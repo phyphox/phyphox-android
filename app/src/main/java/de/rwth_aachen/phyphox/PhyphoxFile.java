@@ -2187,6 +2187,8 @@ public abstract class PhyphoxFile {
                         }
                     }
 
+                    double aeFramerateTarget = getDoubleAttribute("aeFPSTarget", 0.0);
+
                     String featureStr = getStringAttribute("feature");
                     if(featureStr == null)
                         featureStr = "photometric";
@@ -2257,6 +2259,7 @@ public abstract class PhyphoxFile {
                             autoExposure,
                             lockedSetting.isEmpty() ? null : lockedSetting,
                             aeStrategy,
+                            aeFramerateTarget,
                             thresholdAnalyzerThreshold);
 
                     break;

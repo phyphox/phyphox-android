@@ -69,6 +69,7 @@ class CameraInput : Serializable, AnalyzingOpenGLRenderer.ExposureStatisticsList
         mean, avoidUnderxposure, avoidOverexposure, prioritizeFramerate
     }
     var aeStrategy: AEStrategy = AEStrategy.mean
+    var aeFramerateTarget: Double = 0.0
 
     var thresholdAnalyzerThreshold: Double = 0.5
 
@@ -473,6 +474,7 @@ class CameraInput : Serializable, AnalyzingOpenGLRenderer.ExposureStatisticsList
             autoExposure: Boolean,
             lockedSettings: String?,
             aeStrategy: AEStrategy,
+            aeFramerateTarget: Double,
             thresholdAnalyzerThreshold: Double
     ) {
 
@@ -503,6 +505,7 @@ class CameraInput : Serializable, AnalyzingOpenGLRenderer.ExposureStatisticsList
 
         this.dataLock = lock
         this.aeStrategy = aeStrategy
+        this.aeFramerateTarget = aeFramerateTarget
         this.thresholdAnalyzerThreshold = thresholdAnalyzerThreshold
         this.cameraFeature = cameraFeature
     }
@@ -591,7 +594,7 @@ class CameraInput : Serializable, AnalyzingOpenGLRenderer.ExposureStatisticsList
                     }
                     AEStrategy.prioritizeFramerate -> {
                         adjust = 1.0 - speedFactor * 0.1 * (meanLuma - targetExposure)
-                        maxExposureTime = state.sensorFrameDuration
+                        maxExposureTime = if (aeFramerateTarget > 0)  (1.0e9/aeFramerateTarget).toLong() else state.sensorFrameDuration
                     }
                     AEStrategy.avoidUnderxposure -> {
                         if (minRGB > 0.2) {
