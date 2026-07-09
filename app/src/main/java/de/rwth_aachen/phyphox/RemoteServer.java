@@ -391,6 +391,8 @@ public class RemoteServer {
 
     protected int respond(Response response, String contentType, InputStream in, long length) throws IOException {
         try {
+            // CORS: allow cross-origin browser pages to read remote-access responses.
+            response.getHeaders().add("Access-Control-Allow-Origin", "*");
             response.sendHeaders(200, length, System.currentTimeMillis(), null, contentType, null);
             response.sendBody(in, -1, null);
         } finally {
