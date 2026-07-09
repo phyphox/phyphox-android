@@ -41,7 +41,7 @@ public class BluetoothScanner extends AsyncTask<String, Void, BluetoothScanDialo
 
     //Copying is done on a second thread...
     protected BluetoothScanDialog.BluetoothDeviceInfo doInBackground(String... params) {
-        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.JELLY_BEAN_MR2 || !Bluetooth.isSupported(parent)) {
+        if (!Bluetooth.isSupported(parent)) {
             listener.onBluetoothScanError(res.getString(R.string.bt_android_version), true, true);
             return null;
         } else {

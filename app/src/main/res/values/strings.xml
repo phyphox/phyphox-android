@@ -278,7 +278,7 @@ THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND 
     <!-- Bluetooth  -->
 
     <string name="bluetooth">Bluetooth Low Energy</string>
-    <string name="bt_android_version">Bluetooth Low Energy is not supported on Android Versions lower than 4.3.</string>
+    <string name="bt_android_version">Bluetooth Low Energy is not supported on this device.</string>
     <string name="bt_pick_device">Please pick a device.</string>
     <string name="bt_scanning_generic">Scanning for Bluetooth devices…</string>
     <string name="bt_scanning_specific1">Scanning for Bluetooth devices with</string>

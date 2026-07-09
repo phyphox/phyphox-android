@@ -2266,7 +2266,7 @@ public abstract class PhyphoxFile {
 
                 }
                 case "bluetooth": { //A bluetooth input
-                        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.JELLY_BEAN_MR2 || !Bluetooth.isSupported(parent)) {
+                        if (!Bluetooth.isSupported(parent)) {
                             throw new phyphoxFileException(parent.getResources().getString(R.string.bt_android_version));
                         } else {
                             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S && (ContextCompat.checkSelfPermission(parent, Manifest.permission.BLUETOOTH_SCAN) != PackageManager.PERMISSION_GRANTED || ContextCompat.checkSelfPermission(parent, Manifest.permission.BLUETOOTH_CONNECT) != PackageManager.PERMISSION_GRANTED)) {
@@ -3431,7 +3431,7 @@ public abstract class PhyphoxFile {
 
                 }
                 case "bluetooth": { //A bluetooth output
-                    if (Build.VERSION.SDK_INT < Build.VERSION_CODES.JELLY_BEAN_MR2 || !Bluetooth.isSupported(parent)) {
+                    if (!Bluetooth.isSupported(parent)) {
                         throw new phyphoxFileException(parent.getResources().getString(R.string.bt_android_version));
                     } else {
                         String idString = getTranslatedAttribute("id");

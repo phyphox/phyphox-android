@@ -253,7 +253,7 @@ public class ExperimentListActivity extends AppCompatActivity {
 
                 @Override
                 public void onBluetoothScanError(String msg, Boolean isError, Boolean isFatal) {
-                    showBluetoothScanError(res.getString(R.string.bt_android_version), true, true);
+                    showBluetoothScanError(res.getString(R.string.bt_exception_disabled), true, true);
 
                 }
             }).execute();
@@ -1196,7 +1196,7 @@ public class ExperimentListActivity extends AppCompatActivity {
 
                         @Override
                         public void onBluetoothScanError(String msg, Boolean isError, Boolean isFatal) {
-                            showBluetoothScanError(res.getString(R.string.bt_android_version), true, true);
+                            showBluetoothScanError(res.getString(R.string.bt_exception_disabled), true, true);
 
                         }
                     }).execute();
