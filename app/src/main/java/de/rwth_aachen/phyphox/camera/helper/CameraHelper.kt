@@ -419,6 +419,10 @@ object CameraHelper {
     }
 
     fun adjustExposure(adjust: Double, state: CameraSettingState, shutterTarget: Long): Pair<Long, Int> {
+        if (state.shutterSpeedRange == null) {
+            return Pair(shutterTarget, 100)
+        }
+
         var iso = state.currentIsoValue
         var shutter = state.currentShutterValue
         val shutterMax = 1_000_000_000 * state.shutterSpeedRange!!.first().numerator / state.shutterSpeedRange!!.first().denominator
