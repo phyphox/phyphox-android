@@ -99,6 +99,7 @@ import java.util.Calendar;
 import java.util.Date;
 import java.util.HashSet;
 import java.util.Iterator;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
@@ -1162,10 +1163,21 @@ public class Experiment extends AppCompatActivity implements View.OnClickListene
         //Clear data button. Clear the data :)
         if (id == R.id.action_clear) {
             AlertDialog.Builder builder = new AlertDialog.Builder(this);
-            builder.setMessage(res.getString(R.string.clear_data_question))
+            String[] items = experiment.getClearGroups();
+            boolean[] checkedItems = new boolean[items.length];
+            if (items.length > 0) {
+                builder.setMultiChoiceItems(items, checkedItems, (dialog, which, isChecked) -> checkedItems[which] = isChecked);
+            }
+            builder.setTitle(res.getString(items.length > 0 ? R.string.clear_data_question_select : R.string.clear_data_question))
                     .setPositiveButton(R.string.clear_data, new DialogInterface.OnClickListener() {
                         public void onClick(DialogInterface dialog, int id) {
-                            clearData();
+                            List<String> clearGroups = new LinkedList<>();
+                            for (int i = 0; i < checkedItems.length; i++) {
+                                if (checkedItems[i]) {
+                                    clearGroups.add(items[i]);
+                                }
+                            }
+                            clearData(clearGroups);
                         }
                     })
                     .setNegativeButton(R.string.cancel, new DialogInterface.OnClickListener() {
@@ -1718,7 +1730,7 @@ public class Experiment extends AppCompatActivity implements View.OnClickListene
         invalidateOptionsMenu();
     }
 
-    public void clearData() {
+    public void clearData(List<String> clearGroups) {
         //Clear the buffers
 
         experiment.experimentTimeReference.registerEvent(ExperimentTimeReference.TimeMappingEvent.CLEAR);
@@ -1726,9 +1738,11 @@ public class Experiment extends AppCompatActivity implements View.OnClickListene
 
         experiment.dataLock.lock(); //Synced, do not allow another thread to meddle here...
         try {
-            for (DataBuffer buffer : experiment.dataBuffers)
-                if (!buffer.linkedToUserInput)
-                    buffer.clear(true);
+            for (DataBuffer buffer : experiment.dataBuffers) {
+                if (buffer.clearGroup != null && !clearGroups.contains(buffer.clearGroup))
+                    continue;
+                buffer.clear(true);
+            }
         } finally {
             experiment.dataLock.unlock();
         }

@@ -29,7 +29,9 @@ import java.text.DecimalFormat;
 import java.text.DecimalFormatSymbols;
 import java.text.NumberFormat;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
@@ -145,11 +147,11 @@ public class PhyphoxExperiment implements Serializable, ExperimentTimeReference.
     }
 
     //Create a new buffer
-    public DataBuffer createBuffer(String key, int size, ExperimentTimeReference experimentTimeReference) {
+    public DataBuffer createBuffer(String key, String clearGroup, int size, ExperimentTimeReference experimentTimeReference) {
         if (key == null)
             return null;
 
-        DataBuffer output = new DataBuffer(key, size, experimentTimeReference);
+        DataBuffer output = new DataBuffer(key, clearGroup, size, experimentTimeReference);
         dataBuffers.add(output);
         dataMap.put(key, dataBuffers.size() - 1);
         return output;
@@ -165,6 +167,17 @@ public class PhyphoxExperiment implements Serializable, ExperimentTimeReference.
             return null;
 
         return dataBuffers.get(index);
+    }
+
+    public String[] getClearGroups() {
+        Set<String> clearGroups = new HashSet<String>();
+        for (DataBuffer buffer : dataBuffers) {
+            if (buffer.clearGroup != null && !buffer.clearGroup.equals("_"))
+                clearGroups.add(buffer.clearGroup);
+        }
+        return clearGroups.stream()
+                .sorted()
+                .toArray(String[]::new);
     }
 
     //Do the export using the DataExport class (see DataExport.java)

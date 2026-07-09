@@ -38,6 +38,7 @@
     <string name="start">Start</string>
     <string name="clear_data">Clear data</string>
     <string name="clear_data_question">Clear recorded data?</string>
+    <string name="clear_data_question_select">Clear recorded data and the following optional items?</string>
     <string name="clear">Clear</string>
     <string name="leave_experiment">Leave experiment</string>
     <string name="leave_experiment_question">Leave this experiment and discard recorded data?</string>

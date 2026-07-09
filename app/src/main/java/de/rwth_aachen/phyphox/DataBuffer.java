@@ -1,7 +1,5 @@
 package de.rwth_aachen.phyphox;
 
-import android.util.Log;
-
 import java.io.Serializable;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
@@ -25,13 +23,13 @@ interface BufferNotification {
 
 public class DataBuffer implements Serializable {
     public String name; //The key name
+    public String clearGroup; // If set, this buffer is excluded from a clear by the user unless the user specifically selects to delete this group
     private List<Double> buffer; //The actual buffer
     public int size; //The target size
     public double value; //The last added value for easy access and graceful returning NaN for empty buffers
     public boolean isStatic = false; //If set to static, this buffer should only be filled once and cannot be cleared thereafter
     public Double [] init = new Double[0];
     public boolean staticAndSet = false;
-    public boolean linkedToUserInput = false; //If set to true, we should avoid overwriting this value by global operations, i.e.: Do not clear on a reset event.
 
     //Analysis modules and graphs can register to receive notifications if a buffer changes.
     public Set<BufferNotification> updateListeners = new HashSet<>();
@@ -54,10 +52,11 @@ public class DataBuffer implements Serializable {
     private double max = Double.NaN;
 
     //Contructor. Set key name and target size.
-    protected DataBuffer(String name, int size, ExperimentTimeReference experimentTimeReference) {
+    protected DataBuffer(String name, String clearGroup, int size, ExperimentTimeReference experimentTimeReference) {
         this.experimentTimeReference = experimentTimeReference;
         this.size = size;
         this.name = name;
+        this.clearGroup = clearGroup;
 
         //Note on the choice of LinkedList over ArrayList
         //For data acquisition during an experiment we require the ability to append data
@@ -526,7 +525,7 @@ public class DataBuffer implements Serializable {
     }
 
     public DataBuffer copy() {
-        DataBuffer db = new DataBuffer(this.name, this.size, this.experimentTimeReference);
+        DataBuffer db = new DataBuffer(this.name, this.clearGroup, this.size, this.experimentTimeReference);
         db.append(this.getArray(), this.getFilledSize());
         db.isStatic = this.isStatic;
         return db;

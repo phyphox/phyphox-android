@@ -1236,12 +1236,13 @@ public abstract class PhyphoxFile {
                     int size = getIntAttribute("size",1);
                     String strInit = getStringAttribute("init");
                     boolean isStatic = getBooleanAttribute("static", false);
+                    String clearGroup = getTranslatedAttribute("clearGroup");
 
                     String name = getText();
                     if (!isValidIdentifier(name))
                         throw new phyphoxFileException("\"" + name + "\" is not a valid name for a data-container.", xpp.getLineNumber());
 
-                    DataBuffer newBuffer = experiment.createBuffer(name, size, experiment.experimentTimeReference);
+                    DataBuffer newBuffer = experiment.createBuffer(name, clearGroup, size, experiment.experimentTimeReference);
                     newBuffer.setStatic(isStatic);
 
                     if (strInit != null && !strInit.isEmpty()) {
@@ -3617,16 +3618,6 @@ public abstract class PhyphoxFile {
                 e.printStackTrace();
                 return experiment;
 
-            }
-
-            for (ExpView v : experiment.experimentViews) {
-                for (ExpView.expViewElement ev : v.elements) {
-                    if (ev instanceof ExpView.editElement) {
-                        DataBuffer buffer = experiment.getBuffer(((ExpView.editElement) ev).valueOutput);
-                        if (buffer != null)
-                            experiment.getBuffer(((ExpView.editElement)ev).valueOutput).linkedToUserInput = true;
-                    }
-                }
             }
 
             //Sanity check: If the experiment did not define any views, we cannot use it

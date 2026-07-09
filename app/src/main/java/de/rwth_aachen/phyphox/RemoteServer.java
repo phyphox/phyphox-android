@@ -38,6 +38,7 @@ import java.net.NetworkInterface;
 import java.net.SocketException;
 import java.text.DecimalFormat;
 import java.text.NumberFormat;
+import java.util.LinkedList;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.Enumeration;
@@ -239,6 +240,17 @@ public class RemoteServer {
             sb.append("\n]}"); //The view is complete
         }
         sb.append("\n];"); //The views are complete -> JSON object complete
+
+        sb.append("var clearGroups = [");
+        String[] clearGroups = experiment.getClearGroups();
+        for (int i = 0; i < clearGroups.length; i++) {
+            if (i > 0)
+                sb.append(",");
+            sb.append("\"");
+            sb.append(clearGroups[i].replace("\"", "\\\""));
+            sb.append("\"");
+        }
+        sb.append("];");
     }
 
     //Constructs the HTML file and replaces some placeholder.
@@ -254,10 +266,16 @@ public class RemoteServer {
             while ((line = br.readLine()) != null) {
                 if (line.contains("<!-- [[title]] -->")) { //The title. This one is easy...
                     sb.append(line.replace("<!-- [[title]] -->", experiment.title));
+                } else if (line.contains("<!-- [[translationOK]] -->")) { //The localized string for "clear data"
+                    sb.append(line.replace("<!-- [[translationOK]] -->", context.getString(R.string.ok)));
+                } else if (line.contains("<!-- [[translationCancel]] -->")) { //The localized string for "clear data"
+                    sb.append(line.replace("<!-- [[translationCancel]] -->", context.getString(R.string.cancel)));
                 } else if (line.contains("<!-- [[clearDataTranslation]] -->")) { //The localized string for "clear data"
                     sb.append(line.replace("<!-- [[clearDataTranslation]] -->", context.getString(R.string.clear_data)));
                 } else if (line.contains("<!-- [[clearConfirmTranslation]] -->")) { //The localized string for "Clear data?"
                     sb.append(line.replace("<!-- [[clearConfirmTranslation]] -->", context.getString(R.string.clear_data_question)));
+                } else if (line.contains("<!-- [[clearConfirmTranslationSelect]] -->")) { //The localized string for "Clear data?"
+                    sb.append(line.replace("<!-- [[clearConfirmTranslationSelect]] -->", context.getString(R.string.clear_data_question_select)));
                 } else if (line.contains("<!-- [[exportTranslation]] -->")) { //The localized string for "clear data"
                     sb.append(line.replace("<!-- [[exportTranslation]] -->", context.getString(R.string.export)));
                 } else if (line.contains("<!-- [[switchToPhoneLayoutTranslation]] -->")) { //The localized string for "clear data"
@@ -633,7 +651,16 @@ public class RemoteServer {
                     callActivity.remoteStopMeasurement();
                     return respond(response, true);
                 case "clear": //Clear measurement data
-                    callActivity.clearData();
+                    List<String> clearGroups = new LinkedList<>();
+                    int i = 1;
+                    while (true) {
+                        String clearGroup = request.getParams().get("clearGroup"+i);
+                        if (clearGroup == null)
+                            break;
+                        clearGroups.add(clearGroup);
+                        i++;
+                    }
+                    callActivity.clearData(clearGroups);
                     return respond(response, true);
                 case "set": //Set the value of a buffer
                     String buffer = request.getParams().get("buffer"); //Which buffer?

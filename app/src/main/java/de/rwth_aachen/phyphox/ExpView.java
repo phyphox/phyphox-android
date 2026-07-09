@@ -1158,9 +1158,10 @@ public class ExpView implements Serializable{
 
         void setValue(double v) {
             if (!focused) {
-                if (Double.isNaN(v)) //If the buffer holds NaN, resort to the default value (probably the user has not entered anything yet)
+                if (Double.isNaN(v)) { //If the buffer holds NaN, resort to the default value (probably the user has not entered anything yet)
                     currentValue = defaultValue;
-                else
+                    triggered = true;
+                } else
                     currentValue = v;
                 if (et != null) {
                     if (decimal)
@@ -1195,7 +1196,7 @@ public class ExpView implements Serializable{
 
         @Override
         protected void clear() {
-            triggered = true;
+
         }
 
         @Override
