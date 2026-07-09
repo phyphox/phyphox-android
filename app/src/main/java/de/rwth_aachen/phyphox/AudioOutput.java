@@ -34,9 +34,9 @@ public class AudioOutput {
     }
 
     public void init() throws Exception {
-        int minBuffer = AudioTrack.getMinBufferSize(rate, AudioFormat.CHANNEL_OUT_MONO, AudioFormat.ENCODING_PCM_16BIT);
-        bufferSize = Math.max(minBuffer, bufferBaseSize*2*4); //2048 frames with 2 bytes each (16bit short int), grouped in four buffers (on iOS at least)
-        audioTrack = new AudioTrack(AudioManager.STREAM_MUSIC, rate, AudioFormat.CHANNEL_OUT_MONO, AudioFormat.ENCODING_PCM_16BIT, bufferSize, AudioTrack.MODE_STREAM);
+        int minBuffer = AudioTrack.getMinBufferSize(rate, AudioFormat.CHANNEL_OUT_STEREO, AudioFormat.ENCODING_PCM_16BIT);
+        bufferSize = Math.max(minBuffer, bufferBaseSize*2*2*4); //2048 frames on 2 channels with 2 bytes each (16bit short int), grouped in four buffers (on iOS at least)
+        audioTrack = new AudioTrack(AudioManager.STREAM_MUSIC, rate, AudioFormat.CHANNEL_OUT_STEREO, AudioFormat.ENCODING_PCM_16BIT, bufferSize, AudioTrack.MODE_STREAM);
         if (audioTrack.getState() == AudioTrack.STATE_UNINITIALIZED) {
             throw new Exception("Could not initialize audio. (" + audioTrack.getState() + ")");
         }
@@ -49,8 +49,8 @@ public class AudioOutput {
     private Runnable fillBuffer = new Runnable() {
         @Override
         public void run() {
-            float[] floatData = new float[bufferBaseSize];
-            short[] shortData = new short[bufferBaseSize];
+            float[] floatData = new float[bufferBaseSize*2]; //x2 for stereo samples
+            short[] shortData = new short[bufferBaseSize*2];
             float amplitude;
 
             while (playing && active) {
@@ -76,7 +76,7 @@ public class AudioOutput {
                 else
                     amplitude = 1.0f;
                 float x;
-                for (int i = 0; i < bufferBaseSize; i++) {
+                for (int i = 0; i < 2*bufferBaseSize; i++) {
                     x = amplitude * floatData[i] * Short.MAX_VALUE;
                     if (x > Short.MAX_VALUE)
                         shortData[i] = Short.MAX_VALUE;
@@ -85,7 +85,7 @@ public class AudioOutput {
                     else
                         shortData[i] = (short)x;
                 }
-                audioTrack.write(shortData, 0, bufferBaseSize);
+                audioTrack.write(shortData, 0, bufferBaseSize*2);
             }
         }
     };
@@ -182,7 +182,9 @@ public class AudioOutput {
             double phaseStep = (double)f / (double)rate;
 
             for (int i = Math.max(0, start - index); i < end; i++) {
-                buffer[i] += a * sineLookup[(int)(phase * sineLookupSize) % sineLookupSize];
+                float v = (float) (a * sineLookup[(int)(phase * sineLookupSize) % sineLookupSize]);
+                buffer[2*i] += v;
+                buffer[2*i+1] += v;
                 phase += phaseStep;
 
             }
@@ -198,12 +200,17 @@ public class AudioOutput {
 
     public class AudioOutputPluginDirect extends AudioOutputPlugin {
         DataInput input;
+        DataInput pan = new DataInput(0f);
         AudioOutputPluginDirect(DataInput input) {
             this.input = input;
         }
 
         @Override
         public boolean setParameter(String parameter, DataInput input) {
+            if (parameter.equals("pan")) {
+                this.pan = input;
+                return true;
+            }
             return false;
         }
 
@@ -216,6 +223,11 @@ public class AudioOutput {
         public void generate(float[] buffer, int samples, int rate, int index, boolean loop) {
             if (input == null)
                 return;
+
+            float p = (float)pan.getValue();
+            float pl = p > 0 ? (float)(1.0 - p) : 1.0f;
+            float pr = p < 0 ? (float)(1.0 + p) : 1.0f;
+
             Double[] data = input.getArray();
             if (data == null || data.length == 0)
                 return;
@@ -226,13 +238,16 @@ public class AudioOutput {
                 }
             } else {
                 for (int i = 0; i < samples && i + index < data.length; i++) {
-                    buffer[i] += data[index + i];
+                    float v = data[index + i].floatValue();
+                    buffer[2*i] += pl * v;
+                    buffer[2*i+1] += pr * v;
                 }
             }
         }
     }
 
     public class AudioOutputPluginTone extends AudioOutputPlugin {
+        private DataInput pan = new DataInput(0f);
         private DataInput amplitude = new DataInput(1.0f);
         private DataInput duration = new DataInput(1.0f);
         private DataInput frequency = new DataInput(440f);
@@ -246,6 +261,8 @@ public class AudioOutput {
         @Override
         public boolean setParameter(String parameter, DataInput input) {
             switch (parameter) {
+                case "pan": pan = input;
+                    return true;
                 case "amplitude": amplitude = input;
                     return true;
                 case "duration": duration = input;
@@ -262,6 +279,9 @@ public class AudioOutput {
         }
 
         public void generate(float[] buffer, int samples, int rate, int index, boolean loop) {
+            float p = (float)pan.getValue();
+            float pl = p > 0 ? (float)(1.0 - p) : 1.0f;
+            float pr = p < 0 ? (float)(1.0 + p) : 1.0f;
             float d = (float)duration.getValue();
             float a = (float)amplitude.getValue();
             float f = (float)frequency.getValue();
@@ -279,12 +299,15 @@ public class AudioOutput {
                 phase = 0.0;
             for (int i = 0; i < end; i++) {
                 int lookupAddress = (int)(phase * sineLookupSize) % sineLookupSize;
+                float v = 0.f;
                 if(waveform == Waveform.SINE)
-                    buffer[i] += a * sineLookup[lookupAddress];
+                    v = a * sineLookup[lookupAddress];
                 else if(waveform == Waveform.SQUARE)
-                    buffer[i] += (2*lookupAddress > sineLookupSize ? a : -a);
+                    v = (2*lookupAddress > sineLookupSize ? a : -a);
                 else if (waveform == Waveform.SAWTOOTH)
-                    buffer[i] += a * (2 * (float)lookupAddress / (float)sineLookupSize - 1.0f);
+                    v = a * (2 * (float)lookupAddress / (float)sineLookupSize - 1.0f);
+                buffer[2*i] += pl * v;
+                buffer[2*i+1] += pr * v;
                 phase += phaseStep;
             }
             while (phase > 100000.f)
@@ -293,12 +316,15 @@ public class AudioOutput {
     }
 
     public class AudioOutputPluginNoise extends AudioOutputPlugin {
+        private DataInput pan = new DataInput(0f);
         private DataInput amplitude = new DataInput(1.0f);
         private DataInput duration = new DataInput(1.0f);
 
         @Override
         public boolean setParameter(String parameter, DataInput input) {
             switch (parameter) {
+                case "pan": pan = input;
+                    return true;
                 case "amplitude": amplitude = input;
                     return true;
                 case "duration": duration = input;
@@ -313,6 +339,9 @@ public class AudioOutput {
         }
 
         public void generate(float[] buffer, int samples, int rate, int index, boolean loop) {
+            float p = (float)pan.getValue();
+            float pl = p > 0 ? (float)(1.0 - p) : 1.0f;
+            float pr = p < 0 ? (float)(1.0 + p) : 1.0f;
             float d = (float)duration.getValue();
             float a = (float)amplitude.getValue();
 
@@ -324,7 +353,9 @@ public class AudioOutput {
             }
 
             for (int i = 0; i < end; i++) {
-                buffer[i] += a * (2.0f * Math.random() - 1.0f);
+                float v = (float) (a * (2.0f * Math.random() - 1.0f));
+                buffer[2*i] += pl * v;
+                buffer[2*i+1] += pr * v;
             }
         }
     }
