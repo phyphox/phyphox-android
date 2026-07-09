@@ -6,6 +6,7 @@ import static de.rwth_aachen.phyphox.helper.DataExportUtility.MIME_TYPE_CSV_ZIP;
 import static de.rwth_aachen.phyphox.helper.DataExportUtility.MIME_TYPE_PHYPHOX;
 import static de.rwth_aachen.phyphox.helper.DataExportUtility.REQUEST_WRITE_EXTERNAL_STORAGE;
 
+import android.Manifest;
 import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.app.ProgressDialog;
@@ -68,9 +69,11 @@ import androidx.appcompat.widget.Toolbar;
 import androidx.camera.core.Camera;
 import androidx.camera.core.CameraControl;
 import androidx.camera.lifecycle.ProcessCameraProvider;
+import androidx.core.app.ActivityCompat;
 import androidx.core.app.NavUtils;
 import androidx.core.app.ShareCompat;
 import androidx.core.app.TaskStackBuilder;
+import androidx.core.content.ContextCompat;
 import androidx.core.content.FileProvider;
 import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowInsetsCompat;
@@ -1288,9 +1291,22 @@ public class Experiment extends AppCompatActivity implements View.OnClickListene
                         .setTitle(R.string.remoteServerWarningTitle)
                         .setPositiveButton(R.string.ok, new DialogInterface.OnClickListener() {
                             public void onClick(DialogInterface dialog, int id) {
-                                itemRef.setChecked(true);
-                                serverEnabled = true;
-                                startRemoteServer();
+                                if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.CINNAMON_BUN){
+                                    boolean hasPermission =  ContextCompat.checkSelfPermission(Experiment.this, Manifest.permission.ACCESS_LOCAL_NETWORK) == PackageManager.PERMISSION_GRANTED;
+                                    if(!hasPermission){
+                                        ActivityCompat.requestPermissions(Experiment.this, new String[]{Manifest.permission.ACCESS_LOCAL_NETWORK}, 1);
+                                    } else {
+                                        itemRef.setChecked(true);
+                                        serverEnabled = true;
+                                        startRemoteServer();
+                                    }
+
+                                } else {
+                                    itemRef.setChecked(true);
+                                    serverEnabled = true;
+                                    startRemoteServer();
+                                }
+
                             }
                         })
                         .setNeutralButton(R.string.hotspotSettings, new DialogInterface.OnClickListener() {
