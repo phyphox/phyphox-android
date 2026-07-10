@@ -24,7 +24,7 @@ import de.rwth_aachen.phyphox.R;
 
 public class ExperimentRepository{
 
-    Vector<ExperimentsInCategory> categories;
+    public Vector<ExperimentsInCategory> categories = new Vector<>();
 
     /**
      * Collects names of Bluetooth devices and maps them to (hidden) experiments supporting these devices
@@ -147,6 +147,41 @@ public class ExperimentRepository{
 
     public HashMap<UUID, Vector<String>> getBluetoothDeviceUUIDList() {
         return bluetoothDeviceUUIDList;
+    }
+
+    public Vector<ExperimentShortInfo> getSelectedExperiments() {
+        Vector<ExperimentShortInfo> selected = new Vector<>();
+        for (ExperimentsInCategory cat : categories) {
+            for (ExperimentShortInfo info : cat.retrieveExperiments()) {
+                if (info.selected) selected.add(info);
+            }
+        }
+        return selected;
+    }
+
+    public void clearSelection() {
+        for (ExperimentsInCategory cat : categories) {
+            for (ExperimentShortInfo info : cat.retrieveExperiments()) {
+                info.selected = false;
+            }
+            cat.experimentItemAdapter.notifyDataSetChanged();
+        }
+    }
+
+    public void setSelectionMode(boolean selectionMode) {
+        for (ExperimentsInCategory cat : categories) {
+            cat.experimentItemAdapter.setSelectionMode(selectionMode);
+        }
+    }
+
+    public int getSelectedCount() {
+        int count = 0;
+        for (ExperimentsInCategory cat : categories) {
+            for (ExperimentShortInfo info : cat.retrieveExperiments()) {
+                if (info.selected) count++;
+            }
+        }
+        return count;
     }
 }
 

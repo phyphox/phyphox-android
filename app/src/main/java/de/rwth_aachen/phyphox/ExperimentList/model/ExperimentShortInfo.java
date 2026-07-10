@@ -25,6 +25,7 @@ public class ExperimentShortInfo {
     public String isLink;
     public Map<String, String> links;
     public String categoryName;
+    public boolean selected = false;
 
     public final Set<String> bluetoothDeviceNames = new HashSet<>();
     public final Set<UUID> bluetoothDeviceUUIDs = new HashSet<>();

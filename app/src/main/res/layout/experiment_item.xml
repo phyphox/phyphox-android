@@ -16,6 +16,17 @@
         android:paddingEnd="@dimen/activity_horizontal_padding"
         android:background="?attr/selectableItemBackground">
 
+        <RadioButton
+            android:id="@+id/expSelected"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:visibility="gone"
+            android:clickable="false"
+            android:focusable="false"
+            app:layout_constraintTop_toTopOf="parent"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintStart_toStartOf="parent" />
+
         <ImageView
             android:id="@+id/expIcon"
 
@@ -27,7 +38,7 @@
 
             app:layout_constraintDimensionRatio="H,1:1"
             app:layout_constraintTop_toTopOf="@id/expTitle"
-            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintStart_toEndOf="@id/expSelected"
             app:layout_constraintBottom_toBottomOf="@id/expInfo"
 
             />

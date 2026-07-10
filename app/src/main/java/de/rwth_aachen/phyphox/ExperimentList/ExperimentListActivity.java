@@ -21,6 +21,7 @@ import android.content.pm.PackageManager;
 import android.content.res.AssetManager;
 import android.content.res.Configuration;
 import android.content.res.Resources;
+import android.content.res.ColorStateList;
 import android.graphics.Typeface;
 import android.hardware.Sensor;
 import android.hardware.SensorManager;
@@ -49,6 +50,7 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.activity.EdgeToEdge;
+import androidx.activity.OnBackPressedCallback;
 import androidx.annotation.NonNull;
 import androidx.annotation.RequiresApi;
 import androidx.appcompat.app.AlertDialog;
@@ -132,6 +134,9 @@ public class ExperimentListActivity extends AppCompatActivity {
     ReportingScrollView sv;
     View backgroundDimmer;
 
+    private boolean isSelectionMode = false;
+    private View.OnClickListener originalFABListener;
+
     @Override
     //The onCreate block will setup some onClickListeners and display a do-not-damage-your-phone
     //  warning message.
@@ -177,6 +182,19 @@ public class ExperimentListActivity extends AppCompatActivity {
         WindowInsetHelper.setInsets(findViewById(R.id.newExperiment), WindowInsetHelper.ApplyTo.IGNORE, WindowInsetHelper.ApplyTo.IGNORE, WindowInsetHelper.ApplyTo.MARGIN, WindowInsetHelper.ApplyTo.MARGIN);
 
         setUpOnClickListener();
+
+        getOnBackPressedDispatcher().addCallback(this, new OnBackPressedCallback(true) {
+            @Override
+            public void handleOnBackPressed() {
+                if (isSelectionMode) {
+                    exitSelectionMode();
+                } else {
+                    this.setEnabled(false);
+                    getOnBackPressedDispatcher().onBackPressed();
+                    this.setEnabled(true);
+                }
+            }
+        });
 
         experimentRepository = new ExperimentRepository();
 
@@ -227,6 +245,7 @@ public class ExperimentListActivity extends AppCompatActivity {
 
         View experimentListDimmer = findViewById(R.id.experimentListDimmer);
         newExperimentButton.setOnClickListener(neocl);
+        originalFABListener = neocl;
         experimentListDimmer.setOnClickListener(neocl);
 
         Button.OnClickListener neoclSimple = v -> {
@@ -1274,6 +1293,55 @@ public class ExperimentListActivity extends AppCompatActivity {
         });
 
         neDialog.show();
+    }
+
+    public void startSelectionMode() {
+        if (newExperimentDialogOpen)
+            hideNewExperimentDialog();
+        isSelectionMode = true;
+        experimentRepository.setSelectionMode(true);
+        newExperimentButton.setImageResource(R.drawable.delete);
+        newExperimentButton.setBackgroundTintList(ColorStateList.valueOf(res.getColor(R.color.phyphox_red)));
+        newExperimentButton.setOnClickListener(v -> deleteSelectedExperiments());
+    }
+
+    public void onSelectionChanged() {
+        int count = experimentRepository.getSelectedCount();
+        if (count == 0) {
+            exitSelectionMode();
+        }
+    }
+
+    private void exitSelectionMode() {
+        isSelectionMode = false;
+        experimentRepository.clearSelection();
+        experimentRepository.setSelectionMode(false);
+        newExperimentButton.setImageResource(R.drawable.new_experiment);
+        newExperimentButton.setBackgroundTintList(ColorStateList.valueOf(res.getColor(R.color.phyphox_primary)));
+        newExperimentButton.setOnClickListener(originalFABListener);
+    }
+
+    private void deleteSelectedExperiments() {
+        Vector<ExperimentShortInfo> selected = experimentRepository.getSelectedExperiments();
+        if (selected.isEmpty()) return;
+
+        AlertDialog.Builder builder = new AlertDialog.Builder(this);
+        builder.setMessage(res.getString(R.string.confirmDelete))
+                .setTitle(R.string.confirmDeleteTitle)
+                .setPositiveButton(R.string.delete, (dialog, id) -> {
+                    for (ExperimentShortInfo info : selected) {
+                        long crc32 = Helper.getCRC32(new File(getFilesDir(), info.xmlFile));
+                        File resFolder = new File(getFilesDir(), Long.toHexString(crc32).toLowerCase());
+                        deleteFile(info.xmlFile);
+                        if (resFolder.isDirectory()) {
+                            Helper.deleteRecursive(resFolder);
+                        }
+                    }
+                    exitSelectionMode();
+                    experimentRepository.loadAndShowMainExperimentList(this);
+                })
+                .setNegativeButton(R.string.cancel, null)
+                .show();
     }
 
 }
