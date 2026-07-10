@@ -2289,6 +2289,7 @@ public class ExpView implements Serializable{
             super.restore();
             if (rootView != null && interactiveGV != null && parent != null) {
                 isExclusive = false;
+                interactiveGV.prepareExclusive(false);
 
                 interactiveGV.getLayoutParams().height = ViewGroup.LayoutParams.WRAP_CONTENT;
                 interactiveGV.requestLayout();
@@ -2303,6 +2304,7 @@ public class ExpView implements Serializable{
             super.maximize();
             if (rootView != null && interactiveGV != null && parent != null) {
                 isExclusive = true;
+                interactiveGV.prepareExclusive(true);
 
                 interactiveGV.getLayoutParams().height = ViewGroup.LayoutParams.MATCH_PARENT;
                 interactiveGV.requestLayout();

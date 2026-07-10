@@ -6,12 +6,13 @@ import android.content.ContextWrapper;
 import android.content.DialogInterface;
 import android.content.res.ColorStateList;
 import android.graphics.Point;
-import android.os.Build;
 import android.text.InputType;
 import android.util.AttributeSet;
 import android.util.Log;
 import android.util.TypedValue;
 import android.view.Gravity;
+import android.view.LayoutInflater;
+import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
@@ -31,19 +32,14 @@ import android.widget.Spinner;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import androidx.annotation.NonNull;
 import androidx.appcompat.app.AlertDialog;
+import androidx.appcompat.widget.LinearLayoutCompat;
 import androidx.appcompat.widget.SwitchCompat;
 import androidx.core.content.ContextCompat;
 import androidx.core.view.ViewCompat;
 import androidx.core.widget.ImageViewCompat;
 
 
-import com.google.android.material.bottomnavigation.BottomNavigationView;
-
-
-import java.util.ArrayList;
-import java.util.List;
 import java.util.Vector;
 
 import de.rwth_aachen.phyphox.helper.Helper;
@@ -55,7 +51,9 @@ public class InteractiveGraphView extends RelativeLayout implements GraphView.Po
     public GraphView graphView;
     private TextView graphLabel;
     private ImageView expandImage, collapseImage;
-    private BottomNavigationView toolbar;
+    private LinearLayoutCompat toolbar;
+    int selectedItem = R.id.graph_tools_pan;
+    boolean isHorizontalLayout = false;
     public boolean allowLogX = false;
     public boolean allowLogY = false;
 
@@ -117,6 +115,76 @@ public class InteractiveGraphView extends RelativeLayout implements GraphView.Po
         init(context);
     }
 
+    private void selectItem(int item) {
+        selectedItem = item;
+        for (int i = 0; i < toolbar.getChildCount(); i++) {
+            View child = toolbar.getChildAt(i);
+            ImageView iv = child.findViewById(R.id.item_icon);
+            TextView tv = child.findViewById(R.id.item_title);
+            if (iv != null && tv != null) {
+                iv.setSelected(child.getId() == selectedItem);
+                tv.setSelected(child.getId() == selectedItem);
+            }
+        }
+    }
+    private void updateMenuLayout(Boolean isHorizontal) {
+
+        // Toolbar
+        RelativeLayout.LayoutParams lp = (RelativeLayout.LayoutParams) toolbar.getLayoutParams();
+        if (isHorizontal) {
+            lp.height = RelativeLayout.LayoutParams.MATCH_PARENT;
+            lp.width = RelativeLayout.LayoutParams.WRAP_CONTENT;
+            lp.addRule(RelativeLayout.ALIGN_PARENT_RIGHT);
+            lp.addRule(RelativeLayout.ALIGN_PARENT_BOTTOM);
+            lp.addRule(RelativeLayout.BELOW, R.id.graph_label);
+        } else {
+            lp.removeRule(RelativeLayout.ALIGN_PARENT_RIGHT);
+            lp.removeRule(RelativeLayout.BELOW);
+            lp.height = RelativeLayout.LayoutParams.WRAP_CONTENT;
+            lp.width = RelativeLayout.LayoutParams.MATCH_PARENT;
+            lp.addRule(RelativeLayout.ALIGN_PARENT_BOTTOM);
+        }
+        int margin = (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, 8, getResources().getDisplayMetrics());
+        lp.topMargin = isHorizontal ? 0 : margin;
+        lp.leftMargin = isHorizontal ? margin : 0;
+        toolbar.setOrientation(isHorizontal ? LinearLayoutCompat.VERTICAL : LinearLayoutCompat.HORIZONTAL);
+        toolbar.setLayoutParams(lp);
+
+        // Graph
+        RelativeLayout.LayoutParams lpFrame = (RelativeLayout.LayoutParams) graphFrame.getLayoutParams();
+        if (isHorizontal) {
+            lpFrame.removeRule(RelativeLayout.ABOVE);
+            lpFrame.addRule(RelativeLayout.BELOW, R.id.graph_label);
+            lpFrame.addRule(RelativeLayout.ALIGN_PARENT_LEFT);
+            lpFrame.addRule(RelativeLayout.LEFT_OF, R.id.graph_toolbar);
+            lpFrame.addRule(RelativeLayout.ALIGN_PARENT_BOTTOM);
+        } else {
+            lpFrame.removeRule(RelativeLayout.LEFT_OF);
+            lpFrame.addRule(RelativeLayout.BELOW, R.id.graph_label);
+            lpFrame.addRule(RelativeLayout.ALIGN_PARENT_LEFT);
+            lpFrame.addRule(RelativeLayout.ABOVE, R.id.graph_toolbar);
+            lpFrame.removeRule(RelativeLayout.ALIGN_PARENT_BOTTOM);
+        }
+        graphFrame.setLayoutParams(lpFrame);
+
+        // Menu items
+        for (int i = 0; i < toolbar.getChildCount(); i++) {
+            View child = toolbar.getChildAt(i);
+            LinearLayout.LayoutParams params = (LinearLayout.LayoutParams) child.getLayoutParams();
+
+            if (isHorizontal) {
+                params.width = LinearLayout.LayoutParams.MATCH_PARENT;
+                params.height = 0;
+                params.weight = 1.0f;
+            } else {
+                params.width = 0;
+                params.height = LinearLayout.LayoutParams.MATCH_PARENT;
+                params.weight = 1.0f;
+            }
+            child.setLayoutParams(params);
+        }
+    }
+
     private void init(Context context) {
         rootView = inflate(context, R.layout.interactive_graph_layout, this);
 
@@ -127,7 +195,7 @@ public class InteractiveGraphView extends RelativeLayout implements GraphView.Po
         graphLabel = (TextView)this.findViewById(R.id.graph_label);
         expandImage = (ImageView)this.findViewById(R.id.graph_expand_image);
         collapseImage = (ImageView)this.findViewById(R.id.graph_collapse_image);
-        toolbar = (BottomNavigationView) this.findViewById(R.id.graph_toolbar);
+        toolbar = (LinearLayoutCompat) this.findViewById(R.id.graph_toolbar);
         setExpandCollapseImageColor(context);
 
         // Because of edge to edge feature from Android 15, bottom nav bar need to be handled as the bottom padding for this will be automatically set
@@ -137,21 +205,37 @@ public class InteractiveGraphView extends RelativeLayout implements GraphView.Po
             return insets;
         });
 
-        toolbar.inflateMenu(R.menu.graph_menu);
+        PopupMenu tempMenu = new PopupMenu(context, toolbar);
+        tempMenu.getMenuInflater().inflate(R.menu.graph_menu, tempMenu.getMenu());
+        Menu menu = tempMenu.getMenu();
+        toolbar.removeAllViews();
+        for (int i = 0; i < menu.size(); i++) {
+            MenuItem menuItem = menu.getItem(i);
 
-        toolbar.setOnNavigationItemSelectedListener(new BottomNavigationView.OnNavigationItemSelectedListener() {
-            @Override
-            public boolean onNavigationItemSelected(@NonNull MenuItem item) {
-                int itemId = item.getItemId();
-                if (itemId == R.id.graph_tools_pan) {
-                    graphView.setTouchMode(GraphView.TouchMode.zoom);
-                    return true;
-                } else if (itemId == R.id.graph_tools_pick) {
-                    graphView.setTouchMode(GraphView.TouchMode.pick);
-                    return true;
-                } else if (itemId == R.id.graph_tools_more) {
-                    PopupMenu popup = createGraphToolPopUpMenu();
-                    popup.setOnMenuItemClickListener(menuItem -> {
+            // Inflate the single item template
+            View itemView = LayoutInflater.from(context).inflate(R.layout.interactive_graph_menu_item, toolbar, false);
+
+            // Populate the data using your original XML values
+            ImageView iconView = itemView.findViewById(R.id.item_icon);
+            TextView textView = itemView.findViewById(R.id.item_title);
+
+            iconView.setImageDrawable(menuItem.getIcon());
+            textView.setText(menuItem.getTitle());
+            itemView.setId(menuItem.getItemId()); // Keep your original menu item ID!
+
+            itemView.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View view) {
+                    int itemId = view.getId();
+                    if (itemId == R.id.graph_tools_pan) {
+                        selectItem(itemId);
+                        graphView.setTouchMode(GraphView.TouchMode.zoom);
+                    } else if (itemId == R.id.graph_tools_pick) {
+                        selectItem(itemId);
+                        graphView.setTouchMode(GraphView.TouchMode.pick);
+                    } else if (itemId == R.id.graph_tools_more) {
+                        PopupMenu popup = createGraphToolPopUpMenu();
+                        popup.setOnMenuItemClickListener(menuItem -> {
                             int id = menuItem.getItemId();
                             if (id == R.id.graph_tools_linear_fit) {
                                 linearRegression = !linearRegression;
@@ -207,10 +291,18 @@ public class InteractiveGraphView extends RelativeLayout implements GraphView.Po
                             return false;
                         });
                         popup.show();
+                    }
                 }
-                return false;
-            }
-        });
+            });
+
+            // Add the dynamically built item into the main bar container
+            toolbar.addView(itemView);
+        }
+
+        isHorizontalLayout = getWidth() > getHeight();
+        updateMenuLayout(isHorizontalLayout);
+
+        selectItem(R.id.graph_tools_pan);
 
         PlotAreaView plotAreaView = new PlotAreaView(context);
         plotAreaView.setLayoutParams(new ViewGroup.LayoutParams(
@@ -269,13 +361,9 @@ public class InteractiveGraphView extends RelativeLayout implements GraphView.Po
         if(Helper.isDarkTheme(getResources())){
             ImageViewCompat.setImageTintList(collapseImage, ColorStateList.valueOf(ContextCompat.getColor(context, R.color.phyphox_white_100)));
             ImageViewCompat.setImageTintList(expandImage, ColorStateList.valueOf(ContextCompat.getColor(context, R.color.phyphox_white_100)));
-            toolbar.setBackgroundColor(getResources().getColor(R.color.phyphox_black_50));
-
-
-        }else{
+        } else {
             ImageViewCompat.setImageTintList(collapseImage, ColorStateList.valueOf(ContextCompat.getColor(context, R.color.phyphox_black_100)));
             ImageViewCompat.setImageTintList(expandImage, ColorStateList.valueOf(ContextCompat.getColor(context, R.color.phyphox_black_100)));
-            toolbar.setBackgroundColor(getResources().getColor(R.color.phyphox_white_100));
         }
     }
 
@@ -284,8 +372,19 @@ public class InteractiveGraphView extends RelativeLayout implements GraphView.Po
     }
 
     @Override
-    protected void onLayout(boolean changed, int left, int top, int right, int bottom) {
-        super.onLayout(changed, left, top, right, bottom);
+    protected void onMeasure(int widthMeasureSpec, int heightMeasureSpec) {
+        int wSize = MeasureSpec.getSize(widthMeasureSpec);
+        int hSize = MeasureSpec.getSize(heightMeasureSpec);
+        int hMode = MeasureSpec.getMode(heightMeasureSpec);
+
+        if (wSize > 0 && hSize > 0) {
+            boolean isHorizontal = wSize > hSize;
+            if (isHorizontal != isHorizontalLayout) {
+                isHorizontalLayout = isHorizontal;
+                updateMenuLayout(isHorizontal);
+            }
+        }
+        super.onMeasure(widthMeasureSpec, heightMeasureSpec);
     }
 
     public void leaveDialog(final ExpViewFragment parent, final String bufferX, final String bufferY, final String unitX, final String unitY) {
@@ -462,16 +561,20 @@ public class InteractiveGraphView extends RelativeLayout implements GraphView.Po
         dialog.show();
     }
 
+    public void prepareExclusive(boolean willBeExclusive) {
+        graphView.overrideAspectRatio = willBeExclusive;
+        graphView.requestLayout();
+    }
+
     public void setInteractive(boolean interactive) {
 
         if (!interactive) {
             graphView.setTouchMode(GraphView.TouchMode.off);
             linearRegression = false;
             graphView.resetPicks();
-        }
-        else if (toolbar.getSelectedItemId() == R.id.graph_tools_pan)
+        } else if (selectedItem == R.id.graph_tools_pan)
             graphView.setTouchMode(GraphView.TouchMode.zoom);
-        else if (toolbar.getSelectedItemId() == R.id.graph_tools_pick)
+        else if (selectedItem == R.id.graph_tools_pick)
             graphView.setTouchMode(GraphView.TouchMode.pick);
 
         toolbar.setVisibility(interactive ? VISIBLE : GONE);
@@ -830,7 +933,7 @@ public class InteractiveGraphView extends RelativeLayout implements GraphView.Po
         this.observer = observer;
 
         if (pickLabel != null) {
-            toolbar.getMenu().findItem(R.id.graph_tools_pick).setTitle(pickLabel);
+            ((TextView)(toolbar.findViewById(R.id.graph_tools_pick).findViewById(R.id.item_title))).setText(pickLabel);
         }
 
     }

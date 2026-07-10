@@ -60,10 +60,6 @@
         <item name="backgroundColor">@color/phyphox_white_80</item>
     </style>
 
-    <style name="Widget.Phyphox.BottomNavigationView" parent="Widget.Phyphox.Light">
-        <item name="android:color">@color/phyphox_primary</item>
-    </style>
-
     <style name="SliderMaterialTheme" parent="Theme.MaterialComponents.Light.NoActionBar">
         <item name="colorPrimary">@color/phyphox_primary</item>
     </style>

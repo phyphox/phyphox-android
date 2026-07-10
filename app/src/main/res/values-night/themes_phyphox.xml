@@ -46,11 +46,6 @@
         <item name="backgroundColor">@color/phyphox_black_80</item>
     </style>
 
-    <style name="Widget.Phyphox.BottomNavigationView" parent="Widget.Phyphox.Dark">
-        <item name="tint">@null</item> <!-- The tint would override the dynamic highlight of the selected item -->
-        <item name="android:tint">@null</item>
-    </style>
-
     <style name="ThemeOverlay.App.BottomSheetDialog" parent="ThemeOverlay.Material3.BottomSheetDialog">
         <item name="bottomSheetStyle">@style/BottomSheetDialog.Dark</item>
     </style>

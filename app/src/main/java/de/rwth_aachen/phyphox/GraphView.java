@@ -82,6 +82,7 @@ public class GraphView extends View {
     private List<ExperimentTimeReferenceSet>[] timeReferencesY;
 
     private double aspectRatio = 3.;
+    public boolean overrideAspectRatio = false;
 
     private int historyLength; //If set to n > 1 the graph will also show the last n sets in a different color
     private int nCurves; //Tracks the number of entries in the history
@@ -648,10 +649,10 @@ public class GraphView extends View {
             height = (int)Math.round(600/aspectRatio);
         } else if (widthMode == MeasureSpec.UNSPECIFIED) {
             height = heightSize;
-            width = (int)Math.round(height * aspectRatio);
+            width = overrideAspectRatio ? 1 : (int)Math.round(height * aspectRatio);
         } else if (heightMode == MeasureSpec.UNSPECIFIED) {
             width = widthSize;
-            height = (int)Math.round(width / aspectRatio);
+            height = overrideAspectRatio ? 1 : (int)Math.round(width / aspectRatio);
         } else {
             width = widthSize;
             height = heightSize;

@@ -580,8 +580,8 @@ class CameraPreviewScreen(
     }
 
     /* Setup all the view state of the UI shown in the camera preview. */
-    fun updateCameraScreenViewState(newState: CameraScreenViewState) {
-        var forceAll = (currentState == null)
+    fun updateCameraScreenViewState(newState: CameraScreenViewState, force: Boolean = false) {
+        var forceAll = (currentState == null) || force
         if (forceAll) {
             currentState = CameraScreenViewState()
         }

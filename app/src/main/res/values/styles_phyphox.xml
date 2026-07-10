@@ -24,18 +24,6 @@
         <item name="colorAccent">@color/phyphox_rwth_primary</item>
     </style>
 
-    <style name="BottomNavigationView" parent="@style/TextAppearance.AppCompat.Caption">
-        <item name="android:textSize">@dimen/graph_tools_font</item>
-    </style>
-
-    <style name="BottomNavigationView.Active" parent="@style/TextAppearance.AppCompat.Caption">
-        <item name="android:textSize">@dimen/graph_tools_font</item>
-    </style>
-
-    <style name="BottomNavigationView.ActiveIndicator" parent="Widget.Material3.BottomNavigationView.ActiveIndicator">
-        <item name="android:color">@color/phyphox_primary</item>
-    </style>
-
     <style name="PreferenceThemeOverlay.v14.Phyphox.Dark" parent="PreferenceThemeOverlay.v14">
         <item name="android:tint">@color/phyphox_white_100</item>
     </style>

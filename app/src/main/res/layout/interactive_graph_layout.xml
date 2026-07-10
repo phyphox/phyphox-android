@@ -27,28 +27,25 @@
         android:layout_marginLeft="@dimen/graph_label_start_margin"
         android:layout_toRightOf="@id/graph_expand_image"
         android:layout_height="wrap_content"
-        android:layout_width="wrap_content"/>
+        android:layout_alignParentRight="true"
+        android:layout_width="match_parent"/>
 
     <FrameLayout
         android:id="@+id/graph_frame"
-        android:layout_height="wrap_content"
+        android:layout_height="match_parent"
         android:layout_width="match_parent"
         android:layout_marginTop="8dp"
-        android:layout_below="@id/graph_label"
-        android:layout_above="@id/graph_toolbar">
+    >
     </FrameLayout>
 
-    <com.google.android.material.bottomnavigation.BottomNavigationView
+    <androidx.appcompat.widget.LinearLayoutCompat
         android:visibility="gone"
         android:id="@+id/graph_toolbar"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_alignParentBottom="true"
-        android:theme="@style/Widget.Phyphox.BottomNavigationView"
-        app:labelVisibilityMode="labeled"
-        app:itemTextAppearanceActive="@style/BottomNavigationView.Active"
-        app:itemActiveIndicatorStyle="@style/BottomNavigationView.ActiveIndicator"
-        app:itemTextAppearanceInactive="@style/BottomNavigationView"
+        android:orientation="horizontal"
+        android:gravity="center"
+        android:layout_marginTop="8dp"
          />
 
 
