@@ -3061,7 +3061,7 @@ public class ExpView implements Serializable{
 
             return "<div style=\"font-size:"+this.labelSize/.4+"%;\" class=\"switchElement\" id=\"element"+htmlID+"\">" +
                     "<span class=\"label\">"+this.label+"</span>" +
-                    "</span><input type=\"checkbox\" class=\"value\" id=\"radio"+htmlID+"\" "+defaultValue+" ></input>" +
+                    "</span><input type=\"checkbox\" class=\"value\" id=\"radio"+htmlID+"\" ></input>" +
                     "</div>";
         }
 
@@ -3105,7 +3105,7 @@ public class ExpView implements Serializable{
 
         MaterialAutoCompleteTextView autoCompleteTextView;
 
-        private boolean triggered = false;
+        private boolean triggered = true;
         private int currentIndex = 0;
 
         protected class Mapping {
@@ -3205,6 +3205,8 @@ public class ExpView implements Serializable{
                 autoCompleteTextView.setText(options[0]);
             }
 
+            setFromValue(defaultValue);
+
             autoCompleteTextView.setOnItemClickListener((adapterView, view, position, id) -> {
                 triggered = true;
                 currentIndex = position;
@@ -3228,16 +3230,8 @@ public class ExpView implements Serializable{
             return  Double.parseDouble(mappings.get(currentIndex).value);
         }
 
-        @Override
-        protected void onMayReadFromBuffers(PhyphoxExperiment experiment) {
-            super.onMayReadFromBuffers(experiment);
-            if (!needsUpdate || triggered || autoCompleteTextView == null)
-                return;
-            needsUpdate = false;
-            double x = experiment.getBuffer(inputs.get(0)).value;
-
+        private void setFromValue(double x) {
             int index= -1;
-
             for(int i = 0; i < mappings.size(); i++){
                 if(Double.parseDouble(mappings.get(i).value) == x){
                     index = i;
@@ -3246,6 +3240,18 @@ public class ExpView implements Serializable{
             }
             currentIndex = (index == -1)? 0 : index;
             autoCompleteTextView.setText(mappings.get(currentIndex).str, false);
+        }
+
+        @Override
+        protected void onMayReadFromBuffers(PhyphoxExperiment experiment) {
+            super.onMayReadFromBuffers(experiment);
+            if (!needsUpdate || triggered || autoCompleteTextView == null)
+                return;
+            needsUpdate = false;
+            double x = experiment.getBuffer(inputs.get(0)).value;
+
+
+            setFromValue(x);
         }
 
         @Override
