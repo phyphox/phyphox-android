@@ -147,7 +147,7 @@ public class ExperimentItemAdapter extends BaseAdapter {
         TextView title; //The title text
         TextView info;  //The short description text
         ImageButton menuBtn; //A button for a context menu for local experiments (if they are not an asset)
-        android.widget.RadioButton selected;
+        android.widget.CheckBox selected;
     }
 
     //Construct the view for an element.
@@ -161,7 +161,7 @@ public class ExperimentItemAdapter extends BaseAdapter {
                 @Override
                 public void onClick(View v) {
                     if (isSelectionMode) {
-                        if (!experimentShortInfos.get(position).isAsset) {
+                        if (!experimentShortInfos.get(position).isAsset && experimentShortInfos.get(position).isTemp == null) {
                             experimentShortInfos.get(position).selected = !experimentShortInfos.get(position).selected;
                             notifyDataSetChanged();
                             if (parentActivity instanceof de.rwth_aachen.phyphox.ExperimentList.ExperimentListActivity) {
@@ -217,7 +217,7 @@ public class ExperimentItemAdapter extends BaseAdapter {
             convertView.setOnLongClickListener(new View.OnLongClickListener() {
                 @Override
                 public boolean onLongClick(View v) {
-                    if (experimentShortInfos.get(position).isAsset) return false;
+                    if (experimentShortInfos.get(position).isAsset || experimentShortInfos.get(position).isTemp != null) return false;
                     if (!isSelectionMode) {
                         experimentShortInfos.get(position).selected = true;
                         if (parentActivity instanceof de.rwth_aachen.phyphox.ExperimentList.ExperimentListActivity) {
@@ -249,7 +249,7 @@ public class ExperimentItemAdapter extends BaseAdapter {
         holder.title.setText(experimentShortInfos.get(position).title);
         holder.info.setText(experimentShortInfos.get(position).description);
 
-        if (isSelectionMode && !experimentShortInfos.get(position).isAsset) {
+        if (isSelectionMode && !experimentShortInfos.get(position).isAsset && experimentShortInfos.get(position).isTemp == null) {
             holder.selected.setVisibility(View.VISIBLE);
             holder.selected.setChecked(experimentShortInfos.get(position).selected);
         } else {
