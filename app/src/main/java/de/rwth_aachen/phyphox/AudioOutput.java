@@ -225,6 +225,8 @@ public class AudioOutput {
                 return;
 
             float p = (float)pan.getValue();
+            if (!Float.isFinite(p))
+                p = 0.0f;
             float pl = p > 0 ? (float)(1.0 - p) : 1.0f;
             float pr = p < 0 ? (float)(1.0 + p) : 1.0f;
 
@@ -280,11 +282,21 @@ public class AudioOutput {
 
         public void generate(float[] buffer, int samples, int rate, int index, boolean loop) {
             float p = (float)pan.getValue();
-            float pl = p > 0 ? (float)(1.0 - p) : 1.0f;
-            float pr = p < 0 ? (float)(1.0 + p) : 1.0f;
             float d = (float)duration.getValue();
             float a = (float)amplitude.getValue();
             float f = (float)frequency.getValue();
+
+            if (!Float.isFinite(p))
+                p = 0.0f;
+            if (!Float.isFinite(d))
+                d = 0.0f;
+            if (!Float.isFinite(a))
+                a = 0.0f;
+            if (!Float.isFinite(f))
+                f = 0.0f;
+
+            float pl = p > 0 ? (float)(1.0 - p) : 1.0f;
+            float pr = p < 0 ? (float)(1.0 + p) : 1.0f;
 
             int end = samples;
             if (!loop) {
@@ -340,10 +352,18 @@ public class AudioOutput {
 
         public void generate(float[] buffer, int samples, int rate, int index, boolean loop) {
             float p = (float)pan.getValue();
-            float pl = p > 0 ? (float)(1.0 - p) : 1.0f;
-            float pr = p < 0 ? (float)(1.0 + p) : 1.0f;
             float d = (float)duration.getValue();
             float a = (float)amplitude.getValue();
+
+            if (!Float.isFinite(p))
+                p = 0.0f;
+            if (!Float.isFinite(d))
+                d = 0.0f;
+            if (!Float.isFinite(a))
+                a = 0.0f;
+
+            float pl = p > 0 ? (float)(1.0 - p) : 1.0f;
+            float pr = p < 0 ? (float)(1.0 + p) : 1.0f;
 
             int end = samples;
             if (!loop) {
