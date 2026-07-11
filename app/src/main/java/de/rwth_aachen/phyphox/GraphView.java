@@ -364,40 +364,52 @@ public class GraphView extends View {
             if (cd.style == Style.mapZ || cd.fbX == null || cd.fbY == null)
                 continue;
             double vxi, vyi, dx, dy, d;
-            int n = cd.n;
-            int offX = cd.fbX.offset;
-            int offY = cd.fbY.offset;
-            int offZ = 0;
-            float[] xi = new float[cd.fbX.offset + n];
-            float[] yi = new float[cd.fbY.offset + n];
+            int n;
+            float[] xi = null;
+            float[] yi = null;
             float[] zi = null;
             if (i+1 < graphSetup.dataSets.size() && graphSetup.dataSets.get(i+1).style == Style.mapZ) {
-                offZ = graphSetup.dataSets.get(i + 1).fbY.offset;
-                zi = new float[offZ + n];
-            }
-            try {
-                cd.fbX.data.position(0);
-                cd.fbY.data.position(0);
-                cd.fbX.data.get(xi, 0, offX + n);
-                cd.fbY.data.get(yi, 0, offY + n);
-                if (i+1 < graphSetup.dataSets.size() && graphSetup.dataSets.get(i+1).style == Style.mapZ) {
-                    graphSetup.dataSets.get(i+1).fbY.data.position(0);
-                    graphSetup.dataSets.get(i+1).fbY.data.get(zi, 0, offZ + n);
+                synchronized (cd.fbX.lock) {
+                    synchronized (cd.fbY.lock) {
+                        synchronized (graphSetup.dataSets.get(i + 1).fbY.lock) {
+                            n = cd.n;
+                            xi = new float[n];
+                            yi = new float[n];
+                            zi = new float[n];
+                            cd.fbX.data.position(cd.fbX.offset);
+                            cd.fbY.data.position(cd.fbY.offset);
+                            graphSetup.dataSets.get(i + 1).fbY.data.position(graphSetup.dataSets.get(i + 1).fbY.offset);
+                            cd.fbX.data.get(xi, 0, n);
+                            cd.fbY.data.get(yi, 0,  n);
+                            graphSetup.dataSets.get(i + 1).fbY.data.get(zi, 0,  n);
+                        }
+                    }
                 }
-            } catch (Exception e) {
-                break;
+            } else {
+                synchronized (cd.fbX.lock) {
+                    synchronized (cd.fbY.lock) {
+                        n = cd.n;
+                        xi = new float[n];
+                        yi = new float[n];
+                        cd.fbX.data.position(cd.fbX.offset);
+                        cd.fbY.data.position(cd.fbY.offset);
+                        cd.fbX.data.get(xi, 0, n);
+                        cd.fbY.data.get(yi, 0, n);
+                    }
+                }
             }
-            for (int j = 0; j < cd.n; j++) {
+
+            for (int j = 0; j < n; j++) {
 
                 if (cd.style == Style.hbars || cd.style == Style.vbars) {
                     if (j % 6 != 2 && j % 6 != 3)
                         continue;
                 }
 
-                if (xi[offX + j] < searchRangeMinX || xi[offX + j] > searchRangeMaxX || yi[offY + j] < searchRangeMinY || yi[offY + j] > searchRangeMaxY)
+                if (xi[j] < searchRangeMinX || xi[j] > searchRangeMaxX || yi[j] < searchRangeMinY || yi[j] > searchRangeMaxY)
                     continue;
-                vxi = dataXToViewX(xi[offX + j] + (timeOnX ? offsetFromExperimentTime(xi[offX + j]) : 0.0));
-                vyi = dataYToViewY(yi[offY + j] + (timeOnY ? offsetFromExperimentTime(xi[offX + j]) : 0.0));
+                vxi = dataXToViewX(xi[j] + (timeOnX ? offsetFromExperimentTime(xi[j]) : 0.0));
+                vyi = dataYToViewY(yi[j] + (timeOnY ? offsetFromExperimentTime(xi[j]) : 0.0));
 
                 dx = vxi - x;
                 dy = vyi - y;
@@ -406,10 +418,10 @@ public class GraphView extends View {
                     minDist = d;
                     minIndex = j;
                     minGraphIndex = i;
-                    minX = xi[offX + j];
-                    minY = yi[offY + j];
+                    minX = xi[j];
+                    minY = yi[j];
                     if (zi != null)
-                        minZ = zi[offZ + j];
+                        minZ = zi[j];
                     else
                         minZ = Double.NaN;
                     minVX = vxi;
