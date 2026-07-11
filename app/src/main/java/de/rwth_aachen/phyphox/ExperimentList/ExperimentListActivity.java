@@ -7,6 +7,7 @@ import static de.rwth_aachen.phyphox.ExperimentList.model.Const.phyphoxCatHintRe
 
 import android.Manifest;
 import android.annotation.SuppressLint;
+import android.app.Activity;
 import android.app.ProgressDialog;
 import android.bluetooth.BluetoothDevice;
 import android.content.ClipData;
@@ -29,6 +30,7 @@ import android.hardware.camera2.CameraCharacteristics;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
+import android.provider.Settings;
 import android.text.Html;
 import android.text.SpannableStringBuilder;
 import android.text.Spanned;
@@ -224,9 +226,32 @@ public class ExperimentListActivity extends AppCompatActivity {
     //   with the formerly missing permission
     public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults);
+        if(requestCode == BluetoothScanDialog.BLUETOOTH_SCAN_REQUEST_CODE){
+            if(grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                Toast.makeText(this,getString(R.string.bt_permission_granted), Toast.LENGTH_SHORT).show();
+            } else {
+                showSettingsRedirectDialog(this);
+            }
+            return;
+        }
         if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
             this.recreate();
         }
+    }
+
+    private void  showSettingsRedirectDialog(Activity activity){
+        AlertDialog.Builder builder = new AlertDialog.Builder(activity);
+        builder.setTitle(getString(R.string.bl_scan_permission_required_title));
+        builder.setMessage(getString(R.string.bt_scan_permission_needed));
+        builder.setPositiveButton(getString(R.string.gotoSetting), (dialog, which) -> {
+            Intent intent = new Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS);
+            Uri uri = Uri.fromParts("package", activity.getPackageName(), null);
+            intent.setData(uri);
+            activity.startActivityForResult(intent, 1);
+        });
+        builder.setNegativeButton(getString(R.string.cancel), null);
+        AlertDialog dialog = builder.create();
+        dialog.show();
     }
 
     private void setUpOnClickListener(){
