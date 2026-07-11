@@ -33,7 +33,7 @@ public class ExperimentsInCategory {
     final private LinearLayout catLayout; //This is the base layout of the category, which will contain the headline and the gridView showing all the experiments
     final private TextView categoryHeadline; //The TextView to display the headline
     final private ExperimentsInCategory.ExpandableHeightGridView experimentSubList; //The gridView holding experiment items. (See implementation below for the custom flavor "ExpandableHeightGridView")
-    final ExperimentItemAdapter experimentItemAdapter; //Instance of the adapter to fill the gridView (implementation above)
+    public final ExperimentItemAdapter experimentItemAdapter; //Instance of the adapter to fill the gridView (implementation above)
     private final Resources res;
 
     final public String name; //Category name (headline)

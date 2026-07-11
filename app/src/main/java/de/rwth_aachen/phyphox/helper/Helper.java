@@ -611,6 +611,18 @@ public abstract class Helper {
         return (volumeLevel / (double)maxVolumeLevel) * 100.0;
     }
 
+    public static void deleteRecursive(File fileOrDirectory) {
+        if (fileOrDirectory.isDirectory()) {
+            File[] files = fileOrDirectory.listFiles();
+            if (files != null) {
+                for (File child : files) {
+                    deleteRecursive(child);
+                }
+            }
+        }
+        fileOrDirectory.delete();
+    }
+
     //Converts Context to Activity by unpacking ContextWrapper recursively
     public static Activity getActivity(Context context)
     {

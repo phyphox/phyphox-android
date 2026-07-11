@@ -59,6 +59,8 @@ public class ExperimentItemAdapter extends BaseAdapter {
 
     private final ExperimentRepository experimentRepository;
 
+    private boolean isSelectionMode = false;
+
     Resources res;
 
     //Experiment data
@@ -76,6 +78,11 @@ public class ExperimentItemAdapter extends BaseAdapter {
 
     public void setPreselectedBluetoothAddress(String preselectedBluetoothAddress) {
         this.preselectedBluetoothAddress = preselectedBluetoothAddress;
+    }
+
+    public void setSelectionMode(boolean selectionMode) {
+        this.isSelectionMode = selectionMode;
+        notifyDataSetChanged();
     }
 
     //The number of elements is just the number of icons. (Any of the lists should do)
@@ -140,6 +147,7 @@ public class ExperimentItemAdapter extends BaseAdapter {
         TextView title; //The title text
         TextView info;  //The short description text
         ImageButton menuBtn; //A button for a context menu for local experiments (if they are not an asset)
+        android.widget.RadioButton selected;
     }
 
     //Construct the view for an element.
@@ -152,6 +160,17 @@ public class ExperimentItemAdapter extends BaseAdapter {
             convertView.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View v) {
+                    if (isSelectionMode) {
+                        if (!experimentShortInfos.get(position).isAsset) {
+                            experimentShortInfos.get(position).selected = !experimentShortInfos.get(position).selected;
+                            notifyDataSetChanged();
+                            if (parentActivity instanceof de.rwth_aachen.phyphox.ExperimentList.ExperimentListActivity) {
+                                Log.d("ExperimentList", "Selection changed");
+                                ((de.rwth_aachen.phyphox.ExperimentList.ExperimentListActivity) parentActivity).onSelectionChanged();
+                            }
+                        }
+                        return;
+                    }
                     if (experimentShortInfos.get(position).isLink != null) {
                         try {
                             Uri uri = Uri.parse(experimentShortInfos.get(position).isLink);
@@ -195,12 +214,28 @@ public class ExperimentItemAdapter extends BaseAdapter {
                 }
             });
 
+            convertView.setOnLongClickListener(new View.OnLongClickListener() {
+                @Override
+                public boolean onLongClick(View v) {
+                    if (experimentShortInfos.get(position).isAsset) return false;
+                    if (!isSelectionMode) {
+                        experimentShortInfos.get(position).selected = true;
+                        if (parentActivity instanceof de.rwth_aachen.phyphox.ExperimentList.ExperimentListActivity) {
+                            ((de.rwth_aachen.phyphox.ExperimentList.ExperimentListActivity) parentActivity).startSelectionMode();
+                        }
+                        return true;
+                    }
+                    return false;
+                }
+            });
+
             //Create our holder and set its refernces to the views
             holder = new Holder();
             holder.icon = convertView.findViewById(R.id.expIcon);
             holder.title = convertView.findViewById(R.id.expTitle);
             holder.info = convertView.findViewById(R.id.expInfo);
             holder.menuBtn = convertView.findViewById(R.id.menuButton);
+            holder.selected = convertView.findViewById(R.id.expSelected);
 
             //Connect the convertView and the holder to retrieve it later
             convertView.setTag(holder);
@@ -214,13 +249,20 @@ public class ExperimentItemAdapter extends BaseAdapter {
         holder.title.setText(experimentShortInfos.get(position).title);
         holder.info.setText(experimentShortInfos.get(position).description);
 
+        if (isSelectionMode && !experimentShortInfos.get(position).isAsset) {
+            holder.selected.setVisibility(View.VISIBLE);
+            holder.selected.setChecked(experimentShortInfos.get(position).selected);
+        } else {
+            holder.selected.setVisibility(View.GONE);
+        }
+
         if (experimentShortInfos.get(position).unavailableSensor >= 0) {
             holder.title.setTextColor(res.getColor(R.color.phyphox_white_50_black_50));
             holder.info.setTextColor(res.getColor(R.color.phyphox_white_50_black_50));
         }
 
         //Handle the menubutton. Set it visible only for non-assets
-        if (experimentShortInfos.get(position).isTemp != null || experimentShortInfos.get(position).isAsset)
+        if (experimentShortInfos.get(position).isTemp != null || experimentShortInfos.get(position).isAsset || isSelectionMode)
             holder.menuBtn.setVisibility(ImageView.GONE); //Asset - no menu button
         else {
             //No asset. Menu button visible and it needs an onClickListener

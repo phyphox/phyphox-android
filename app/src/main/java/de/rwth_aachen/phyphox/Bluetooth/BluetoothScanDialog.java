@@ -57,6 +57,8 @@ public class BluetoothScanDialog {
 
     private final Boolean autoConnect;
 
+    public static final int BLUETOOTH_SCAN_REQUEST_CODE = 3;
+
     ArrayList<String> macAddresses = new ArrayList<>();
 
     public BluetoothScanDialog(Boolean autoConnect, final Activity activity, final Context context, BluetoothAdapter bta) {
@@ -242,7 +244,7 @@ public class BluetoothScanDialog {
 
             parent.runOnUiThread(() -> {
                 dialog.cancel();
-                ActivityCompat.requestPermissions(parent, new String[]{Manifest.permission.BLUETOOTH_SCAN, Manifest.permission.BLUETOOTH_CONNECT}, 0);
+                ActivityCompat.requestPermissions(parent, new String[]{Manifest.permission.BLUETOOTH_SCAN, Manifest.permission.BLUETOOTH_CONNECT}, BLUETOOTH_SCAN_REQUEST_CODE);
             });
             return false;
         }

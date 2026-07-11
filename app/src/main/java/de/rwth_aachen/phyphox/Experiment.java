@@ -32,6 +32,7 @@ import android.os.CountDownTimer;
 import android.os.Handler;
 import android.os.PowerManager;
 import android.provider.ContactsContract;
+import android.provider.Settings;
 import android.util.Log;
 import android.util.TypedValue;
 import android.view.Gravity;
@@ -95,6 +96,7 @@ import java.io.FileOutputStream;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.HashSet;
@@ -213,6 +215,8 @@ public class Experiment extends AppCompatActivity implements View.OnClickListene
 
     public static UpdateConnectedDeviceDelegate updateConnectedDeviceDelegate;
     private  RecyclerView recyclerView;
+
+    static final int REQUEST_LOCAL_NETWORK_SCAN  = 2;
 
 
     private void doLeaveExperiment() {
@@ -392,11 +396,21 @@ public class Experiment extends AppCompatActivity implements View.OnClickListene
     //   with the formerly missing permission
     public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults);
+        Log.d("Experiment", "requestCode: " + requestCode + " permissions: " + Arrays.toString(permissions) + " grantResults: " + Arrays.toString(grantResults));
         if (requestCode == REQUEST_WRITE_EXTERNAL_STORAGE){
             if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
                 Toast.makeText(this, "Permission granted. You can now save the file.", Toast.LENGTH_SHORT).show();
             } else {
                 Toast.makeText(this, "Permission denied. Cannot save file.", Toast.LENGTH_SHORT).show();
+            }
+            return;
+        }
+
+        if(requestCode == REQUEST_LOCAL_NETWORK_SCAN){
+            if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                startRemoteServer();
+            } else {
+                showSettingsRedirectDialog(this);
             }
             return;
         }
@@ -1303,14 +1317,18 @@ public class Experiment extends AppCompatActivity implements View.OnClickListene
                         .setTitle(R.string.remoteServerWarningTitle)
                         .setPositiveButton(R.string.ok, new DialogInterface.OnClickListener() {
                             public void onClick(DialogInterface dialog, int id) {
-                                if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.CINNAMON_BUN){
+                                if(Build.VERSION.SDK_INT >= 37){
                                     boolean hasPermission =  ContextCompat.checkSelfPermission(Experiment.this, Manifest.permission.ACCESS_LOCAL_NETWORK) == PackageManager.PERMISSION_GRANTED;
-                                    if(!hasPermission){
-                                        ActivityCompat.requestPermissions(Experiment.this, new String[]{Manifest.permission.ACCESS_LOCAL_NETWORK}, 1);
-                                    } else {
+                                    boolean shouldShowRationale = ActivityCompat.shouldShowRequestPermissionRationale(Experiment.this, Manifest.permission.ACCESS_LOCAL_NETWORK);
+
+                                    if(hasPermission){
                                         itemRef.setChecked(true);
                                         serverEnabled = true;
                                         startRemoteServer();
+                                    } else if(shouldShowRationale){
+                                        showRationaleAndRequest();
+                                    } else {
+                                        ActivityCompat.requestPermissions(Experiment.this, new String[]{Manifest.permission.ACCESS_LOCAL_NETWORK}, REQUEST_LOCAL_NETWORK_SCAN);
                                     }
 
                                 } else {
@@ -1377,6 +1395,30 @@ public class Experiment extends AppCompatActivity implements View.OnClickListene
         }
 
         return super.onOptionsItemSelected(item);
+    }
+
+    private void  showSettingsRedirectDialog(Activity activity){
+        AlertDialog.Builder builder = new AlertDialog.Builder(activity);
+        builder.setTitle(getString(R.string.localNetworkPermission));
+        builder.setMessage(getString(R.string.localNetworkPermissionMessage));
+        builder.setPositiveButton(getString(R.string.gotoSetting), (dialog, which) -> {
+            Intent intent = new Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS);
+            Uri uri = Uri.fromParts("package", activity.getPackageName(), null);
+            intent.setData(uri);
+            activity.startActivityForResult(intent, 1);
+        });
+        builder.setNegativeButton(getString(R.string.cancel), null);
+        AlertDialog dialog = builder.create();
+        dialog.show();
+    }
+
+    private void showRationaleAndRequest() {
+        new AlertDialog.Builder(this)
+                .setTitle(getString(R.string.permissionRequired))
+                .setMessage(getString(R.string.localNetworkRationaleMessage))
+                .setPositiveButton(getString(R.string.ok), (d, w) -> ActivityCompat.requestPermissions(Experiment.this, new String[]{Manifest.permission.ACCESS_LOCAL_NETWORK}, REQUEST_LOCAL_NETWORK_SCAN))
+                .setNegativeButton(getString(R.string.cancel), null)
+                .show();
     }
 
     //Below follow two runnable, which act as our "main loop" (although this feels like a function,

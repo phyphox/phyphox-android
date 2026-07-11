@@ -7,6 +7,7 @@ import static de.rwth_aachen.phyphox.ExperimentList.model.Const.phyphoxCatHintRe
 
 import android.Manifest;
 import android.annotation.SuppressLint;
+import android.app.Activity;
 import android.app.ProgressDialog;
 import android.bluetooth.BluetoothDevice;
 import android.content.ClipData;
@@ -21,6 +22,7 @@ import android.content.pm.PackageManager;
 import android.content.res.AssetManager;
 import android.content.res.Configuration;
 import android.content.res.Resources;
+import android.content.res.ColorStateList;
 import android.graphics.Typeface;
 import android.hardware.Sensor;
 import android.hardware.SensorManager;
@@ -28,6 +30,7 @@ import android.hardware.camera2.CameraCharacteristics;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
+import android.provider.Settings;
 import android.text.Html;
 import android.text.SpannableStringBuilder;
 import android.text.Spanned;
@@ -49,6 +52,7 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.activity.EdgeToEdge;
+import androidx.activity.OnBackPressedCallback;
 import androidx.annotation.NonNull;
 import androidx.annotation.RequiresApi;
 import androidx.appcompat.app.AlertDialog;
@@ -132,6 +136,9 @@ public class ExperimentListActivity extends AppCompatActivity {
     ReportingScrollView sv;
     View backgroundDimmer;
 
+    private boolean isSelectionMode = false;
+    private View.OnClickListener originalFABListener;
+
     @Override
     //The onCreate block will setup some onClickListeners and display a do-not-damage-your-phone
     //  warning message.
@@ -178,6 +185,19 @@ public class ExperimentListActivity extends AppCompatActivity {
 
         setUpOnClickListener();
 
+        getOnBackPressedDispatcher().addCallback(this, new OnBackPressedCallback(true) {
+            @Override
+            public void handleOnBackPressed() {
+                if (isSelectionMode) {
+                    exitSelectionMode();
+                } else {
+                    this.setEnabled(false);
+                    getOnBackPressedDispatcher().onBackPressed();
+                    this.setEnabled(true);
+                }
+            }
+        });
+
         experimentRepository = new ExperimentRepository();
 
         handleIntent(getIntent());
@@ -206,9 +226,32 @@ public class ExperimentListActivity extends AppCompatActivity {
     //   with the formerly missing permission
     public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults);
+        if(requestCode == BluetoothScanDialog.BLUETOOTH_SCAN_REQUEST_CODE){
+            if(grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                Toast.makeText(this,getString(R.string.bt_permission_granted), Toast.LENGTH_SHORT).show();
+            } else {
+                showSettingsRedirectDialog(this);
+            }
+            return;
+        }
         if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
             this.recreate();
         }
+    }
+
+    private void  showSettingsRedirectDialog(Activity activity){
+        AlertDialog.Builder builder = new AlertDialog.Builder(activity);
+        builder.setTitle(getString(R.string.bl_scan_permission_required_title));
+        builder.setMessage(getString(R.string.bt_scan_permission_needed));
+        builder.setPositiveButton(getString(R.string.gotoSetting), (dialog, which) -> {
+            Intent intent = new Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS);
+            Uri uri = Uri.fromParts("package", activity.getPackageName(), null);
+            intent.setData(uri);
+            activity.startActivityForResult(intent, 1);
+        });
+        builder.setNegativeButton(getString(R.string.cancel), null);
+        AlertDialog dialog = builder.create();
+        dialog.show();
     }
 
     private void setUpOnClickListener(){
@@ -227,6 +270,7 @@ public class ExperimentListActivity extends AppCompatActivity {
 
         View experimentListDimmer = findViewById(R.id.experimentListDimmer);
         newExperimentButton.setOnClickListener(neocl);
+        originalFABListener = neocl;
         experimentListDimmer.setOnClickListener(neocl);
 
         Button.OnClickListener neoclSimple = v -> {
@@ -1274,6 +1318,55 @@ public class ExperimentListActivity extends AppCompatActivity {
         });
 
         neDialog.show();
+    }
+
+    public void startSelectionMode() {
+        if (newExperimentDialogOpen)
+            hideNewExperimentDialog();
+        isSelectionMode = true;
+        experimentRepository.setSelectionMode(true);
+        newExperimentButton.setImageResource(R.drawable.delete);
+        newExperimentButton.setBackgroundTintList(ColorStateList.valueOf(res.getColor(R.color.phyphox_red)));
+        newExperimentButton.setOnClickListener(v -> deleteSelectedExperiments());
+    }
+
+    public void onSelectionChanged() {
+        int count = experimentRepository.getSelectedCount();
+        if (count == 0) {
+            exitSelectionMode();
+        }
+    }
+
+    private void exitSelectionMode() {
+        isSelectionMode = false;
+        experimentRepository.clearSelection();
+        experimentRepository.setSelectionMode(false);
+        newExperimentButton.setImageResource(R.drawable.new_experiment);
+        newExperimentButton.setBackgroundTintList(ColorStateList.valueOf(res.getColor(R.color.phyphox_primary)));
+        newExperimentButton.setOnClickListener(originalFABListener);
+    }
+
+    private void deleteSelectedExperiments() {
+        Vector<ExperimentShortInfo> selected = experimentRepository.getSelectedExperiments();
+        if (selected.isEmpty()) return;
+
+        AlertDialog.Builder builder = new AlertDialog.Builder(this);
+        builder.setMessage(res.getString(R.string.confirmDelete))
+                .setTitle(R.string.confirmDeleteTitle)
+                .setPositiveButton(R.string.delete, (dialog, id) -> {
+                    for (ExperimentShortInfo info : selected) {
+                        long crc32 = Helper.getCRC32(new File(getFilesDir(), info.xmlFile));
+                        File resFolder = new File(getFilesDir(), Long.toHexString(crc32).toLowerCase());
+                        deleteFile(info.xmlFile);
+                        if (resFolder.isDirectory()) {
+                            Helper.deleteRecursive(resFolder);
+                        }
+                    }
+                    exitSelectionMode();
+                    experimentRepository.loadAndShowMainExperimentList(this);
+                })
+                .setNegativeButton(R.string.cancel, null)
+                .show();
     }
 
 }
