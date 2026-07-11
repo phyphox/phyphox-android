@@ -23,6 +23,11 @@ import android.text.SpannableString;
 import android.text.TextPaint;
 import android.text.method.DigitsKeyListener;
 import android.text.style.MetricAffectingSpan;
+import android.animation.ValueAnimator;
+import android.graphics.Color;
+import android.graphics.drawable.LayerDrawable;
+import android.text.Editable;
+import android.text.TextWatcher;
 import android.util.Log;
 import android.util.TypedValue;
 import android.view.ContextThemeWrapper;
@@ -31,6 +36,8 @@ import android.view.KeyEvent;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.inputmethod.EditorInfo;
+import android.view.inputmethod.InputMethodManager;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import com.google.android.material.button.MaterialButton;
@@ -911,6 +918,7 @@ public class ExpView implements Serializable{
     //editElement implements a simple edit box which takes a single value from the user
     public class editElement extends expViewElement implements Serializable {
         transient EditText et = null;
+        transient private ValueAnimator commitAnimator = null;
         private double factor; //factor used for conversion. Mostly for prefixes like m, k, M, G...
         private String unit; //A string to display as unit
         private double defaultValue; //This value is filled into the dataBuffer before the user enters a custom value
@@ -1053,6 +1061,7 @@ public class ExpView implements Serializable{
                 allowedDigits.append("-.,Ee"); //Note: This is not perfect, but we get into trouble if numbers are so small that they need to be represented in scientific notation (1e-6). But then again, this is not really about securing anything...
             }
             et.setInputType(inputType);
+            et.setImeOptions(EditorInfo.IME_ACTION_DONE);
             if (decimal) {
                 et.setKeyListener(DigitsKeyListener.getInstance(allowedDigits.toString()));
                 et.addTextChangedListener(new DecimalTextWatcher());
@@ -1092,18 +1101,60 @@ public class ExpView implements Serializable{
             //Add the row to the main linear layout passed to this function
             root_ll.addView(rootView);
 
-            //Add a listener to the edit box to keep track of the focus
+            //Handle text changes and focus changes and indicate the status to the user through chaning background colors
+            final Drawable originalBackground = et.getBackground();
+            final ColorDrawable overlay = new ColorDrawable(Color.TRANSPARENT);
+            final LayerDrawable combinedBackground = new LayerDrawable(new Drawable[]{originalBackground, overlay});
+            et.setBackground(combinedBackground);
+
+            final int colorYellow = ContextCompat.getColor(c, R.color.phyphox_yellow);
+            final int colorGreen = ContextCompat.getColor(c, R.color.phyphox_green);
+
+            et.addTextChangedListener(new TextWatcher() {
+                @Override
+                public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
+
+                @Override
+                public void onTextChanged(CharSequence s, int start, int before, int count) {
+                    if (et.hasFocus()) {
+                        overlay.setColor(colorYellow);
+                        overlay.setAlpha(100);
+                    }
+                }
+
+                @Override
+                public void afterTextChanged(Editable s) {}
+            });
+
             et.setOnFocusChangeListener((v, hasFocus) -> {
                 focused = hasFocus;
+                if (commitAnimator != null) {
+                    commitAnimator.cancel();
+                }
                 if (!hasFocus) {
                     setValue(getValue()); //Write back the value actually used...
                     triggered = true;
+
+                    overlay.setColor(colorGreen);
+                    commitAnimator = ValueAnimator.ofInt(255, 0);
+                    commitAnimator.setDuration(500);
+                    commitAnimator.addUpdateListener(animator -> overlay.setAlpha((int) animator.getAnimatedValue()));
+                    commitAnimator.start();
+                } else {
+                    overlay.setAlpha(0);
                 }
             });
 
-            et.setOnEditorActionListener((textView, i, keyEvent) -> {
-                et.clearFocus();
-                return true;
+            et.setOnEditorActionListener((textView, actionId, keyEvent) -> {
+                if (actionId == EditorInfo.IME_ACTION_DONE || actionId == EditorInfo.IME_ACTION_NEXT || actionId == EditorInfo.IME_ACTION_UNSPECIFIED) {
+                    InputMethodManager imm = (InputMethodManager) c.getSystemService(Context.INPUT_METHOD_SERVICE);
+                    if (imm != null) {
+                        imm.hideSoftInputFromWindow(et.getWindowToken(), 0);
+                    }
+                    et.clearFocus();
+                    return true;
+                }
+                return false;
             });
 
         }
