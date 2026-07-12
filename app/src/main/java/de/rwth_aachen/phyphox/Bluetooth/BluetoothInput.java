@@ -29,7 +29,6 @@ import de.rwth_aachen.phyphox.PhyphoxFile;
 /**
  * The BluetoothInput class encapsulates an input to Bluetooth devices.
  */
-@RequiresApi(api = Build.VERSION_CODES.JELLY_BEAN_MR2)
 public class BluetoothInput extends Bluetooth {
 
     /**

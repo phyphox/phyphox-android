@@ -57,7 +57,6 @@ import de.rwth_aachen.phyphox.PhyphoxFile;
  * <li>closing the connection.</li>
  * </ul>
  */
-@RequiresApi(api = Build.VERSION_CODES.JELLY_BEAN_MR2)
 public class Bluetooth implements Serializable {
 
     public final static UUID baseUUID = UUID.fromString("00000000-0000-1000-8000-00805f9b34fb");
@@ -797,6 +796,7 @@ public class Bluetooth implements Serializable {
          * Index of the buffer the characteristic value should be saved in.
          */
         public int index;
+        String triggerId = null;
         /**
          * Method that will be called to convert the value of the characteristic.
          */
@@ -821,8 +821,9 @@ public class Bluetooth implements Serializable {
             this.inputConversionFunction = conversionFunction;
         }
 
-        public Characteristic(int index, ConversionsOutput.OutputConversion conversionFunction, short outputOffset) {
+        public Characteristic(int index, ConversionsOutput.OutputConversion conversionFunction, short outputOffset, String triggerId) {
             this.index = index;
+            this.triggerId = triggerId;
             this.outputConversionFunction = conversionFunction;
             this.outputOffset = outputOffset;
         }
@@ -1194,6 +1195,7 @@ public class Bluetooth implements Serializable {
          * Method that will be called to convert the value of the characteristic.
          */
         public ConversionsOutput.OutputConversion conversionFunction;
+        public String triggerId;
         public short offset;
         /**
          * Create a new OutputData.
@@ -1202,10 +1204,11 @@ public class Bluetooth implements Serializable {
          * @param index              index of the buffer
          * @param conversionFunction OutputConversion instance that will be used to convert the value of the characteristic
          */
-        public OutputData(UUID uuid, int index, ConversionsOutput.OutputConversion conversionFunction, short offset) {
+        public OutputData(UUID uuid, int index, ConversionsOutput.OutputConversion conversionFunction, short offset, String triggerId) {
             this.uuid = uuid;
             this.index = index;
             this.conversionFunction = conversionFunction;
+            this.triggerId = triggerId;
             this.offset = offset;
         }
 
@@ -1222,7 +1225,7 @@ public class Bluetooth implements Serializable {
                 // add Characteristic to the list for its BluetoothGattCharacteristic
                 b.mapping.put(c, new ArrayList<Characteristic>());
             }
-            Characteristic toAdd = new Characteristic(this.index, this.conversionFunction, this.offset);
+            Characteristic toAdd = new Characteristic(this.index, this.conversionFunction, this.offset, this.triggerId);
             b.valuesSize++;
             b.mapping.get(c).add(toAdd);
         }

@@ -74,6 +74,7 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Vector;
 
+import de.rwth_aachen.phyphox.Bluetooth.BluetoothOutput;
 import de.rwth_aachen.phyphox.helper.Helper;
 import de.rwth_aachen.phyphox.camera.CameraPreviewFragment;
 import de.rwth_aachen.phyphox.camera.Scrollable;
@@ -1271,6 +1272,7 @@ public class ExpView implements Serializable{
         private Vector<DataOutput> outputs = null;
         private Vector<String> triggers = null;
         private List<NetworkConnection> networkConnections = null;
+        private Vector<BluetoothOutput> bluetoothOutputs = null;
         private boolean triggered = false;
         private DataBuffer dynamicBuffer;
         MaterialButton b;
@@ -1324,6 +1326,7 @@ public class ExpView implements Serializable{
             super.createView(ll, c, res, parent, experiment);
 
             networkConnections = experiment.networkConnections;
+            bluetoothOutputs = experiment.bluetoothOutputs;
 
             b = new MaterialButton(c);
 
@@ -1367,6 +1370,9 @@ public class ExpView implements Serializable{
                         ((MaterialButton)rootView).setEnabled(false);
                         ((MaterialButton)rootView).setAlpha(0.5f);
                     }
+                }
+                for (BluetoothOutput btOut : bluetoothOutputs) {
+                    btOut.requestSend(t);
                 }
             }
         }

@@ -4,9 +4,12 @@ import android.app.Activity;
 import android.bluetooth.BluetoothGattCharacteristic;
 import android.content.Context;
 import android.os.Build;
+import android.util.Log;
 
 import androidx.annotation.RequiresApi;
 
+import java.util.HashSet;
+import java.util.Set;
 import java.util.UUID;
 import java.util.Vector;
 
@@ -17,13 +20,14 @@ import de.rwth_aachen.phyphox.DataInput;
 /**
  * The BluetoothOutput class encapsulates an output to Bluetooth devices.
  */
-@RequiresApi(api = Build.VERSION_CODES.JELLY_BEAN_MR2)
 public class BluetoothOutput extends Bluetooth {
 
     /**
      * Data-buffers
      */
     public Vector<DataInput> data;
+
+    Set<String> requestedTriggers = new HashSet<>();
 
     /**
      * Create a new BluetoothOutput.
@@ -45,6 +49,9 @@ public class BluetoothOutput extends Bluetooth {
     }
 
 
+    public void requestSend(String triggerId) {
+        requestedTriggers.add(triggerId);
+    }
     /**
      * Write data to the Characteristics.
      */
@@ -54,6 +61,9 @@ public class BluetoothOutput extends Bluetooth {
                 int n = 0;
                 byte[] out = null;
                 for (Characteristic c : mapping.get(characteristic)) {
+                    if (c.triggerId != null && !c.triggerId.isEmpty() && !requestedTriggers.contains(c.triggerId))
+                        continue;
+
                     if (data.get(c.index).getFilledSize() != 0) {
                         byte[] value = convertData(data.get(c.index).buffer, c.outputConversionFunction);
                         if (value.length + c.outputOffset > n) {
@@ -73,6 +83,7 @@ public class BluetoothOutput extends Bluetooth {
                     add(new WriteCommand(btGatt, characteristic));
                 }
             }
+            requestedTriggers.clear();
         }
     }
 

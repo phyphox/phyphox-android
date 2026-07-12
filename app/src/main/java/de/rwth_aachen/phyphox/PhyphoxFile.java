@@ -22,7 +22,6 @@ import android.util.Log;
 import android.util.Xml;
 import android.view.Gravity;
 
-import androidx.annotation.RequiresApi;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
 
@@ -548,7 +547,7 @@ public abstract class PhyphoxFile {
     }
 
     // Blockparser for input or output assignments inside a bluetooth-block
-    private static class bluetoothIoBlockParser extends xmlBlockParser {
+    private static class BluetoothIoBlockParser extends xmlBlockParser {
         protected static Class conversionsInput = (new ConversionsInput()).getClass();
         protected static Class conversionsOutput = (new ConversionsOutput()).getClass();
         protected static Class conversionsConfig = (new ConversionsConfig()).getClass();
@@ -557,7 +556,7 @@ public abstract class PhyphoxFile {
         Vector<Bluetooth.CharacteristicData> characteristics; // characteristics of the bluetooth input / output
         HashSet<UUID> characteristicsWithExtraTime; // uuids of all characteristics that have extra=time to make sure they can't have it twice
 
-        bluetoothIoBlockParser (XmlPullParser xpp, PhyphoxExperiment experiment, Experiment parent, Vector<DataOutput> outputList, Vector<DataInput> inputList, Vector<Bluetooth.CharacteristicData> characteristics) {
+        BluetoothIoBlockParser(XmlPullParser xpp, PhyphoxExperiment experiment, Experiment parent, Vector<DataOutput> outputList, Vector<DataInput> inputList, Vector<Bluetooth.CharacteristicData> characteristics) {
             super(xpp, experiment, parent);
             this.outputList = outputList;
             this.inputList = inputList;
@@ -591,6 +590,8 @@ public abstract class PhyphoxFile {
                     if (inputList == null) {
                         throw new phyphoxFileException("No output expected.", xpp.getLineNumber());
                     }
+
+                    String triggerId = getStringAttribute("triggerId");
 
                     // check conversion attribute
                     if (conversionFunctionName == null) {
@@ -629,7 +630,7 @@ public abstract class PhyphoxFile {
                     inputList.add(new DataInput(buffer, keep));
 
                     // add data to characteristics
-                    characteristics.add(new Bluetooth.OutputData(uuid, inputList.size()-1, outputConversionFunction, offset));
+                    characteristics.add(new Bluetooth.OutputData(uuid, inputList.size()-1, outputConversionFunction, offset, triggerId));
 
                     break;
                 }
@@ -2322,7 +2323,7 @@ public abstract class PhyphoxFile {
 
                             Vector<DataOutput> outputs = new Vector<>();
                             Vector<Bluetooth.CharacteristicData> characteristics = new Vector<>();
-                            (new bluetoothIoBlockParser(xpp, experiment, parent, outputs, null, characteristics)).process();
+                            (new BluetoothIoBlockParser(xpp, experiment, parent, outputs, null, characteristics)).process();
                             try {
                                 BluetoothInput b = new BluetoothInput(idString, nameFilter, addressFilter, modeFilter, uuidFilter, autoConnect, rate, subscribeOnStart, outputs, experiment.dataLock, parent, parent, characteristics, experiment.experimentTimeReference);
                                 if (mtu > 0)
@@ -3453,7 +3454,7 @@ public abstract class PhyphoxFile {
 
                         Vector<DataInput> inputs = new Vector<>();
                         Vector<Bluetooth.CharacteristicData> characteristics = new Vector<>();
-                        (new bluetoothIoBlockParser(xpp, experiment, parent, null, inputs, characteristics)).process();
+                        (new BluetoothIoBlockParser(xpp, experiment, parent, null, inputs, characteristics)).process();
                         BluetoothOutput b = new BluetoothOutput(idString, nameFilter, addressFilter, uuidFilter, autoConnect, parent, parent, inputs, characteristics);
                         if (mtu > 0)
                             b.requestMTU = mtu;
