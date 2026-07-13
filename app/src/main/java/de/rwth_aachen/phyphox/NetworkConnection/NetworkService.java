@@ -3,7 +3,7 @@ package de.rwth_aachen.phyphox.NetworkConnection;
 import android.net.Uri;
 import android.os.AsyncTask;
 
-import org.apache.poi.util.IOUtils;
+import org.apache.commons.io.IOUtils;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;

@@ -2,7 +2,7 @@ package de.rwth_aachen.phyphox;
 
 import static de.rwth_aachen.phyphox.helper.DataExportUtility.MIME_TYPE_CSV_MINI;
 import static de.rwth_aachen.phyphox.helper.DataExportUtility.MIME_TYPE_CSV_ZIP;
-import static de.rwth_aachen.phyphox.helper.DataExportUtility.MIME_TYPE_XLS;
+import static de.rwth_aachen.phyphox.helper.DataExportUtility.MIME_TYPE_XLSX;
 
 import android.app.Activity;
 import android.app.AlertDialog;
@@ -17,14 +17,6 @@ import android.widget.Button;
 import android.widget.RadioButton;
 import android.widget.RadioGroup;
 import com.google.android.material.bottomsheet.BottomSheetDialog;
-
-import org.apache.poi.ss.usermodel.Cell;
-import org.apache.poi.ss.usermodel.CellStyle;
-import org.apache.poi.ss.usermodel.Font;
-import org.apache.poi.ss.usermodel.Row;
-import org.apache.poi.ss.usermodel.Sheet;
-import org.apache.poi.ss.usermodel.Workbook;
-import org.apache.poi.hssf.usermodel.HSSFWorkbook;
 
 import java.io.File;
 import java.io.FileOutputStream;
@@ -42,6 +34,7 @@ import java.util.zip.ZipOutputStream;
 
 import de.rwth_aachen.phyphox.helper.DataExportUtility;
 import de.rwth_aachen.phyphox.helper.FileNameFormat;
+import de.rwth_aachen.phyphox.helper.XlsxWriter;
 
 //The DataExport class provides export functionality for a phyphoxExperiment.
 //it provides multiple export formats and the dialogs to control them
@@ -291,7 +284,8 @@ public class DataExport implements Serializable {
         }
     }
 
-    //This class implements an Microsoft Excel export using the Apache POI library
+    //This class implements a Microsoft Excel (xlsx) export using our own minimal implementation
+    // of the file format (see XlsxWriter)
     protected class ExcelFormat extends ExportFormat implements Serializable {
         //Nothing to do or configure in the constructor
         ExcelFormat() {
@@ -306,121 +300,89 @@ public class DataExport implements Serializable {
         protected File export (List<ExportSet> sets, File exportPath, boolean minimalistic, Context ctx) {
             File file = new File(exportPath, "/"+getFilename(minimalistic)); //Create file with default filename
 
-            //New excel workbook
-            Workbook wb = new HSSFWorkbook();
-            //Create a style (just bold font) for the table header
-            Font font= wb.createFont();
-            font.setBold(true);
-            CellStyle cs = wb.createCellStyle();
-            cs.setFont(font);
-
             try { // A lot can go wrong here. Catch em all...
-                for (ExportSet set : sets) { //For each dataset...
-                    Sheet sheet = wb.createSheet(set.name);//..create a new sheet within the Excel document
+                XlsxWriter xlsx = new XlsxWriter(new FileOutputStream(file));
+                try {
+                    for (ExportSet set : sets) { //For each dataset...
+                        xlsx.startSheet(set.name); //..create a new sheet within the Excel document
 
-                    //Create the header row and fill it
-                    Row row = sheet.createRow(0);
-                    for (int j = 0; j < set.data.length; j++) {
-                        Cell c = row.createCell(j);
-                        c.setCellValue(set.sources.get(j).getSecureName());
-                        c.setCellStyle(cs);
-                    }
+                        //Create the header row and fill it
+                        xlsx.startRow();
+                        for (int j = 0; j < set.data.length; j++)
+                            xlsx.stringCell(set.sources.get(j).getSecureName(), true);
+                        xlsx.endRow();
 
-                    //Create all the data rows
-                    for (int i = 0; i < set.data[0].length; i++) { //For each row of data (number of rows determined by first entry in dataset)
-                        row = sheet.createRow(i+1);
-                        for (int j = 0; j < set.data.length; j++) { //For each column
-                            Cell c = row.createCell(j);
-                            if (i < set.data[j].length) //Is there data for this cell?
-                                c.setCellValue(set.data[j][i]); //Yepp, enter it
-                            else
-                                c.setCellValue("NaN"); //Nope, no data. Fill NaN into this cell
-                        }
-                    }
-                }
-
-                if (!minimalistic) {
-                    Sheet sheet;
-                    Row row;
-                    Cell c;
-
-                    sheet = wb.createSheet("Metadata Device");//..create a new sheet within the Excel document
-                    row = sheet.createRow(0);
-                    c = row.createCell(0);
-                    c.setCellValue("proeprty");
-                    c.setCellStyle(cs);
-                    c = row.createCell(1);
-                    c.setCellValue("value");
-                    c.setCellStyle(cs);
-
-                    int i = 1;
-                    StringBuilder data = new StringBuilder();
-                    for (Metadata.DeviceMetadata deviceMetadata : Metadata.DeviceMetadata.values()) {
-                        if (deviceMetadata == Metadata.DeviceMetadata.sensorMetadata || deviceMetadata == Metadata.DeviceMetadata.uniqueID || deviceMetadata == Metadata.DeviceMetadata.camera2api || deviceMetadata == Metadata.DeviceMetadata.camera2apiFull)
-                            continue;
-                        String identifier = deviceMetadata.toString();
-
-                        row = sheet.createRow(i);
-                        row.createCell(0).setCellValue(identifier);
-                        row.createCell(1).setCellValue(new Metadata(identifier, ctx).get(""));
-                        i++;
-                    }
-                    for (SensorInput.SensorName sensor : SensorInput.SensorName.values()) {
-                        for (Metadata.SensorMetadata sensorMetadata : Metadata.SensorMetadata.values()) {
-                            String identifier = sensorMetadata.toString();
-
-                            row = sheet.createRow(i);
-                            row.createCell(0).setCellValue(sensor.name() + " " + identifier);
-                            row.createCell(1).setCellValue(new Metadata(sensor.name()+identifier, ctx).get(""));
-                            i++;
+                        //Create all the data rows
+                        for (int i = 0; i < set.data[0].length; i++) { //For each row of data (number of rows determined by first entry in dataset)
+                            xlsx.startRow();
+                            for (int j = 0; j < set.data.length; j++) { //For each column
+                                if (i < set.data[j].length) //Is there data for this cell?
+                                    xlsx.numberCell(set.data[j][i]); //Yepp, enter it
+                                else
+                                    xlsx.stringCell("NaN", false); //Nope, no data. Fill NaN into this cell
+                            }
+                            xlsx.endRow();
                         }
                     }
 
-                    sheet = wb.createSheet("Metadata Time");//..create a new sheet within the Excel document
-                    row = sheet.createRow(0);
-                    c = row.createCell(0);
-                    c.setCellValue("event");
-                    c.setCellStyle(cs);
-                    c = row.createCell(1);
-                    c.setCellValue("experiment time");
-                    c.setCellStyle(cs);
-                    c = row.createCell(2);
-                    c.setCellValue("system time");
-                    c.setCellStyle(cs);
-                    c = row.createCell(3);
-                    c.setCellValue("system time text");
-                    c.setCellStyle(cs);
+                    if (!minimalistic) {
+                        xlsx.startSheet("Metadata Device");
+                        xlsx.startRow();
+                        xlsx.stringCell("property", true);
+                        xlsx.stringCell("value", true);
+                        xlsx.endRow();
 
-                    i = 1;
-                    data = new StringBuilder();
-                    SimpleDateFormat dateFormat;
-                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N)
-                        dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.SSS 'UTC'XXX");
-                    else
-                        dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.SSS 'UTC'Z");
-                    for (ExperimentTimeReference.TimeMapping timeMapping : experiment.experimentTimeReference.timeMappings) {
-                        row = sheet.createRow(i);
-                        row.createCell(0).setCellValue(timeMapping.event.name());
-                        row.createCell(1).setCellValue(timeMapping.experimentTime);
-                        row.createCell(2).setCellValue(timeMapping.systemTime / 1000.);
-                        row.createCell(3).setCellValue(dateFormat.format(timeMapping.systemTime));
-                        i++;
+                        for (Metadata.DeviceMetadata deviceMetadata : Metadata.DeviceMetadata.values()) {
+                            if (deviceMetadata == Metadata.DeviceMetadata.sensorMetadata || deviceMetadata == Metadata.DeviceMetadata.uniqueID || deviceMetadata == Metadata.DeviceMetadata.camera2api || deviceMetadata == Metadata.DeviceMetadata.camera2apiFull)
+                                continue;
+                            String identifier = deviceMetadata.toString();
+
+                            xlsx.startRow();
+                            xlsx.stringCell(identifier, false);
+                            xlsx.stringCell(new Metadata(identifier, ctx).get(""), false);
+                            xlsx.endRow();
+                        }
+                        for (SensorInput.SensorName sensor : SensorInput.SensorName.values()) {
+                            for (Metadata.SensorMetadata sensorMetadata : Metadata.SensorMetadata.values()) {
+                                String identifier = sensorMetadata.toString();
+
+                                xlsx.startRow();
+                                xlsx.stringCell(sensor.name() + " " + identifier, false);
+                                xlsx.stringCell(new Metadata(sensor.name()+identifier, ctx).get(""), false);
+                                xlsx.endRow();
+                            }
+                        }
+
+                        xlsx.startSheet("Metadata Time");
+                        xlsx.startRow();
+                        xlsx.stringCell("event", true);
+                        xlsx.stringCell("experiment time", true);
+                        xlsx.stringCell("system time", true);
+                        xlsx.stringCell("system time text", true);
+                        xlsx.endRow();
+
+                        SimpleDateFormat dateFormat;
+                        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N)
+                            dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.SSS 'UTC'XXX");
+                        else
+                            dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.SSS 'UTC'Z");
+                        for (ExperimentTimeReference.TimeMapping timeMapping : experiment.experimentTimeReference.timeMappings) {
+                            xlsx.startRow();
+                            xlsx.stringCell(timeMapping.event.name(), false);
+                            xlsx.numberCell(timeMapping.experimentTime);
+                            xlsx.numberCell(timeMapping.systemTime / 1000.);
+                            xlsx.stringCell(dateFormat.format(timeMapping.systemTime), false);
+                            xlsx.endRow();
+                        }
                     }
-                }
-
-                //We now have our Excel document. Let's write it to the file.
-                FileOutputStream os = null;
-                try { //Let's catch errors while writing separately
-                    os = new FileOutputStream(file);
-                    wb.write(os);
                 } catch (Exception e) {
+                    //This could be done better. Any error during xlsx compiling ends up here
                     Log.e("excelExport", "Unhandled exception during write.", e);
                 } finally {
-                    if (os != null)
-                        os.close();
+                    xlsx.close();
                 }
-
             } catch (Exception e) {
+                //This could be done better. Any error during file opening ends up here
                 Log.e("excelExport", "Unhandled exception.", e);
             }
 
@@ -428,14 +390,13 @@ public class DataExport implements Serializable {
         }
 
         @Override
-        //This mime-typ is ugly, but seems to be the "official" one, while there are many others in use.
         protected String getType (boolean minimalistic) {
-            return MIME_TYPE_XLS;
+            return MIME_TYPE_XLSX;
         }
 
         @Override
         protected String getFilename (boolean minimalistic) {
-            return filenameBase + ".xls";
+            return filenameBase + ".xlsx";
         }
     }
 

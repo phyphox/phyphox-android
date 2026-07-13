@@ -9,8 +9,6 @@ import android.util.AttributeSet;
 import android.util.TypedValue;
 import android.view.View;
 
-import org.apache.poi.sl.usermodel.Line;
-
 import de.rwth_aachen.phyphox.helper.RGB;
 
 public class MarkerOverlayView extends View {

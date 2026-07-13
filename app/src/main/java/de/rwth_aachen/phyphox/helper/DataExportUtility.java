@@ -40,7 +40,6 @@ public class DataExportUtility{
     public static final String MIME_TYPE_CSV_MINI = "text/csv";
     public static final String MIME_TYPE_CSV_ZIP = "application/zip";
     public static final String MIME_TYPE_XLSX = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet";
-    public static final String MIME_TYPE_XLS = "application/vnd.ms-excel";
     public static final String MIME_TYPE_PHYPHOX = "application/octet-stream";
 
     public static void createFileInDownloads(File exportFile, String filenameBase, String mimeType, Activity c){

@@ -9,9 +9,9 @@ import android.hardware.camera2.CameraCharacteristics;
 import android.os.Build;
 import android.util.Size;
 
-import org.apache.commons.codec.binary.Hex;
-import org.apache.commons.codec.digest.DigestUtils;
-
+import java.nio.charset.StandardCharsets;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 import java.util.UUID;
 
 import de.rwth_aachen.phyphox.ExperimentList.ExperimentListActivity;
@@ -192,7 +192,15 @@ public class Metadata {
 
     public String get(String hash) {
         if (metadata == DeviceMetadata.uniqueID) {
-            return new String(Hex.encodeHex(DigestUtils.md5(resultBuffer + hash)));
+            try {
+                byte[] digest = MessageDigest.getInstance("MD5").digest((resultBuffer + hash).getBytes(StandardCharsets.UTF_8));
+                StringBuilder hex = new StringBuilder(digest.length * 2);
+                for (byte b : digest)
+                    hex.append(String.format("%02x", b));
+                return hex.toString();
+            } catch (NoSuchAlgorithmException e) {
+                return null; //Cannot happen, MD5 is guaranteed to be available
+            }
         } else {
             return resultBuffer;
         }

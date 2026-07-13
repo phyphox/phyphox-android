@@ -92,8 +92,6 @@ dependencies {
     //https://github.com/journeyapps/zxing-android-embedded/blob/master/CHANGES.md
     implementation 'com.journeyapps:zxing-android-embedded:4.3.0'
 
-    implementation ('org.apache.poi:poi:3.13') // This seems to be the last version with working (old) Excel export. Keep until we found time to implement xlsx
-
     implementation 'net.freeutils:jlhttp:3.2'
 
     //https://bigbadaboom.github.io/androidsvg/release_notes.html
