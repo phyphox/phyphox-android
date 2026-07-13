@@ -2623,6 +2623,9 @@ public abstract class PhyphoxFile {
                             new ioBlockParser.ioMapping() {{name = "batteryLevel"; asRequired = false; minCount = 0; maxCount = 1; repeatableOffset = -1; }},
                             new ioBlockParser.ioMapping() {{name = "wifiSignalStrength"; asRequired = true; minCount = 0; maxCount = 1; repeatableOffset = -1; }},
                             new ioBlockParser.ioMapping() {{name = "systemVolume"; asRequired = true; minCount = 0; maxCount = 1; repeatableOffset = -1; }},
+                            new ioBlockParser.ioMapping() {{name = "batteryVoltage"; asRequired = true; minCount = 0; maxCount = 1; repeatableOffset = -1; }},
+                            new ioBlockParser.ioMapping() {{name = "batteryCurrent"; asRequired = true; minCount = 0; maxCount = 1; repeatableOffset = -1; }},
+                            new ioBlockParser.ioMapping() {{name = "batteryTemperature"; asRequired = true; minCount = 0; maxCount = 1; repeatableOffset = -1; }},
                     };
                     (new ioBlockParser(xpp, experiment, parent, inputs, outputs, inputMapping, outputMapping, "as")).process(); //Load inputs and outputs
 

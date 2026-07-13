@@ -333,14 +333,24 @@ public class Analysis {
 
         @Override
         protected void update() {
-            if(outputs.get(0) != null)
+            //The outputs vector only reaches up to the last output mapped in the experiment file
+            if(outputs.size() > 0 && outputs.get(0) != null)
                 outputs.get(0).append(Helper.getBatteryPercentage(context));
 
-            if(outputs.get(1) != null)
+            if(outputs.size() > 1 && outputs.get(1) != null)
                 outputs.get(1).append(Helper.getWifiReceptionStrength(context));
 
-            if(outputs.get(2) != null)
+            if(outputs.size() > 2 && outputs.get(2) != null)
                 outputs.get(2).append(Helper.getSystemVolume(context));
+
+            if(outputs.size() > 3 && outputs.get(3) != null)
+                outputs.get(3).append(Helper.getBatteryVoltage(context));
+
+            if(outputs.size() > 4 && outputs.get(4) != null)
+                outputs.get(4).append(Helper.getBatteryCurrent(context));
+
+            if(outputs.size() > 5 && outputs.get(5) != null)
+                outputs.get(5).append(Helper.getBatteryTemperature(context));
         }
     }
 

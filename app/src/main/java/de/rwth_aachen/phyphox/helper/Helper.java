@@ -553,28 +553,54 @@ public abstract class Helper {
     }
 
 
-    public static int getBatteryPercentage(Context context) {
+    public static double getBatteryPercentage(Context context) {
+        if(context == null) return Double.NaN;
 
-        final int NO_BATTERY_SIGNAL_LEVEL = 0;
+        BatteryManager bm = (BatteryManager) context.getSystemService(BATTERY_SERVICE);
+        if(bm == null) return Double.NaN;
 
-        if(context == null) return NO_BATTERY_SIGNAL_LEVEL;
+        return bm.getIntProperty(BatteryManager.BATTERY_PROPERTY_CAPACITY);
+    }
 
-        if (Build.VERSION.SDK_INT >= 21) {
-            BatteryManager bm = (BatteryManager) context.getSystemService(BATTERY_SERVICE);
-            if(bm == null) return NO_BATTERY_SIGNAL_LEVEL;
+    //Battery voltage in volts, NaN if unavailable
+    public static double getBatteryVoltage(Context context) {
+        if (context == null) return Double.NaN;
 
-            return bm.getIntProperty(BatteryManager.BATTERY_PROPERTY_CAPACITY);
-        } else {
-            IntentFilter iFilter = new IntentFilter(Intent.ACTION_BATTERY_CHANGED);
-            Intent batteryStatus = context.registerReceiver(null, iFilter);
-            if(batteryStatus == null) return NO_BATTERY_SIGNAL_LEVEL;
+        Intent batteryStatus = context.registerReceiver(null, new IntentFilter(Intent.ACTION_BATTERY_CHANGED));
+        if (batteryStatus == null) return Double.NaN;
 
-            int level = batteryStatus.getIntExtra(BatteryManager.EXTRA_LEVEL, -1);
-            int scale = batteryStatus.getIntExtra(BatteryManager.EXTRA_SCALE, -1);
-            if (level == -1 || scale == -1 || scale == 0) return NO_BATTERY_SIGNAL_LEVEL;
+        int voltage = batteryStatus.getIntExtra(BatteryManager.EXTRA_VOLTAGE, -1); //in millivolts
+        if (voltage <= 0) return Double.NaN;
 
-            return ( level / scale ) * 100;
-        }
+        return voltage * 1e-3;
+    }
+
+    //Battery current in amperes, positive when charging and negative when discharging (as
+    // defined by the Android API, but note that some devices do not follow this convention and
+    // report an inverted sign). NaN if unavailable.
+    public static double getBatteryCurrent(Context context) {
+        if (context == null) return Double.NaN;
+
+        BatteryManager bm = (BatteryManager) context.getSystemService(BATTERY_SERVICE);
+        if (bm == null) return Double.NaN;
+
+        int current = bm.getIntProperty(BatteryManager.BATTERY_PROPERTY_CURRENT_NOW); //in microamperes
+        if (current == Integer.MIN_VALUE) return Double.NaN; //returned by getIntProperty if the property is not supported
+
+        return current * 1e-6;
+    }
+
+    //Battery temperature in degrees Celsius, NaN if unavailable
+    public static double getBatteryTemperature(Context context) {
+        if (context == null) return Double.NaN;
+
+        Intent batteryStatus = context.registerReceiver(null, new IntentFilter(Intent.ACTION_BATTERY_CHANGED));
+        if (batteryStatus == null) return Double.NaN;
+
+        int temperature = batteryStatus.getIntExtra(BatteryManager.EXTRA_TEMPERATURE, Integer.MIN_VALUE); //in tenths of a degree Celsius
+        if (temperature == Integer.MIN_VALUE) return Double.NaN;
+
+        return temperature * 0.1;
     }
 
     public static int getWifiReceptionStrength(Context context){
