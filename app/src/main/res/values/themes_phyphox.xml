@@ -42,6 +42,10 @@
 
     </style>
 
+    <style name="ThemeOverlay.Phyphox.ActionBar" parent="">
+        <item name="actionMenuTextColor">@color/phyphox_white_90</item>
+    </style>
+
     <style name="rwth" parent="Theme.AppCompat.Light.NoActionBar">
         <item name="android:textColor">@color/phyphox_black_100</item>
         <item name="colorPrimary">@color/phyphox_black_100</item>
