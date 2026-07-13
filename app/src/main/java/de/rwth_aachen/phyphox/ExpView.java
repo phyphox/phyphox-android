@@ -1065,6 +1065,7 @@ public class ExpView implements Serializable{
             et.setImeOptions(EditorInfo.IME_ACTION_DONE);
             if (decimal) {
                 et.setKeyListener(DigitsKeyListener.getInstance(allowedDigits.toString()));
+                et.setRawInputType(inputType);
                 et.addTextChangedListener(new DecimalTextWatcher());
             }
             if(!editable){
