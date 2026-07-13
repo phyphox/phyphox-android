@@ -48,6 +48,8 @@ import java.util.Locale;
 import java.util.Set;
 import java.util.Vector;
 
+import de.rwth_aachen.phyphox.helper.FileNameFormat;
+
 //RemoteServer implements a web interface to remote control the experiment and receive the data
 
 public class RemoteServer {
@@ -734,8 +736,8 @@ public class RemoteServer {
             String type = exportFormat.getType(false);
 
             //Use the experiment's exporter to create the file
-            final String fileName = experiment.title.replaceAll("[^0-9a-zA-Z \\-_]", "");
-            final File exportFile = experiment.exporter.exportDirect(exportFormat, callActivity.getCacheDir(), false, fileName.isEmpty() ? "phyphox" :  fileName, context);
+            final String fileName = FileNameFormat.formatFilename(context, experiment.title, experiment.experimentTimeReference);
+            final File exportFile = experiment.exporter.exportDirect(exportFormat, callActivity.getCacheDir(), false, fileName, context);
 
             //Set "Content-Disposition" to force the browser to handle this as a download with a default file name
             response.getHeaders().add("Content-Disposition", "attachment; filename=\"" + exportFormat.getFilename(false) + "\"");

@@ -21,6 +21,7 @@ import java.util.Locale;
 
 import de.rwth_aachen.phyphox.BuildConfig;
 import de.rwth_aachen.phyphox.R;
+import de.rwth_aachen.phyphox.helper.FileNameFormat;
 
 public class SettingsFragment extends PreferenceFragmentCompat {
 
@@ -37,6 +38,7 @@ public class SettingsFragment extends PreferenceFragmentCompat {
         setPreferencesFromResource(R.xml.settings, rootKey);
 
         setupPortEditText();
+        setupFileNameFormatEditText();
         prepareLanguageList();
         updateCurrentLanguage();
         updateTheme();
@@ -55,6 +57,20 @@ public class SettingsFragment extends PreferenceFragmentCompat {
                     Toast.makeText(getContext(), "Allowed range: 1024-65535", Toast.LENGTH_LONG).show();
                     return false;
                 }
+            });
+        }
+    }
+
+    private void setupFileNameFormatEditText() {
+        EditTextPreference editTextPreference = findPreference(FileNameFormat.PREF_KEY);
+        if (editTextPreference != null) {
+            editTextPreference.setOnPreferenceChangeListener((preference, newValue) -> {
+                //An empty template makes no sense, so clearing the text resets it to the default
+                if (newValue.toString().trim().isEmpty()) {
+                    editTextPreference.setText(FileNameFormat.DEFAULT_FORMAT);
+                    return false;
+                }
+                return true;
             });
         }
     }

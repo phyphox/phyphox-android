@@ -52,6 +52,16 @@
 
     <androidx.preference.PreferenceCategory android:title="@string/settingsHeadAdvanced">
         <androidx.preference.EditTextPreference
+            android:key="fileNameFormat"
+            android:title="@string/settingsFileNameFormat"
+            android:summary="%s"
+            android:dialogMessage="@string/settingsFileNameFormatDetail"
+            android:defaultValue="{title} {date} {time}"
+            android:icon="@drawable/download"
+            android:persistent="true"
+            app:useSimpleSummaryProvider="true"
+            />
+        <androidx.preference.EditTextPreference
             android:key="remoteAccessPort"
             android:title="@string/settingsPort"
             android:summary="%s"

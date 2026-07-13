@@ -34,7 +34,6 @@ import java.text.DecimalFormatSymbols;
 import java.text.NumberFormat;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.List;
 import java.util.Locale;
 import java.util.Vector;
@@ -42,6 +41,7 @@ import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
 
 import de.rwth_aachen.phyphox.helper.DataExportUtility;
+import de.rwth_aachen.phyphox.helper.FileNameFormat;
 
 //The DataExport class provides export functionality for a phyphoxExperiment.
 //it provides multiple export formats and the dialogs to control them
@@ -113,8 +113,10 @@ public class DataExport implements Serializable {
     protected abstract class ExportFormat implements Serializable {
         protected String filenameBase = "phyphox";
 
+        //fb is expected to be a complete file name base (without extension), typically generated
+        // from the user's template by FileNameFormat
         public void setFilenameBase (String fb) {
-            filenameBase = fb + " " + (new SimpleDateFormat("yyyy-MM-dd HH-mm-ss")).format(new Date());
+            filenameBase = fb;
         }
 
         protected abstract String getName(); //Returns the name or description of the format
@@ -465,8 +467,8 @@ public class DataExport implements Serializable {
             exportSets.get(i).getData();
         }
 
-        final String fileName = experiment.title.replaceAll("[^0-9a-zA-Z \\-_]", "");
-        showFormatDialog(exportSets, c, minimalistic, fileName.isEmpty() ? "phyphox" : fileName);
+        final String fileName = FileNameFormat.formatFilename(c, experiment.title, experiment.experimentTimeReference);
+        showFormatDialog(exportSets, c, minimalistic, fileName);
     }
 
     //Annoying class to make the integer mutable.
@@ -486,7 +488,7 @@ public class DataExport implements Serializable {
      * @param c The Activity context from which this dialog is being displayed.
      * @param minimalistic A boolean flag indicating whether to perform a minimalistic export.
      *                     This might affect the content or formatting of the exported file.
-     * @param fileName The base name for the exported file (without the extension or timestamp).
+     * @param fileName The base name for the exported file (without the extension).
      */
     protected void showFormatDialog(final List<ExportSet> chosenSets, final Activity c, final boolean minimalistic, final String fileName) {
         final mutableInteger selected = new mutableInteger(); //This will hold the result

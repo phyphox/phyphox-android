@@ -93,12 +93,8 @@ import com.journeyapps.barcodescanner.BarcodeEncoder;
 
 import java.io.File;
 import java.io.FileOutputStream;
-import java.text.DateFormat;
-import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Calendar;
-import java.util.Date;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedList;
@@ -115,6 +111,7 @@ import de.rwth_aachen.phyphox.Bluetooth.ConnectedBluetoothDeviceInfoAdapter;
 import de.rwth_aachen.phyphox.Bluetooth.ConnectedDeviceInfo;
 import de.rwth_aachen.phyphox.Bluetooth.UpdateConnectedDeviceDelegate;
 import de.rwth_aachen.phyphox.helper.DataExportUtility;
+import de.rwth_aachen.phyphox.helper.FileNameFormat;
 import de.rwth_aachen.phyphox.helper.WindowInsetHelper;
 import de.rwth_aachen.phyphox.camera.CameraInput;
 import de.rwth_aachen.phyphox.camera.depth.DepthInput;
@@ -1234,8 +1231,8 @@ public class Experiment extends AppCompatActivity implements View.OnClickListene
 
         if (id == R.id.action_share) {
 
-            final String fileName = experiment.title.replaceAll("[^0-9a-zA-Z \\-_]", "");
-            File file = new File(this.getCacheDir(), "/"+ (fileName.isEmpty() ? "phyphox" : fileName) + " " + (new SimpleDateFormat("yyyy-MM-dd HH-mm-ss")).format(new Date())+".png");
+            final String fileName = FileNameFormat.formatFilename(this, experiment.title, experiment.experimentTimeReference);
+            File file = new File(this.getCacheDir(), "/" + fileName + ".png");
             final Uri uri = FileProvider.getUriForFile(this, getPackageName() + ".exportProvider", file);
 
             final Intent intent = ShareCompat.IntentBuilder.from(this)
@@ -2146,9 +2143,8 @@ public class Experiment extends AppCompatActivity implements View.OnClickListene
             View view = LayoutInflater.from(parentContext).inflate(R.layout.action_bottom_sheet_save_state, null);
 
             customTitleET = view.findViewById(R.id.editTextMeasurementName);
-            DateFormat df = DateFormat.getDateTimeInstance(DateFormat.SHORT, DateFormat.SHORT);
-            final Date now = Calendar.getInstance().getTime();
-            customTitleET.setText(getString(R.string.save_state_default_title) + " " + df.format(now));
+            final String defaultName = FileNameFormat.format(parentContext, experiment.title, experiment.experimentTimeReference);
+            customTitleET.setText(defaultName);
 
             buttonShare = view.findViewById(R.id.imageShare);
             buttonShare.setOnClickListener(v -> buttonShareClicked());
@@ -2159,8 +2155,7 @@ public class Experiment extends AppCompatActivity implements View.OnClickListene
             buttonToCollection = view.findViewById(R.id.imageSave);
             buttonToCollection.setOnClickListener(v -> buttonCollectionClicked());
 
-            final String fileName = experiment.title.replaceAll("[^0-9a-zA-Z \\-_]", "");
-            filename = fileName.isEmpty() ? getString(R.string.save_state_default_title) : fileName + " " + (new SimpleDateFormat("yyyy-MM-dd HH-mm-ss")).format(now)+".phyphox";
+            filename = FileNameFormat.sanitize(defaultName) + ".phyphox";
             file = new File(getCacheDir(), "/"+filename);
 
             progressBar = view.findViewById(R.id.progressBar);
