@@ -107,18 +107,6 @@ public class ConnectedBluetoothDeviceInfoAdapter extends RecyclerView.Adapter<Co
     }
 
     private Drawable getSignalStrengthImage(int signalStrength){
-        Drawable signalStrengthDrawable;
-        if (signalStrength > ConnectedDeviceInfo.SIGNAL_FULL)
-            signalStrengthDrawable = ContextCompat.getDrawable(mParent, R.drawable.bluetooth_signal_4);
-        else if (signalStrength > ConnectedDeviceInfo.SIGNAL_HIGH)
-            signalStrengthDrawable=  ContextCompat.getDrawable(mParent, R.drawable.bluetooth_signal_3);
-        else if (signalStrength > ConnectedDeviceInfo.SIGNAL_MEDIUM)
-            signalStrengthDrawable = ContextCompat.getDrawable(mParent, R.drawable.bluetooth_signal_2);
-        else if (signalStrength > ConnectedDeviceInfo.SIGNAL_LOW)
-            signalStrengthDrawable = ContextCompat.getDrawable(mParent, R.drawable.bluetooth_signal_1);
-        else
-            signalStrengthDrawable = ContextCompat.getDrawable(mParent, R.drawable.bluetooth_signal_0);
-
-        return signalStrengthDrawable;
+        return ContextCompat.getDrawable(mParent, ConnectedDeviceInfo.getSignalStrengthDrawable(signalStrength));
     }
 }

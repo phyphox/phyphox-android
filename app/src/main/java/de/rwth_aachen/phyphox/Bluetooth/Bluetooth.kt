@@ -10,7 +10,6 @@ import android.bluetooth.BluetoothGattCharacteristic
 import android.bluetooth.BluetoothGattDescriptor
 import android.bluetooth.BluetoothManager
 import android.bluetooth.BluetoothProfile
-import android.bluetooth.BluetoothStatusCodes
 import android.content.Context
 import android.content.pm.PackageManager
 import android.os.Build
@@ -231,7 +230,8 @@ open class Bluetooth(
             //No matching device found - scan for unpaired devices and present possible matches
             // to the user (blocks this background thread until a device is picked or the dialog
             // is cancelled)
-            val bsd = BluetoothScanDialog(autoConnect, activity, context, btAdapter)
+            val adapter = btAdapter ?: throw BluetoothException(context.resources.getString(R.string.bt_exception_disabled), this)
+            val bsd = BluetoothScanDialog(autoConnect, activity, context, adapter)
             if (!bsd.scanPermission())
                 return false
             if (!bsd.locationEnabled())
@@ -517,59 +517,9 @@ open class Bluetooth(
     // GATT plumbing
     //
 
-    /** Executes queue operations on the actual BluetoothGatt (API 33+ value based writes, legacy setValue below) */
+    /** Executes queue operations on the actual BluetoothGatt (shared with other queue users, see [BleGattIo]) */
     @Transient
-    private val gattIo = object : GattIo {
-        override fun start(op: BleOp): Boolean {
-            val gatt = btGatt ?: return false
-            return when (op) {
-                is BleOp.DiscoverServices -> gatt.discoverServices()
-                is BleOp.RequestMtu -> gatt.requestMtu(op.mtu)
-                is BleOp.ReadRssi -> gatt.readRemoteRssi()
-                is BleOp.Read -> {
-                    val c = findCharacteristicOrNull(op.characteristic) ?: return false
-                    gatt.readCharacteristic(c)
-                }
-                is BleOp.Write -> {
-                    val c = findCharacteristicOrNull(op.characteristic) ?: return false
-                    //Note: WRITE_TYPE_DEFAULT on purpose, WRITE_TYPE_NO_RESPONSE does not work
-                    // with the BBC micro:bit
-                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-                        gatt.writeCharacteristic(c, op.value, BluetoothGattCharacteristic.WRITE_TYPE_DEFAULT) == BluetoothStatusCodes.SUCCESS
-                    } else {
-                        @Suppress("DEPRECATION")
-                        c.setValue(op.value)
-                        c.writeType = BluetoothGattCharacteristic.WRITE_TYPE_DEFAULT
-                        @Suppress("DEPRECATION")
-                        gatt.writeCharacteristic(c)
-                    }
-                }
-                is BleOp.WriteDescriptor -> {
-                    val c = findCharacteristicOrNull(op.characteristic) ?: return false
-                    val d = c.getDescriptor(op.descriptor) ?: return false
-                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-                        gatt.writeDescriptor(d, op.value) == BluetoothStatusCodes.SUCCESS
-                    } else {
-                        @Suppress("DEPRECATION")
-                        d.setValue(op.value)
-                        @Suppress("DEPRECATION")
-                        gatt.writeDescriptor(d)
-                    }
-                }
-            }
-        }
-    }
-
-    private fun findCharacteristicOrNull(uuid: UUID): BluetoothGattCharacteristic? {
-        val services = btGatt?.services ?: return null
-        for (service in services) {
-            for (c in service.characteristics) {
-                if (uuid == c.uuid)
-                    return c
-            }
-        }
-        return null
-    }
+    private val gattIo = BleGattIo { btGatt }
 
     /**
      * The single GATT callback: feeds operation results into the queue and dispatches

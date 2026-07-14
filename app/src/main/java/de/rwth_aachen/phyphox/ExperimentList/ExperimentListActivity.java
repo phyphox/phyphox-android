@@ -283,24 +283,7 @@ public class ExperimentListActivity extends AppCompatActivity {
 
         Button.OnClickListener neoclBluetooth = v -> {
             hideNewExperimentDialog();
-
-            Set<String> bluetoothNameKeySet = experimentRepository.getBluetoothDeviceNameList().keySet();
-            Set<UUID> bluetoothUUIDKeySet = experimentRepository.getBluetoothDeviceUUIDList().keySet();
-
-            new BluetoothScanner(this, bluetoothNameKeySet, bluetoothUUIDKeySet, new BluetoothScanner.BluetoothScanListener() {
-                @Override
-                public void onBluetoothDeviceFound(BluetoothScanDialog.BluetoothDeviceInfo result) {
-                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN_MR2) {
-                        openBluetoothExperiments(result.device, result.uuids, result.phyphoxService);
-                    }
-                }
-
-                @Override
-                public void onBluetoothScanError(String msg, Boolean isError, Boolean isFatal) {
-                    showBluetoothScanError(res.getString(R.string.bt_exception_disabled), true, true);
-
-                }
-            }).execute();
+            startBluetoothScan();
         };
 
         newExperimentBluetooth.setOnClickListener(neoclBluetooth);
@@ -1217,6 +1200,25 @@ public class ExperimentListActivity extends AppCompatActivity {
         dialog.show();
     }
 
+    //Scan for supported Bluetooth devices (or devices offering an experiment for download) and
+    //open the choice of experiments for the device picked by the user.
+    private void startBluetoothScan() {
+        Set<String> bluetoothNameKeySet = experimentRepository.getBluetoothDeviceNameList().keySet();
+        Set<UUID> bluetoothUUIDKeySet = experimentRepository.getBluetoothDeviceUUIDList().keySet();
+
+        new BluetoothScanner(this, bluetoothNameKeySet, bluetoothUUIDKeySet, new BluetoothScanner.BluetoothScanListener() {
+            @Override
+            public void onBluetoothDeviceFound(BluetoothScanDialog.BluetoothDeviceInfo result) {
+                openBluetoothExperiments(result.device, result.uuids, result.phyphoxService);
+            }
+
+            @Override
+            public void onBluetoothScanError(String msg, boolean isError, boolean isFatal) {
+                showBluetoothScanError(msg, isError, isFatal);
+            }
+        }).execute();
+    }
+
     protected void showBluetoothScanError(String msg, Boolean isError, Boolean isFatal) {
         final ExperimentListActivity parent = this;
 
@@ -1226,24 +1228,7 @@ public class ExperimentListActivity extends AppCompatActivity {
         if (!isFatal) {
             builder.setPositiveButton(isError ? R.string.tryagain : R.string.doContinue, new DialogInterface.OnClickListener() {
                 public void onClick(DialogInterface dialog, int id) {
-                    //(new RunBluetoothScan()).execute();
-                    Set<String> bluetoothNameKeySet = experimentRepository.getBluetoothDeviceNameList().keySet();
-                    Set<UUID> bluetoothUUIDKeySet = experimentRepository.getBluetoothDeviceUUIDList().keySet();
-
-                    new BluetoothScanner(parent, bluetoothNameKeySet, bluetoothUUIDKeySet, new BluetoothScanner.BluetoothScanListener() {
-                        @Override
-                        public void onBluetoothDeviceFound(BluetoothScanDialog.BluetoothDeviceInfo result) {
-                            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN_MR2) {
-                                openBluetoothExperiments(result.device, result.uuids, result.phyphoxService);
-                            }
-                        }
-
-                        @Override
-                        public void onBluetoothScanError(String msg, Boolean isError, Boolean isFatal) {
-                            showBluetoothScanError(res.getString(R.string.bt_exception_disabled), true, true);
-
-                        }
-                    }).execute();
+                    startBluetoothScan();
                 }
             });
         }
