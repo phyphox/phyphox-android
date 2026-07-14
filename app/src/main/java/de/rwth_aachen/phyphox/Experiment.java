@@ -101,6 +101,7 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 import java.util.UUID;
 
@@ -834,7 +835,7 @@ public class Experiment extends AppCompatActivity implements View.OnClickListene
         }
 
         recyclerView.setLayoutManager(new LinearLayoutManager(this));
-        deviceInfoAdapter = new ConnectedBluetoothDeviceInfoAdapter(connectedDevices);
+        deviceInfoAdapter = new ConnectedBluetoothDeviceInfoAdapter(new ArrayList<>(connectedDevices));
         recyclerView.setAdapter(deviceInfoAdapter);
         bluetoothConnectionSuccessful = true;
     }
@@ -1986,18 +1987,29 @@ public class Experiment extends AppCompatActivity implements View.OnClickListene
     Runnable runDeviceUpdate = new Runnable() {
         @Override
         public void run() {
-            Log.d("ConnectedDeivce", "runDeviceUpdate: "+connectedDevices);
             if(deviceInfoAdapter != null){
-                Log.d("ConnectedDeivce", "runDeviceUpdate: deviceInfoAdapter:  "+connectedDevices);
-                deviceInfoAdapter.update(connectedDevices);
+                //pass a copy: the adapter clears its own list (which may be this very list) on update
+                deviceInfoAdapter.update(new ArrayList<>(connectedDevices));
             }
         }
     };
 
     @Override
     public void updateConnectedDevice(ArrayList<ConnectedDeviceInfo> connectedDeviceInfos) {
-        connectedDevices = connectedDeviceInfos;
-        Log.d("ConnectedDeivce", "updateConnectedDevice: "+connectedDeviceInfos);
+        //Each Bluetooth device reports its own status. Merge it into the list of all connected
+        //devices (matched by address), so multiple devices are shown next to each other.
+        for (ConnectedDeviceInfo info : connectedDeviceInfos) {
+            boolean found = false;
+            for (int i = 0; i < connectedDevices.size(); i++) {
+                if (Objects.equals(connectedDevices.get(i).getDeviceId(), info.getDeviceId())) {
+                    connectedDevices.set(i, info);
+                    found = true;
+                    break;
+                }
+            }
+            if (!found)
+                connectedDevices.add(info);
+        }
         runOnUiThread(runDeviceUpdate);
     }
 

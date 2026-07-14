@@ -133,9 +133,6 @@ open class Bluetooth(
 
     private val connectedDeviceInformation = ConnectedDeviceInfo()
 
-    @Transient
-    private var connectedDeviceInfoArrayList = ArrayList<ConnectedDeviceInfo>()
-
     /** timestamp of the last error toast, to throttle repeated errors while running */
     @Transient
     private var lastToastShown = 0L
@@ -655,14 +652,10 @@ open class Bluetooth(
 
     private fun updateConnectedDeviceInfo(rssi: Int) {
         connectedDeviceInformation.signalStrength = rssi
-        val list = connectedDeviceInfoArrayList
-        val index = list.indexOfFirst { it.deviceId == connectedDeviceInformation.deviceId }
-        if (index < 0)
-            list.add(connectedDeviceInformation)
-        else
-            list[index] = connectedDeviceInformation
+        //Each device only reports its own info. The Experiment activity merges the reports of
+        // all connected devices into the list shown at the bottom of the screen.
         mainHandler.post {
-            Experiment.updateConnectedDeviceDelegate?.updateConnectedDevice(list)
+            Experiment.updateConnectedDeviceDelegate?.updateConnectedDevice(arrayListOf(connectedDeviceInformation))
         }
     }
 
