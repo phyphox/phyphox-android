@@ -11,7 +11,7 @@ public class ConversionsConfig {
         ConfigConversion() {
 
         }
-        protected byte[] convert(String data) {
+        public byte[] convert(String data) {
             return null;
         }
     }
@@ -24,7 +24,7 @@ public class ConversionsConfig {
         }
 
         @Override
-        protected byte[] convert(String data) {
+        public byte[] convert(String data) {
             try {
                 return (byte[]) conversionFunction.invoke(null, data);
             } catch (Exception e) {

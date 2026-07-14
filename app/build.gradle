@@ -111,6 +111,9 @@ dependencies {
 
     implementation "com.github.hannesa2:paho.mqtt.android:4.4"
 
+    implementation 'org.jetbrains.kotlinx:kotlinx-coroutines-android:1.9.0' //Used by the Bluetooth engine (also pulled in transitively by camera/lifecycle libraries)
+    testImplementation 'org.jetbrains.kotlinx:kotlinx-coroutines-test:1.9.0'
+
     def camerax_version = "1.4.2" //1.5.0+ requires minSDK>=23
     implementation "androidx.camera:camera-core:${camerax_version}"
     implementation "androidx.camera:camera-camera2:${camerax_version}"

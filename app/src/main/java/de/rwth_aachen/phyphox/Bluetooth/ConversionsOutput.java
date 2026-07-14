@@ -12,7 +12,7 @@ public class ConversionsOutput {
         OutputConversion() {
 
         }
-        protected byte[] convert(DataBuffer data) {
+        public byte[] convert(DataBuffer data) {
             return null;
         }
     }
@@ -25,7 +25,7 @@ public class ConversionsOutput {
         }
 
         @Override
-        protected byte[] convert(DataBuffer data) {
+        public byte[] convert(DataBuffer data) {
             try {
                 return (byte[]) conversionFunction.invoke(null, data);
             } catch (Exception e) {

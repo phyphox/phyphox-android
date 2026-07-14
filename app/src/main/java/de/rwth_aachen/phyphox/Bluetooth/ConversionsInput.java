@@ -20,7 +20,7 @@ public class ConversionsInput {
         InputConversion() {
 
         }
-        protected List<Double> convert(byte[] data) {
+        public List<Double> convert(byte[] data) {
             return new ArrayList<>();
         }
     }
@@ -51,7 +51,7 @@ public class ConversionsInput {
         }
 
         @Override
-        protected List<Double> convert(byte[] data) {
+        public List<Double> convert(byte[] data) {
             List<Double> out = new ArrayList<>();
             try {
                 int index = offset;
@@ -295,7 +295,7 @@ public class ConversionsInput {
         }
 
         @Override
-        protected List<Double> convert(byte[] data) {
+        public List<Double> convert(byte[] data) {
             String[] s;
             if (separator.isEmpty()) {
                 s = new String[1];
