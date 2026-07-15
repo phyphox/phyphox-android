@@ -1,6 +1,10 @@
 package de.rwth_aachen.phyphox;
 
 import android.content.Context;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
+import android.graphics.ColorSpace;
+import android.os.Build;
 import android.util.Log;
 
 import java.io.Serializable;
@@ -2717,6 +2721,108 @@ public class Analysis {
             if (outputs.size() > 1 && outputs.get(1) != null)
                 outputs.get(1).append(Arrays.copyOfRange(data, limit, n), n-limit);
 
+        }
+    }
+
+    //Decode an image file (any format supported by Android's BitmapFactory, at least PNG, JPEG and
+    //BMP) from a buffer holding the bytes of the encoded file (one byte per value, 0..255) into
+    //its dimensions and per-pixel channel data (0..1, line-wise from the top)
+    public static class imagedecodeAM extends AnalysisModule implements Serializable {
+
+        protected imagedecodeAM(PhyphoxExperiment experiment, Vector<DataInput> inputs, Vector<DataOutput> outputs) {
+            super(experiment, inputs, outputs);
+            useArray = true;
+        }
+
+        private static double linearize(double x) {
+            //sRGB EOTF, same as the luminance output of the camera input
+            if (x < 0.04045)
+                return x / 12.92;
+            else
+                return Math.pow((x + 0.055) / 1.055, 2.4);
+        }
+
+        @Override
+        protected void update() {
+            //Outputs: 0 = width, 1 = height, 2 = r, 3 = g, 4 = b, 5 = a, 6 = luma, 7 = luminance
+            Double[] in = inputArrays.get(0);
+            int n = inputArraySizes.get(0);
+            if (in == null || n == 0)
+                return;
+
+            byte[] encoded = new byte[n];
+            for (int i = 0; i < n; i++)
+                encoded[i] = (byte)((int)Math.round(in[i]) & 0xff);
+
+            BitmapFactory.Options options = new BitmapFactory.Options();
+            options.inPreferredConfig = Bitmap.Config.ARGB_8888;
+            options.inScaled = false;
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O)
+                options.inPreferredColorSpace = ColorSpace.get(ColorSpace.Named.SRGB); //Convert wide-gamut images (i.e. Display P3) to sRGB
+
+            Bitmap bitmap;
+            try {
+                bitmap = BitmapFactory.decodeByteArray(encoded, 0, n, options);
+            } catch (OutOfMemoryError e) {
+                bitmap = null;
+            }
+            if (bitmap == null) {
+                Log.e("imagedecode", "Could not decode image data.");
+                return;
+            }
+
+            int w = bitmap.getWidth();
+            int h = bitmap.getHeight();
+            int[] pixels = new int[w * h];
+            bitmap.getPixels(pixels, 0, w, 0, 0, w, h);
+            bitmap.recycle();
+
+            if (outputs.size() > 0 && outputs.get(0) != null)
+                outputs.get(0).append(w);
+            if (outputs.size() > 1 && outputs.get(1) != null)
+                outputs.get(1).append(h);
+
+            Double[] r = (outputs.size() > 2 && outputs.get(2) != null) ? new Double[pixels.length] : null;
+            Double[] g = (outputs.size() > 3 && outputs.get(3) != null) ? new Double[pixels.length] : null;
+            Double[] b = (outputs.size() > 4 && outputs.get(4) != null) ? new Double[pixels.length] : null;
+            Double[] a = (outputs.size() > 5 && outputs.get(5) != null) ? new Double[pixels.length] : null;
+            Double[] luma = (outputs.size() > 6 && outputs.get(6) != null) ? new Double[pixels.length] : null;
+            Double[] luminance = (outputs.size() > 7 && outputs.get(7) != null) ? new Double[pixels.length] : null;
+
+            if (r == null && g == null && b == null && a == null && luma == null && luminance == null)
+                return;
+
+            for (int i = 0; i < pixels.length; i++) {
+                int pixel = pixels[i];
+                double rv = ((pixel >> 16) & 0xff) / 255.;
+                double gv = ((pixel >> 8) & 0xff) / 255.;
+                double bv = (pixel & 0xff) / 255.;
+                if (r != null)
+                    r[i] = rv;
+                if (g != null)
+                    g[i] = gv;
+                if (b != null)
+                    b[i] = bv;
+                if (a != null)
+                    a[i] = ((pixel >>> 24) & 0xff) / 255.;
+                if (luma != null)
+                    luma[i] = 0.2126 * rv + 0.7152 * gv + 0.0722 * bv; //Rec. 709 weights on gamma-encoded values, same as the luma output of the camera input
+                if (luminance != null)
+                    luminance[i] = 0.2126 * linearize(rv) + 0.7152 * linearize(gv) + 0.0722 * linearize(bv);
+            }
+
+            if (r != null)
+                outputs.get(2).append(r, pixels.length);
+            if (g != null)
+                outputs.get(3).append(g, pixels.length);
+            if (b != null)
+                outputs.get(4).append(b, pixels.length);
+            if (a != null)
+                outputs.get(5).append(a, pixels.length);
+            if (luma != null)
+                outputs.get(6).append(luma, pixels.length);
+            if (luminance != null)
+                outputs.get(7).append(luminance, pixels.length);
         }
     }
 
