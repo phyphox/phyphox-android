@@ -345,6 +345,14 @@ public class ExpView implements Serializable{
             }
         }
 
+        //Called when the user wants to leave this element's exclusive mode (for example via
+        //back navigation). Elements may intercept this to ask the user how to proceed first
+        //(see graphElement, which asks how a temporary zoom should be applied).
+        protected void requestLeaveExclusive() {
+            if (parent != null)
+                parent.leaveExclusive();
+        }
+
         protected void onViewSelected(boolean parentViewIsVisible) {
 
         }
@@ -1864,7 +1872,7 @@ public class ExpView implements Serializable{
                 public void onClick(View view) {
                     if (self.parent != null) {
                         if (isExclusive) {
-                            interactiveGV.leaveDialog(self.parent, inputs.size() > 1 ? inputs.get(1) : null, inputs.size() > 0 ? inputs.get(0) : null, unitX, unitY);
+                            self.requestLeaveExclusive();
                         } else {
                             interactiveGV.requestFocus();
                             self.parent.requestExclusive(self);
@@ -1878,6 +1886,18 @@ public class ExpView implements Serializable{
             rootView.setFocusableInTouchMode(false);
             ll.addView(rootView);
 
+        }
+
+        @Override
+        //Leaving exclusive mode of a graph may require user input on how to apply a temporary
+        //zoom, so show the same dialog as when tapping the maximized graph.
+        protected void requestLeaveExclusive() {
+            if (parent == null)
+                return;
+            if (interactiveGV != null)
+                interactiveGV.leaveDialog(parent, inputs.size() > 1 ? inputs.get(1) : null, inputs.size() > 0 ? inputs.get(0) : null, unitX, unitY);
+            else
+                parent.leaveExclusive();
         }
 
         @Override
@@ -2662,7 +2682,7 @@ public class ExpView implements Serializable{
                 public void onClick(View view) {
                     if (self.parent != null) {
                         if (isExclusive) {
-                            self.parent.leaveExclusive();
+                            self.requestLeaveExclusive();
                         } else {
                             cv.requestFocus();
                             self.parent.requestExclusive(self);
@@ -2932,7 +2952,7 @@ public class ExpView implements Serializable{
         protected boolean toggleExclusive() {
             if (self.parent != null) {
                 if (isExclusive) {
-                    self.parent.leaveExclusive();
+                    self.requestLeaveExclusive();
                 } else {
                     self.parent.requestExclusive(self);
                 }

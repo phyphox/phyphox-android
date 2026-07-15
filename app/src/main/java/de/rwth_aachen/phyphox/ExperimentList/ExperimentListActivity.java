@@ -139,6 +139,16 @@ public class ExperimentListActivity extends AppCompatActivity {
     private boolean isSelectionMode = false;
     private View.OnClickListener originalFABListener;
 
+    //Intercepts the back action when it should only dismiss an overlay (selection mode or the
+    //new experiment menu) instead of leaving the activity. It is kept disabled otherwise, so
+    //the system can play predictive back animations.
+    private OnBackPressedCallback backCallback = null;
+
+    //Set if this instance was launched by another app to view a phyphox file. In that case this
+    //activity only acts as a dispatcher that examines the file and hands it over to the
+    //Experiment activity, so it should not remain on the back stack below the experiment.
+    private boolean launchedToViewFile = false;
+
     @Override
     //The onCreate block will setup some onClickListeners and display a do-not-damage-your-phone
     //  warning message.
@@ -185,23 +195,46 @@ public class ExperimentListActivity extends AppCompatActivity {
 
         setUpOnClickListener();
 
-        getOnBackPressedDispatcher().addCallback(this, new OnBackPressedCallback(true) {
+        backCallback = new OnBackPressedCallback(false) {
             @Override
             public void handleOnBackPressed() {
-                if (isSelectionMode) {
+                if (isSelectionMode)
                     exitSelectionMode();
-                } else {
-                    this.setEnabled(false);
-                    getOnBackPressedDispatcher().onBackPressed();
-                    this.setEnabled(true);
-                }
+                else if (newExperimentDialogOpen)
+                    hideNewExperimentDialog();
             }
-        });
+        };
+        getOnBackPressedDispatcher().addCallback(this, backCallback);
 
         experimentRepository = new ExperimentRepository();
 
+        launchedToViewFile = Intent.ACTION_VIEW.equals(getIntent().getAction()) && getIntent().getScheme() != null;
         handleIntent(getIntent());
 
+    }
+
+    private void updateBackCallbackState() {
+        backCallback.setEnabled(isSelectionMode || newExperimentDialogOpen);
+    }
+
+    //If this activity was only launched to pass a phyphox file from another app to the
+    //Experiment activity, it should be removed from the back stack once the experiment has been
+    //opened. Otherwise the user would navigate back through an unexpected experiment list (in
+    //the other app's task) instead of returning to the app the file came from.
+    private void finishIfViewIntentDispatcher() {
+        if (launchedToViewFile)
+            finish();
+    }
+
+    @Override
+    protected void onNewIntent(Intent intent) {
+        super.onNewIntent(intent);
+        setIntent(intent);
+        //A reused instance is an experiment list the user already had open, so it should stay
+        //around when dispatching a file to the Experiment activity - unless it sits on top of
+        //another app's task.
+        launchedToViewFile = Intent.ACTION_VIEW.equals(intent.getAction()) && intent.getScheme() != null && !isTaskRoot();
+        handleIntent(intent);
     }
 
 
@@ -695,6 +728,7 @@ public class ExperimentListActivity extends AppCompatActivity {
 
                 //Open the file
                 startActivity(intent);
+                finishIfViewIntentDispatcher();
             } else {
                 //Load experiments from local files
                 ExperimentRepository zipRepository = new ExperimentRepository();
@@ -865,6 +899,7 @@ public class ExperimentListActivity extends AppCompatActivity {
                 Intent forwardedIntent = new Intent(intent);
                 forwardedIntent.setClass(this, Experiment.class);
                 this.startActivity(forwardedIntent);
+                finishIfViewIntentDispatcher();
             } else {
                 //We got a zip-file. Let's see what's inside...
                 progress = ProgressDialog.show(this, res.getString(R.string.loadingTitle), res.getString(R.string.loadingText), true);
@@ -878,6 +913,7 @@ public class ExperimentListActivity extends AppCompatActivity {
 
     protected void showNewExperimentDialog() {
         newExperimentDialogOpen = true;
+        updateBackCallbackState();
 
         Animation rotate45In = AnimationUtils.loadAnimation(getBaseContext(), R.anim.experiment_list_fab_rotate45);
         Animation fabIn = AnimationUtils.loadAnimation(getBaseContext(), R.anim.experiment_list_fab_in);
@@ -904,6 +940,7 @@ public class ExperimentListActivity extends AppCompatActivity {
 
     protected void hideNewExperimentDialog() {
         newExperimentDialogOpen = false;
+        updateBackCallbackState();
 
         Animation rotate0In = AnimationUtils.loadAnimation(getBaseContext(), R.anim.experiment_list_fab_rotate0);
         Animation fabOut = AnimationUtils.loadAnimation(getBaseContext(), R.anim.experiment_list_fab_out);
@@ -1309,6 +1346,7 @@ public class ExperimentListActivity extends AppCompatActivity {
         if (newExperimentDialogOpen)
             hideNewExperimentDialog();
         isSelectionMode = true;
+        updateBackCallbackState();
         experimentRepository.setSelectionMode(true);
         newExperimentButton.setImageResource(R.drawable.delete);
         newExperimentButton.setBackgroundTintList(ColorStateList.valueOf(res.getColor(R.color.phyphox_red)));
@@ -1324,6 +1362,7 @@ public class ExperimentListActivity extends AppCompatActivity {
 
     private void exitSelectionMode() {
         isSelectionMode = false;
+        updateBackCallbackState();
         experimentRepository.clearSelection();
         experimentRepository.setSelectionMode(false);
         newExperimentButton.setImageResource(R.drawable.new_experiment);

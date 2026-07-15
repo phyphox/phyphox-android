@@ -37,6 +37,7 @@
         <activity
             android:name="de.rwth_aachen.phyphox.ExperimentList.ExperimentListActivity"
             android:exported="true"
+            android:launchMode="singleTop"
             android:theme="@style/splashTheme"
             android:configChanges="keyboardHidden|orientation|screenSize">
             <intent-filter>
@@ -91,19 +92,11 @@
             android:label="@string/title_activity_experiment"
             android:configChanges="keyboardHidden|orientation|screenSize"
             android:windowSoftInputMode="adjustPan"
-            android:parentActivityName="de.rwth_aachen.phyphox.ExperimentList.ExperimentListActivity">
-            <meta-data
-                android:name="android.support.PARENT_ACTIVITY"
-                android:value="de.rwth_aachen.phyphox.ExperimentList.ExperimentListActivity" />
-        </activity>
+            android:parentActivityName="de.rwth_aachen.phyphox.ExperimentList.ExperimentListActivity" />
         <activity
             android:name="de.rwth_aachen.phyphox.SettingsActivity.SettingsActivity"
             android:label="@string/settings"
-            android:parentActivityName="de.rwth_aachen.phyphox.ExperimentList.ExperimentListActivity">
-            <meta-data
-                android:name="android.support.PARENT_ACTIVITY"
-                android:value="de.rwth_aachen.phyphox.ExperimentList.ExperimentListActivity" />
-        </activity>
+            android:parentActivityName="de.rwth_aachen.phyphox.ExperimentList.ExperimentListActivity" />
         <activity
             android:name="com.journeyapps.barcodescanner.CaptureActivity"
             android:screenOrientation="unspecified"

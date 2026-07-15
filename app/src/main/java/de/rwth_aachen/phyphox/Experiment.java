@@ -216,25 +216,42 @@ public class Experiment extends AppCompatActivity implements View.OnClickListene
 
     static final int REQUEST_LOCAL_NETWORK_SCAN  = 2;
 
+    OnBackPressedCallback backCallback = null; //Intercepts the back action when leaving needs confirmation or an element is in exclusive mode
 
-    private void doLeaveExperiment() {
-        Intent upIntent = NavUtils.getParentActivityIntent(this);
-        if (NavUtils.shouldUpRecreateTask(this, upIntent)) {
-            TaskStackBuilder.create(this)
-                    .addNextIntent(upIntent)
-                    .startActivities();
-        }
+
+    //Back action: leave the activity and return to whatever is below us in the current task.
+    //This may be the experiment list, but it may also be another app that opened a phyphox file.
+    private void shutdownAndFinish() {
         shutdownIO();
         finish();
     }
 
-    private void leaveExperiment() {
-        if (experiment != null && experiment.analysisTime > 10.0) {
+    //Up action: in contrast to back, up always leads to the experiment list. If it is not below
+    //us in our own task (for example because the experiment was opened directly from another
+    //app), it has to be created as a new task first.
+    private void navigateUpToExperimentList() {
+        shutdownIO();
+        Intent upIntent = NavUtils.getParentActivityIntent(this);
+        if (NavUtils.shouldUpRecreateTask(this, upIntent) || isTaskRoot()) {
+            TaskStackBuilder.create(this)
+                    .addNextIntent(upIntent)
+                    .startActivities();
+        }
+        finish();
+    }
+
+    private boolean leaveRequiresConfirmation() {
+        return experiment != null && experiment.analysisTime > 10.0;
+    }
+
+    //Ask for confirmation if the user would lose measured data, then execute the leave action.
+    private void leaveExperiment(final Runnable leaveAction) {
+        if (leaveRequiresConfirmation()) {
             AlertDialog.Builder builder = new AlertDialog.Builder(this);
             builder.setMessage(res.getString(R.string.leave_experiment_question))
                     .setPositiveButton(R.string.leave, new DialogInterface.OnClickListener() {
                         public void onClick(DialogInterface dialog, int id) {
-                            doLeaveExperiment();
+                            leaveAction.run();
                         }
                     })
                     .setNegativeButton(R.string.cancel, new DialogInterface.OnClickListener() {
@@ -245,8 +262,25 @@ public class Experiment extends AppCompatActivity implements View.OnClickListene
             AlertDialog dialog = builder.create();
             dialog.show();
         } else {
-            doLeaveExperiment();
+            leaveAction.run();
         }
+    }
+
+    private ExpViewFragment getCurrentExpViewFragment() {
+        if (adapter == null || pager == null)
+            return null;
+        return (ExpViewFragment)getSupportFragmentManager().findFragmentByTag("android:switcher:" + pager.getId() + ":" + adapter.getItemId(pager.getCurrentItem()));
+    }
+
+    //The back callback only needs to intercept the back action if we cannot simply leave the
+    //activity: either a view element is in fullscreen/exclusive mode or leaving needs to be
+    //confirmed by the user. Keeping it disabled otherwise lets the system play predictive back
+    //animations.
+    void updateBackCallbackState() {
+        if (backCallback == null)
+            return;
+        ExpViewFragment f = getCurrentExpViewFragment();
+        backCallback.setEnabled((f != null && f.hasExclusive()) || leaveRequiresConfirmation());
     }
 
     @Override
@@ -254,19 +288,25 @@ public class Experiment extends AppCompatActivity implements View.OnClickListene
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
-        getOnBackPressedDispatcher().addCallback(this, new OnBackPressedCallback(true) {
+        backCallback = new OnBackPressedCallback(false) {
             @Override
             public void handleOnBackPressed() {
-                if (adapter != null && pager != null) {
-                    ExpViewFragment f = (ExpViewFragment)getSupportFragmentManager().findFragmentByTag("android:switcher:" + pager.getId() + ":" + adapter.getItemId(pager.getCurrentItem()));
-                    if (f != null && f.hasExclusive()) {
-                        f.leaveExclusive();
-                        return;
-                    }
+                ExpViewFragment f = getCurrentExpViewFragment();
+                if (f != null && f.hasExclusive()) {
+                    f.requestLeaveExclusive();
+                    return;
                 }
-                leaveExperiment();
+                leaveExperiment(Experiment.this::shutdownAndFinish);
             }
-        });
+        };
+        getOnBackPressedDispatcher().addCallback(this, backCallback);
+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
+            //Nice animation when leaving the experiment. This replaces the deprecated
+            //overridePendingTransition in onStop on older devices and in contrast to that one
+            //it does not interfere with predictive back gestures.
+            overrideActivityTransition(OVERRIDE_TRANSITION_CLOSE, R.anim.hold, R.anim.exit_experiment);
+        }
 
         updateConnectedDeviceDelegate = this;
 
@@ -357,7 +397,8 @@ public class Experiment extends AppCompatActivity implements View.OnClickListene
         if (popupWindow != null)
             popupWindow.dismiss();
 
-        overridePendingTransition(R.anim.hold, R.anim.exit_experiment); //Make a nice animation...
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.UPSIDE_DOWN_CAKE)
+            overridePendingTransition(R.anim.hold, R.anim.exit_experiment); //Make a nice animation... (Newer devices use overrideActivityTransition, set in onCreate)
     }
 
     @Override
@@ -1130,7 +1171,7 @@ public class Experiment extends AppCompatActivity implements View.OnClickListene
 
         //Home-button. Back to the Experiment List
         if (id == android.R.id.home) {
-            leaveExperiment();
+            leaveExperiment(this::navigateUpToExperimentList);
             return true;
         }
 
@@ -1475,6 +1516,8 @@ public class Experiment extends AppCompatActivity implements View.OnClickListene
                     stopMeasurement();
                 updateState = false;
             }
+
+            updateBackCallbackState();
 
             if (experiment != null) {
                 try {

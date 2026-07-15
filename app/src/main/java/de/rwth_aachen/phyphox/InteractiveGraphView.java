@@ -388,7 +388,7 @@ public class InteractiveGraphView extends RelativeLayout implements GraphView.Po
     }
 
     public void leaveDialog(final ExpViewFragment parent, final String bufferX, final String bufferY, final String unitX, final String unitY) {
-        if (!graphView.absoluteTime && Double.isNaN(graphView.zoomState.minX) && Double.isNaN(graphView.zoomState.minY) && Double.isNaN(graphView.zoomState.maxX) && Double.isNaN(graphView.zoomState.maxY) && Double.isNaN(graphView.zoomState.maxZ) && Double.isNaN(graphView.zoomState.maxZ)) {
+        if (!graphView.absoluteTime && Double.isNaN(graphView.zoomState.minX) && Double.isNaN(graphView.zoomState.minY) && Double.isNaN(graphView.zoomState.maxX) && Double.isNaN(graphView.zoomState.maxY) && Double.isNaN(graphView.zoomState.minZ) && Double.isNaN(graphView.zoomState.maxZ)) {
             parent.leaveExclusive();
             return;
         }

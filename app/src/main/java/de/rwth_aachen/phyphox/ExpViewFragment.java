@@ -53,10 +53,18 @@ public class ExpViewFragment extends Fragment {
         return hasExclusive;
     }
 
+    //Let the activity update its back handling, which has to intercept the back action to
+    //leave the exclusive mode
+    private void notifyExclusiveChanged() {
+        if (getActivity() instanceof Experiment)
+            ((Experiment) getActivity()).updateBackCallbackState();
+    }
+
     public void requestExclusive(ExpView.expViewElement caller) {
         if (root == null)
             return;
         hasExclusive = true;
+        notifyExclusiveChanged();
         root.setFillViewport(true);
         LayoutTransition layoutTransition = new LayoutTransition();
         layoutTransition.setDuration(150);
@@ -78,8 +86,26 @@ public class ExpViewFragment extends Fragment {
         ll.setLayoutTransition(null);
     }
 
+    //Leave exclusive mode on behalf of the user (for example via back navigation), giving the
+    //maximized element the chance to intercept, i.e. a graph asking how a temporary zoom should
+    //be applied. Tapping the maximized element goes through the same logic via its click listener.
+    public void requestLeaveExclusive() {
+        if (!hasExclusive)
+            return;
+        if (getActivity() instanceof Experiment && ((Experiment) getActivity()).experiment != null && ((Experiment) getActivity()).experiment.experimentViews.size() > index) {
+            for (ExpView.expViewElement element : ((Experiment) getActivity()).experiment.experimentViews.elementAt(index).elements) {
+                if (element.state == ExpView.State.maximized) {
+                    element.requestLeaveExclusive();
+                    return;
+                }
+            }
+        }
+        leaveExclusive();
+    }
+
     public void leaveExclusive() {
         hasExclusive = false;
+        notifyExclusiveChanged();
         if (root == null)
             return;
         root.setFillViewport(false);
