@@ -538,10 +538,26 @@ public class PhyphoxExperiment implements Serializable, ExperimentTimeReference.
 
         //Create audioTrack instance
         if (micBufferSize > 0) {
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M && !forceAudioRecordingCompatibilityFormat)
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M && !forceAudioRecordingCompatibilityFormat) {
                 audioRecord = new AudioRecord(MediaRecorder.AudioSource.DEFAULT, micRate, AudioFormat.CHANNEL_IN_MONO, AudioFormat.ENCODING_PCM_FLOAT, micBufferSize * 2);
-            else
+                if (audioRecord.getState() != AudioRecord.STATE_INITIALIZED) {
+                    //Some devices and custom ROMs advertise ENCODING_PCM_FLOAT but cannot
+                    //actually record with it. Fall back to the 16bit compatibility format,
+                    //which also switches the recording code to the corresponding read calls.
+                    audioRecord.release();
+                    audioRecord = null;
+                    forceAudioRecordingCompatibilityFormat = true;
+                    Log.w("PhyphoxExperiment", "Could not initialize audio recording with ENCODING_PCM_FLOAT. Falling back to ENCODING_PCM_16BIT.");
+                }
+            }
+            if (audioRecord == null) {
                 audioRecord = new AudioRecord(MediaRecorder.AudioSource.DEFAULT, micRate, AudioFormat.CHANNEL_IN_MONO, AudioFormat.ENCODING_PCM_16BIT, micBufferSize * 2);
+                if (audioRecord.getState() != AudioRecord.STATE_INITIALIZED) {
+                    audioRecord.release();
+                    audioRecord = null;
+                    throw new Exception("Could not initialize audio recording at a rate of " + micRate + " Hz.");
+                }
+            }
         }
 
         //Reconnect sensors
