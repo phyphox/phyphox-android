@@ -579,6 +579,12 @@ class CameraInput : Serializable, AnalyzingOpenGLRenderer.ExposureStatisticsList
     @androidx.annotation.OptIn(androidx.camera.camera2.interop.ExperimentalCamera2Interop::class)
     override fun newExposureStatistics(minRGB: Double, maxRGB: Double, meanLuma: Double) {
         if (cameraSettingState.value.autoExposure) {
+            //Auto exposure only ever adjusts ISO and shutter speed, so locked settings need to be
+            //excluded from its strategy. If both are locked, there is nothing left to adjust.
+            val isoLocked = lockedSettings?.containsKey("iso") == true
+            val shutterLocked = lockedSettings?.containsKey("shutter_speed") == true
+            if (isoLocked && shutterLocked)
+                return
             lifecycleOwner?.lifecycleScope?.launch {
                 val state = cameraSettingState.value
                 var adjust = 1.0
@@ -616,7 +622,7 @@ class CameraInput : Serializable, AnalyzingOpenGLRenderer.ExposureStatisticsList
                     }
                 }
 
-                val (shutter, iso) = CameraHelper.adjustExposure(adjust, state, maxExposureTime)
+                val (shutter, iso) = CameraHelper.adjustExposure(adjust, state, maxExposureTime, isoLocked, shutterLocked)
 
                 var newCameraSettingState = state.copy(
                         currentIsoValue = iso,

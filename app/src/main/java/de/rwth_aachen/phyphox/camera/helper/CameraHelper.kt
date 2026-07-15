@@ -418,9 +418,12 @@ object CameraHelper {
         }
     }
 
-    fun adjustExposure(adjust: Double, state: CameraSettingState, shutterTarget: Long): Pair<Long, Int> {
+    fun adjustExposure(adjust: Double, state: CameraSettingState, shutterTarget: Long, isoLocked: Boolean = false, shutterLocked: Boolean = false): Pair<Long, Int> {
+        if (isoLocked && shutterLocked) //Nothing we are allowed to adjust
+            return Pair(state.currentShutterValue, state.currentIsoValue)
+
         if (state.shutterSpeedRange == null) {
-            return Pair(shutterTarget, 100)
+            return Pair(if (shutterLocked) state.currentShutterValue else shutterTarget, if (isoLocked) state.currentIsoValue else 100)
         }
 
         var iso = state.currentIsoValue
@@ -429,6 +432,34 @@ object CameraHelper {
         val shutterMin = 1_000_000_000 * state.shutterSpeedRange!!.last().numerator / state.shutterSpeedRange!!.last().denominator
         val isoMax = state.isoRange?.last()?.toInt() ?: 100
         val isoMin = state.isoRange?.first()?.toInt() ?: 100
+
+        if (shutterLocked) {
+            //Only the ISO may be changed, so pick the available ISO that gets closest to the required adjustment
+            val targetIso = iso.toDouble() * adjust
+            var isoOption = iso
+            var optionRating = Double.MAX_VALUE
+            for (isoCandidate in state.isoRange ?: listOf(iso)) {
+                val thisIso = isoCandidate.toInt()
+                val rating = abs(log(thisIso.toDouble()/targetIso, 2.0))
+                if (rating < optionRating) {
+                    isoOption = thisIso
+                    optionRating = rating
+                }
+            }
+            return Pair(shutter, isoOption)
+        }
+
+        if (isoLocked) {
+            //Only the shutter speed may be changed
+            shutter = (shutter * adjust).toLong()
+            if (shutter > shutterMax)
+                shutter = shutterMax
+            if (shutter > shutterTarget)
+                shutter = shutterTarget
+            if (shutter < shutterMin)
+                shutter = shutterMin
+            return Pair(shutter, iso)
+        }
 
         fun isoShutterRating(iso: Int, shutter: Long): Double {
             return abs(log(iso.toDouble()/50.0, 2.0)) + // Prefer ISO 100
