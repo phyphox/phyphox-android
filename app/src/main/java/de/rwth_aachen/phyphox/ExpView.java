@@ -2108,14 +2108,26 @@ public class ExpView implements Serializable{
         protected String dataCompleteHTML() {
             String rescale = "";
             String scaleX = "";
-            if (scaleMinX == GraphView.scaleMode.fixed && !Double.isNaN(minX))
-                scaleX += "\"min\":" + minX + ", ";
-            else
-                rescale += "elementData["+htmlID+"][\"graph\"].options.scales.xAxes[0].ticks.min = minX;";
-            if (scaleMaxX == GraphView.scaleMode.fixed && !Double.isNaN(maxX))
-                scaleX += "\"max\":" + maxX + ", ";
-            else
+            if (followX && !Double.isNaN(minX) && !Double.isNaN(maxX)) {
+                //The graph follows the data: Keep the window width given by the minX and maxX
+                //attributes, but anchor its end at the newest x value of the data, mirroring
+                //the behavior of GraphView.rescale() in the app. Before any data arrives (or
+                //after the data has been cleared) the initial range from the attributes is used.
+                scaleX += "\"min\":" + minX + ", \"max\":" + maxX + ", ";
+                rescale += "if (elementData["+htmlID+"][\"datasets\"][0][\"data\"].length > 0) {";
                 rescale += "elementData["+htmlID+"][\"graph\"].options.scales.xAxes[0].ticks.max = maxX;";
+                rescale += "elementData["+htmlID+"][\"graph\"].options.scales.xAxes[0].ticks.min = maxX - " + (maxX - minX) + ";";
+                rescale += "}";
+            } else {
+                if (scaleMinX == GraphView.scaleMode.fixed && !Double.isNaN(minX))
+                    scaleX += "\"min\":" + minX + ", ";
+                else
+                    rescale += "elementData["+htmlID+"][\"graph\"].options.scales.xAxes[0].ticks.min = minX;";
+                if (scaleMaxX == GraphView.scaleMode.fixed && !Double.isNaN(maxX))
+                    scaleX += "\"max\":" + maxX + ", ";
+                else
+                    rescale += "elementData["+htmlID+"][\"graph\"].options.scales.xAxes[0].ticks.max = maxX;";
+            }
             String scaleY = "";
             if (scaleMinY == GraphView.scaleMode.fixed && !Double.isNaN(minY))
                 scaleY += "\"min\":" + minY + ", ";
