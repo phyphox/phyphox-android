@@ -2803,19 +2803,27 @@ public class ExpView implements Serializable{
         protected void createView(LinearLayout ll, Context c, Resources res, ExpViewFragment parent, PhyphoxExperiment experiment){
             super.createView(ll, c, res, parent, experiment);
 
-            if (experiment.resourceFolder.startsWith("ASSET")) {
-                String assetPath = "experiments/res/" + src;
-                try {
-                    InputStream is = res.getAssets().open(assetPath);
-                    drawable = new BitmapDrawable(BitmapFactory.decodeStream(is));
-                } catch (Exception e) {
-                    Log.e("imageView", "Failed to open image from asset: " + assetPath);
-                }
-            } else {
+            //Externally loaded experiments deliver their images in a res folder alongside the
+            //XML file, so try this one first...
+            if (experiment.resourceFolder != null && !experiment.resourceFolder.startsWith("ASSET")) {
                 File srcFile = new File(experiment.resourceFolder, src);
                 Bitmap bmp = BitmapFactory.decodeFile(srcFile.getAbsolutePath());
                 if (bmp != null)
                     drawable = new BitmapDrawable(bmp);
+            }
+            //...and fall back to the internal images bundled with phyphox (at the moment only
+            //hue.png). This is the regular source for experiments loaded from the assets, but
+            //it also allows external experiment files to reuse the bundled images.
+            if (drawable == null) {
+                String assetPath = "experiments/res/" + src;
+                try {
+                    InputStream is = res.getAssets().open(assetPath);
+                    Bitmap bmp = BitmapFactory.decodeStream(is);
+                    if (bmp != null)
+                        drawable = new BitmapDrawable(bmp);
+                } catch (Exception e) {
+                    Log.e("imageView", "Failed to open image from asset: " + assetPath);
+                }
             }
             if (drawable != null) {
                 applyFilter(Helper.isDarkTheme(res) ? darkFilter : lightFilter);

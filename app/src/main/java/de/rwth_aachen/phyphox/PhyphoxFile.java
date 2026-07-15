@@ -3744,8 +3744,21 @@ public abstract class PhyphoxFile {
                 File newResFolder = new File(parent.get().getFilesDir(), Long.toHexString(exp.crc32).toLowerCase());
                 newResFolder.mkdirs();
                 for (String src : exp.resources) {
+                    File srcFile = new File(exp.resourceFolder, src);
+                    if (!srcFile.isFile()) {
+                        //Resources that were not delivered alongside the experiment file may
+                        //reference the internal images bundled with phyphox instead. These do
+                        //not need to be copied, so only warn if there is no such image either.
+                        try {
+                            parent.get().getAssets().open("experiments/res/" + src).close();
+                        } catch (Exception e) {
+                            Log.e("CopyXML", "Could not save resource: " + src);
+                            warnings += "Could not save resource: " + src + "\n";
+                        }
+                        continue;
+                    }
                     try {
-                        Helper.copyFile(new File(exp.resourceFolder, src), new File(newResFolder, src));
+                        Helper.copyFile(srcFile, new File(newResFolder, src));
                     } catch (Exception e) {
                         Log.e("CopyXML", "Could not save resource: " + e.getMessage());
                         warnings += "Could not save resource: " + src + "\n";

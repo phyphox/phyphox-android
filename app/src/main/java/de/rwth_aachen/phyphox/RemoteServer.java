@@ -908,14 +908,35 @@ public class RemoteServer {
     public int handleRes(Request request, Response response) throws IOException {
         //Get the parameters
         String src = request.getParams().get("src");
-        if (src != null && !src.isEmpty() && experiment.resources.contains(src)) {
-            try {
-                File file = new File(experiment.resourceFolder, src);
-                return respond(response, null, file);
-            } catch (Exception e) {
-                return respond(response, "{\"error\": \"Unknown file.\"}");
+        if (src == null || src.isEmpty() || !experiment.resources.contains(src))
+            return respond(response, "{\"error\": \"Unknown file.\"}");
+
+        //Externally loaded experiments deliver their resources in a res folder alongside the
+        //XML file, so try this one first...
+        if (experiment.resourceFolder != null && !experiment.resourceFolder.startsWith("ASSET")) {
+            File file = new File(experiment.resourceFolder, src);
+            if (file.isFile()) {
+                try {
+                    return respond(response, null, file);
+                } catch (Exception e) {
+                    return respond(response, "{\"error\": \"Unknown file.\"}");
+                }
             }
-        } else {
+        }
+
+        //...and fall back to the internal images bundled with phyphox (at the moment only
+        //hue.png), matching the fallback of the image view element in the app.
+        try {
+            InputStream is = context.getAssets().open("experiments/res/" + src);
+            ByteArrayOutputStream os = new ByteArrayOutputStream();
+            byte[] buffer = new byte[4096];
+            int n;
+            while ((n = is.read(buffer)) != -1)
+                os.write(buffer, 0, n);
+            is.close();
+            byte[] data = os.toByteArray();
+            return respond(response, null, new ByteArrayInputStream(data), data.length);
+        } catch (Exception e) {
             return respond(response, "{\"error\": \"Unknown file.\"}");
         }
     }
