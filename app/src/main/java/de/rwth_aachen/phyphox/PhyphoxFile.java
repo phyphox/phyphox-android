@@ -264,6 +264,7 @@ public abstract class PhyphoxFile {
     protected static class xmlBlockParser {
         protected Experiment parent; //For some elements we need access to the parent activity
         private String tag; //The tag of the block that should be handled by this parser
+        private String namespace; //The namespace of the block handled by this parser. Tags from other namespaces are skipped entirely.
         private int rootDepth; //The depth of the base of the block handled by this parser
         protected XmlPullParser xpp; //The pull parser used handed to this parser
         protected PhyphoxExperiment experiment; //The experiment to be loaded
@@ -340,6 +341,17 @@ public abstract class PhyphoxFile {
 
         }
 
+        //Skip the current start tag with its entire subtree. Used to ignore tags from foreign namespaces.
+        private void skipCurrentTag() throws XmlPullParserException, IOException, phyphoxFileException {
+            int depth = xpp.getDepth();
+            int eventType = xpp.next();
+            while (eventType != XmlPullParser.END_TAG || xpp.getDepth() != depth) {
+                if (eventType == XmlPullParser.END_DOCUMENT)
+                    throw new phyphoxFileException("Unexpected end of document.", xpp.getLineNumber());
+                eventType = xpp.next();
+            }
+        }
+
         public void process() throws IOException, XmlPullParserException, phyphoxFileException {
             int eventType = xpp.getEventType();
             if (eventType != XmlPullParser.START_TAG)
@@ -348,6 +360,7 @@ public abstract class PhyphoxFile {
             //Remember our entry point
             this.rootDepth = xpp.getDepth();
             this.tag = xpp.getName();
+            this.namespace = xpp.getNamespace(); //Tags from any other namespace than our own root element (usually none or a default xmlns) do not concern us
 
             //That's it for the root element. Start to distribute the next events to processStartTag and processEndTag
             eventType = xpp.next();
@@ -360,6 +373,10 @@ public abstract class PhyphoxFile {
                     case XmlPullParser.END_DOCUMENT: //We should not reach the end of the document wthin this block
                         throw new phyphoxFileException("Unexpected end of document.", xpp.getLineNumber());
                     case XmlPullParser.START_TAG:
+                        if (!namespace.equals(xpp.getNamespace())) {
+                            skipCurrentTag(); //This tag belongs to a foreign namespace (i.e. from an editor). Ignore it and its children.
+                            break;
+                        }
                         processStartTag(xpp.getName());
                         break;
                     case XmlPullParser.END_TAG:
