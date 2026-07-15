@@ -102,10 +102,11 @@ public class ConversionsConfig {
     }
 
     public static byte[] singleByte (String data) {
-        return new byte[]{Byte.parseByte(data)};
+        //Parse as int and truncate, so both signed (-128..127) and unsigned (128..255) notations work
+        return new byte[]{(byte) Integer.parseInt(data)};
     }
 
-    public static byte[] int8 (String data) { //Just as intuitive alias. We do not need to care about the sign as the parseByte function correctly handles both, values above 127 and below 0
+    public static byte[] int8 (String data) { //Just an intuitive alias
         return singleByte(data);
     }
 
@@ -115,7 +116,7 @@ public class ConversionsConfig {
 
     public static byte[] hexadecimal (String data) {
         byte[] result = new byte[data.length()/2];
-        for (int i = 0; i < data.length(); i+=2) {
+        for (int i = 0; i + 1 < data.length(); i+=2) { //A dangling character of an odd-length string is ignored
             result[i/2] = (byte) ((Character.digit(data.charAt(i), 16) << 4) + Character.digit(data.charAt(i+1), 16));
         }
         return result;

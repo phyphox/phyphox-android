@@ -10,6 +10,7 @@ import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.regex.Pattern;
 
 // The class holds public static functions which convert values from a byte array to a double value.
 public class ConversionsInput {
@@ -254,7 +255,7 @@ public class ConversionsInput {
             int index = offset;
 
             while (index < data.length) {
-                int actualLength = data.length - offset;
+                int actualLength = data.length - index;
                 if (length > 0 && length < actualLength)
                     actualLength = length;
                 byte[] subdata = Arrays.copyOfRange(data, index, index + actualLength);
@@ -297,11 +298,11 @@ public class ConversionsInput {
         @Override
         public List<Double> convert(byte[] data) {
             String[] s;
-            if (separator.isEmpty()) {
+            if (separator == null || separator.isEmpty()) {
                 s = new String[1];
                 s[0] = new String(data);
             } else
-                s = (new String(data)).split(this.separator);
+                s = (new String(data)).split(Pattern.quote(this.separator)); //The separator is a literal string, do not let split interpret it as a regular expression
             List<Double> out = new ArrayList<>(1);
             if (s.length <= this.index)
                 return out;
