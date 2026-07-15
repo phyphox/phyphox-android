@@ -51,6 +51,13 @@ class CurveData implements Serializable {
     int ibCount, ibUsedCount;
     transient IntBuffer ib;
 
+    //Only used for mapXY if interpolateMapColors is false: Each data point is drawn as a
+    //homogeneously colored cell centered on the data point. Its four vertices all carry the data
+    //point's z value, so the interpolation across the cell is constant (i.e. flat shading).
+    int vboCellX, vboCellY, vboCellZ;
+    transient FloatBuffer cellX, cellY, cellZ;
+    int cellCount;
+
     int mapWidth;
     int n;
     GraphView.Style style;
@@ -75,6 +82,7 @@ class GraphSetup implements Serializable {
     public boolean logX = false;
     public boolean logY = false;
     public boolean logZ = false;
+    public boolean interpolateMapColors = true; //If false, color maps show a homogeneously colored cell around each data point instead of interpolating colors between the data points
 
     public Vector<Integer> colorScale = new Vector<>();
 
@@ -949,31 +957,58 @@ class PlotRenderer extends Thread implements TextureView.SurfaceTextureListener 
         CurveData dataSetZ = graphSetup.dataSets.get(i+1);
         if (dataSetZ.n < 4)
             return;
-        if (dataSet.vboX == 0)
-            return;
-        if (dataSet.vboY == 0)
-            return;
-        if (dataSetZ.vboY == 0)
-            return;
+        if (graphSetup.interpolateMapColors) {
+            if (dataSet.vboX == 0)
+                return;
+            if (dataSet.vboY == 0)
+                return;
+            if (dataSetZ.vboY == 0)
+                return;
 
-        GLES20.glBindBuffer(GLES20.GL_ARRAY_BUFFER, dataSet.vboX);
-        GLES20.glEnableVertexAttribArray(mapPositionXHandle);
-        GLES20.glVertexAttribPointer(mapPositionXHandle, 1, GLES20.GL_FLOAT, false, 0, 0);
+            GLES20.glBindBuffer(GLES20.GL_ARRAY_BUFFER, dataSet.vboX);
+            GLES20.glEnableVertexAttribArray(mapPositionXHandle);
+            GLES20.glVertexAttribPointer(mapPositionXHandle, 1, GLES20.GL_FLOAT, false, 0, 0);
 
-        GLES20.glBindBuffer(GLES20.GL_ARRAY_BUFFER, dataSet.vboY);
-        GLES20.glEnableVertexAttribArray(mapPositionYHandle);
-        GLES20.glVertexAttribPointer(mapPositionYHandle, 1, GLES20.GL_FLOAT, false, 0, 0);
+            GLES20.glBindBuffer(GLES20.GL_ARRAY_BUFFER, dataSet.vboY);
+            GLES20.glEnableVertexAttribArray(mapPositionYHandle);
+            GLES20.glVertexAttribPointer(mapPositionYHandle, 1, GLES20.GL_FLOAT, false, 0, 0);
 
-        GLES20.glBindBuffer(GLES20.GL_ARRAY_BUFFER, dataSetZ.vboY);
-        GLES20.glEnableVertexAttribArray(mapPositionZHandle);
-        GLES20.glVertexAttribPointer(mapPositionZHandle, 1, GLES20.GL_FLOAT, false, 0, 0);
+            GLES20.glBindBuffer(GLES20.GL_ARRAY_BUFFER, dataSetZ.vboY);
+            GLES20.glEnableVertexAttribArray(mapPositionZHandle);
+            GLES20.glVertexAttribPointer(mapPositionZHandle, 1, GLES20.GL_FLOAT, false, 0, 0);
 
-        if (dataSet.ibUsedCount < 4)
-            return;
+            if (dataSet.ibUsedCount < 4)
+                return;
 
-        GLES20.glBindBuffer(GLES20.GL_ELEMENT_ARRAY_BUFFER, dataSet.ibo);
-        GLES20.glDrawElements(GLES20.GL_TRIANGLE_STRIP, dataSet.ibUsedCount, GLES20.GL_UNSIGNED_INT, 0);
-        GLES20.glBindBuffer(GLES20.GL_ELEMENT_ARRAY_BUFFER, 0);
+            GLES20.glBindBuffer(GLES20.GL_ELEMENT_ARRAY_BUFFER, dataSet.ibo);
+            GLES20.glDrawElements(GLES20.GL_TRIANGLE_STRIP, dataSet.ibUsedCount, GLES20.GL_UNSIGNED_INT, 0);
+            GLES20.glBindBuffer(GLES20.GL_ELEMENT_ARRAY_BUFFER, 0);
+        } else {
+            //Homogeneously colored cells, see doUpdateBuffers
+            if (dataSet.vboCellX == 0 || dataSet.vboCellY == 0 || dataSet.vboCellZ == 0)
+                return;
+            if (dataSet.cellCount < 1)
+                return;
+
+            GLES20.glBindBuffer(GLES20.GL_ARRAY_BUFFER, dataSet.vboCellX);
+            GLES20.glEnableVertexAttribArray(mapPositionXHandle);
+            GLES20.glVertexAttribPointer(mapPositionXHandle, 1, GLES20.GL_FLOAT, false, 0, 0);
+
+            GLES20.glBindBuffer(GLES20.GL_ARRAY_BUFFER, dataSet.vboCellY);
+            GLES20.glEnableVertexAttribArray(mapPositionYHandle);
+            GLES20.glVertexAttribPointer(mapPositionYHandle, 1, GLES20.GL_FLOAT, false, 0, 0);
+
+            GLES20.glBindBuffer(GLES20.GL_ARRAY_BUFFER, dataSet.vboCellZ);
+            GLES20.glEnableVertexAttribArray(mapPositionZHandle);
+            GLES20.glVertexAttribPointer(mapPositionZHandle, 1, GLES20.GL_FLOAT, false, 0, 0);
+
+            if (dataSet.ibUsedCount < 6)
+                return;
+
+            GLES20.glBindBuffer(GLES20.GL_ELEMENT_ARRAY_BUFFER, dataSet.ibo);
+            GLES20.glDrawElements(GLES20.GL_TRIANGLES, dataSet.ibUsedCount, GLES20.GL_UNSIGNED_INT, 0);
+            GLES20.glBindBuffer(GLES20.GL_ELEMENT_ARRAY_BUFFER, 0);
+        }
 
         //Draw scale
 
@@ -1099,7 +1134,7 @@ class PlotRenderer extends Thread implements TextureView.SurfaceTextureListener 
             } else
                 data.n = 0;
 
-            if (data.style == GraphView.Style.mapXY && (data.mapWidth > 0)) {
+            if (data.style == GraphView.Style.mapXY && (data.mapWidth > 0) && graphSetup.interpolateMapColors) {
                 data.ibUsedCount = ((data.n / data.mapWidth)-1) * (2* data.mapWidth + 2);
                 if (data.ibUsedCount > 4 && (data.ib == null || data.ibUsedCount > data.ibCount)) {
                     IntBuffer newIB = ByteBuffer.allocateDirect(data.ibUsedCount * 4).order(ByteOrder.nativeOrder()).asIntBuffer();
@@ -1130,6 +1165,112 @@ class PlotRenderer extends Thread implements TextureView.SurfaceTextureListener 
                     GLES20.glBindBuffer(GLES20.GL_ELEMENT_ARRAY_BUFFER, data.ibo);
                     GLES20.glBufferData(GLES20.GL_ELEMENT_ARRAY_BUFFER, data.ibUsedCount * 4, data.ib, GLES20.GL_DYNAMIC_DRAW);
                     GLES20.glBindBuffer(GLES20.GL_ARRAY_BUFFER, 0);
+                }
+            }
+        }
+
+        if (!graphSetup.interpolateMapColors) {
+            //Without color interpolation each data point is drawn as a homogeneously colored cell
+            //centered on the data point. As each cell has its own four vertices sharing the same z
+            //value, this results in flat shading with the unmodified map shaders. The cell corners
+            //sit at the midpoints between neighboring data points (with even spacing assumed to
+            //extend the outermost cells).
+            for (int iSet = 0; iSet < graphSetup.dataSets.size()-1; iSet++) {
+                CurveData data = graphSetup.dataSets.get(iSet);
+                if (data.style != GraphView.Style.mapXY || data.mapWidth <= 0)
+                    continue;
+                FloatBufferRepresentation fbX = data.fbX;
+                FloatBufferRepresentation fbY = data.fbY;
+                FloatBufferRepresentation fbZ = graphSetup.dataSets.get(iSet+1).fbY;
+                if (fbX == null || fbY == null || fbZ == null)
+                    continue;
+
+                if (data.vboCellX == 0) {
+                    int ref[] = new int[3];
+                    GLES20.glGenBuffers(3, ref, 0);
+                    data.vboCellX = ref[0];
+                    data.vboCellY = ref[1];
+                    data.vboCellZ = ref[2];
+                }
+                if (data.ibo == 0) {
+                    int ref[] = new int[1];
+                    GLES20.glGenBuffers(1, ref, 0);
+                    data.ibo = ref[0];
+                }
+
+                int w = data.mapWidth;
+                synchronized (fbX.lock) {
+                    synchronized (fbY.lock) {
+                        synchronized (fbZ.lock) {
+                            int rows = Math.min(Math.min(fbX.size, fbY.size), fbZ.size) / w;
+                            int cells = rows * w;
+                            data.cellCount = cells;
+                            if (cells < 1)
+                                continue;
+
+                            if (data.cellX == null || data.cellX.capacity() < 4 * cells) {
+                                data.cellX = ByteBuffer.allocateDirect(4 * cells * 4).order(ByteOrder.nativeOrder()).asFloatBuffer();
+                                data.cellY = ByteBuffer.allocateDirect(4 * cells * 4).order(ByteOrder.nativeOrder()).asFloatBuffer();
+                                data.cellZ = ByteBuffer.allocateDirect(4 * cells * 4).order(ByteOrder.nativeOrder()).asFloatBuffer();
+                            }
+                            data.cellX.position(0);
+                            data.cellY.position(0);
+                            data.cellZ.position(0);
+
+                            for (int j = 0; j < rows; j++) {
+                                for (int i = 0; i < w; i++) {
+                                    int k = j * w + i;
+                                    float x = fbX.data.get(fbX.offset + k);
+                                    float y = fbY.data.get(fbY.offset + k);
+                                    float z = fbZ.data.get(fbZ.offset + k);
+
+                                    float dxm, dxp;
+                                    if (w > 1) {
+                                        dxm = i > 0 ? 0.5f * (x - fbX.data.get(fbX.offset + k - 1)) : 0.5f * (fbX.data.get(fbX.offset + k + 1) - x);
+                                        dxp = i < w-1 ? 0.5f * (fbX.data.get(fbX.offset + k + 1) - x) : 0.5f * (x - fbX.data.get(fbX.offset + k - 1));
+                                    } else
+                                        dxm = dxp = 0.5f;
+                                    float dym, dyp;
+                                    if (rows > 1) {
+                                        dym = j > 0 ? 0.5f * (y - fbY.data.get(fbY.offset + k - w)) : 0.5f * (fbY.data.get(fbY.offset + k + w) - y);
+                                        dyp = j < rows-1 ? 0.5f * (fbY.data.get(fbY.offset + k + w) - y) : 0.5f * (y - fbY.data.get(fbY.offset + k - w));
+                                    } else
+                                        dym = dyp = 0.5f;
+
+                                    data.cellX.put(x - dxm).put(x + dxp).put(x - dxm).put(x + dxp);
+                                    data.cellY.put(y - dym).put(y - dym).put(y + dyp).put(y + dyp);
+                                    data.cellZ.put(z).put(z).put(z).put(z);
+                                }
+                            }
+
+                            data.cellX.position(0);
+                            GLES20.glBindBuffer(GLES20.GL_ARRAY_BUFFER, data.vboCellX);
+                            GLES20.glBufferData(GLES20.GL_ARRAY_BUFFER, 4 * cells * 4, data.cellX, GLES20.GL_DYNAMIC_DRAW);
+                            data.cellY.position(0);
+                            GLES20.glBindBuffer(GLES20.GL_ARRAY_BUFFER, data.vboCellY);
+                            GLES20.glBufferData(GLES20.GL_ARRAY_BUFFER, 4 * cells * 4, data.cellY, GLES20.GL_DYNAMIC_DRAW);
+                            data.cellZ.position(0);
+                            GLES20.glBindBuffer(GLES20.GL_ARRAY_BUFFER, data.vboCellZ);
+                            GLES20.glBufferData(GLES20.GL_ARRAY_BUFFER, 4 * cells * 4, data.cellZ, GLES20.GL_DYNAMIC_DRAW);
+                            GLES20.glBindBuffer(GLES20.GL_ARRAY_BUFFER, 0);
+
+                            //Two triangles per cell
+                            data.ibUsedCount = 6 * cells;
+                            if (data.ib == null || data.ib.capacity() < data.ibUsedCount) {
+                                data.ib = ByteBuffer.allocateDirect(data.ibUsedCount * 4).order(ByteOrder.nativeOrder()).asIntBuffer();
+                                data.ib.position(0);
+                                for (int c = 0; c < cells; c++) {
+                                    int base = 4 * c;
+                                    data.ib.put(base).put(base + 1).put(base + 2);
+                                    data.ib.put(base + 2).put(base + 1).put(base + 3);
+                                }
+                            }
+                            data.ib.position(0);
+                            GLES20.glBindBuffer(GLES20.GL_ELEMENT_ARRAY_BUFFER, data.ibo);
+                            GLES20.glBufferData(GLES20.GL_ELEMENT_ARRAY_BUFFER, data.ibUsedCount * 4, data.ib, GLES20.GL_DYNAMIC_DRAW);
+                            GLES20.glBindBuffer(GLES20.GL_ELEMENT_ARRAY_BUFFER, 0);
+                        }
+                    }
                 }
             }
         }

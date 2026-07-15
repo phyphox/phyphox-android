@@ -1470,6 +1470,7 @@ public abstract class PhyphoxFile {
                     String lineStyle = getStringAttribute("style"); //Line style defaults to "line", but may be "dots"
                     int mapWidth= getIntAttribute("mapWidth", 0);
                     boolean showColorScale = getBooleanAttribute("showColorScale", true);
+                    boolean interpolateMapColors = getBooleanAttribute("interpolateMapColors", true);
                     boolean partialUpdate = getBooleanAttribute("partialUpdate", false);
                     int history = getIntAttribute("history", 1);
                     String labelX = getTranslatedAttribute("labelX");
@@ -1607,6 +1608,7 @@ public abstract class PhyphoxFile {
                     }
                     ge.setShowColorScale(showColorScale);
                     ge.setMapWidth(mapWidth);
+                    ge.setInterpolateMapColors(interpolateMapColors);
                     ge.setColorScale(colorScale);
                     ge.setLineWidth(lineWidth);
                     ge.setColor(color, parent.getResources());

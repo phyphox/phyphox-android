@@ -647,6 +647,10 @@ public class GraphView extends View {
         }
     }
 
+    public void setInterpolateMapColors(boolean interpolate) {
+        graphSetup.interpolateMapColors = interpolate;
+    }
+
     @Override
     protected void onMeasure(int widthMeasureSpec, int heightMeasureSpec) {
         int widthMode = MeasureSpec.getMode(widthMeasureSpec);

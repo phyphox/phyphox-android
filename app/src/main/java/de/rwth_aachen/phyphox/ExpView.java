@@ -1520,6 +1520,7 @@ public class ExpView implements Serializable{
         private Vector<Integer> mapWidth = new Vector<>();
         private Vector<Integer> colorScale = new Vector<>();
         private boolean showColorScale;
+        private boolean interpolateMapColors = true;
         private int historyLength = 1; //If set to n > 1 the graph will also show the last n sets in a different color
         private int nCurves = 1;
         private String labelX = null; //Label for the x-axis
@@ -1663,6 +1664,12 @@ public class ExpView implements Serializable{
 
         protected  void setShowColorScale(boolean showColorScale){
             this.showColorScale = showColorScale;
+        }
+
+        protected void setInterpolateMapColors(boolean interpolate) {
+            this.interpolateMapColors = interpolate;
+            if (gv != null)
+                gv.setInterpolateMapColors(interpolate);
         }
 
         public void setScaleModeX(GraphView.scaleMode minMode, double minV, GraphView.scaleMode maxMode, double maxV) {
@@ -1836,6 +1843,7 @@ public class ExpView implements Serializable{
             gv.graphSetup.incrementalX = partialUpdate;
             gv.setAspectRatio(aspectRatio);
             gv.setColorScale(colorScale);
+            gv.setInterpolateMapColors(interpolateMapColors);
             gv.setScaleModeX(scaleMinX, minX, scaleMaxX, maxX);
             gv.setScaleModeY(scaleMinY, minY, scaleMaxY, maxY);
             gv.setScaleModeZ(scaleMinZ, minZ, scaleMaxZ, maxZ);
