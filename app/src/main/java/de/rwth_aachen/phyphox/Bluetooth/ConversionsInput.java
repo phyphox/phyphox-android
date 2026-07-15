@@ -200,7 +200,7 @@ public class ConversionsInput {
     public static double float64LittleEndian (byte[] data) {
         long bits = 0;
         for (int i = 0; i < 8; i++) {
-            bits |= (data[i] & 0xFF) << (8 * i);
+            bits |= ((long)(data[i] & 0xFF)) << (8 * i);
         }
         return Double.longBitsToDouble(bits);
     }
@@ -208,7 +208,7 @@ public class ConversionsInput {
     public static double float64BigEndian (byte[] data) {
         long bits = 0;
         for (int i = 0; i < 8; i++) {
-            bits |= (data[i] & 0xFF) << (8 * (7-i));
+            bits |= ((long)(data[i] & 0xFF)) << (8 * (7-i));
         }
         return Double.longBitsToDouble(bits);
     }
