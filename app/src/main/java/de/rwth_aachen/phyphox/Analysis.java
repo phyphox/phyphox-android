@@ -2826,4 +2826,62 @@ public class Analysis {
         }
     }
 
+    //Apply the magnitude of a Butterworth filter's transfer function to data in the frequency
+    //domain (the FFT itself is done separately with the fft module). With only "cutoff" set this
+    //is a lowpass; with a non-zero "cutofflow" it becomes a bandpass with -3dB at both cutoffs.
+    public static class butterworthAM extends AnalysisModule implements Serializable {
+
+        protected butterworthAM(PhyphoxExperiment experiment, Vector<DataInput> inputs, Vector<DataOutput> outputs) {
+            super(experiment, inputs, outputs);
+            useArray = true;
+        }
+
+        @Override
+        protected void update() {
+            //Inputs: 0 = y, 1 = x (frequency of each data element), 2 = n, 3 = cutoff, 4 = cutoffLow
+            Double[] data = inputArrays.get(0);
+            Double[] x = inputArrays.get(1);
+            if (data == null || x == null)
+                return;
+
+            double order = Double.NaN;
+            if (inputArrays.get(2) != null && inputArraySizes.get(2) > 0)
+                order = inputArrays.get(2)[inputArraySizes.get(2)-1];
+            double cutoff = Double.NaN;
+            if (inputArrays.get(3) != null && inputArraySizes.get(3) > 0)
+                cutoff = inputArrays.get(3)[inputArraySizes.get(3)-1];
+            double cutoffLow = 0.;
+            if (inputArrays.size() > 4 && inputArrays.get(4) != null && inputArraySizes.get(4) > 0)
+                cutoffLow = inputArrays.get(4)[inputArraySizes.get(4)-1];
+
+            if (Double.isNaN(order) || Double.isNaN(cutoff))
+                return;
+
+            int count = Math.min(inputArraySizes.get(0), inputArraySizes.get(1));
+            Double[] filtered = new Double[count];
+            for (int i = 0; i < count; i++) {
+                double f = Math.abs(x[i]);
+                double gain;
+                if (cutoffLow > 0.) {
+                    //Bandpass from the standard lowpass-to-bandpass transformation:
+                    //|H|^2 = 1 / (1 + ((f^2 - fl*fh) / (f*(fh - fl)))^2n), unity at sqrt(fl*fh), -3dB at fl and fh
+                    if (f == 0.)
+                        gain = 0.;
+                    else {
+                        double ratio = (f * f - cutoffLow * cutoff) / (f * (cutoff - cutoffLow));
+                        gain = 1. / Math.sqrt(1. + Math.pow(ratio * ratio, order));
+                    }
+                } else {
+                    //Lowpass: |H|^2 = 1 / (1 + (f/fh)^2n)
+                    double ratio = f / cutoff;
+                    gain = 1. / Math.sqrt(1. + Math.pow(ratio * ratio, order));
+                }
+                filtered[i] = data[i] * gain;
+            }
+
+            if (outputs.size() > 0 && outputs.get(0) != null)
+                outputs.get(0).append(filtered, count);
+        }
+    }
+
 }
