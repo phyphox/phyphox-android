@@ -1027,7 +1027,11 @@ public abstract class PhyphoxFile {
                 if (targetIndex > -1) {
                     if (targetIndex >= additionalTags.size())
                         additionalTags.setSize(targetIndex + 1);
-                    additionalTags.set(targetIndex, at);
+                    AdditionalTag existing = additionalTags.get(targetIndex);
+                    if (existing != null && !existing.name.equals("input") && !existing.name.equals("output"))
+                        additionalTags.insertElementAt(at, targetIndex); //The slot is taken by another tag (i.e. a map tag of a dropdown element that occurred before this input/output). Insert instead of overwriting it.
+                    else
+                        additionalTags.set(targetIndex, at);
                 } else
                     additionalTags.add(at);
             }
