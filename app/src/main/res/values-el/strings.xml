@@ -32,7 +32,7 @@
 \nDominik Dorsel
 \nJonas Gessner
 \nCamilla Lummerzheim</string>
-    <string name="creditsLibs">Το web-interface της απομακρυσμένης πρόσβασης χρησιμοποιεί τη βιβλιοθήκη JavaScript \"Chart.js\" (http://chartjs.org), διαθέσιμη υπό την άδεια του ΜΙΤ. Για το μετασχηματισμό fourier χρησιμοποιούμε την βιβλιοθήκη FFTW (http://fftw.org), Copyright © 2003, 2007-11 Matteo Frigo, Copyright © 2003, 2007-11 Massachusetts Institute of Technology που είναι διαθέσιμη υπό την άδεια GNU General Public Licence (version 2 or later). Τα δεδομένα υψομέτρου του GPS μετατρέπονται από το ελλειψοειδές WGS84 στο γεωειδές EGM84 χρησιμοποιώντας δεδομένα EGM84 (30\' ανάλυσης) και μια τροποποιημένη συνάρτηση από το GographicLib (https://geographiclib.sourceforge.io/, MIT/X11 licence).</string>
+    <string name="creditsLibs">Το web-interface της απομακρυσμένης πρόσβασης χρησιμοποιεί τον Java Lightweight HTTP Server (jlhttp) διαθέσιμο με βάση την GNU General Public Licence v2 και σχεδιάζει τα διαγράμματα με τη βιβλιοθήκη JavaScript \"Chart.js\" (http://chartjs.org), διαθέσιμη υπό την άδεια του ΜΙΤ. Για το μετασχηματισμό fourier χρησιμοποιούμε την βιβλιοθήκη FFTW (http://fftw.org), Copyright © 2003, 2007-11 Matteo Frigo, Copyright © 2003, 2007-11 Massachusetts Institute of Technology που είναι διαθέσιμη υπό την άδεια GNU General Public Licence (version 2 or later). Τα δεδομένα υψομέτρου του GPS μετατρέπονται από το ελλειψοειδές WGS84 στο γεωειδές EGM84 χρησιμοποιώντας δεδομένα EGM84 (30\' ανάλυσης) και μια τροποποιημένη συνάρτηση από το GographicLib (https://geographiclib.sourceforge.io/, MIT/X11 licence).</string>
     <string name="sensorLinearAcceleration">Γραμμική επιτάχυνση</string>
     <string name="sensorLight">Φως</string>
     <string name="sensorGyroscope">Γυροσκόπιο</string>
@@ -373,7 +373,7 @@
     <string name="settings_mode_no_dark">Off</string>
     <string name="settings_mode_dark_system">Όμοιο με το σύστημα</string>
     <string name="privacyPolicyURL">https://phyphox.org/privacy</string>
-    <string name="cameraFront">Μπροστά</string>
+    <string name="cameraFront">Εμπρός</string>
     <string name="cameraBack">Πίσω</string>
     <string name="off">Off</string>
     <string name="on">On</string>

@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="settings">સેટિંગ્સ</string>
+    <string name="ok">બરાબર</string>
+    <string name="unknown">અજ્ઞાત</string>
+    <string name="stop">રોકો</string>
+    <string name="start">ચાલુ કરો</string>
+    <string name="off">બંધ</string>
+    <string name="on">ચાલુ</string>
+</resources>

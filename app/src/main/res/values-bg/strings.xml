@@ -1,0 +1,174 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="action_settings">Настройки</string>
+    <string name="graph_tools_pick">Избор от данни</string>
+    <string name="graph_tools_more">Допълнителни инструменти</string>
+    <string name="graph_tools_system_time">Премини към системно време</string>
+    <string name="graph_tools_reset">Възстанови мащаба</string>
+    <string name="graph_tools_linear_fit">Линейна апроксимация</string>
+    <string name="graph_tools_log_x">Логаритмичен мащаб по x</string>
+    <string name="graph_tools_log_y">Логаритмичен мащаб по x</string>
+    <string name="graph_point_label">Точка</string>
+    <string name="graph_slope_label">Наклон</string>
+    <string name="graph_difference_label">Разлика</string>
+    <string name="graph_fit_label">Линейна апроксимация: y = a x + b</string>
+    <string name="applyZoomExplanation">При напускане на интерактивния режим, ще може да изберете дали да запазите избрания мащаб.</string>
+    <string name="applyZoomAdvanced">Допълнителни настройки</string>
+    <string name="applyZoomApply">Приложи към…</string>
+    <string name="applyZoomReset">Възстанови начална конфигурация</string>
+    <string name="applyZoomKeep">Запази избора</string>
+    <string name="applyZoomThis">Само тази графика</string>
+    <string name="applyZoomSameVariable">Други графики: Същата променлива</string>
+    <string name="applyZoomSameUnit">Други графики: същата единица</string>
+    <string name="applyZoomSameAxis">Други графики: Същата ос</string>
+    <string name="newExperiment">Добави експерименти</string>
+    <string name="newExperimentSimple">Добави прост експеримент</string>
+    <string name="newExperimentPhyphoxInfo">За да създадете други експерименти, включително анализ на данни, и за да ги споделите с колеги, ученици, студенти, и приятели посетете phyphox.org.</string>
+    <string name="newExperimentInputTitle">Заглавие</string>
+    <string name="newExperimentInputBufferSize">Размер на буфера (брой стойности, които да бъдат запазени)</string>
+    <string name="newExperimentInputRate">Честота на сензора (Hz, 0 = възможно най-бързо)</string>
+    <string name="newExperimentInputSensors">Активирани сензори</string>
+    <string name="newExperimentBluetooth">Добави експеримент за блутут устройство</string>
+    <string name="newExperimentBluetoothErrorTitle">Bluetooth - грешка при сканиране</string>
+    <string name="newExperimentBluetoothLoadFromDevice">Зареди от устройство</string>
+    <string name="newExperimentBluetoothLoadFromDeviceInfo">Това устройство осигурява собствен phyphox експеримент. За отварянето му избери \"Зареди от устройство\".</string>
+    <string name="newExperimentQR">Добави експеримент чрез QR код</string>
+    <string name="newExperimentQRscan">Сканирай QR код, съдържащ phyphox експеримент.</string>
+    <string name="newExperimentQRErrorTitle">Грешка при QR код.</string>
+    <string name="newExperimentQRNoExperiment">Не може да открие QR код, съдържащ phyphox експеримент.</string>
+    <string name="newExperimentQRcrcMismatch">QR кода, който току що сканирахте не съвпада с предишните кодове. Моля сканирайте кодове само от един и същ експеримент.</string>
+    <string name="newExperimentQRCodesMissing1">QR кодът, който току-що сканирахте е част от поредица от</string>
+    <string name="newExperimentQRCodesMissing2">кодове. Моля натистене \"Продължи\" за да сканирате и останалите. Все още липсващи кодове:</string>
+    <string name="newExperimentQRBadCRC">Грешна контролна сума. Това означава, че или QR кодът е грешен, или е възникнала грещка при сканирането му.</string>
+    <string name="newExperimentBTReadErrorTitle">Грешка при експеримент чрез Bluetooth.</string>
+    <string name="newExperimentBTReadErrorCorrupted">Прехвърлените експериментални данни са повредени.</string>
+    <string name="generalErrorDialog">Възникна грешка.</string>
+    <string name="help">Помощ и информация</string>
+    <string name="experimentsPhyphoxOrg">Идеи за експеримент и инструкции</string>
+    <string name="experimentsPhyphoxOrgURL">http://phyphox.org/experiments</string>
+    <string name="faqPhyphoxOrg">Често задавани въпроси</string>
+    <string name="faqPhyphoxOrgURL">http://phyphox.org/faq</string>
+    <string name="remotePhyphoxOrg">Помощ за дистанционен контрол</string>
+    <string name="remotePhyphoxOrgURL">http://phyphox.org/remote-control</string>
+    <string name="translationToWebsiteURL">http://phyphox.org/languages#en</string>
+    <string name="deviceInfo">Информация за устройството</string>
+    <string name="copyToClipboard">Копирай във временния буфер</string>
+    <string name="deviceInfoCopied">Информацията за устройството е копирана във временния ви буфер.</string>
+    <string name="warning">Предупреждение</string>
+    <string name="donotshowagain">Не показвай отново</string>
+    <string name="damageWarning">Внимавайте да не повредите телефона си по време на експериментите. Особено внимавайте да не го изпуснете върху твърди повърости, и да не го излагата на силни магнитни полета. Авторите на phyphox не носят отговорност за повреди на телефона ви.</string>
+    <string name="info">Информация</string>
+    <string name="credits">Принос</string>
+    <string name="creditsRWTH">phyphox® е създаден в 2nd Institute of Physics at the RWTH Aachen University.</string>
+    <string name="creditsNames">Концепция и Разработка:
+\nDr. Sebastian Staacks
+\nКонцепция:
+\nDr. Sebastian Staacks
+\nПрограмиране:
+\nGaurav Tripathee
+\nDominik Dorsel
+\nJonas Gessner
+\nCamilla Lummerzheim</string>
+    <string name="gpl">Phyphox® е софтуеър с отворен код, публикуван под лизенз GNU General Public Licence. За повече информация и достъп до кода посетете http://phyphox.org for further information and to get access to its source code. Името \"phyphox\" и \"RWTH Aachen\" са регистрирани търговски марки.</string>
+    <string name="creditsLibs">Уеб-интерфейсът за дистанционен достъп използва Java Lightweight HTTP Server (jlhttp) лизензиран под GNU General Public Licence v2 и изобразява данните чрез JavaScript библиотеката \"Chart.js\" (http://chartjs.org), достъпни под лиценза MIT licence. За преобразувания на Фурие използваме библиотеката FFTW library (http://fftw.org), Copyright © 2003, 2007-11 Matteo Frigo, Copyright © 2003, 2007-11 Massachusetts Institute of Technology, която е достъпна под лиценз GNU General Public Licence (версия 2 или по-висока). GPS данните за височина са превърнати от елипсоид WGS84 към геоид EGM84 използвайки данните EGM84 (разделителна способност 30\') и функция ported от GographicLib (https://geographiclib.sourceforge.io/, MIT/X11 licence).</string>
+    <string name="sensorLinearAcceleration">Линейно ускорение</string>
+    <string name="sensorGravity">Гравитация</string>
+    <string name="sensorLight">Светлина</string>
+    <string name="sensorGyroscope">Жироскоп</string>
+    <string name="sensorAccelerometer">Акселерометър</string>
+    <string name="sensorMagneticField">Магнитно поле</string>
+    <string name="sensorPressure">Налягане</string>
+    <string name="sensorTemperature">Температура</string>
+    <string name="sensorHumidity">Влажност</string>
+    <string name="sensorProximity">Близост</string>
+    <string name="sensorAttitude">Ориентация</string>
+    <string name="sensorVendor">Специфичен за производителя</string>
+    <string name="sensorDepth">Разстояние (LiDAR/ToF)</string>
+    <string name="sensorCamera">Камера</string>
+    <string name="location">Местоположение</string>
+    <string name="sensorNotAvailableWarningTitle">Сензорът не е наличен.</string>
+    <string name="sensorNotAvailableWarningText1">Сензорът</string>
+    <string name="sensorNotAvailableWarningText2">не е наличен. Обикновено това означава, че устройството ви не притежава този тип сензор.</string>
+    <string name="sensorNotAvailableWarningMoreInfo">Повече информация</string>
+    <string name="sensorNotAvailableWarningMoreInfoURL">http://phyphox.org/faq/#faqMissingSensor</string>
+    <string name="tryagain">Опитайте отново</string>
+    <string name="doContinue">Продължете</string>
+    <string name="close">Затвори</string>
+    <string name="next">Следващ</string>
+    <string name="cancel">Откажи</string>
+    <string name="unknown">непознат</string>
+    <string name="rename">Преименувай</string>
+    <string name="delete">Изтрий</string>
+    <string name="confirmDelete">Желаете ли да изтриете този експеримент от набора ви\?</string>
+    <string name="confirmDeleteTitle">Потвърждавате ли изтриването\?</string>
+    <string name="stop">Спиране</string>
+    <string name="start">Начало</string>
+    <string name="clear_data">Изчисти данните</string>
+    <string name="clear_data_question">Да се изчистят ли записаните данни\?</string>
+    <string name="clear">Изчисти</string>
+    <string name="leave_experiment">Напусни експеримента</string>
+    <string name="leave_experiment_question">Желаете ли да напуснете този експеримент и да отхвърлите записаните данни\?</string>
+    <string name="leave">Напусни</string>
+    <string name="timed_stop">Прекрати зададено измерване</string>
+    <string name="timed_start">Стартирай зададено измерване</string>
+    <string name="loadingTitle">Задеждане</string>
+    <string name="loadingText">Зареждане на експеримент…</string>
+    <string name="loadingBluetoothConnectionText">Свързване към Bluetooth устройство…</string>
+    <string name="timedRunDialogTitle">Времетраене</string>
+    <string name="timedRunStartDelay">Забавен старт (s)</string>
+    <string name="timedRunStopDelay">Продължителност на експеримента (s)</string>
+    <string name="enableTimedRun">Изпълни със зададено времетраене</string>
+    <string name="export">Експортиране на данни</string>
+    <string name="export_empty">Тази конфигурация на експеримента не дефинира данни за експортиране. Ако това е грешка, моля обърнете се към източника на QR кода или конфигурационния файл.</string>
+    <string name="export_subject">Данни от phyphox</string>
+    <string name="export_pick_share">Избери метод за експортиране</string>
+    <string name="share">Сподели снимка на екрана</string>
+    <string name="download">Изтегляне</string>
+    <string name="savedToDownloadsMessage">Файлът е запазен при изтеглените файлове</string>
+    <string name="permissionRequiredToSaveToDownloads">Необходимо е разрешение за да може да се запазват изтеглените файлове</string>
+    <string name="errorWritingStateFile">Грешка при записване на файл със състоянието:</string>
+    <string name="share_subject">Екранна снимка от phyphox</string>
+    <string name="share_pick_share">Избор на метод за споделяне</string>
+    <string name="remoteServer">Разрешаване на отдалечен достъп</string>
+    <string name="remoteServerWarning">Избрали сте да разрешите отдалечен достъп до набраните данни. Правете го единствено в сигурна мрежа! Също така имайте предвид, че в много корпоративни или университетски мрежи, директен достъп между устройства може да не е възможен.
+\n
+\nЗа най-добра сигурност и ефективност се свържете към това устройство чрез tethering (точка за споделяне).
+\n
+\nСлед като натиснете ОК ще имате достъп до измерването ви от всеки уеб браъузър в същата мрежа.</string>
+    <string name="remoteServerWarningTitle">Предупреждение за сигурност!</string>
+    <string name="remoteServerNoNetwork">Първо трябва да настроите Wifi връзка до отдалеченото устройство. Моля включете Wifi или създайте мобилна точка за споделяне.</string>
+    <string name="remoteServerActive">Отдалеченият достъп е включен. Влезте в експеримента на следния URL адрес:
+\n%1$s</string>
+    <string name="hotspotSettings">Настройки на точка за споделяне</string>
+    <string name="remoteDepthGUIWarning">Преглед и контрол на сензора LiDAR/ToF въху отдалечения интерфейс не се поддържа.</string>
+    <string name="remoteCameraPreviewWarning">Преглед и контрол на камерата върху отдалечения интерфейс не се поддържа.</string>
+    <string name="calibrated_magnetometer">Използвайте калибриран магнтитометър</string>
+    <string name="force_gnss">Само сателитно местоположение</string>
+    <string name="switchToPhoneLayout">Изглед: Тесен</string>
+    <string name="switchColumns1">Изглед: 1 стълб</string>
+    <string name="switchColumns2">Изглед: 2 стълба</string>
+    <string name="switchColumns3">Изглед: 3 стълба</string>
+    <string name="toggleBrightMode">Светъл режим</string>
+    <string name="fontSize">Размер на шрифта</string>
+    <string name="show_description">Информация за експеримента</string>
+    <string name="save_locally">Добавяне на експеримент към набор</string>
+    <string name="save_locally_done">Експериментът е добавен успешно към набора.</string>
+    <string name="save_locally_message">Експериментът е отворен от отдалечен източник. Желаете ли да го добавите към набора си\?</string>
+    <string name="save_locally_button">Запазване в колеkция</string>
+    <string name="save_state">Запазване на състоянието на експеримент</string>
+    <string name="save_state_category">Запазени състояния на експеримент</string>
+    <string name="save_state_message">Може да запазите състоянието на експеримента, включително данните, в колекцията си, или да ги споделите с друго приложение.</string>
+    <string name="save_state_title">Наименование</string>
+    <string name="save_state_save">В колекция</string>
+    <string name="save_state_share">Споделяне</string>
+    <string name="save_state_subject">Състояние на експеримент за phyphox</string>
+    <string name="save_state_default_title">Измерване</string>
+    <string name="save_state_success">Състоянието е запазено във вашата колекция.</string>
+    <string name="open_zip_title">Отваряне на група експерименти</string>
+    <string name="open_zip_dialog_instructions">Този ресурс съдържа няколко експеримента. Може да изберете един за отваряне с възможност за запазване в колекцията си, или да използвате буртона по-долу за да запазите в колекцията си всичките наведнъж.</string>
+    <string name="open_save_all">Запазване на всички</string>
+    <string name="open_bluetooth_assets_title">Експерименти за Bluetooth устройство</string>
+    <string name="settingsProximityLock">Заключване чрез сензора за близост</string>
+    <string name="settingsProximityLockDetail">Изключете екрана при активиране на сензора за близост, за да избегнете неволни докосвания, например когато телефонът е в джоба ви.</string>
+    <string name="settingsPort">Порт за отдалечен достъп</string>
+</resources>

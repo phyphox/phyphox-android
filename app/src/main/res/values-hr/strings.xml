@@ -78,7 +78,7 @@
 \nJonas Gessner
 \nCamilla Lummerzheim</string>
     <string name="gpl">Phyphox® je program otvorenog koda objavljen pod GNU General Public Licence. Molim Vas posjetite http://phyphox.org za daljnje informacije i za pristup njegovom izvornom kodu. Ali, ime \"phyphox\" i \"RWTH Aachen\" su registritani zaštitni znakovi.</string>
-    <string name="creditsLibs">Internet sučelje za daljinsko upravljanje koristi Javascript biblioteku \"Chart.js\"(http://chartjs.org), dostupnu pod MIT licencom. Za Furijerove transformacije, koristimo FFTW biblioteku (http://fftw.org), Copyright © 2003, 2007-11 Matteo Frigo, Copyright © 2003, 2007-11 Massachusetts Institute of Technology, koja je dostupna pod GNU General Public Licence (verzija 2 ili novija). PodaciGPS elevacije su pretvoreni iz WGS84 elipsoida u EGM84 geoid koristeći EGM84 podatke (30\' rezolucija) i prenesenom funkcijom iz GographicLib (https://geographiclib.sourceforge.io/, MIT/X11 licenca).</string>
+    <string name="creditsLibs">Internet sučelje za daljinsko upravljanje koristi laki Java HTTP server (jhttp) pod GNU generičkom javnom licencom v2 i grafički prikazuje podatke pomoću Javascript biblioteke \"Chart.js\"(http://chartjs.org), dostupne pod MIT licencom. Za Furijerove transformacije, koristimo FFTW biblioteku (http://fftw.org), Copyright © 2003, 2007-11 Matteo Frigo, Copyright © 2003, 2007-11 Massachusetts Institute of Technology, koja je dostupna pod GNU General Public Licence (verzija 2 ili novija). PodaciGPS elevacije su pretvoreni iz WGS84 elipsoida u EGM84 geoid koristeći EGM84 podatke (30\' rezolucija) i prenesenom funkcijom iz GographicLib (https://geographiclib.sourceforge.io/, MIT/X11 licenca).</string>
     <string name="sensorLinearAcceleration">Linearno ubrzanje</string>
     <string name="sensorGravity">Sila teža</string>
     <string name="sensorLight">Svijetlost</string>
@@ -246,12 +246,12 @@
     <string name="depthAggregationModeAverage">Prosjek</string>
     <string name="depthAggregationModeWeighted">Težinski</string>
     <string name="cameraFrontFacing">Prednja kamera</string>
-    <string name="cameraFront">Prednja</string>
+    <string name="cameraFront">Naprijed</string>
     <string name="cameraBackFacing">Stražnja kamera</string>
-    <string name="cameraBack">Stražnja</string>
+    <string name="cameraBack">Natrag</string>
     <string name="cameraExternal">Vanjska kamera</string>
-    <string name="off">Isključi</string>
-    <string name="on">Uključi</string>
+    <string name="off">Isključeno</string>
+    <string name="on">Uključeno</string>
     <string name="camera_preview">Kamera Pregled</string>
     <string name="camera_not_ready">Kamera nije spremna</string>
     <string name="settingsDefault">Zadano</string>
@@ -274,7 +274,7 @@
     <string name="settings_mode_dark">Uključeno (Zadano)</string>
     <string name="settings_mode_no_dark">Isključeno</string>
     <string name="settings_mode_dark_system">Kao i sustav</string>
-    <string name="common_unit_short_arbitrary_unit">proizvoljna jedinica</string>
+    <string name="common_unit_short_arbitrary_unit">proiz. jedinica</string>
     <string name="common_unit_short_second">s</string>
     <string name="common_unit_short_milli_second">ms</string>
     <string name="common_unit_short_hertz">Hz</string>
@@ -293,6 +293,7 @@
     <string name="common_unit_short_hecto_pascal">hPa</string>
     <string name="common_unit_short_decibel">dB</string>
     <string name="common_unit_short_percent">%</string>
+    <string name="common_unit_short_luminance">cd/m²</string>
     <string name="common_unit_percentage">%</string>
     <string name="common_quantity_short_time">t</string>
     <string name="common_quantity_short_angular_velocity">ω</string>
@@ -382,4 +383,16 @@
     <string name="common_musical_note_gb7">F#7 / Gb7</string>
     <string name="common_musical_note_g7">G7</string>
     <string name="common_musical_note_ab7">G#7 / Ab7</string>
+    <string name="remoteCameraPreviewWarning">Pregled i kontrola kamere na udaljenom sučelju nije podržana.</string>
+    <string name="common_quantity_short_luma">Y\'</string>
+    <string name="cameraZoom">Uvećanje</string>
+    <string name="download">Preuzimanje</string>
+    <string name="savedToDownloadsMessage">Dokument spremljen u Preuzimanja</string>
+    <string name="permissionRequiredToSaveToDownloads">Potrebna je dozvola za spremanje kako bi mogli spremiti datoteke u Preuzimanja</string>
+    <string name="errorWritingStateFile">Greška pri zapisivanju datoteke stanja:</string>
+    <string name="wb_auto">Automatski</string>
+    <string name="wb_incandescent">žarulja</string>
+    <string name="wb_fluorescent">fluorescentna svjetiljka</string>
+    <string name="wb_daylight">Dnevno svijetlo</string>
+    <string name="wb_cloudy">Oblačno</string>
 </resources>

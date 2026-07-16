@@ -373,4 +373,24 @@
     <string name="settings_mode_dark">चालू (डिफ़ॉल्ट)</string>
     <string name="settings_mode_no_dark">बंद</string>
     <string name="settings_mode_dark_system">सिस्टम के रूप में</string>
+    <string name="cameraFront">अग्रभाग</string>
+    <string name="cameraBack">पश्चभाग</string>
+    <string name="off">ऑफ</string>
+    <string name="on">ऑन</string>
+    <string name="camera_preview">कैमरा पूर्वावलोकन</string>
+    <string name="camera_not_ready">कैमरा तैयार नहीं</string>
+    <string name="common_unit_percentage">%</string>
+    <string name="common_quantity_short_luminance">Lv</string>
+    <string name="remoteCameraPreviewWarning">रिमोट इंटरफ़ेस पर कैमरे का पूर्वावलोकन और नियंत्रण समर्थित नहीं है।</string>
+    <string name="common_quantity_short_luma">Y\'</string>
+    <string name="cameraZoom">ज़ूम</string>
+    <string name="download">डाउनलोड</string>
+    <string name="savedToDownloadsMessage">फ़ाइल डाउनलोड में सेव की गई</string>
+    <string name="permissionRequiredToSaveToDownloads">डाउनलोड्स में फाइल्स को सेव करने के लिए स्टोरेज अनुमति चाहिए</string>
+    <string name="errorWritingStateFile">स्टेट फाइल को लिखने में त्रुटि:</string>
+    <string name="wb_auto">स्वतः चालित</string>
+    <string name="wb_incandescent">दीप्त</string>
+    <string name="wb_fluorescent">स्फुरदीप्त</string>
+    <string name="wb_daylight">दिन का प्रकाश</string>
+    <string name="wb_cloudy">बादलों वाला</string>
 </resources>
