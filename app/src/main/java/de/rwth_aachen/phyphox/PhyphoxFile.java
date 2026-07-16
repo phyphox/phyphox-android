@@ -1480,7 +1480,7 @@ public abstract class PhyphoxFile {
                     String unitY = getTranslatedAttribute("unitY");
                     String unitZ = getTranslatedAttribute("unitZ");
                     String unitYX = getTranslatedAttribute("unitYperX");
-                    String pickLabel = getStringAttribute("pickLabel");
+                    String pickLabel = getTranslatedAttribute("pickLabel");
 
                     Vector<Integer> colorScale = new Vector<>();
                     int colorStepIndex = 1;
