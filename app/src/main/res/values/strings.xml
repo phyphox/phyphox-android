@@ -9,7 +9,6 @@
     <string name="experimentsPhyphoxOrgURL">http://phyphox.org/experiments</string>
     <string name="faqPhyphoxOrg">Frequently asked questions</string>
     <string name="faqPhyphoxOrgURL">http://phyphox.org/faq</string>
-
     <!-- Generals  -->
     <string name="error">Error</string>
     <string name="invalidValue">Invalid Value</string>
@@ -109,9 +108,7 @@
     <string name="warning_photosensitivity_message">This experiment may produces high-frequency light pulses. It may trigger discomfort or seizures for individuals with photosensitive epilepsy. \n\nAvoid staring directly at the light source.</string>
     <string name="device_overheating">Device Overheating</string>
     <string name="device_heating_serious">The device is getting very warm. The flashlight has been turned off to cool down.</string>
-
     <!-- Graph  -->
-
     <string name="graph_tools_pan_and_zoom">Pan and zoom</string>
     <string name="graph_tools_pick">Pick data</string>
     <string name="graph_tools_calibrate">Calibrate</string>
@@ -127,13 +124,11 @@
     <string name="graph_slope_label">Slope</string>
     <string name="graph_difference_label">Difference</string>
     <string name="graph_fit_label">Linear fit: y = a x + b</string>
-
     <!-- Spectroscopy camera UI -->
     <string name="which_spectrum_orientation">What is your device\'s orientation in regard to the spectrum?</string>
     <string name="portrait_orientation">Portrait</string>
     <string name="landscape_orientation">Landscape</string>
     <string name="spectrum_analysis_setting">Spectrum Analysis Settings</string>
-
     <!-- Graph Zooms  -->
     <string name="applyZoomTitle">Apply zoom</string>
     <string name="applyZoomExplanation">As you are closing the interactive mode of this graph, you can select if you want to keep your zoom.</string>
@@ -146,9 +141,7 @@
     <string name="applyZoomSameVariable">Other graphs: Same variable</string>
     <string name="applyZoomSameUnit">Other graphs: Same unit</string>
     <string name="applyZoomSameAxis">Other graphs: Same axis</string>
-
     <!-- Creating new experiments  -->
-
     <string name="newExperiment">Add experiments</string>
     <string name="newExperimentSimple">Add simple experiment</string>
     <string name="newExperimentPhyphoxInfo">Visit phyphox.org to create more advanced experiments including data analysis and share them with colleagues, students and friends.</string>
@@ -170,9 +163,7 @@
     <string name="newExperimentQRBadCRC">Invalid checksum. This means that either the QR code is bad or something went wrong while scanning it.</string>
     <string name="newExperimentBTReadErrorTitle">Bluetooth experiment error.</string>
     <string name="newExperimentBTReadErrorCorrupted">The transmitted experiment data is corrupted.</string>
-
     <!-- Credits  -->
-
     <string name="credits">Credits</string>
     <string name="creditsRWTH">phyphox® has been created at the 2nd Institute of Physics at the RWTH Aachen University.</string>
     <string name="creditsNames">Development and Concept:
@@ -247,9 +238,7 @@ Redistribution and use in source and binary forms, with or without modification,
 THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.<br />
 ]]>
     </string>
-
     <!-- Sensors  -->
-
     <string name="sensorLinearAcceleration">Linear Acceleration</string>
     <string name="sensorGravity">Gravity</string>
     <string name="sensorLight">Light</string>
@@ -275,9 +264,7 @@ THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND 
     <string name="sensorNotAvailableWarningMoreInfoURL">http://phyphox.org/faq/#faqMissingSensor</string>
     <string name="calibrated_magnetometer">Use calibrated magnetometer</string>
     <string name="force_gnss">Satellite location only</string>
-
     <!-- Bluetooth  -->
-
     <string name="bluetooth">Bluetooth Low Energy</string>
     <string name="bt_android_version">Bluetooth Low Energy is not supported on this device.</string>
     <string name="bt_pick_device">Please pick a device.</string>
@@ -318,13 +305,11 @@ THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND 
     <string name="bl_scan_permission_required_title">Bluetooth Scan Permission Needed</string>
     <string name="bt_scan_permission_needed">You have permanently disabled bluetooth scan access. Please enable Nearby Devices in your device settings to discover bluetooth devices.</string>
     <string name="bt_permission_granted">Permission granted: You can open the scan dialog now..</string>
-
     <!-- Networks and Remotes  -->
-
     <string name="networkPrivacyWarning">Privacy warning</string>
     <string name="networkVisitPrivacyURL">Privacy policy</string>
     <string name="networkPrivacyInfo">This experiment uses a network connection, which means that experiment data can be transmitted to a network service. You can find more details by clicking the privacy policy button below, which will take you to a website with a privacy policy provided by the creator of this experiment. If the network service is not a local device, you should be aware that phyphox may transmit the following information if you start this experiment:</string>
-    <string name="networkPrivacyUniqueID">An id that is unique to this device and the network service, which allow to match all data send from this device through this experiment configuration.</string>
+    <string name="networkPrivacyUniqueID">An id that is unique to this device and the network service, which allows to match all data sent from this device through this experiment configuration.</string>
     <string name="networkPrivacySensorData">Data from the following sensors:</string>
     <string name="networkPrivacySensorMicrophone">Recordings or data derived from recordings from the microphone.</string>
     <string name="networkPrivacySensorLocation">Location data (GPS data or similar).</string>
@@ -347,9 +332,7 @@ THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND 
     <string name="localNetworkRationaleMessage">Local network access is required to connect to the remote server. Please grant the permission.</string>
     <string name="gotoSetting">Go to Settings</string>
     <string name="permissionRequired">Permission Required</string>
-
     <!-- Camera Feature -->
-
     <string name="depthAggregationMode">Aggregation mode</string>
     <string name="depthAggregationModePrompt">Select the method to aggregate depth information within the selected region.</string>
     <string name="depthAggregationModeClosest">Closest</string>
@@ -370,9 +353,7 @@ THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND 
     <string name="on">On</string>
     <string name="camera_preview">Camera Preview</string>
     <string name="camera_not_ready">Camera Not Ready</string>
-
     <!-- App Settings -->
-
     <string name="settingsDefault">Default</string>
     <string name="settings">Settings</string>
     <string name="settingsHeadLanguage">Language</string>
@@ -395,7 +376,6 @@ THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND 
     <string name="settings_mode_dark">On (Default)</string>
     <string name="settings_mode_no_dark">Off </string>
     <string name="settings_mode_dark_system">As system</string>
-
     <!-- Units-->
     // pixel position, wavelenght,
     <string name="common_unit_short_arbitrary_unit">arb. unit</string>
