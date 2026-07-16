@@ -12,9 +12,10 @@ android {
         //  format  WXXYYZZ, where WW is major, XX is minor, YY is patch, and ZZ is build
         versionCode 1020100 //1.02.01-00
 
-        def locales = ['en', 'cs', 'de', 'el', 'es', 'fr', 'hi', 'it', 'ja', 'ka', 'nl', 'pl', 'pt', 'ru', 'sr', 'b+sr+Latn', 'tr', 'vi', 'zh-rCN', 'zh-rTW']
+        // Note that the following locales have not yet been released and are currently included for testing: bn, gu, kn, or, ta,
+        def locales = ['en', 'bn', 'cs', 'de', 'el', 'es', 'fr', 'gu', 'hi', 'it', 'ja', 'ka', 'kn', 'nl', 'or', 'pl', 'pt', 'ru', 'sr', 'b+sr+Latn', 'ta', 'tr', 'vi', 'zh-rCN', 'zh-rTW']
         buildConfigField "String[]", "LOCALE_ARRAY", "new String[]{\""+locales.join("\",\"")+"\"}"
-        resourceConfigurations += ['en', 'cs', 'de', 'el', 'es', 'fr', 'hi', 'it', 'ja', 'ka', 'nl', 'pl', 'pt', 'ru', 'sr', 'b+sr+Latn', 'tr', 'vi', 'zh-rCN', 'zh-rTW']
+        resourceConfigurations += locales
 
         vectorDrawables {
             useSupportLibrary = true
