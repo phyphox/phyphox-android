@@ -119,7 +119,7 @@
     <string name="categoryPhyphoxOrg">Unterstütze phyphox</string>
     <string name="categoryPhyphoxOrgHint">Am Ende der Liste gibt es neue Möglichkeiten, phyphox zu unterstützen.</string>
     <string name="translationToWebsiteURL">http://phyphox.org/languages#de</string>
-    <string name="bt_android_version">Bluetooth Low Energy wird von bei Android Versionen kleiner als 4.3 nicht unterstützt.</string>
+    <string name="bt_android_version">Bluetooth Low Energy wird auf diesem Gerät nicht unterstützt.</string>
     <string name="bt_exception_uuid">Die Characteristic mit der UUID</string>
     <string name="bt_exception_uuid2">wurde nicht gefunden.</string>
     <string name="bt_exception_disabled">Bluetooth ist deaktiviert. Bitte aktiviere Bluetooth und versuche es noch einmal.</string>
@@ -397,4 +397,37 @@
     <string name="savedToDownloadsMessage">Datei in Dowloads gespeichert</string>
     <string name="permissionRequiredToSaveToDownloads">Die Zugriffsberechtigung für den Speicher wird benötigt um Dateien im Download-Ordner zu speichern</string>
     <string name="errorWritingStateFile">Fehler beim Schreiben des Zustands:</string>
+    <string name="error">Fehler</string>
+    <string name="invalidValue">Ungültiger Wert</string>
+    <string name="clear_data_question_select">Aufgezeichnete Daten sowie die folgenden optionalen Elemente löschen\?</string>
+    <string name="warning_photosensitivity">Warnung vor Anfällen bei Lichtempfindlichkeit</string>
+    <string name="warning_photosensitivity_message">Dieses Experiment kann hochfrequente Lichtimpulse erzeugen. Dies kann bei Personen mit fotosensibler Epilepsie zu Beschwerden oder Anfällen führen.
+\n
+\nVermeiden Sie es, direkt in die Lichtquelle zu blicken.</string>
+    <string name="device_overheating">Gerät überhitzt</string>
+    <string name="device_heating_serious">Das Gerät wird sehr warm. Die Taschenlampe wurde ausgeschaltet um abzukühlen.</string>
+    <string name="graph_tools_calibrate">Kalibrieren</string>
+    <string name="which_spectrum_orientation">Wie ist die Ausrichtung deines Geräts in Bezug auf das Spektrum\?</string>
+    <string name="portrait_orientation">Vertikal</string>
+    <string name="landscape_orientation">Horizontal</string>
+    <string name="spectrum_analysis_setting">Spektrum Analyse-Einstellungen</string>
+    <string name="bl_scan_permission_required_title">Erlaubnis für Bluetooth Suche benötigt</string>
+    <string name="bt_scan_permission_needed">Du hast die Erlaubnis für die Bluetooth-Suche dauerhaft deaktiviert. Bitte aktiviere „Geräte in der Nähe“ in deinen Geräteeinstellungen, um Bluetooth-Geräte zu finden.</string>
+    <string name="bt_permission_granted">Berechtigung erteilt: Du kannst den Scan-Dialog jetzt öffnen.</string>
+    <string name="localNetworkPermission">Erlaubnis für lokalen Netzwerkzugriff benötigt</string>
+    <string name="localNetworkPermissionMessage">Du hast den Zugriff auf das lokale Netzwerk dauerhaft deaktiviert. Bitte aktiviere „Geräte in der Nähe“ in deinen Geräteeinstellungen, um lokale Hardware zu finden.</string>
+    <string name="localNetworkRationaleMessage">Der Zugriff auf das lokale Netzwerk ist erforderlich, um eine Verbindung zum Remote-Server herzustellen. Bitte erteile die Berechtigung.</string>
+    <string name="gotoSetting">Gehe zu Einstellungen</string>
+    <string name="permissionRequired">Berechtigung notwendig</string>
+    <string name="settingsFileNameFormat">Vorlage für Dateinamen</string>
+    <string name="settingsFileNameFormatDetail">Vorlage für Standarddateinamen beim Exportieren von Daten, Teilen eines Screenshots oder Speichern eines Zustands. Verfügbare Platzhalter:
+\n{title} – Titel des Experiments
+\n{date} – aktuelles Datum
+\n{time} – aktuelle Uhrzeit
+\n{startDate} – Datum zu Beginn der Messung
+\n{startTime} – Uhrzeit zu Beginn der Messung
+\n{duration} – Dauer der Messung</string>
+    <string name="common_unit_short_nano_meter">nm</string>
+    <string name="common_unit_short_micro_meter">μm</string>
+    <string name="common_quantity_short_wavelength">λ</string>
 </resources>
