@@ -234,8 +234,14 @@ public class SpectroscopyAnalyzer extends AnalyzingModule {
             result.luminance[i] /= totalContributions[i] * normalizationFactor;
         }
 
-        result.pixelPosition = Arrays.copyOfRange(result.pixelPosition, minContribution, maxContribution+1);
-        result.luminance = Arrays.copyOfRange(result.luminance, minContribution, maxContribution+1);
+        if (minContribution < 0) {
+            // No pixel contributed to any spectrum column (e.g. entirely dark or clipped frame)
+            result.pixelPosition = new double[0];
+            result.luminance = new double[0];
+        } else {
+            result.pixelPosition = Arrays.copyOfRange(result.pixelPosition, minContribution, maxContribution + 1);
+            result.luminance = Arrays.copyOfRange(result.luminance, minContribution, maxContribution + 1);
+        }
 
         checkGLError("spectroscopy analyze");
 
