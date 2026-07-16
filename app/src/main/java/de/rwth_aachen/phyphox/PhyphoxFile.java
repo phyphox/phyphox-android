@@ -147,7 +147,7 @@ public abstract class PhyphoxFile {
 
         //We only respond to view-action-intents
         String action = intent.getAction();
-        if (action.equals(Intent.ACTION_VIEW)) {
+        if (Intent.ACTION_VIEW.equals(action)) {
 
             //We need to perform slightly different actions for all the different schemes
             String scheme = intent.getScheme();
