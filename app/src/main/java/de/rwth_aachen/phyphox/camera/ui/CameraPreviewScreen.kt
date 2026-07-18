@@ -482,13 +482,12 @@ class CameraPreviewScreen(
 
     public fun updateTransformation(outWidth: Int, outHeight: Int) {
         cameraInput.analyzingOpenGLRenderer?.let {
-            val whmax: Int = Math.max(it.camNativeWidth, it.camNativeHeight)
-            val whmin: Int = Math.min(it.camNativeWidth, it.camNativeHeight)
-            if (whmax == 0 || whmin == 0 || outWidth == 0 || outHeight == 0) return
+            //Use the size of the transformed camera image (camWidth/camHeight, which includes any crop from the surface texture's transform matrix) instead of the native buffer size, so the preview aspect ratio exactly matches what the analyzing renderers see
+            if (it.camWidth == 0 || it.camHeight == 0 || outWidth == 0 || outHeight == 0) return
             val rotation = (context.getSystemService(Context.WINDOW_SERVICE) as WindowManager).defaultDisplay.rotation
             transformation = Matrix()
             val landscape = Surface.ROTATION_90 == rotation || Surface.ROTATION_270 == rotation
-            val targetAspect = if (landscape) whmax.toFloat() / whmin.toFloat() else whmin.toFloat() / whmax.toFloat()
+            val targetAspect = if (landscape) it.camHeight.toFloat() / it.camWidth.toFloat() else it.camWidth.toFloat() / it.camHeight.toFloat()
             val sx: Float
             val sy: Float
             if (outWidth.toFloat() / outHeight.toFloat() > targetAspect) {

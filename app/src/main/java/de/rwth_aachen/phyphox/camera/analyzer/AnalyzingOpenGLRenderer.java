@@ -59,6 +59,7 @@ public class AnalyzingOpenGLRenderer implements Preview.SurfaceProvider, Surface
     Surface cameraSurface = null;
 
     float[] camMatrix = new float[16];
+    float[] latestCamMatrix = new float[16];
 
     ExposureStatisticsListener exposureStatisticsListener;
 
@@ -171,6 +172,11 @@ public class AnalyzingOpenGLRenderer implements Preview.SurfaceProvider, Surface
     public void releaseCameraSurface(Runnable callback) {
         executor.execute(
                 () -> {
+                    if (cameraSurfaceTexture != null) {
+                        cameraSurfaceTexture.setOnFrameAvailableListener(null);
+                        cameraSurfaceTexture.release();
+                        cameraSurfaceTexture = null;
+                    }
                     if (cameraSurface != null) {
                         cameraSurface.release();
                         cameraSurface = null;
@@ -275,29 +281,7 @@ public class AnalyzingOpenGLRenderer implements Preview.SurfaceProvider, Surface
             return;
         executor.execute(
                 () -> {
-                    if (surfaceTextureIsNew) {
-                        cameraSurfaceTexture.updateTexImage();
-                        cameraSurfaceTexture.getTransformMatrix(camMatrix);
-                        camWidth = Math.abs(Math.round(camMatrix[0] * camNativeWidth + camMatrix[1] * camNativeHeight));
-                        camHeight = Math.abs(Math.round(camMatrix[4] * camNativeWidth + camMatrix[5] * camNativeHeight));
-                        Log.i("AnalyzingOpenGLRenderer", "camMatrix: " + Arrays.toString(camMatrix));
-                        Log.i("AnalyzingOpenGLRenderer", "native size: " + camNativeWidth + "x" + camNativeHeight + " => transformed cam size: " + camWidth + "x" + camHeight);
-
-                        prepareOpenGL(camWidth, camHeight);
-
-                        for (AnalyzingOpenGLRendererPreviewOutput previewOutput : previewOutputs) {
-                            CameraPreviewScreen screen = previewOutput.cameraPreviewScreen.get();
-                            if (screen != null && previewOutput.w > 0 && previewOutput.h > 0) {
-                                final int w = previewOutput.w;
-                                final int h = previewOutput.h;
-                                new Handler(Looper.getMainLooper()).post(() -> screen.updateTransformation(w, h));
-                            }
-                        }
-
-                        surfaceTextureIsNew = false;
-                    }
-
-                    if (!running || eglContext == null || cameraSurfaceTexture == null)
+                    if (eglContext == null || cameraSurfaceTexture == null)
                         return;
 
                     EGL14.eglMakeCurrent(eglDisplay, EGL14.EGL_NO_SURFACE, EGL14.EGL_NO_SURFACE, eglContext);
@@ -305,6 +289,39 @@ public class AnalyzingOpenGLRenderer implements Preview.SurfaceProvider, Surface
                     long start = System.nanoTime();
 
                     cameraSurfaceTexture.updateTexImage();
+
+                    //The transform matrix has to be checked on every frame: It changes with a new surface texture, but a new texture may also report a default matrix until the first actual frame has arrived
+                    cameraSurfaceTexture.getTransformMatrix(latestCamMatrix);
+                    if (surfaceTextureIsNew || (running && !Arrays.equals(camMatrix, latestCamMatrix))) {
+                        System.arraycopy(latestCamMatrix, 0, camMatrix, 0, 16);
+                        int newCamWidth = Math.abs(Math.round(camMatrix[0] * camNativeWidth + camMatrix[1] * camNativeHeight));
+                        int newCamHeight = Math.abs(Math.round(camMatrix[4] * camNativeWidth + camMatrix[5] * camNativeHeight));
+                        Log.i("AnalyzingOpenGLRenderer", "camMatrix: " + Arrays.toString(camMatrix));
+
+                        //Only rebuild the GL setup if the effective camera size changed. A matrix change that keeps the size (like a shifted crop) must not tear down the analysis buffers mid-measurement.
+                        if (surfaceTextureIsNew || newCamWidth != camWidth || newCamHeight != camHeight) {
+                            camWidth = newCamWidth;
+                            camHeight = newCamHeight;
+                            Log.i("AnalyzingOpenGLRenderer", "native size: " + camNativeWidth + "x" + camNativeHeight + " => transformed cam size: " + camWidth + "x" + camHeight);
+
+                            prepareOpenGL(camWidth, camHeight);
+
+                            for (AnalyzingOpenGLRendererPreviewOutput previewOutput : previewOutputs) {
+                                CameraPreviewScreen screen = previewOutput.cameraPreviewScreen.get();
+                                if (screen != null && previewOutput.w > 0 && previewOutput.h > 0) {
+                                    final int w = previewOutput.w;
+                                    final int h = previewOutput.h;
+                                    new Handler(Looper.getMainLooper()).post(() -> screen.updateTransformation(w, h));
+                                }
+                            }
+
+                            surfaceTextureIsNew = false;
+                        }
+                    }
+
+                    if (!running)
+                        return;
+
                     long reportedTime = cameraSurfaceTexture.getTimestamp();
                     long timestampDelta = reportedTime + timeAdjustment - SystemClock.elapsedRealtimeNanos();
                     if (Math.abs(timestampDelta) > 60e9) {
@@ -387,12 +404,6 @@ public class AnalyzingOpenGLRenderer implements Preview.SurfaceProvider, Surface
 
     @Override
     public void onSurfaceRequested(@NonNull SurfaceRequest request) {
-
-        camNativeWidth = request.getResolution().getWidth();
-        camNativeHeight = request.getResolution().getHeight();
-
-        surfaceTextureIsNew = true;
-
         executor.execute(
                 () -> {
                     if (eglContext == null)
@@ -405,12 +416,31 @@ public class AnalyzingOpenGLRenderer implements Preview.SurfaceProvider, Surface
                     }
                     checkGLError("Create eglCameraTexture");
 
+                    //Detach and release any leftover surface texture from a previous camera session, so its stray frames cannot trigger draw calls anymore
+                    if (cameraSurfaceTexture != null) {
+                        cameraSurfaceTexture.setOnFrameAvailableListener(null);
+                        cameraSurfaceTexture.release();
+                    }
+                    if (cameraSurface != null)
+                        cameraSurface.release();
+
+                    camNativeWidth = request.getResolution().getWidth();
+                    camNativeHeight = request.getResolution().getHeight();
+
                     cameraSurfaceTexture = new SurfaceTexture(eglCameraTexture);
                     cameraSurfaceTexture.setDefaultBufferSize(camNativeWidth, camNativeHeight);
                     cameraSurfaceTexture.setOnFrameAvailableListener(this);
-                    Surface cameraSurface = new Surface(cameraSurfaceTexture);
+                    cameraSurface = new Surface(cameraSurfaceTexture);
+                    //Only set surfaceTextureIsNew now that the new surface texture is in place: If it is set before this executor task runs, a draw call triggered by a late frame from the old camera would consume the flag and permanently cache the old camera's transform matrix
+                    surfaceTextureIsNew = true;
                     request.provideSurface(cameraSurface, executor, result -> {
-                        releaseCameraSurface(()->{});
+                        Surface releasedSurface = result.getSurface();
+                        if (releasedSurface == cameraSurface) {
+                            releaseCameraSurface(()->{});
+                        } else {
+                            //This surface has already been replaced by a newer one, just make sure it is released
+                            releasedSurface.release();
+                        }
                         checkGLError("destroy camera surface");
                     });
                     checkGLError("onSurfaceRequested");
