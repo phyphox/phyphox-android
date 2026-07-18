@@ -188,7 +188,7 @@
     <string name="experimentinfo_hint">Provjerite informacije pokusa kako bi ste naučili kako ga koristiti.</string>
     <string name="start_hint">Dodirnite trokut kako bi ste pokrenuli pokus.</string>
     <string name="bluetooth">Bluetooth Niske Energije</string>
-    <string name="bt_android_version">Bluetooth Niske Energije nije podržan na inačicama Androida ispod 4.3.</string>
+    <string name="bt_android_version">Bluetooth Niske Energije nije podržan na ovom uređaju.</string>
     <string name="bt_pick_device">Molim Vas odaberite uređaj.</string>
     <string name="bt_scanning_generic">Traženje Bluetooth uređaja…</string>
     <string name="bt_scanning_specific1">Traženje Bluetooth uređaja s(a)</string>
@@ -391,8 +391,41 @@
     <string name="permissionRequiredToSaveToDownloads">Potrebna je dozvola za spremanje kako bi mogli spremiti datoteke u Preuzimanja</string>
     <string name="errorWritingStateFile">Greška pri zapisivanju datoteke stanja:</string>
     <string name="wb_auto">Automatski</string>
-    <string name="wb_incandescent">žarulja</string>
-    <string name="wb_fluorescent">fluorescentna svjetiljka</string>
+    <string name="wb_incandescent">Žarulja</string>
+    <string name="wb_fluorescent">Fluorescentna svjetiljka</string>
     <string name="wb_daylight">Dnevno svijetlo</string>
     <string name="wb_cloudy">Oblačno</string>
+    <string name="error">Pogreška</string>
+    <string name="invalidValue">Nevažeća vrijednost</string>
+    <string name="clear_data_question_select">Počistiti snimljene podatke i sljedeće opcionalne stavke\?</string>
+    <string name="warning_photosensitivity">Upozorenje za fotoosijetljive osobe</string>
+    <string name="warning_photosensitivity_message">Ovaj pokus može proizvesti visoko-frekventne pulseve svijetla. Pkus može izazvati nelagodu ili napadaje kod osoba s fotoosjetljivom epilepsijom.
+\n
+\nIzbjegavajte izravno gledanje u izvor svijetla.</string>
+    <string name="device_overheating">Pregrijavanje uređaja</string>
+    <string name="device_heating_serious">Uređaj postaje topao. Bljeskalica je ugašena radi hlađenja uređaja.</string>
+    <string name="graph_tools_calibrate">Kalibrirajte</string>
+    <string name="which_spectrum_orientation">Koja je orijentacija Vašeg uređaja u odnosu na spektar\?</string>
+    <string name="portrait_orientation">Portret</string>
+    <string name="landscape_orientation">Pejzaž</string>
+    <string name="spectrum_analysis_setting">Postavke analize spektra</string>
+    <string name="bl_scan_permission_required_title">Potrebna je dozvola za korištenje Bluetooth skeniranja</string>
+    <string name="bt_scan_permission_needed">Trajno ste onemogućili pristup bluetooth skeniranju. Molimo omogućite postavku uređaja u blizini na Vašem uređaju kako bi ste otkrili uređaje.</string>
+    <string name="bt_permission_granted">Dozvola dopuštena: Sada možete otvoriti dijalog za skeniranje...</string>
+    <string name="localNetworkPermission">Potrebna je dozvola za korištenje Lokalnih Mreža</string>
+    <string name="localNetworkPermissionMessage">Trano ste onemogućili pristup lokalnim mrežama. Molimo da omogućite opciju uređaja u blizini na vašem uređaju kako bi ste otkrili lokalne uređaje.</string>
+    <string name="localNetworkRationaleMessage">Potreban je pristup Lokalnim Mrežama kako bi ste se spojili na server. Molimo da odobrite zahtijev.</string>
+    <string name="gotoSetting">Otiđite na postvake</string>
+    <string name="permissionRequired">Potrebna je dozvola</string>
+    <string name="settingsFileNameFormat">Zadani nazivi datoteka</string>
+    <string name="settingsFileNameFormatDetail">Uzorci zadanih naziva datoteka kada se izvoze podaci, dijeli slika zaskona ili sprema stanje. Dostupni predlođci: 
+\n{title} – naslov pokusa
+\n{date} – današnji datum
+\n{time} – trenutno vrijeme
+\n{startDate} – datum početka pokusa
+\n{startTime} – vrijeme početka pokusa
+\n{duration} – trajanje mjerenja</string>
+    <string name="common_unit_short_nano_meter">nm</string>
+    <string name="common_unit_short_micro_meter">μm</string>
+    <string name="common_quantity_short_wavelength">λ</string>
 </resources>
