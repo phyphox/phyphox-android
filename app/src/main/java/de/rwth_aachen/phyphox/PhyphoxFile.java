@@ -24,6 +24,7 @@ import android.view.Gravity;
 
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
+import androidx.preference.PreferenceManager;
 
 import org.xmlpull.v1.XmlPullParser;
 import org.xmlpull.v1.XmlPullParserException;
@@ -2286,6 +2287,13 @@ public abstract class PhyphoxFile {
                             aeStrategy,
                             aeFramerateTarget,
                             thresholdAnalyzerThreshold);
+
+                    //Experimental high-speed camera mode: determine the usable configurations at
+                    //load time, so the camera UI can disable the unsupported controls right away
+                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M
+                            && PreferenceManager.getDefaultSharedPreferences(parent).getBoolean("experimentalHighSpeedCamera", false)) {
+                        experiment.cameraInput.prepareHighSpeed((CameraManager) parent.getSystemService(Context.CAMERA_SERVICE));
+                    }
 
                     break;
 

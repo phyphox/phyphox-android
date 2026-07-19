@@ -364,6 +364,10 @@ THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND 
     <string name="settingsProximityLock">Proximity lock</string>
     <string name="settingsProximityLockDetail">Disable the screen when the proximity sensor is triggered to avoid unintended inputs for example in a pocket.</string>
     <string name="settingsPort">Remote access port</string>
+    <string name="settingsHighSpeedCamera">High-speed camera (experimental)</string>
+    <string name="settingsHighSpeedCameraDetail">Capture camera experiments at the highest frame rate offered by the device\'s high-speed mode (typically 120 or 240 fps) instead of the regular camera mode, which is limited to 60 fps. Warning: The high-speed mode does not support most camera controls. Exposure, ISO, shutter speed, white balance and zoom are entirely controlled by the device and the corresponding controls are disabled. Not all devices support a high-speed mode.</string>
+    <string name="cameraHighSpeedNotSupported">This device does not offer a high-speed camera mode. Using the regular camera instead.</string>
+    <string name="cameraHighSpeedFailed">The high-speed camera mode failed on this device. Switching to the regular camera.</string>
     <string name="settingsFileNameFormat">Default file names</string>
     <string name="settingsFileNameFormatDetail">Template for default file names when exporting data, sharing a screenshot or saving a state. Available placeholders:\n{title} – experiment title\n{date} – current date\n{time} – current time\n{startDate} – date at the start of the measurement\n{startTime} – time at the start of the measurement\n{duration} – measurement duration</string>
     <string name="settings_theme_night">Default</string>

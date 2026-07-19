@@ -38,6 +38,23 @@ data class CameraMainControlsViewState(
                     whiteBalanceButton = whiteBalanceButton.copy(isVisible = false)
             )
 
+    //Experimental high-speed camera mode: the constrained high-speed API does not support the
+    //exposure, white balance and zoom controls, so only the lens switch remains (and only if the
+    //other lens offers a high-speed mode, too, as we never mix both camera implementations)
+    fun enableHighSpeedControl(
+            canSwitchLens: Boolean
+    ): CameraMainControlsViewState =
+            copy(
+                    switchLensButton = switchLensButton.copy(isVisible = true, isEnabled = canSwitchLens),
+                    shutterButton = shutterButton.copy(isVisible = false),
+                    isoButton = isoButton.copy(isVisible = false),
+                    apertureButton = apertureButton.copy(isVisible = false),
+                    autoExposureButton = autoExposureButton.copy(isVisible = false),
+                    exposureButton = exposureButton.copy(isVisible = false),
+                    zoomButton = zoomButton.copy(isVisible = false),
+                    whiteBalanceButton = whiteBalanceButton.copy(isVisible = false)
+            )
+
     fun enableAdvanceExposureControl(
             isIsoLocked: Boolean,
             isShutterSpeedLocked: Boolean,

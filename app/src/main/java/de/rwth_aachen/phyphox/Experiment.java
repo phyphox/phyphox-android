@@ -697,12 +697,15 @@ public class Experiment extends AppCompatActivity implements View.OnClickListene
                 }
             }
 
-            if (experiment.cameraInput != null && Build.VERSION.SDK_INT >= Build.VERSION_CODES.M)
+            if (experiment.cameraInput != null && Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+                if (experiment.cameraInput.highSpeedRequestedButUnsupported())
+                    Toast.makeText(this, R.string.cameraHighSpeedNotSupported, Toast.LENGTH_LONG).show();
                 experiment.cameraInput.startCameraFromProvider(this, this.getApplication(), new CameraInput.OnCameraReadyListener() {
                     @Override
                     public void onReady(Camera camera) {
                             if(experiment.flashlightOutput != null){
-                                experiment.flashlightOutput.initHardware(camera.getCameraControl());
+                                //In the experimental high-speed camera mode there is no CameraX camera to control the flashlight through
+                                experiment.flashlightOutput.initHardware(camera != null ? camera.getCameraControl() : null);
                             }
                     }
 
@@ -714,6 +717,7 @@ public class Experiment extends AppCompatActivity implements View.OnClickListene
                             }
                     }
                 });
+            }
 
             if(experiment.cameraInput == null && experiment.flashlightOutput != null){
                 experiment.flashlightOutput.initHardware(null);

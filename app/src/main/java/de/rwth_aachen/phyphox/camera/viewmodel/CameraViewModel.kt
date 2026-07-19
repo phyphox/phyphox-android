@@ -63,7 +63,10 @@ class CameraViewModel() : ViewModel() {
                                 cameraScreenViewState.value
                                         .copy(isVisible = cameraPreviewScreen.getCameraSettingsVisibility())
                                         .updateCameraMainControls {
-                                            when (cameraUiState.cameraSettingLevel) {
+                                            if (cameraInput.highSpeedActive()) {
+                                                //The experimental high-speed camera implementation does not support the camera controls, regardless of the level set by the experiment
+                                                it.enableHighSpeedControl(cameraInput.highSpeedCanSwitchLens())
+                                            } else when (cameraUiState.cameraSettingLevel) {
                                                 CameraSettingLevel.BASIC -> it.enableBasicExposureControl()
                                                 CameraSettingLevel.INTERMEDIATE -> {
                                                     val exposureLocked =
@@ -95,7 +98,11 @@ class CameraViewModel() : ViewModel() {
                     CameraPreviewState.ATTACHING_TO_CAMERA -> {
                         startCameraPreviewView(cameraPreviewScreen)
 
-                        cameraPreviewScreen.setupZoomControl(cameraInput.cameraSettingState.value)
+                        //In the experimental high-speed mode there is no CameraX camera providing a
+                        //zoom state and the high-speed API does not support zoom anyways, so the
+                        //(hidden) zoom control must not be set up from the degenerate default values
+                        if (!cameraInput.highSpeedActive())
+                            cameraPreviewScreen.setupZoomControl(cameraInput.cameraSettingState.value)
 
                         _cameraUiState.emit(
                                 cameraUiState.copy(cameraPreviewState = CameraPreviewState.UPDATING)
@@ -148,16 +155,19 @@ class CameraViewModel() : ViewModel() {
                         )
                     }
                     cameraPreviewScreen.setCurrentValueInCameraSettingTextView(cameraSettingState)
-                    val oldState = cameraScreenViewState.value
-                    val newState = cameraScreenViewState.value.copy(
-                            mainControls = oldState.mainControls.copy(
-                                    isoButton = oldState.mainControls.isoButton.copy(isEnabled = !cameraSettingState.autoExposure && !(cameraInput.lockedSettings?.contains("iso") ?: false)),
-                                    shutterButton = oldState.mainControls.shutterButton.copy(isEnabled = !cameraSettingState.autoExposure && !(cameraInput.lockedSettings?.contains("shutter_speed") ?: false)),
-                                    apertureButton = oldState.mainControls.apertureButton.copy(isEnabled = !cameraSettingState.autoExposure && (cameraSettingState.apertureRange?.count() ?: 0) > 1 && !(cameraInput.lockedSettings?.contains("aperture") ?: false))
-                            )
-                    )
+                    if (!cameraInput.highSpeedActive()) {
+                        //Not in high-speed mode: the exposure buttons are kept hidden and disabled there as the high-speed API does not support these controls
+                        val oldState = cameraScreenViewState.value
+                        val newState = cameraScreenViewState.value.copy(
+                                mainControls = oldState.mainControls.copy(
+                                        isoButton = oldState.mainControls.isoButton.copy(isEnabled = !cameraSettingState.autoExposure && !(cameraInput.lockedSettings?.contains("iso") ?: false)),
+                                        shutterButton = oldState.mainControls.shutterButton.copy(isEnabled = !cameraSettingState.autoExposure && !(cameraInput.lockedSettings?.contains("shutter_speed") ?: false)),
+                                        apertureButton = oldState.mainControls.apertureButton.copy(isEnabled = !cameraSettingState.autoExposure && (cameraSettingState.apertureRange?.count() ?: 0) > 1 && !(cameraInput.lockedSettings?.contains("aperture") ?: false))
+                                )
+                        )
 
-                    cameraScreenViewState.emit(newState)
+                        cameraScreenViewState.emit(newState)
+                    }
                 } else if (cameraSettingState.cameraState == CameraState.RESTART) {
                     _cameraUiState.emit(
                         cameraUiState.value.copy(cameraPreviewState = CameraPreviewState.WAITING_FOR_CAMERA)

@@ -77,6 +77,13 @@
             android:summary="@string/settingsProximityLockDetail"
             android:persistent="true"
             android:defaultValue="false" />
+        <androidx.preference.SwitchPreference
+            android:key="experimentalHighSpeedCamera"
+            android:title="@string/settingsHighSpeedCamera"
+            android:icon="@drawable/baseline_shutter_speed_24"
+            android:summary="@string/settingsHighSpeedCameraDetail"
+            android:persistent="true"
+            android:defaultValue="false" />
 
     </androidx.preference.PreferenceCategory>
 

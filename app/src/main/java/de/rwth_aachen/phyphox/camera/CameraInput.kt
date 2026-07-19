@@ -4,9 +4,13 @@ import android.annotation.SuppressLint
 import android.app.Application
 import android.graphics.RectF
 import android.hardware.camera2.CameraCharacteristics
+import android.hardware.camera2.CameraManager
 import android.hardware.camera2.CameraMetadata
 import android.hardware.camera2.CaptureRequest
 import android.os.Build
+import android.os.Handler
+import android.os.Looper
+import android.widget.Toast
 import android.util.Log
 import android.util.Size
 import androidx.annotation.RequiresApi
@@ -27,6 +31,7 @@ import com.google.common.util.concurrent.ListenableFuture
 import de.rwth_aachen.phyphox.DataBuffer
 import de.rwth_aachen.phyphox.DataOutput
 import de.rwth_aachen.phyphox.ExperimentTimeReference
+import de.rwth_aachen.phyphox.R
 import de.rwth_aachen.phyphox.camera.analyzer.AnalyzingOpenGLRenderer
 import de.rwth_aachen.phyphox.camera.analyzer.SpectroscopyAnalyzer
 import de.rwth_aachen.phyphox.camera.helper.CameraHelper
@@ -50,6 +55,36 @@ class CameraInput : Serializable, AnalyzingOpenGLRenderer.ExposureStatisticsList
     @Transient var camera: Camera? = null
     @Transient private lateinit var cameraProviderListenableFuture: ListenableFuture<ProcessCameraProvider>
     private var cameraProvider: ProcessCameraProvider? = null
+
+    //Experimental high-speed camera mode: If enabled in the settings (and supported by the
+    //device), the camera is driven by HighSpeedCameraSession (camera2 constrained high-speed API)
+    //instead of the regular CameraX preview use case. Note that in this mode most camera controls
+    //are not supported, so exposure is left entirely to the device's auto exposure.
+    var highSpeedRequested = false
+    var highSpeedConfigs = HashMap<Int, HighSpeedCameraConfig>()
+    @Transient var highSpeedSession: HighSpeedCameraSession? = null
+    @Transient private var application: Application? = null
+
+    //Determine the usable high-speed configurations while the experiment is loaded, so the UI can
+    //adapt before the camera is running. Called if the user enabled the experimental setting.
+    @RequiresApi(Build.VERSION_CODES.M)
+    fun prepareHighSpeed(cameraManager: CameraManager) {
+        highSpeedRequested = true
+        for (lens in intArrayOf(CameraSelector.LENS_FACING_BACK, CameraSelector.LENS_FACING_FRONT)) {
+            HighSpeedCameraSession.findConfig(cameraManager, lens)?.let {
+                highSpeedConfigs[lens] = it
+            }
+        }
+        Log.i("CameraInput", "High-speed camera requested. Available configurations: $highSpeedConfigs")
+    }
+
+    fun highSpeedRequestedButUnsupported(): Boolean = highSpeedRequested && highSpeedConfigs.isEmpty()
+
+    //True if the camera for the currently selected lens runs (or will run) in high-speed mode, in
+    //which case the camera controls have to be disabled as the high-speed API does not support them
+    fun highSpeedActive(): Boolean = highSpeedRequested && highSpeedConfigs.containsKey(cameraSettingState.value.currentLens)
+
+    fun highSpeedCanSwitchLens(): Boolean = highSpeedConfigs.size > 1
 
     // Holds and release the image analysis value (z) and time value (t) from data buffer
     var dataLuma: DataBuffer? = null
@@ -124,6 +159,7 @@ class CameraInput : Serializable, AnalyzingOpenGLRenderer.ExposureStatisticsList
 
     fun startCameraFromProvider(lifecycleOwner: LifecycleOwner, application: Application,  listener: OnCameraReadyListener) {
         this.lifecycleOwner = lifecycleOwner
+        this.application = application
         cameraProviderListenableFuture = ProcessCameraProvider.getInstance(application)
 
         cameraProviderListenableFuture.addListener({
@@ -161,20 +197,93 @@ class CameraInput : Serializable, AnalyzingOpenGLRenderer.ExposureStatisticsList
                     CameraState.RUNNING -> Unit
                     CameraState.RESTART -> {
                         cameraProvider?.unbindAll()
-                        analyzingOpenGLRenderer?.releaseCameraSurface {
-                            lifecycleOwner.lifecycleScope.launch {
-                                startCamera()
+                        closeHighSpeedSession {
+                            analyzingOpenGLRenderer?.releaseCameraSurface {
+                                lifecycleOwner.lifecycleScope.launch {
+                                    startCamera()
+                                }
                             }
                         }
                     }
                     CameraState.SHUTDOWN -> {
                         cameraProvider?.unbindAll()
                         analyzingOpenGLRenderer?.shutdown()
-                        analyzingOpenGLRenderer?.releaseCameraSurface {}
+                        closeHighSpeedSession {
+                            analyzingOpenGLRenderer?.releaseCameraSurface {}
+                        }
                     }
                 }
             }
         }
+    }
+
+    //Runs the callback once any high-speed session has been closed (immediately if there is none),
+    //so the camera surface can safely be released afterwards
+    private fun closeHighSpeedSession(callback: Runnable) {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+            val session = highSpeedSession
+            highSpeedSession = null
+            if (session != null) {
+                session.close(callback)
+                return
+            }
+        }
+        callback.run()
+    }
+
+    @RequiresApi(Build.VERSION_CODES.M)
+    private fun startHighSpeedCamera(config: HighSpeedCameraConfig) {
+        val application = this.application ?: run {
+            Log.e("CameraInput", "Cannot start high-speed camera without application context.")
+            return
+        }
+        val session = HighSpeedCameraSession(application, config, object : HighSpeedCameraSession.Listener {
+            override fun onHighSpeedSessionRunning(frameDurationNs: Long) {
+                lifecycleOwner?.lifecycleScope?.launch {
+                    _cameraSettingState.emit(
+                            cameraSettingState.value.copy(
+                                    sensorFrameDuration = frameDurationNs,
+                                    //The high-speed API leaves exposure to the device's auto
+                                    //exposure, our own auto exposure algorithm must not run
+                                    autoExposure = false,
+                                    cameraState = CameraState.INITIALIZING
+                            )
+                    )
+                }
+            }
+
+            override fun onHighSpeedCaptureResult(shutterSpeedNs: Long?, iso: Int?, aperture: Float?) {
+                //Track the values chosen by the device's auto exposure, so they end up in the
+                //shutterSpeed/iso/aperture buffers of the experiment as usual
+                val state = cameraSettingState.value
+                val newState = state.copy(
+                        currentShutterValue = shutterSpeedNs ?: state.currentShutterValue,
+                        currentIsoValue = iso ?: state.currentIsoValue,
+                        currentApertureValue = aperture ?: state.currentApertureValue
+                )
+                if (newState != state) {
+                    lifecycleOwner?.lifecycleScope?.launch {
+                        _cameraSettingState.emit(newState)
+                    }
+                }
+            }
+
+            override fun onHighSpeedSessionError(message: String) {
+                Log.e("CameraInput", "High-speed camera failed: $message")
+                //Fall back to the regular, reliable implementation
+                highSpeedRequested = false
+                Handler(Looper.getMainLooper()).post {
+                    Toast.makeText(application, R.string.cameraHighSpeedFailed, Toast.LENGTH_LONG).show()
+                }
+                lifecycleOwner?.lifecycleScope?.launch {
+                    _cameraSettingState.emit(
+                            cameraSettingState.value.copy(cameraState = CameraState.RESTART)
+                    )
+                }
+            }
+        })
+        highSpeedSession = session
+        session.start(analyzingOpenGLRenderer!!)
     }
 
     private fun startCamera() {
@@ -184,6 +293,14 @@ class CameraInput : Serializable, AnalyzingOpenGLRenderer.ExposureStatisticsList
                 dataLock,
                 cameraSettingState,
                 this)
+        }
+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M && highSpeedRequested) {
+            val highSpeedConfig = highSpeedConfigs[cameraSettingState.value.currentLens]
+            if (highSpeedConfig != null) {
+                startHighSpeedCamera(highSpeedConfig)
+                return
+            }
         }
 
         val cameraSelector = CameraHelper.cameraLensToSelector(cameraSettingState.value.currentLens)
@@ -578,6 +695,8 @@ class CameraInput : Serializable, AnalyzingOpenGLRenderer.ExposureStatisticsList
 
     @androidx.annotation.OptIn(androidx.camera.camera2.interop.ExperimentalCamera2Interop::class)
     override fun newExposureStatistics(minRGB: Double, maxRGB: Double, meanLuma: Double) {
+        if (highSpeedSession != null)
+            return //Exposure is controlled by the device in high-speed mode, our algorithm cannot adjust anything
         if (cameraSettingState.value.autoExposure) {
             //Auto exposure only ever adjusts ISO and shutter speed, so locked settings need to be
             //excluded from its strategy. If both are locked, there is nothing left to adjust.

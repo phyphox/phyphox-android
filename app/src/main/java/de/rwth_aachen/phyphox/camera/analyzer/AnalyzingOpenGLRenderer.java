@@ -279,8 +279,28 @@ public class AnalyzingOpenGLRenderer implements Preview.SurfaceProvider, Surface
         CameraSettingState state = cameraSettingValueState.getValue();
         if (!running && !surfaceTextureIsNew)
             return;
+        //If the camera delivers frames faster than they can be analyzed (in particular in the
+        //experimental high-speed mode), the executor queue must not grow unboundedly. With more
+        //than one draw already waiting the new frame is dropped here; the surface texture keeps
+        //only the most recent frame anyways, so a queued-up draw would just re-analyze a frame
+        //that has already been processed.
+        if (pendingDraws.get() > 1)
+            return;
+        pendingDraws.incrementAndGet();
         executor.execute(
                 () -> {
+                    try {
+                        drawOnExecutor(state);
+                    } finally {
+                        pendingDraws.decrementAndGet();
+                    }
+                }
+        );
+    }
+
+    private final java.util.concurrent.atomic.AtomicInteger pendingDraws = new java.util.concurrent.atomic.AtomicInteger(0);
+
+    private void drawOnExecutor(CameraSettingState state) {
                     if (eglContext == null || cameraSurfaceTexture == null)
                         return;
 
@@ -386,8 +406,6 @@ public class AnalyzingOpenGLRenderer implements Preview.SurfaceProvider, Surface
                         nFrames++;
                     }
 
-                }
-        );
     }
 
     public void setSpectrumOrientation(SpectroscopyAnalyzer.SpectrumOrientation spectrumOrientation) {
@@ -400,6 +418,49 @@ public class AnalyzingOpenGLRenderer implements Preview.SurfaceProvider, Surface
                 }
             }
         });
+    }
+
+    public interface CameraSurfaceConsumer {
+        void onSurfaceReady(Surface surface);
+    }
+
+    //Entry point for the experimental high-speed camera implementation (HighSpeedCameraSession):
+    //Creates the camera surface directly for a camera2 session instead of answering a CameraX
+    //SurfaceRequest (see onSurfaceRequested below), but sets up the exact same analysis pipeline.
+    //The surface lifecycle is managed by the caller via releaseCameraSurface.
+    public void createCameraSurface(int width, int height, CameraSurfaceConsumer consumer) {
+        executor.execute(
+                () -> {
+                    if (eglContext == null)
+                        createContext();
+
+                    if (eglCameraTexture == -1) {
+                        int[] textures = new int[1];
+                        GLES20.glGenTextures(1, textures, 0);
+                        eglCameraTexture = textures[0];
+                    }
+                    checkGLError("Create eglCameraTexture");
+
+                    //Detach and release any leftover surface texture from a previous camera session, so its stray frames cannot trigger draw calls anymore
+                    if (cameraSurfaceTexture != null) {
+                        cameraSurfaceTexture.setOnFrameAvailableListener(null);
+                        cameraSurfaceTexture.release();
+                    }
+                    if (cameraSurface != null)
+                        cameraSurface.release();
+
+                    camNativeWidth = width;
+                    camNativeHeight = height;
+
+                    cameraSurfaceTexture = new SurfaceTexture(eglCameraTexture);
+                    cameraSurfaceTexture.setDefaultBufferSize(camNativeWidth, camNativeHeight);
+                    cameraSurfaceTexture.setOnFrameAvailableListener(this);
+                    cameraSurface = new Surface(cameraSurfaceTexture);
+                    surfaceTextureIsNew = true;
+                    consumer.onSurfaceReady(cameraSurface);
+                    checkGLError("createCameraSurface");
+                }
+        );
     }
 
     @Override
