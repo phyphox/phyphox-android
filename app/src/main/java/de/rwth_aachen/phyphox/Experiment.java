@@ -328,7 +328,13 @@ public class Experiment extends AppCompatActivity implements View.OnClickListene
             ab.setDisplayShowTitleEnabled(false);
         }
 
-        if (savedInstanceState != null) {
+        //Only restore the experiment from the application-wide instance if the saved state stems
+        //from a completed load of this activity (onSaveInstanceState only writes the full state
+        //including STATE_CURRENT_VIEW if loadCompleted was set). If the activity is recreated
+        //while still loading (typically after granting a permission that was requested during
+        //loading), app.experiment might hold an entirely different experiment that saved its
+        //state earlier, so we must reload from the intent instead.
+        if (savedInstanceState != null && savedInstanceState.containsKey(STATE_CURRENT_VIEW)) {
             App app = (App) this.getApplicationContext();
             experiment = app.experiment;
             //experiment = (phyphoxExperiment) savedInstanceState.getSerializable(STATE_EXPERIMENT);
@@ -428,6 +434,9 @@ public class Experiment extends AppCompatActivity implements View.OnClickListene
     }
 
     @Override
+    //Config changes declared in the manifest (rotation, network operator change when crossing a
+    //border, hardware keyboard connecting) do not recreate the activity, so they cannot
+    //interrupt a running measurement. They do not affect our UI, so they can simply be ignored.
     public void onConfigurationChanged(Configuration newConfig) {
         super.onConfigurationChanged(newConfig);
     }

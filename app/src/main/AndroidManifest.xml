@@ -90,7 +90,7 @@
         <activity
             android:name="de.rwth_aachen.phyphox.Experiment"
             android:label="@string/title_activity_experiment"
-            android:configChanges="keyboardHidden|orientation|screenSize"
+            android:configChanges="keyboard|keyboardHidden|orientation|screenSize|mcc|mnc"
             android:windowSoftInputMode="adjustPan"
             android:parentActivityName="de.rwth_aachen.phyphox.ExperimentList.ExperimentListActivity" />
         <activity
