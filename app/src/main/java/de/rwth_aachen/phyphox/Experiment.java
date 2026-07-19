@@ -345,7 +345,10 @@ public class Experiment extends AppCompatActivity implements View.OnClickListene
 
         WindowInsetHelper.setInsets(findViewById(R.id.customActionBar), WindowInsetHelper.ApplyTo.PADDING, WindowInsetHelper.ApplyTo.PADDING, WindowInsetHelper.ApplyTo.PADDING, WindowInsetHelper.ApplyTo.IGNORE);
         WindowInsetHelper.setInsets(findViewById(R.id.tab_layout), WindowInsetHelper.ApplyTo.PADDING, WindowInsetHelper.ApplyTo.IGNORE, WindowInsetHelper.ApplyTo.PADDING, WindowInsetHelper.ApplyTo.IGNORE);
-        WindowInsetHelper.setInsets(findViewById(R.id.view_pager), WindowInsetHelper.ApplyTo.PADDING, WindowInsetHelper.ApplyTo.IGNORE, WindowInsetHelper.ApplyTo.PADDING, WindowInsetHelper.ApplyTo.IGNORE);
+        //The pager insets must be margins, not padding: ViewPager's scroll position recovery on
+        //size changes (recomputeScrollPosition) miscalculates if its padding changes on rotation,
+        //leaving the pager stuck between two pages.
+        WindowInsetHelper.setInsets(findViewById(R.id.view_pager), WindowInsetHelper.ApplyTo.MARGIN, WindowInsetHelper.ApplyTo.IGNORE, WindowInsetHelper.ApplyTo.MARGIN, WindowInsetHelper.ApplyTo.IGNORE);
         WindowInsetHelper.setInsets(findViewById(R.id.fl_remoteInfo), WindowInsetHelper.ApplyTo.PADDING, WindowInsetHelper.ApplyTo.IGNORE, WindowInsetHelper.ApplyTo.PADDING, WindowInsetHelper.ApplyTo.IGNORE);
         WindowInsetHelper.setInsets(findViewById(R.id.errorMessage), WindowInsetHelper.ApplyTo.PADDING, WindowInsetHelper.ApplyTo.IGNORE, WindowInsetHelper.ApplyTo.PADDING, WindowInsetHelper.ApplyTo.IGNORE);
         WindowInsetHelper.setInsets(findViewById(R.id.recycler_view_battery), WindowInsetHelper.ApplyTo.PADDING, WindowInsetHelper.ApplyTo.IGNORE, WindowInsetHelper.ApplyTo.PADDING, WindowInsetHelper.ApplyTo.PADDING);
@@ -1872,10 +1875,12 @@ public class Experiment extends AppCompatActivity implements View.OnClickListene
         btn_moreInfo.animate().translationY(0).alpha(1.0f);
         tv_announcer.animate().translationY(0).alpha(1.0f);
 
-        RelativeLayout.LayoutParams lp = new RelativeLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT);
-        lp.addRule(RelativeLayout.BELOW, R.id.tab_layout);
+        //Modify the existing layout params instead of creating new ones to keep the margins set
+        //by the window inset listener intact
+        ViewPager pagerView = (ViewPager)findViewById(R.id.view_pager);
+        RelativeLayout.LayoutParams lp = (RelativeLayout.LayoutParams)pagerView.getLayoutParams();
         lp.addRule(RelativeLayout.ABOVE, R.id.fl_remoteInfo);
-        ((ViewPager)findViewById(R.id.view_pager)).setLayoutParams(lp);
+        pagerView.setLayoutParams(lp);
 
         btn_moreInfo.setOnClickListener(v -> openDialogWithQrCode(addressList));
 
@@ -1928,10 +1933,12 @@ public class Experiment extends AppCompatActivity implements View.OnClickListene
         announcer.animate().translationY(announcer.getMeasuredHeight()).alpha(0.0f);
         fl_announcer.setVisibility(View.GONE);
 
-        RelativeLayout.LayoutParams lp = new RelativeLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT);
-        lp.addRule(RelativeLayout.BELOW, R.id.tab_layout);
+        //Modify the existing layout params instead of creating new ones to keep the margins set
+        //by the window inset listener intact
+        ViewPager pagerView = (ViewPager)findViewById(R.id.view_pager);
+        RelativeLayout.LayoutParams lp = (RelativeLayout.LayoutParams)pagerView.getLayoutParams();
         lp.addRule(RelativeLayout.ABOVE, R.id.recycler_view_battery);
-        ((ViewPager)findViewById(R.id.view_pager)).setLayoutParams(lp);
+        pagerView.setLayoutParams(lp);
 
         if (remote == null) //no server there? never mind.
             return;
