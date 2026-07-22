@@ -82,6 +82,10 @@ class CameraInput : Serializable, AnalyzingOpenGLRenderer.ExposureStatisticsList
 
     @Transient var analyzingOpenGLRenderer: AnalyzingOpenGLRenderer? = null
 
+    //Focus distance in meters as set by the "focus_distance" option of the locked attribute.
+    //Zero denotes infinity and null means that the autofocus stays enabled.
+    var lockedFocusDistance: Float? = null
+
     interface OnCameraReadyListener {
         fun onReady(camera: Camera?)
         fun onFailure(error: Throwable)
@@ -92,7 +96,8 @@ class CameraInput : Serializable, AnalyzingOpenGLRenderer.ExposureStatisticsList
         lifecycleOwner?.let { lifecycleOwner ->
             cameraProvider?.unbindAll()
             val camera = cameraProvider?.bindToLifecycle(lifecycleOwner, cameraSelector) ?: return null
-            val ranges = Camera2CameraInfo.from(camera.cameraInfo).getCameraCharacteristic(CameraCharacteristics.CONTROL_AE_AVAILABLE_TARGET_FPS_RANGES)
+            val camera2Info = Camera2CameraInfo.from(camera.cameraInfo)
+            val ranges = camera2Info.getCameraCharacteristic(CameraCharacteristics.CONTROL_AE_AVAILABLE_TARGET_FPS_RANGES)
             val maxFpsRange = ranges?.toList()?.maxBy { it.upper * 1000 + it.lower } ?: return null
             Log.d("CameraInput", "Aiming for fps range $maxFpsRange")
             cameraProvider?.unbindAll()
@@ -110,6 +115,31 @@ class CameraInput : Serializable, AnalyzingOpenGLRenderer.ExposureStatisticsList
             extender.setCaptureRequestOption(CaptureRequest.CONTROL_AE_TARGET_FPS_RANGE, maxFpsRange)
             val sensorFrameDuration = 1_000_000_000/maxFpsRange.upper.toLong()
             extender.setCaptureRequestOption(CaptureRequest.SENSOR_FRAME_DURATION, sensorFrameDuration)
+
+            //A locked focus distance turns off the autofocus and focusses at a fixed distance.
+            //Besides being desirable for a fixed setup, this also helps against devices (notably
+            //Pixels) that switch the active physical camera of a logical multi camera on their
+            //own when their macro focus heuristic believes that another lens focusses better on a
+            //close subject, which ruins spectroscopy measurements.
+            lockedFocusDistance?.let { focusDistance ->
+                val afModes = camera2Info.getCameraCharacteristic(CameraCharacteristics.CONTROL_AF_AVAILABLE_MODES)
+                if (afModes?.contains(CameraMetadata.CONTROL_AF_MODE_OFF) != true) {
+                    Log.w("CameraInput", "Cannot lock the focus distance as this camera does not allow turning off its autofocus.")
+                    return@let
+                }
+
+                //The API takes the reciprocal of the distance in dioptres, with zero denoting
+                //infinity. The closest distance the camera can focus at gives the largest value it
+                //accepts, so the request has to be limited to this range.
+                val minFocusDistance = camera2Info.getCameraCharacteristic(CameraCharacteristics.LENS_INFO_MINIMUM_FOCUS_DISTANCE) ?: 0.0f
+                val requestedDioptres = if (focusDistance > 0.0f) 1.0f / focusDistance else 0.0f
+                val dioptres = requestedDioptres.coerceIn(0.0f, minFocusDistance)
+                if (dioptres != requestedDioptres)
+                    Log.w("CameraInput", "Requested focus distance of $focusDistance m is not supported by this camera. Using ${if (dioptres > 0.0f) (1.0f/dioptres).toString() + " m" else "infinity"} instead.")
+
+                extender.setCaptureRequestOption(CaptureRequest.CONTROL_AF_MODE, CameraMetadata.CONTROL_AF_MODE_OFF)
+                extender.setCaptureRequestOption(CaptureRequest.LENS_FOCUS_DISTANCE, dioptres)
+            }
 
             val currentCameraSettingValueState = _cameraSettingState.value
             val newCameraSettingValueState = currentCameraSettingValueState.copy(
@@ -547,6 +577,16 @@ class CameraInput : Serializable, AnalyzingOpenGLRenderer.ExposureStatisticsList
 
         lockedSettings?.get("aperture")?.takeIf(String::isNotEmpty)?.toFloatOrNull()?.let {
             apertureCurrentValue = it
+        }
+
+        //In meters (zero denoting infinity) as this is more intuitive than the dioptres used by
+        //the camera API. Unlike the settings above this has no UI element, so it can only be
+        //locked to an explicit value and the autofocus stays enabled if there is none.
+        lockedSettings?.get("focus_distance")?.takeIf(String::isNotEmpty)?.toFloatOrNull()?.let {
+            if (it >= 0.0f)
+                lockedFocusDistance = it
+            else
+                Log.w("CameraInput", "Ignoring negative locked focus distance: $it")
         }
 
         return CameraSettingState(
