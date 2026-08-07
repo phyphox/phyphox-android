@@ -119,6 +119,7 @@ public class AnalyzingOpenGLRendererPreviewOutput implements TextureView.Surface
         if (!EGL14.eglMakeCurrent(eglDisplay, eglSurface, eglSurface, eglContext)) {
             throw new RuntimeException("Camera preview: eglMakeCurrent failed");
         }
+        GLES20.glBindFramebuffer(GLES20.GL_FRAMEBUFFER, 0); //The analyzing modules leave their framebuffer objects bound, but the preview renders to the window surface
         GLES20.glViewport(0,0, w, h);
         return true;
     }

@@ -9,8 +9,6 @@ import static de.rwth_aachen.phyphox.camera.analyzer.OpenGLHelper.fullScreenVert
 import static de.rwth_aachen.phyphox.camera.analyzer.OpenGLHelper.interpolatingFullScreenVertexShader;
 
 import android.graphics.RectF;
-import android.opengl.EGL14;
-import android.opengl.EGLSurface;
 import android.opengl.GLES20;
 import android.os.Build;
 
@@ -270,15 +268,8 @@ public class HSVAnalyzer extends AnalyzingModule {
         out.append(latestResult);
     }
 
-    public void makeCurrent(EGLSurface eglSurface, int w, int h) {
-        if (!EGL14.eglMakeCurrent(eglDisplay, eglSurface, eglSurface, eglContext)) {
-            throw new RuntimeException("Camera preview: eglMakeCurrent failed");
-        }
-        GLES20.glViewport(0,0, w, h);
-    }
-
     void drawHSV(float[] camMatrix, RectF passepartout) {
-        makeCurrent(analyzingSurface, width, height);
+        makeCurrent(analyzingFramebuffer, width, height);
 
         if (mode == Mode.hue)
             GLES20.glClearColor(0.498039216f, 0.498039216f, 0.498039216f, 0.498039216f);
@@ -323,7 +314,7 @@ public class HSVAnalyzer extends AnalyzingModule {
 
     void drawHsvDownsampling(int step, float[] camMatrix) {
         long start = System.nanoTime();
-        makeCurrent(downsampleSurfaces[step], wDownsampleStep[step], hDownsampleStep[step]);
+        makeCurrent(downsamplingFramebuffers[step], wDownsampleStep[step], hDownsampleStep[step]);
 
         GLES20.glUseProgram(hsvDownsamplingProgram);
 
@@ -336,8 +327,7 @@ public class HSVAnalyzer extends AnalyzingModule {
         GLES20.glVertexAttribPointer(hsvDownsamplingProgramTexCoordinatesHandle, 2, GLES20.GL_FLOAT, false, 0, 0);
 
         GLES20.glActiveTexture(GLES20.GL_TEXTURE0);
-        GLES20.glBindTexture(GLES20.GL_TEXTURE_2D, downsamplingTextures[step]);
-        EGL14.eglBindTexImage(eglDisplay, (step == 0) ? analyzingSurface : downsampleSurfaces[step-1], EGL14.EGL_BACK_BUFFER);
+        GLES20.glBindTexture(GLES20.GL_TEXTURE_2D, (step == 0) ? analyzingTexture : downsamplingTextures[step-1]);
         GLES20.glTexParameteri(GLES20.GL_TEXTURE_2D, GLES20.GL_TEXTURE_MAG_FILTER, GLES20.GL_LINEAR);
         GLES20.glTexParameteri(GLES20.GL_TEXTURE_2D, GLES20.GL_TEXTURE_MIN_FILTER, GLES20.GL_LINEAR);
         GLES20.glTexParameteri(GLES20.GL_TEXTURE_2D, GLES20.GL_TEXTURE_WRAP_S, GLES20.GL_CLAMP_TO_EDGE);
@@ -350,7 +340,6 @@ public class HSVAnalyzer extends AnalyzingModule {
         GLES20.glDrawArrays(GLES20.GL_TRIANGLE_STRIP, 0, 4);
 
         GLES20.glBindTexture(GLES20.GL_TEXTURE_2D, 0);
-        EGL14.eglReleaseTexImage(eglDisplay, (step == 0) ? analyzingSurface : downsampleSurfaces[step-1], EGL14.EGL_BACK_BUFFER);
         GLES20.glDisableVertexAttribArray(hsvDownsamplingProgramVerticesHandle);
         GLES20.glDisableVertexAttribArray(hsvDownsamplingProgramTexCoordinatesHandle);
 

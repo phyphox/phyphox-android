@@ -9,8 +9,6 @@ import static de.rwth_aachen.phyphox.camera.analyzer.OpenGLHelper.fullScreenVert
 import static de.rwth_aachen.phyphox.camera.analyzer.OpenGLHelper.interpolatingFullScreenVertexShader;
 
 import android.graphics.RectF;
-import android.opengl.EGL14;
-import android.opengl.EGLSurface;
 import android.opengl.GLES20;
 
 import java.nio.ByteBuffer;
@@ -162,15 +160,8 @@ public class LuminanceAnalyzer extends AnalyzingModule {
         out.append(latestResult*exposureFactor);
     }
 
-    public void makeCurrent(EGLSurface eglSurface, int w, int h) {
-        if (!EGL14.eglMakeCurrent(eglDisplay, eglSurface, eglSurface, eglContext)) {
-            throw new RuntimeException("Camera preview: eglMakeCurrent failed");
-        }
-        GLES20.glViewport(0,0, w, h);
-    }
-
     void drawLuminance(float[] camMatrix, RectF passepartout) {
-        makeCurrent(analyzingSurface, width, height);
+        makeCurrent(analyzingFramebuffer, width, height);
 
         GLES20.glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
         GLES20.glClear(GLES20.GL_COLOR_BUFFER_BIT);
@@ -216,7 +207,7 @@ public class LuminanceAnalyzer extends AnalyzingModule {
 
     void drawLuminanceDownsampling(int step, float[] camMatrix) {
         long start = System.nanoTime();
-        makeCurrent(downsampleSurfaces[step], wDownsampleStep[step], hDownsampleStep[step]);
+        makeCurrent(downsamplingFramebuffers[step], wDownsampleStep[step], hDownsampleStep[step]);
 
         GLES20.glUseProgram(luminanceDownsamplingProgram);
 
@@ -229,8 +220,7 @@ public class LuminanceAnalyzer extends AnalyzingModule {
         GLES20.glVertexAttribPointer(luminanceDownsamplingProgramTexCoordinatesHandle, 2, GLES20.GL_FLOAT, false, 0, 0);
 
         GLES20.glActiveTexture(GLES20.GL_TEXTURE0);
-        GLES20.glBindTexture(GLES20.GL_TEXTURE_2D, downsamplingTextures[step]);
-        EGL14.eglBindTexImage(eglDisplay, (step == 0) ? analyzingSurface : downsampleSurfaces[step-1], EGL14.EGL_BACK_BUFFER);
+        GLES20.glBindTexture(GLES20.GL_TEXTURE_2D, (step == 0) ? analyzingTexture : downsamplingTextures[step-1]);
         GLES20.glTexParameteri(GLES20.GL_TEXTURE_2D, GLES20.GL_TEXTURE_MAG_FILTER, GLES20.GL_LINEAR);
         GLES20.glTexParameteri(GLES20.GL_TEXTURE_2D, GLES20.GL_TEXTURE_MIN_FILTER, GLES20.GL_LINEAR);
         GLES20.glTexParameteri(GLES20.GL_TEXTURE_2D, GLES20.GL_TEXTURE_WRAP_S, GLES20.GL_CLAMP_TO_EDGE);
@@ -243,7 +233,6 @@ public class LuminanceAnalyzer extends AnalyzingModule {
         GLES20.glDrawArrays(GLES20.GL_TRIANGLE_STRIP, 0, 4);
 
         GLES20.glBindTexture(GLES20.GL_TEXTURE_2D, 0);
-        EGL14.eglReleaseTexImage(eglDisplay, (step == 0) ? analyzingSurface : downsampleSurfaces[step-1], EGL14.EGL_BACK_BUFFER);
         GLES20.glDisableVertexAttribArray(luminanceDownsamplingProgramVerticesHandle);
         GLES20.glDisableVertexAttribArray(luminanceDownsamplingProgramTexCoordinatesHandle);
 
