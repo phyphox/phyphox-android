@@ -117,7 +117,7 @@
             app:iconTint="@null"
             app:iconGravity="textStart"
             android:textSize="12sp"
-            android:text="Orientation" />
+            android:text="@string/spectrum_orientation" />
 
 
     </androidx.appcompat.widget.LinearLayoutCompat>
