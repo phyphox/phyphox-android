@@ -1,26 +1,26 @@
 Věděli jste, že s sebou nosíte 3D magnetometr. Víte, že můžete použít svůj mobil jako kyvadlo k měření lokálního tíhového zrychlení? Že můžete udělat ze svého mobilu sonar. Phyphox vám dává přístup k senzorům vašeho mobilu buď přímo nebo skrze připravené moduly experimentů, které analyzují vaše data a umožňují exportovat jak čistá naměřená data tak vypočtené výsledky pro další analýzu. Můžete dokonce vytvořit své vlastní experimentální moduly na phyphox.org a sdílet je s kolegy, studenty a přáteli. 
 
 Vybrané funkce:
-- Široký výběr připravených experimentů. Stačí zmáčknout tlačítko a vše běží.
-- Exportování dat v několika běžně používaných formátech.
-- Vzdálený přístup k vašemu experimentu skrze webové rozhraní. Stačí mít PC na stejné lokální síti jako váš mobil. Instalace softwaru na PC není nutná. Vše co potřebujete je moderní internetový prohlížeč.
-- Vytvořte své vlastní experimentální moduly vybráním senzorových vstupů, definováním kroků analýzy dat a vybráním vhodného rozhraní pro jejich zobrazení. To vše pomocí našeho web-editoru (http://phyphox.org/editor) .Nabízíme širokou paletu nástrojů pro analýzu dat od pouhého sčítání hodnot až po pokročilé metody jakými jsou například Fourierova transformace a křížová korelace
+• Široký výběr připravených experimentů. Stačí zmáčknout tlačítko a vše běží.
+• Exportování dat v několika běžně používaných formátech.
+• Vzdálený přístup k vašemu experimentu skrze webové rozhraní. Stačí mít PC na stejné lokální síti jako váš mobil. Instalace softwaru na PC není nutná. Vše co potřebujete je moderní internetový prohlížeč.
+• Vytvořte své vlastní experimentální moduly vybráním senzorových vstupů, definováním kroků analýzy dat a vybráním vhodného rozhraní pro jejich zobrazení. To vše pomocí našeho web-editoru (<a href="http://phyphox.org/editor">http://phyphox.org/editor</a>) .Nabízíme širokou paletu nástrojů pro analýzu dat od pouhého sčítání hodnot až po pokročilé metody jakými jsou například Fourierova transformace a křížová korelace
 
 Podporované senzory:
-- Akcelerometr
-- Magnetometr
-- Gyroskop
-- Světelný senzor
-- Barometr
-- Mikrofon
-- Senzor přiblížení(Proximity)
-- GPS
+• Akcelerometr
+• Magnetometr
+• Gyroskop
+• Světelný senzor
+• Barometr
+• Mikrofon
+• Senzor přiblížení(Proximity)
+• GPS
 *některé senzory nejsou součástí vybavení všech mobilních zařízení.
 
 Formáty pro export
-- CSV (Hodnoty oddělované čárkou)
-- TSV (Hodnoty oddělované tabulátorem)
-- Excel
+• CSV (Hodnoty oddělované čárkou)
+• TSV (Hodnoty oddělované tabulátorem)
+• Excel
 (pokud byste potřebovali jiný formát, tak nám neváhejte napsat)
 
 

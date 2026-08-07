@@ -3,26 +3,26 @@ Wist je dat je een 3D-magnetometer draagt? Dat u uw telefoon als een slinger kun
 phyphox geeft je toegang tot de sensoren van je smartphone , hetzij direct, hetzij via kant-en-klare experimenten die je data analyseren en waarmee je onbewerkte data samen met de resultaten kunt exporteren voor verdere analyse. U kunt zelfs uw eigen experimenten naar phyphox.org uploaden en deze met collega's, studenten en vrienden delen.
 
 Mogelijke functies:
-- Een selectie van vooraf opgezette experimenten. Druk gewoon op play om te starten.
-- Exporteer uw gegevens naar veelgebruikte bestandsindelingen
-- Beheer op afstand uw experiment via een webinterface vanaf elke pc in hetzelfde netwerk als uw smartphone. U hoeft niets op die pc's te installeren - u hebt alleen een moderne webbrowser nodig.
-- Creëer met behulp van onze web-editor (http://phyphox.org/editor) uw eigen experimenten door meting via een gekozen sensor, analysestappen te bepalen en views te maken als interface. De analyse kan bestaan uit het toevoegen van slechts twee waarden of het gebruik van geavanceerde methoden zoals Fourier-transformaties en crosscorrelatie. We bieden een hele toolbox met analysefuncties.
+• Een selectie van vooraf opgezette experimenten. Druk gewoon op play om te starten.
+• Exporteer uw gegevens naar veelgebruikte bestandsindelingen
+• Beheer op afstand uw experiment via een webinterface vanaf elke pc in hetzelfde netwerk als uw smartphone. U hoeft niets op die pc's te installeren - u hebt alleen een moderne webbrowser nodig.
+• Creëer met behulp van onze web-editor (<a href="http://phyphox.org/editor">http://phyphox.org/editor</a>) uw eigen experimenten door meting via een gekozen sensor, analysestappen te bepalen en views te maken als interface. De analyse kan bestaan uit het toevoegen van slechts twee waarden of het gebruik van geavanceerde methoden zoals Fourier-transformaties en crosscorrelatie. We bieden een hele toolbox met analysefuncties.
 
 Ondersteunde sensoren:
-- Accelerometer
-- Magnetometer
-- Gyroscoop
-- Lichtintensiteit
-- Druk
-- Microfoon
-- Nabijsheidsensor
-- GPS
+• Accelerometer
+• Magnetometer
+• Gyroscoop
+• Lichtintensiteit
+• Druk
+• Microfoon
+• Nabijsheidsensor
+• GPS
 *sommige sensoren zitten niet op elke smartphone.
 
 Export formaten
-- CSV (Comma separated values)
-- TSV (Tab-separated values)
-- Excel
+• CSV (Comma separated values)
+• TSV (Tab-separated values)
+• Excel
 (als u andere bestandsformaten wenst, laat het ons weten)
 
 Deze app werd ontwikkeld aan het Instituut voor Fysica van de RWTH Aachen University.

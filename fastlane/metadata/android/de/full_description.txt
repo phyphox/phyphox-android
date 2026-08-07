@@ -3,26 +3,26 @@ Wusstest du, dass du stets ein 3D-Magnetometer mit dir herumträgst? Dass dein S
 phyphox ermöglicht den Zugriff auf die Sensoren Ihres Smartphone oder Tablets, entweder direkt oder durch sofort einsatzbereite Experimente mit eingebauter Datenauswertung und Export-Funktion. Du kannst sogar eigene Experimente mit eigenen Datenanalysen auf phyphox.org entwickeln und diese mit Kollegen, Schülern und Freunden teilen.
 
 Feature-Auswahl:
-- Vordefinierte Beispiel-Experimente. Einfach Start klicken und los geht\'s!
-- Exportiere deine Daten in vielen gängigen Formaten
-- Steure dein Experiment von einem PC im gleichen Netzwerk fern. Dazu musst du nichts installieren, sondern brauchst lediglich einen aktuellen Browser.
-- Eigene Experimente können aus Sensor-Eingängen, mathematischen Operationen und Darstellungsmodulen in unserem Web-Editor (http://phyphox.org/editor) zusammengesetzt werden. Egal, ob nur zwei Werte addiert werden sollen oder du fortgeschrittene Funktionen wie Fourier-Transformation oder Kreuzkorrelation benötigst.
+• Vordefinierte Beispiel-Experimente. Einfach Start klicken und los geht's!
+• Exportiere deine Daten in vielen gängigen Formaten
+• Steure dein Experiment von einem PC im gleichen Netzwerk fern. Dazu musst du nichts installieren, sondern brauchst lediglich einen aktuellen Browser.
+• Eigene Experimente können aus Sensor-Eingängen, mathematischen Operationen und Darstellungsmodulen in unserem Web-Editor (<a href="http://phyphox.org/editor">http://phyphox.org/editor</a>) zusammengesetzt werden. Egal, ob nur zwei Werte addiert werden sollen oder du fortgeschrittene Funktionen wie Fourier-Transformation oder Kreuzkorrelation benötigst.
 
 Unterstützte Sensoren
-- Beschleunigungssensor
-- Magnetometer
-- Gyroskop
-- Licht-Sensor
-- Druck
-- Näherungssensor
-- Mikrofon
-- GPS
+• Beschleunigungssensor
+• Magnetometer
+• Gyroskop
+• Licht-Sensor
+• Druck
+• Näherungssensor
+• Mikrofon
+• GPS
 *manche Sensoren sind nicht auf jedem Gerät verfügbar.
 
 Export Formate
-- CSV (durch Komma getrennte Werte)
-- TSV (durch Tabulator getrennte Werte)
-- Excel
+• CSV (durch Komma getrennte Werte)
+• TSV (durch Tabulator getrennte Werte)
+• Excel
 (wenn du weitere Formate benötigst, lass es uns wissen)
 
 

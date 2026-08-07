@@ -3,26 +3,26 @@ Bạn có biết rằng bạn đang mang một từ kế 3D? Rằng bạn có th
 phyphox cho phép bạn truy cập trực tiếp vào các cảm biến của điện thoại hoặc thông qua các thí nghiệm sẵn sàng để phân tích dữ liệu của bạn và cho phép bạn xuất dữ liệu thô cùng với kết quả để phân tích thêm. Bạn thậm chí có thể đưa thí nghiệm riêng của mình lên phyphox.org và chia sẻ chúng với đồng nghiệp, sinh viên và bạn bè.
 
 Các tính năng có thể chọn:
-- Nhiều thí nghiệm có sẵn. Chỉ cần nhấn nút để bắt đầu.
-- Xuất dữ liệu của bạn ra với nhiều định dạng được sử dụng rộng rãi
-- Điều khiển thí nghiệm của bạn từ xa thông qua giao diện web từ bất kỳ máy tính nào đang kết nối cùng mạng với điện thoại của bạn. Không cần cài đặt bất cứ thứ gì trên các tính đó - tất cả những gì bạn cần là một trình duyệt web hiện đại.
-- Làm thí nghiệm riêng của bạn bằng cách chọn đầu vào cảm biến, xác định các bước phân tích và tạo các chế độ xem bằng giao diện có thể chỉnh sửa của chúng tôi (http://phyphox.org/editor). Phân tích có thể chỉ cần thêm hai giá trị hoặc sử dụng các phương thức nâng cao như biến đổi Fourier và tương quan chéo. Chúng tôi cung cấp một hộp công cụ có nhiều chức năng phân tích.
+• Nhiều thí nghiệm có sẵn. Chỉ cần nhấn nút để bắt đầu.
+• Xuất dữ liệu của bạn ra với nhiều định dạng được sử dụng rộng rãi
+• Điều khiển thí nghiệm của bạn từ xa thông qua giao diện web từ bất kỳ máy tính nào đang kết nối cùng mạng với điện thoại của bạn. Không cần cài đặt bất cứ thứ gì trên các tính đó - tất cả những gì bạn cần là một trình duyệt web hiện đại.
+• Làm thí nghiệm riêng của bạn bằng cách chọn đầu vào cảm biến, xác định các bước phân tích và tạo các chế độ xem bằng giao diện có thể chỉnh sửa của chúng tôi (<a href="http://phyphox.org/editor">http://phyphox.org/editor</a>). Phân tích có thể chỉ cần thêm hai giá trị hoặc sử dụng các phương thức nâng cao như biến đổi Fourier và tương quan chéo. Chúng tôi cung cấp một hộp công cụ có nhiều chức năng phân tích.
 
 Cảm biến được hỗ trợ:
-- Gia tốc kế
-- Từ kế
-- Con quay hồi chuyển
-- Cường độ sáng
-- Áp suất
-- Micro
-- Tiệm cận
-- GPS
+• Gia tốc kế
+• Từ kế
+• Con quay hồi chuyển
+• Cường độ sáng
+• Áp suất
+• Micro
+• Tiệm cận
+• GPS
 *một số cảm biến không có trên mọi điện thoại.
 
 Định dạng xuất dữ liệu
-- CSV (Giá trị được phân tách bằng dấu phẩy)
-- TSV (Giá trị được phân tách bằng dấu tab)
-- Excel
+• CSV (Giá trị được phân tách bằng dấu phẩy)
+• TSV (Giá trị được phân tách bằng dấu tab)
+• Excel
 (nếu bạn cần các định dạng khác, vui lòng cho chúng tôi biết)
 
 

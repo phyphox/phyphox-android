@@ -3,26 +3,26 @@
 Phyphox, telefonunuzun sensörlerine direkt olarak veya verilerinizi analiz edip ham verileri daha ayrıntılı incelemeniz için sonuçlarla birlikte dışa aktarmanıza izin veren hazır deneyler aracılığıyla erişmenizi sağlar. Hatta kendi deneylerinizi phyphox.org'da tanımlayıp meslektaşlarınız, öğrencileriniz ve arkadaşlarınızla paylaşabilirsiniz.
 
 Seçilen Özellikler:
-- Ön tanımlı deneylerden oluşan seçim. Başlamak için sadece başlat tuşuna basın.
-- Verilerinizi yaygın olarak kullanılan dosya formatlarıyla dışa aktarın.
-- Deneylerinizi, telefonunuzla aynı ağdaki herhangi bir bilgisayardan bir web arayüzüne girerek uzaktan kontrol edin. Bu bilgisayarlara herhangi bir şey yüklemenize gerek yok. Tek ihtiyacınız olan modern bir web tarayıcısı.
-- Web editörümüzü (http://phyphox.org/editor) kullanarak sensör girdilerini seçerek, analiz adımlarını tanımlayarak ve arayüz için görüntüler oluşturarak kendi deneylerinizi tanımlayın. Analiz sadece iki değer eklemek veya Fourier dönüşümleri ve çapraz korelasyon gibi gelişmiş yöntemler kullanmaktan oluşabilir. Analiz fonksiyonlarının araçlarını eksiksiz olarak sunuyoruz.
+• Ön tanımlı deneylerden oluşan seçim. Başlamak için sadece başlat tuşuna basın.
+• Verilerinizi yaygın olarak kullanılan dosya formatlarıyla dışa aktarın.
+• Deneylerinizi, telefonunuzla aynı ağdaki herhangi bir bilgisayardan bir web arayüzüne girerek uzaktan kontrol edin. Bu bilgisayarlara herhangi bir şey yüklemenize gerek yok. Tek ihtiyacınız olan modern bir web tarayıcısı.
+• Web editörümüzü (<a href="http://phyphox.org/editor">http://phyphox.org/editor</a>) kullanarak sensör girdilerini seçerek, analiz adımlarını tanımlayarak ve arayüz için görüntüler oluşturarak kendi deneylerinizi tanımlayın. Analiz sadece iki değer eklemek veya Fourier dönüşümleri ve çapraz korelasyon gibi gelişmiş yöntemler kullanmaktan oluşabilir. Analiz fonksiyonlarının araçlarını eksiksiz olarak sunuyoruz.
 
 Desteklenen Sensörler:
-- İvmeölçer
-- Manyetometre
-- Jiroskop
-- Işık şiddeti
-- Basınç Sensörü
-- Mikrofon
-- Yakınlık Sensörü
-- GPS
+• İvmeölçer
+• Manyetometre
+• Jiroskop
+• Işık şiddeti
+• Basınç Sensörü
+• Mikrofon
+• Yakınlık Sensörü
+• GPS
 *bazı sensörler her cihazda bulunmayabilir.
 
 Dışa aktarma biçimleri
-- CSV (Virgülle ayrılmış değerler)
-- TSV (Sekmeyle ayrılmış değerler)
-- Excel
+• CSV (Virgülle ayrılmış değerler)
+• TSV (Sekmeyle ayrılmış değerler)
+• Excel
 (başka biçimlere ihtiyacınız varsa, lütfen bize bildirin)
 
 

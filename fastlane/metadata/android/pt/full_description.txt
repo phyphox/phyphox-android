@@ -3,26 +3,26 @@ Você sabe que você está carregando um Magnetômetro 3D? Que você pode usar o
 phyphox dá acesso aos sensores do seu aparelho, seja diretamente ou através de experimentos prontos que avaliam os dados e lhe permitem exportar as medidas para outras análises. Você pode até personalizar experimentos no website phyphox.org e compartilhar com seus colegas, estudantes e amigos. 
 
 Principais características:
-- Experimentos prontos: Apenas um toque para começar.
-- Exporte os seus dados para varios formatos comuns.
-- Acesso remoto ao seu experimento através uma interface web de qualquer computador na mesma rede do seu smartphone. Não instale nada - você precisa apenas de uma navegador atual.
-- Faça seus experimentos selecionando os sensores, o tempo da medida e criando visualizações especiais através do nosso editor (http://phyphox.org/editor). Esta análise pode ser simples como somar dois valores ou usando métodos avançados, como a transformada de Fourier ou correlação cruzada. Nós disponibilizamos vários conjuntos de análises. 
+• Experimentos prontos: Apenas um toque para começar.
+• Exporte os seus dados para varios formatos comuns.
+• Acesso remoto ao seu experimento através uma interface web de qualquer computador na mesma rede do seu smartphone. Não instale nada - você precisa apenas de uma navegador atual.
+• Faça seus experimentos selecionando os sensores, o tempo da medida e criando visualizações especiais através do nosso editor (<a href="http://phyphox.org/editor">http://phyphox.org/editor</a>). Esta análise pode ser simples como somar dois valores ou usando métodos avançados, como a transformada de Fourier ou correlação cruzada. Nós disponibilizamos vários conjuntos de análises. 
 
 Sensores suportados:
-- Acelerômetro
-- Magnetômetro
-- Giroscópio
-- Intensidade luminosa
-- Pressão
-- Microfone
-- Proximidade
-- GPS
+• Acelerômetro
+• Magnetômetro
+• Giroscópio
+• Intensidade luminosa
+• Pressão
+• Microfone
+• Proximidade
+• GPS
 *alguns sensores não estão presentes em todos os aparelhos.
 
 Formatos para exportacão
-- CSV (valores separados por vírgula)
-- TSV (valores separados por tabulação)
-- Excel
+• CSV (valores separados por vírgula)
+• TSV (valores separados por tabulação)
+• Excel
 (se precisar de outro formato, entre em contato connosco)
 
 
