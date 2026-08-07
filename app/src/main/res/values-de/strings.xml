@@ -430,4 +430,5 @@
     <string name="common_unit_short_nano_meter">nm</string>
     <string name="common_unit_short_micro_meter">μm</string>
     <string name="common_quantity_short_wavelength">λ</string>
+    <string name="spectrum_orientation">Ausrichtung</string>
 </resources>
