@@ -153,7 +153,7 @@
     <string name="experimentinfo_hint">查看实验信息，了解如何使用该实验。</string>
     <string name="start_hint">触摸三角图标来开始实验。</string>
     <string name="bluetooth">低功耗蓝牙</string>
-    <string name="bt_android_version">低于安卓4.3的系统不支持低功耗蓝牙。</string>
+    <string name="bt_android_version">这台设备不支持低功耗蓝牙。</string>
     <string name="bt_pick_device">请选择一个设备。</string>
     <string name="bt_scanning_generic">正在扫描蓝牙设备…</string>
     <string name="bt_scanning_specific1">正在扫描以下蓝牙装置</string>
@@ -183,8 +183,8 @@
     <string name="bt_error_writing">写入UUID特征时出错</string>
     <string name="bt_error_reading">读取UUID特征时出错</string>
     <string name="bt_error_discovering">发现蓝牙设备时出错。</string>
-    <string name="bt_fail_reading">读取操作不成功。</string>
-    <string name="bt_fail_writing">写入操作不成功。</string>
+    <string name="bt_fail_reading">读取操作未成功。</string>
+    <string name="bt_fail_writing">写入操作未成功。</string>
     <string name="bt_more_info_link_text">若你的设备不被支持，选择“更多信息”，以便在我们的网站上了解更多关于灵活的低功耗蓝牙技术支持。</string>
     <string name="bt_more_info_link_button">更多信息</string>
     <string name="bt_more_info_link_url">https://phyphox.org/ble</string>
@@ -215,8 +215,8 @@
     <string name="common_unit_short_lux">lx (勒克斯)</string>
     <string name="common_unit_short_degree">°</string>
     <string name="common_unit_short_centi_meter">cm</string>
-    <string name="common_unit_short_kilo_meter">公里</string>
-    <string name="common_unit_short_meter_per_second">米/秒</string>
+    <string name="common_unit_short_kilo_meter">km</string>
+    <string name="common_unit_short_meter_per_second">m/s</string>
     <string name="common_quantity_short_time">时间 (t)</string>
     <string name="common_quantity_short_illuminance">曝光值 (Ev)</string>
     <string name="common_direction_short_north">北</string>
@@ -394,4 +394,36 @@
     <string name="wb_fluorescent">日光灯</string>
     <string name="wb_daylight">自然光</string>
     <string name="wb_cloudy">阴天</string>
+    <string name="error">错误</string>
+    <string name="invalidValue">无效值</string>
+    <string name="clear_data_question_select">清除已记录数据以及以下可选项目？</string>
+    <string name="warning_photosensitivity">光敏性警告</string>
+    <string name="warning_photosensitivity_message">这项实验可能会产生高频光脉冲，可能会引发光敏性癫痫患者的不适或癫痫发作。
+\n
+\n请避免直视光源。</string>
+    <string name="device_overheating">设备过热</string>
+    <string name="device_heating_serious">设备发热严重，已关闭闪光灯以冷却。</string>
+    <string name="graph_tools_calibrate">校准</string>
+    <string name="portrait_orientation">竖屏</string>
+    <string name="landscape_orientation">横屏</string>
+    <string name="spectrum_analysis_setting">频谱分析设置</string>
+    <string name="bl_scan_permission_required_title">需要蓝牙扫描权限</string>
+    <string name="bt_scan_permission_needed">你已永久禁用蓝牙扫描权限。请在设备设置中启用“附近的设备”以发现蓝牙设备。</string>
+    <string name="bt_permission_granted">已授予权限：你现在可以打开扫描对话框。</string>
+    <string name="localNetworkPermission">需要本地网络权限</string>
+    <string name="localNetworkPermissionMessage">你已永久禁用本地网络权限。请在设备设置中启用“附近的设备”以发现本地硬件。</string>
+    <string name="localNetworkRationaleMessage">连接远程服务器需要本地网络权限，请授予权限。</string>
+    <string name="gotoSetting">前往设置</string>
+    <string name="permissionRequired">需要权限</string>
+    <string name="settingsFileNameFormat">默认文件名</string>
+    <string name="settingsFileNameFormatDetail">导出数据、分享屏幕截图或保存状态时默认文件名的模板。可用占位符：
+\n{title} – 实验的标题
+\n{date} – 当前日期
+\n{time} – 当前时间
+\n{startDate} – 测量开始时的日期
+\n{startTime} – 测量开始时的时间
+\n{duration} – 测量持续时间</string>
+    <string name="common_unit_short_nano_meter">nm</string>
+    <string name="common_unit_short_micro_meter">μm</string>
+    <string name="common_quantity_short_wavelength">λ</string>
 </resources>
