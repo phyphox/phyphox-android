@@ -379,7 +379,6 @@
     <string name="on">开</string>
     <string name="camera_preview">相机预览</string>
     <string name="camera_not_ready">相机未就绪</string>
-    <string name="common_unit_percentage">%</string>
     <string name="common_quantity_short_luminance">辉度 (Lv)</string>
     <string name="common_quantity_percentage">百分比</string>
     <string name="remoteCameraPreviewWarning">不支持在远程界面上预览和控制相机。</string>
@@ -403,7 +402,6 @@
 \n请避免直视光源。</string>
     <string name="device_overheating">设备过热</string>
     <string name="device_heating_serious">设备发热严重，已关闭闪光灯以冷却。</string>
-    <string name="graph_tools_calibrate">校准</string>
     <string name="portrait_orientation">竖屏</string>
     <string name="landscape_orientation">横屏</string>
     <string name="spectrum_analysis_setting">频谱分析设置</string>

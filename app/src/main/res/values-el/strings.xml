@@ -379,7 +379,6 @@
     <string name="on">On</string>
     <string name="camera_preview">Προεπισκόπηση</string>
     <string name="camera_not_ready">Ανέτοιμη κάμερα</string>
-    <string name="common_unit_percentage">%</string>
     <string name="common_quantity_short_luminance">Lv</string>
     <string name="common_quantity_percentage">Ποσοστό</string>
     <string name="remoteCameraPreviewWarning">Δεν υποστηρίζεται η προεπισκόπιση και ο έλεγχος της κάμερας στην απομακρυσμένη πρόσβαση.</string>
@@ -394,12 +393,11 @@
     <string name="wb_fluorescent">Φθορισμού</string>
     <string name="wb_daylight">Ημερήσιο Φως</string>
     <string name="wb_cloudy">Συννεφιά</string>
-    <string name="warning_photosensitivity_message">Αυτό το πείραμα ενδέχεται να παράγει παλμούς φωτός υψηλής συχνότητας. Μπορεί να προκαλέσει δυσφορία ή κρίσεις σε άτομα με φωτοευαίσθητη επιληψία. 
+    <string name="warning_photosensitivity_message">Αυτό το πείραμα ενδέχεται να παράγει παλμούς φωτός υψηλής συχνότητας. Μπορεί να προκαλέσει δυσφορία ή κρίσεις σε άτομα με φωτοευαίσθητη επιληψία.
 \n
 \nΑποφύγετε να κοιτάζετε κατευθείαν προς την πηγή φωτός.</string>
     <string name="device_overheating">Υπερθέρμανση συσκευής</string>
     <string name="device_heating_serious">Η συσκευή έχει υπερθερμανθεί. Ο φακός έσβησε για να ψυχθεί.</string>
-    <string name="graph_tools_calibrate">Βαθμονόμηση</string>
     <string name="which_spectrum_orientation">Ποιος είναι ο προσανατολισμός της συσκευής σε σχέση με το φάσμα;</string>
     <string name="portrait_orientation">Κατακόρυφος</string>
     <string name="landscape_orientation">Οριζόντιος</string>

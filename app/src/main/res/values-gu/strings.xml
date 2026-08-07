@@ -116,7 +116,6 @@
 \nપ્રકાશ સ્ત્રોત તરફ સીધા જોવાનું ટાળો.</string>
     <string name="device_overheating">ડિવાઇસ ઓવરહિટીંગ</string>
     <string name="device_heating_serious">ડિવાઇસ ખૂબ ગરમ થઈ રહ્યું છે. ઠંડુ થવા માટે ફ્લેશલાઇટ બંધ કરવામાં આવી છે.</string>
-    <string name="graph_tools_calibrate">કેલિબ્રેટ કરો</string>
     <string name="graph_tools_follow">નવા ડેટાને અનુસરો</string>
     <string name="graph_tools_linear_fit">રેખીય ફિટ</string>
     <string name="graph_tools_export">આ ડેટાસેટનો નિકાસ કરો</string>
@@ -326,7 +325,6 @@
     <string name="common_unit_short_hecto_pascal">hPa</string>
     <string name="common_unit_short_decibel">dB</string>
     <string name="common_unit_short_percent">%</string>
-    <string name="common_unit_percentage">%</string>
     <string name="common_quantity_short_time">t</string>
     <string name="common_quantity_short_angular_velocity">ω</string>
     <string name="common_quantity_short_magnetic_field">B</string>

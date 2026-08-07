@@ -380,7 +380,6 @@
     <string name="on">Włącz</string>
     <string name="camera_preview">Podgląd kamery</string>
     <string name="camera_not_ready">Kamera niegotowa</string>
-    <string name="common_unit_percentage">%</string>
     <string name="common_quantity_short_luminance">Lv</string>
     <string name="common_quantity_percentage">Procent</string>
     <string name="remoteCameraPreviewWarning">Podgląd i kontrolowanie kamery w dostępnie zdalnym nie jest wspierane.</string>

@@ -384,7 +384,6 @@
     <string name="on">துவக்கு</string>
     <string name="camera_preview">ஒளிப்படவி முன்னோட்டம்</string>
     <string name="camera_not_ready">ஒளிப்படவி தயாராக இல்லை</string>
-    <string name="common_unit_percentage">%</string>
     <string name="common_quantity_short_luminance">Lv</string>
     <string name="common_quantity_percentage">வீதம்</string>
     <string name="common_quantity_short_luma">Y\'</string>

@@ -293,7 +293,6 @@
     <string name="common_unit_short_hecto_pascal">hPa</string>
     <string name="common_unit_short_decibel">dB</string>
     <string name="common_unit_short_percent">%</string>
-    <string name="common_unit_percentage">%</string>
     <string name="common_quantity_short_time">t</string>
     <string name="common_quantity_short_angular_velocity">ω</string>
     <string name="common_quantity_short_magnetic_field">B</string>
@@ -403,7 +402,6 @@
 \nIzbjegavajte izravno gledanje u izvor svijetla.</string>
     <string name="device_overheating">Pregrijavanje uređaja</string>
     <string name="device_heating_serious">Uređaj postaje topao. Bljeskalica je ugašena radi hlađenja uređaja.</string>
-    <string name="graph_tools_calibrate">Kalibrirajte</string>
     <string name="which_spectrum_orientation">Koja je orijentacija Vašeg uređaja u odnosu na spektar\?</string>
     <string name="portrait_orientation">Portret</string>
     <string name="landscape_orientation">Pejzaž</string>
@@ -417,7 +415,7 @@
     <string name="gotoSetting">Otiđite na postvake</string>
     <string name="permissionRequired">Potrebna je dozvola</string>
     <string name="settingsFileNameFormat">Zadani nazivi datoteka</string>
-    <string name="settingsFileNameFormatDetail">Uzorci zadanih naziva datoteka kada se izvoze podaci, dijeli slika zaskona ili sprema stanje. Dostupni predlođci: 
+    <string name="settingsFileNameFormatDetail">Uzorci zadanih naziva datoteka kada se izvoze podaci, dijeli slika zaskona ili sprema stanje. Dostupni predlođci:
 \n{title} – naslov pokusa
 \n{date} – današnji datum
 \n{time} – trenutno vrijeme

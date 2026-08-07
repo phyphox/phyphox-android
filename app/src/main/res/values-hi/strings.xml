@@ -379,7 +379,6 @@
     <string name="on">ऑन</string>
     <string name="camera_preview">कैमरा पूर्वावलोकन</string>
     <string name="camera_not_ready">कैमरा तैयार नहीं</string>
-    <string name="common_unit_percentage">%</string>
     <string name="common_quantity_short_luminance">Lv</string>
     <string name="remoteCameraPreviewWarning">रिमोट इंटरफ़ेस पर कैमरे का पूर्वावलोकन और नियंत्रण समर्थित नहीं है।</string>
     <string name="common_quantity_short_luma">Y\'</string>
