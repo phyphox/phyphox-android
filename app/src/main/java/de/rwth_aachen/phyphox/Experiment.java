@@ -646,13 +646,39 @@ public class Experiment extends AppCompatActivity implements View.OnClickListene
             timedRunStartDelay = experiment.timedRunStartDelay;
             timedRunStopDelay = experiment.timedRunStopDelay;
 
-            //If the experiment has been launched from a Bluetooth scan, we need to set the bluetooth device in the experiment so it does not ask the user again
+            //If the experiment has been launched from a Bluetooth scan (or was transferred from a
+            //device that provides its own experiment over BLE), we set that device in the
+            //experiment so it does not ask the user for it again. The preselected device is a
+            //single physical device, so it may only be assigned to a single device the experiment
+            //defines - otherwise an experiment using a second device (e.g. another sensor of the
+            //same model) would silently reuse the sender for that one too instead of scanning for
+            //it. Devices are told apart by their id (the block's "id" attribute), falling back to
+            //each block being its own device; blocks sharing an id are the same physical device.
             String btAddress = intent.getStringExtra(EXPERIMENT_PRESELECTED_BLUETOOTH_ADDRESS);
             if (btAddress != null && Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN_MR2) {
-                for (Bluetooth bt : this.experiment.bluetoothInputs)
-                    bt.deviceAddress = btAddress;
-                for (Bluetooth bt : this.experiment.bluetoothOutputs)
-                    bt.deviceAddress = btAddress;
+                List<Bluetooth> bluetoothDevices = new ArrayList<>();
+                bluetoothDevices.addAll(this.experiment.bluetoothInputs);
+                bluetoothDevices.addAll(this.experiment.bluetoothOutputs);
+
+                //The sender corresponds to the first device the experiment defines that does not
+                //already pin a specific hardware address in its file.
+                Bluetooth target = null;
+                for (Bluetooth bt : bluetoothDevices) {
+                    if (bt.deviceAddress == null || bt.deviceAddress.isEmpty()) {
+                        target = bt;
+                        break;
+                    }
+                }
+
+                if (target != null) {
+                    String targetId = target.idString;
+                    for (Bluetooth bt : bluetoothDevices) {
+                        boolean sameDevice = bt == target ||
+                                (targetId != null && !targetId.isEmpty() && targetId.equals(bt.idString));
+                        if (sameDevice && (bt.deviceAddress == null || bt.deviceAddress.isEmpty()))
+                            bt.deviceAddress = btAddress;
+                    }
+                }
             }
 
             //We should set the experiment title....
