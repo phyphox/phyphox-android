@@ -200,18 +200,13 @@ public class AudioOutput {
 
     public class AudioOutputPluginDirect extends AudioOutputPlugin {
         DataInput input;
-        DataInput pan = new DataInput(0f);
         AudioOutputPluginDirect(DataInput input) {
             this.input = input;
         }
 
         @Override
         public boolean setParameter(String parameter, DataInput input) {
-            if (parameter.equals("pan")) {
-                this.pan = input;
-                return true;
-            }
-            return false;
+            return false; //The direct input takes no parameters. Its mono signal is played on both stereo channels.
         }
 
         @Override
@@ -224,25 +219,21 @@ public class AudioOutput {
             if (input == null)
                 return;
 
-            float p = (float)pan.getValue();
-            if (!Float.isFinite(p))
-                p = 0.0f;
-            float pl = p > 0 ? (float)(1.0 - p) : 1.0f;
-            float pr = p < 0 ? (float)(1.0 + p) : 1.0f;
-
             Double[] data = input.getArray();
             if (data == null || data.length == 0)
                 return;
 
             if (loop) {
                 for (int i = 0; i < samples; i++) {
-                    buffer[i] += data[(index + i) % data.length];
+                    float v = data[(index + i) % data.length].floatValue();
+                    buffer[2*i] += v;
+                    buffer[2*i+1] += v;
                 }
             } else {
                 for (int i = 0; i < samples && i + index < data.length; i++) {
                     float v = data[index + i].floatValue();
-                    buffer[2*i] += pl * v;
-                    buffer[2*i+1] += pr * v;
+                    buffer[2*i] += v;
+                    buffer[2*i+1] += v;
                 }
             }
         }
