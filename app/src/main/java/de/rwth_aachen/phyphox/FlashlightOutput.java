@@ -53,6 +53,8 @@ public class FlashlightOutput {
     }
 
     public void initHardware(CameraControl cameraControl) {
+        if (flashLightManager != null)
+            flashLightManager.release();
         this.flashLightManager = new FlashLightManager(cameraManager, cameraControl);
     }
 
