@@ -649,35 +649,36 @@ public class Experiment extends AppCompatActivity implements View.OnClickListene
             //If the experiment has been launched from a Bluetooth scan (or was transferred from a
             //device that provides its own experiment over BLE), we set that device in the
             //experiment so it does not ask the user for it again. The preselected device is a
-            //single physical device, so it may only be assigned to a single device the experiment
-            //defines - otherwise an experiment using a second device (e.g. another sensor of the
-            //same model) would silently reuse the sender for that one too instead of scanning for
-            //it. Devices are told apart by their id (the block's "id" attribute), falling back to
-            //each block being its own device; blocks sharing an id are the same physical device.
+            //single physical device, but the scan/transfer only tells us its address, not which
+            //of the experiment's Bluetooth blocks it is meant for. So we may only apply it when
+            //the experiment uses exactly one device - otherwise an experiment with a second
+            //device (e.g. another sensor of the same model, or a separate input device next to an
+            //output-only sender) would silently bind that one to the sender too instead of
+            //scanning for it. With more than one device the scan dialog asks for each in turn,
+            //including the sender. Devices are told apart by their id (the block's "id"
+            //attribute); a block without an id is its own device, and blocks sharing an id are
+            //the same physical device. Matches iOS (ExperimentsCollectionViewController, which
+            //only preselects when bluetoothDevices.count == 1).
             String btAddress = intent.getStringExtra(EXPERIMENT_PRESELECTED_BLUETOOTH_ADDRESS);
             if (btAddress != null && Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN_MR2) {
                 List<Bluetooth> bluetoothDevices = new ArrayList<>();
                 bluetoothDevices.addAll(this.experiment.bluetoothInputs);
                 bluetoothDevices.addAll(this.experiment.bluetoothOutputs);
 
-                //The sender corresponds to the first device the experiment defines that does not
-                //already pin a specific hardware address in its file.
-                Bluetooth target = null;
+                Set<String> distinctIds = new HashSet<>();
+                int deviceCount = 0;
                 for (Bluetooth bt : bluetoothDevices) {
-                    if (bt.deviceAddress == null || bt.deviceAddress.isEmpty()) {
-                        target = bt;
-                        break;
+                    if (bt.idString != null && !bt.idString.isEmpty()) {
+                        if (distinctIds.add(bt.idString))
+                            deviceCount++;
+                    } else {
+                        deviceCount++; //a block without an id is its own device
                     }
                 }
 
-                if (target != null) {
-                    String targetId = target.idString;
-                    for (Bluetooth bt : bluetoothDevices) {
-                        boolean sameDevice = bt == target ||
-                                (targetId != null && !targetId.isEmpty() && targetId.equals(bt.idString));
-                        if (sameDevice && (bt.deviceAddress == null || bt.deviceAddress.isEmpty()))
-                            bt.deviceAddress = btAddress;
-                    }
+                if (deviceCount == 1) {
+                    for (Bluetooth bt : bluetoothDevices)
+                        bt.deviceAddress = btAddress;
                 }
             }
 
