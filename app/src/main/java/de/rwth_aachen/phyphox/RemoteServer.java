@@ -377,25 +377,57 @@ public class RemoteServer {
         return ret;
     }
 
+    //CORS: allow cross-origin browser pages to read remote-access responses, including error
+    //responses - the case where a browser client most needs to read the body. The header is set
+    //before the request is dispatched, so it is also present on the error pages jlhttp generates
+    //itself (404, 405, ...), which never pass through respond().
+    private static class CorsHTTPServer extends HTTPServer {
+        CorsHTTPServer(int port) {
+            super(port);
+        }
+
+        @Override
+        protected void handleTransaction(Request req, Response resp) throws IOException {
+            resp.getHeaders().add("Access-Control-Allow-Origin", "*");
+            super.handleTransaction(req, resp);
+        }
+    }
+
+    //Wraps a context handler so that an unhandled exception becomes jlhttp's plain 500 error
+    //response. Without this, the exception would escape to jlhttp's connection handling, which
+    //builds a fresh response without the CORS header set in handleTransaction.
+    private HTTPServer.ContextHandler withErrorResponse(HTTPServer.ContextHandler handler) {
+        return (request, response) -> {
+            try {
+                return handler.serve(request, response);
+            } catch (RuntimeException e) {
+                Log.e("remoteServer", "Unhandled exception while serving " + request.getPath() + ".", e);
+                if (response.headersSent())
+                    throw e; //Too late for an error response, let jlhttp abort the connection
+                return 500;
+            }
+        };
+    }
+
     //This starts the http server and registers the handlers for several requests
     public synchronized void start() {
         httpServerPort = Integer.parseInt(PreferenceManager.getDefaultSharedPreferences(context).getString("remoteAccessPort", "8080"));
-        httpServer = new HTTPServer(httpServerPort);
+        httpServer = new CorsHTTPServer(httpServerPort);
         executor = Executors.newCachedThreadPool();
         httpServer.setExecutor(executor);
         HTTPServer.VirtualHost host = httpServer.getVirtualHost(null);
 
         //Now register a handler for different requests
-        host.addContext("/", this::handleHome); //The basic interface (index.html) when the user just calls the address
-        host.addContext("/style.css", this::handleStyle); //The style sheet (style.css) linked from index.html
-        host.addContext("/logo", this::handleLogo); //The phyphox logo, also included in style.css
-        host.addContext("/get", this::handleGet); //A get command takes parameters which define, which buffers and how much of them is requested - the response is a JSON set with the data
-        host.addContext("/control", this::handleControl, "GET", "POST"); //The control command starts and stops measurements
-        host.addContext("/export", this::handleExport); //The export command requests a data file containing sets as requested by the parameters
-        host.addContext("/config", this::handleConfig); //The config command requests information on the currently active experiment configuration
-        host.addContext("/meta", this::handleMeta); //The meta command requests information on the device
-        host.addContext("/time", this::handleTime); //The meta command requests information on the current time reference
-        host.addContext("/res", this::handleRes); //Fetch resource files (like images embedded in the experiment configuration)
+        host.addContext("/", withErrorResponse(this::handleHome)); //The basic interface (index.html) when the user just calls the address
+        host.addContext("/style.css", withErrorResponse(this::handleStyle)); //The style sheet (style.css) linked from index.html
+        host.addContext("/logo", withErrorResponse(this::handleLogo)); //The phyphox logo, also included in style.css
+        host.addContext("/get", withErrorResponse(this::handleGet)); //A get command takes parameters which define, which buffers and how much of them is requested - the response is a JSON set with the data
+        host.addContext("/control", withErrorResponse(this::handleControl), "GET", "POST"); //The control command starts and stops measurements
+        host.addContext("/export", withErrorResponse(this::handleExport)); //The export command requests a data file containing sets as requested by the parameters
+        host.addContext("/config", withErrorResponse(this::handleConfig)); //The config command requests information on the currently active experiment configuration
+        host.addContext("/meta", withErrorResponse(this::handleMeta)); //The meta command requests information on the device
+        host.addContext("/time", withErrorResponse(this::handleTime)); //The meta command requests information on the current time reference
+        host.addContext("/res", withErrorResponse(this::handleRes)); //Fetch resource files (like images embedded in the experiment configuration)
         try {
             httpServer.start();
         } catch (IOException e) {
@@ -411,8 +443,7 @@ public class RemoteServer {
 
     protected int respond(Response response, String contentType, InputStream in, long length) throws IOException {
         try {
-            // CORS: allow cross-origin browser pages to read remote-access responses.
-            response.getHeaders().add("Access-Control-Allow-Origin", "*");
+            //The CORS header is already set for every response in CorsHTTPServer.handleTransaction
             response.sendHeaders(200, length, System.currentTimeMillis(), null, contentType, null);
             response.sendBody(in, -1, null);
         } finally {
