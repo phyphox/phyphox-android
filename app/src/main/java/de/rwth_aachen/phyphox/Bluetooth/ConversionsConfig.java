@@ -115,9 +115,14 @@ public class ConversionsConfig {
     }
 
     public static byte[] hexadecimal (String data) {
-        byte[] result = new byte[data.length()/2];
-        for (int i = 0; i + 1 < data.length(); i+=2) { //A dangling character of an odd-length string is ignored
-            result[i/2] = (byte) ((Character.digit(data.charAt(i), 16) << 4) + Character.digit(data.charAt(i+1), 16));
+        String hex = data.replace(" ", "");
+        byte[] result = new byte[hex.length()/2];
+        for (int i = 0; i + 1 < hex.length(); i+=2) { //A dangling character of an odd-length string is ignored
+            int high = Character.digit(hex.charAt(i), 16);
+            int low = Character.digit(hex.charAt(i+1), 16);
+            if (high < 0 || low < 0)
+                return new byte[0]; //An invalid character yields an empty array rather than junk bytes
+            result[i/2] = (byte) ((high << 4) + low);
         }
         return result;
     }
