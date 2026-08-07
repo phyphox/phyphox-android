@@ -111,7 +111,6 @@
     <!-- Graph  -->
     <string name="graph_tools_pan_and_zoom">Pan and zoom</string>
     <string name="graph_tools_pick">Pick data</string>
-    <string name="graph_tools_calibrate">Calibrate</string>
     <string name="graph_tools_more">More tools</string>
     <string name="graph_tools_system_time">Convert to system time</string>
     <string name="graph_tools_reset">Reset zoom</string>
