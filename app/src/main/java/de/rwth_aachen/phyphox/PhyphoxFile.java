@@ -3744,6 +3744,13 @@ public abstract class PhyphoxFile {
                 File newResFolder = new File(parent.get().getFilesDir(), Long.toHexString(exp.crc32).toLowerCase());
                 newResFolder.mkdirs();
                 for (String src : exp.resources) {
+                    //The src comes from the experiment file and is not trustworthy: refuse any
+                    //path traversal so it cannot read from or write to outside the folders here.
+                    if (!Helper.isSafeResourceName(src)) {
+                        Log.e("CopyXML", "Refusing to save resource with path traversal: " + src);
+                        warnings += "Could not save resource: " + src + "\n";
+                        continue;
+                    }
                     File srcFile = new File(exp.resourceFolder, src);
                     if (!srcFile.isFile()) {
                         //Resources that were not delivered alongside the experiment file may

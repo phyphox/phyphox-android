@@ -2815,9 +2815,12 @@ public class ExpView implements Serializable{
         protected void createView(LinearLayout ll, Context c, Resources res, ExpViewFragment parent, PhyphoxExperiment experiment){
             super.createView(ll, c, res, parent, experiment);
 
+            //The src comes from the experiment file, which is not trustworthy: refuse any path
+            //traversal so it cannot reach outside the resource folder.
+            boolean srcIsSafe = Helper.isSafeResourceName(src);
             //Externally loaded experiments deliver their images in a res folder alongside the
             //XML file, so try this one first...
-            if (experiment.resourceFolder != null && !experiment.resourceFolder.startsWith("ASSET")) {
+            if (srcIsSafe && experiment.resourceFolder != null && !experiment.resourceFolder.startsWith("ASSET")) {
                 File srcFile = new File(experiment.resourceFolder, src);
                 Bitmap bmp = BitmapFactory.decodeFile(srcFile.getAbsolutePath());
                 if (bmp != null)
@@ -2826,7 +2829,7 @@ public class ExpView implements Serializable{
             //...and fall back to the internal images bundled with phyphox (at the moment only
             //hue.png). This is the regular source for experiments loaded from the assets, but
             //it also allows external experiment files to reuse the bundled images.
-            if (drawable == null) {
+            if (srcIsSafe && drawable == null) {
                 String assetPath = "experiments/res/" + src;
                 try {
                     InputStream is = res.getAssets().open(assetPath);

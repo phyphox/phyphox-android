@@ -49,6 +49,7 @@ import java.util.Set;
 import java.util.Vector;
 
 import de.rwth_aachen.phyphox.helper.FileNameFormat;
+import de.rwth_aachen.phyphox.helper.Helper;
 
 //RemoteServer implements a web interface to remote control the experiment and receive the data
 
@@ -939,7 +940,7 @@ public class RemoteServer {
     public int handleRes(Request request, Response response) throws IOException {
         //Get the parameters
         String src = request.getParams().get("src");
-        if (src == null || src.isEmpty() || !experiment.resources.contains(src))
+        if (src == null || src.isEmpty() || !experiment.resources.contains(src) || !Helper.isSafeResourceName(src))
             return respond(response, "{\"error\": \"Unknown file.\"}");
 
         //Externally loaded experiments deliver their resources in a res folder alongside the

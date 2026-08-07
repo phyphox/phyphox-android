@@ -144,6 +144,20 @@ public abstract class Helper {
         return score;
     }
 
+    //A resource name (an image element's src) comes from the experiment file, which is not
+    //trustworthy. Refuse any path traversal so a malicious file cannot reach outside its
+    //resource folder - relevant especially for the /res endpoint, which serves the resolved
+    //file over the network. Matches the guard in the iOS app (Experiment.resolveResource).
+    public static boolean isSafeResourceName(String src) {
+        if (src == null || src.isEmpty())
+            return false;
+        for (String component : src.split("/")) {
+            if (component.equals(".."))
+                return false;
+        }
+        return true;
+    }
+
     public static boolean isDarkTheme(Resources res){
         int nightModelFlags = res.getConfiguration().uiMode & Configuration.UI_MODE_NIGHT_MASK;
 
