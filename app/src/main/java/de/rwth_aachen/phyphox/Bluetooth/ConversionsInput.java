@@ -6,7 +6,6 @@ import android.util.Log;
 import org.xmlpull.v1.XmlPullParser;
 
 import java.io.Serializable;
-import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -15,7 +14,44 @@ import java.util.regex.Pattern;
 // The class holds public static functions which convert values from a byte array to a double value.
 public class ConversionsInput {
 
+    //A single byte-array-to-double conversion function. Serializable so the conversion objects
+    //stay serializable like they were when they wrapped a reflected Method.
+    public interface ByteArrayToDouble extends Serializable {
+        double apply(byte[] data);
+    }
 
+    //Resolves a conversion function named in an experiment file to a conversion object. The name is
+    //matched case-insensitively (see the enum-case-insensitive rule in phyphox-docs). Returns null
+    //if there is no such function, so the caller can reject the file. The accepted names are the
+    //file-format contract and must not change; this replaced a reflection lookup by method name.
+    public static InputConversion getConversion(String name, XmlPullParser xpp) {
+        if (name == null)
+            return null;
+        switch (name.toLowerCase()) {
+            case "string": return new string(xpp);
+            case "formattedstring": return new formattedString(xpp);
+            case "int8": return new SimpleInputConversion(ConversionsInput::int8, xpp);
+            case "uint8": return new SimpleInputConversion(ConversionsInput::uInt8, xpp);
+            case "singlebyte": return new SimpleInputConversion(ConversionsInput::singleByte, xpp);
+            case "uint16littleendian": return new SimpleInputConversion(ConversionsInput::uInt16LittleEndian, xpp);
+            case "uint16bigendian": return new SimpleInputConversion(ConversionsInput::uInt16BigEndian, xpp);
+            case "int16littleendian": return new SimpleInputConversion(ConversionsInput::int16LittleEndian, xpp);
+            case "int16bigendian": return new SimpleInputConversion(ConversionsInput::int16BigEndian, xpp);
+            case "uint24littleendian": return new SimpleInputConversion(ConversionsInput::uInt24LittleEndian, xpp);
+            case "uint24bigendian": return new SimpleInputConversion(ConversionsInput::uInt24BigEndian, xpp);
+            case "int24littleendian": return new SimpleInputConversion(ConversionsInput::int24LittleEndian, xpp);
+            case "int24bigendian": return new SimpleInputConversion(ConversionsInput::int24BigEndian, xpp);
+            case "uint32littleendian": return new SimpleInputConversion(ConversionsInput::uInt32LittleEndian, xpp);
+            case "uint32bigendian": return new SimpleInputConversion(ConversionsInput::uInt32BigEndian, xpp);
+            case "int32littleendian": return new SimpleInputConversion(ConversionsInput::int32LittleEndian, xpp);
+            case "int32bigendian": return new SimpleInputConversion(ConversionsInput::int32BigEndian, xpp);
+            case "float32littleendian": return new SimpleInputConversion(ConversionsInput::float32LittleEndian, xpp);
+            case "float32bigendian": return new SimpleInputConversion(ConversionsInput::float32BigEndian, xpp);
+            case "float64littleendian": return new SimpleInputConversion(ConversionsInput::float64LittleEndian, xpp);
+            case "float64bigendian": return new SimpleInputConversion(ConversionsInput::float64BigEndian, xpp);
+            default: return null;
+        }
+    }
 
     public static class InputConversion implements Serializable {
         InputConversion() {
@@ -27,11 +63,11 @@ public class ConversionsInput {
     }
 
     public static class SimpleInputConversion extends InputConversion implements Serializable {
-        private final Method conversionFunction;
+        private final ByteArrayToDouble conversionFunction;
         int offset;
         int repeating;
         int length;
-        public SimpleInputConversion(Method conversionFunction, XmlPullParser xpp) {
+        public SimpleInputConversion(ByteArrayToDouble conversionFunction, XmlPullParser xpp) {
             super();
             this.conversionFunction = conversionFunction;
             try {
@@ -61,7 +97,7 @@ public class ConversionsInput {
                     if (length > 0 && length < actualLength)
                         actualLength = length;
                     byte[] subdata = Arrays.copyOfRange(data, index, index + actualLength);
-                    out.add((Double) conversionFunction.invoke(null, subdata));
+                    out.add(conversionFunction.apply(subdata));
                     if (repeating > 0)
                         index += repeating;
                     else

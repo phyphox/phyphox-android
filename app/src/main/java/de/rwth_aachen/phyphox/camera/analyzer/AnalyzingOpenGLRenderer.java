@@ -112,9 +112,6 @@ public class AnalyzingOpenGLRenderer implements Preview.SurfaceProvider, Surface
         if (cameraInput.getDataValue() != null) {
             analyzingModules.add(new HSVAnalyzer(cameraInput.getDataValue(), HSVAnalyzer.Mode.value));
         }
-        if (cameraInput.getDataThreshold() != null) {
-            analyzingModules.add(new ThresholdAnalyzer(cameraInput.getDataThreshold(), cameraInput.getThresholdAnalyzerThreshold()));
-        }
         if(cameraInput.getDataPixelPosition() != null){
             if(cameraInput.isFeatureSpectroscopy()){
                 analyzingModules.add(new SpectroscopyAnalyzer(

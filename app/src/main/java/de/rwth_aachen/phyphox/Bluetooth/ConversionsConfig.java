@@ -2,10 +2,48 @@ package de.rwth_aachen.phyphox.Bluetooth;
 
 
 import java.io.Serializable;
-import java.lang.reflect.Method;
 
 // The class holds public static functions which convert values from a string to a byte array.
 public class ConversionsConfig {
+
+    //A single string-to-bytes conversion function. Serializable so the conversion objects stay
+    //serializable like they were when they wrapped a reflected Method.
+    public interface StringToByteArray extends Serializable {
+        byte[] apply(String data);
+    }
+
+    //Resolves a conversion function named in an experiment file to a conversion object. The name is
+    //matched case-insensitively (see the enum-case-insensitive rule in phyphox-docs). Returns null
+    //if there is no such function, so the caller can reject the file. The accepted names are the
+    //file-format contract and must not change; this replaced a reflection lookup by method name.
+    public static ConfigConversion getConversion(String name) {
+        if (name == null)
+            return null;
+        switch (name.toLowerCase()) {
+            case "string": return new SimpleConfigConversion(ConversionsConfig::string);
+            case "hexadecimal": return new SimpleConfigConversion(ConversionsConfig::hexadecimal);
+            case "int16littleendian": return new SimpleConfigConversion(ConversionsConfig::int16LittleEndian);
+            case "uint16littleendian": return new SimpleConfigConversion(ConversionsConfig::uInt16LittleEndian);
+            case "int24littleendian": return new SimpleConfigConversion(ConversionsConfig::int24LittleEndian);
+            case "uint24littleendian": return new SimpleConfigConversion(ConversionsConfig::uInt24LittleEndian);
+            case "int32littleendian": return new SimpleConfigConversion(ConversionsConfig::int32LittleEndian);
+            case "uint32littleendian": return new SimpleConfigConversion(ConversionsConfig::uInt32LittleEndian);
+            case "int16bigendian": return new SimpleConfigConversion(ConversionsConfig::int16BigEndian);
+            case "uint16bigendian": return new SimpleConfigConversion(ConversionsConfig::uInt16BigEndian);
+            case "int24bigendian": return new SimpleConfigConversion(ConversionsConfig::int24BigEndian);
+            case "uint24bigendian": return new SimpleConfigConversion(ConversionsConfig::uInt24BigEndian);
+            case "int32bigendian": return new SimpleConfigConversion(ConversionsConfig::int32BigEndian);
+            case "uint32bigendian": return new SimpleConfigConversion(ConversionsConfig::uInt32BigEndian);
+            case "float32littleendian": return new SimpleConfigConversion(ConversionsConfig::float32LittleEndian);
+            case "float32bigendian": return new SimpleConfigConversion(ConversionsConfig::float32BigEndian);
+            case "float64littleendian": return new SimpleConfigConversion(ConversionsConfig::float64LittleEndian);
+            case "float64bigendian": return new SimpleConfigConversion(ConversionsConfig::float64BigEndian);
+            case "singlebyte": return new SimpleConfigConversion(ConversionsConfig::singleByte);
+            case "int8": return new SimpleConfigConversion(ConversionsConfig::int8);
+            case "uint8": return new SimpleConfigConversion(ConversionsConfig::uInt8);
+            default: return null;
+        }
+    }
 
     public static class ConfigConversion implements Serializable {
         ConfigConversion() {
@@ -17,8 +55,8 @@ public class ConversionsConfig {
     }
 
     public static class SimpleConfigConversion extends ConfigConversion implements Serializable {
-        private Method conversionFunction;
-        public SimpleConfigConversion(Method conversionFunction) {
+        private final StringToByteArray conversionFunction;
+        public SimpleConfigConversion(StringToByteArray conversionFunction) {
             super();
             this.conversionFunction = conversionFunction;
         }
@@ -26,7 +64,7 @@ public class ConversionsConfig {
         @Override
         public byte[] convert(String data) {
             try {
-                return (byte[]) conversionFunction.invoke(null, data);
+                return conversionFunction.apply(data);
             } catch (Exception e) {
                 return null;
             }

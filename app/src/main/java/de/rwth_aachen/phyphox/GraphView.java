@@ -44,13 +44,14 @@ public class GraphView extends View {
     }
 
     public static Style styleFromStr(String str) {
-        return switch (str) {
+        //Enumerated values are matched case-insensitively (see rules.yml, enum-case-insensitive)
+        return switch (str.toLowerCase()) {
             case "lines" -> Style.lines;
             case "dots" -> Style.dots;
             case "hbars" -> Style.hbars;
             case "vbars" -> Style.vbars;
             case "map" -> Style.mapXY;
-            case "mapZ" -> Style.mapZ;
+            case "mapz" -> Style.mapZ;
             default -> Style.unknown;
         };
     }

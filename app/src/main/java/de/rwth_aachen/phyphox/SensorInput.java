@@ -85,8 +85,12 @@ public class SensorInput implements SensorEventListener, Serializable {
     }
 
     public static int resolveSensorString(String type) {
+        //Enumerated values are matched case-insensitively (see rules.yml, enum-case-insensitive)
+        SensorName name = de.rwth_aachen.phyphox.helper.Helper.enumFromStringIgnoreCase(SensorName.class, type);
+        if (name == null)
+            return -2;
         try {
-            return resolveSensorName(SensorName.valueOf(type));
+            return resolveSensorName(name);
         } catch (InvalidParameterException e) {
             return -2;
         }
@@ -148,7 +152,8 @@ public class SensorInput implements SensorEventListener, Serializable {
         if (this.type < -1)
             throw new SensorException("Unknown sensor.");
 
-        this.sensorName = SensorName.valueOf(type);
+        //Enumerated values are matched case-insensitively (see rules.yml, enum-case-insensitive)
+        this.sensorName = de.rwth_aachen.phyphox.helper.Helper.enumFromStringIgnoreCase(SensorName.class, type);
     }
 
     private Sensor findSensor() {

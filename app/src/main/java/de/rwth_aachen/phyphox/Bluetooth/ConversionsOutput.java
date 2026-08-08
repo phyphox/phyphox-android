@@ -1,12 +1,52 @@
 package de.rwth_aachen.phyphox.Bluetooth;
 
 import java.io.Serializable;
-import java.lang.reflect.Method;
 
 import de.rwth_aachen.phyphox.DataBuffer;
 
 // The class holds public static functions which convert double values to a byte array that can be written to a characteristic.
 public class ConversionsOutput {
+
+    //A single value-to-bytes conversion function. Serializable so the conversion objects stay
+    //serializable like they were when they wrapped a reflected Method.
+    public interface DoubleToByteArray extends Serializable {
+        byte[] apply(double data);
+    }
+
+    //Resolves a conversion function named in an experiment file to a conversion object. The name is
+    //matched case-insensitively (see the enum-case-insensitive rule in phyphox-docs). Returns null
+    //if there is no such function, so the caller can reject the file. The accepted names are the
+    //file-format contract and must not change; this replaced a reflection lookup by method name.
+    public static OutputConversion getConversion(String name) {
+        if (name == null)
+            return null;
+        switch (name.toLowerCase()) {
+            case "bytearray": return new OutputConversion() {
+                @Override public byte[] convert(DataBuffer data) { return byteArray(data); }
+            };
+            case "string": return new SimpleOutputConversion(ConversionsOutput::string);
+            case "int16littleendian": return new SimpleOutputConversion(ConversionsOutput::int16LittleEndian);
+            case "uint16littleendian": return new SimpleOutputConversion(ConversionsOutput::uInt16LittleEndian);
+            case "int24littleendian": return new SimpleOutputConversion(ConversionsOutput::int24LittleEndian);
+            case "uint24littleendian": return new SimpleOutputConversion(ConversionsOutput::uInt24LittleEndian);
+            case "int32littleendian": return new SimpleOutputConversion(ConversionsOutput::int32LittleEndian);
+            case "uint32littleendian": return new SimpleOutputConversion(ConversionsOutput::uInt32LittleEndian);
+            case "int16bigendian": return new SimpleOutputConversion(ConversionsOutput::int16BigEndian);
+            case "uint16bigendian": return new SimpleOutputConversion(ConversionsOutput::uInt16BigEndian);
+            case "int24bigendian": return new SimpleOutputConversion(ConversionsOutput::int24BigEndian);
+            case "uint24bigendian": return new SimpleOutputConversion(ConversionsOutput::uInt24BigEndian);
+            case "int32bigendian": return new SimpleOutputConversion(ConversionsOutput::int32BigEndian);
+            case "uint32bigendian": return new SimpleOutputConversion(ConversionsOutput::uInt32BigEndian);
+            case "float32littleendian": return new SimpleOutputConversion(ConversionsOutput::float32LittleEndian);
+            case "float32bigendian": return new SimpleOutputConversion(ConversionsOutput::float32BigEndian);
+            case "float64littleendian": return new SimpleOutputConversion(ConversionsOutput::float64LittleEndian);
+            case "float64bigendian": return new SimpleOutputConversion(ConversionsOutput::float64BigEndian);
+            case "singlebyte": return new SimpleOutputConversion(ConversionsOutput::singleByte);
+            case "uint8": return new SimpleOutputConversion(ConversionsOutput::uInt8);
+            case "int8": return new SimpleOutputConversion(ConversionsOutput::int8);
+            default: return null;
+        }
+    }
 
     public static class OutputConversion implements Serializable {
         OutputConversion() {
@@ -18,8 +58,8 @@ public class ConversionsOutput {
     }
 
     public static class SimpleOutputConversion extends OutputConversion implements Serializable {
-        private Method conversionFunction;
-        public SimpleOutputConversion(Method conversionFunction) {
+        private final DoubleToByteArray conversionFunction;
+        public SimpleOutputConversion(DoubleToByteArray conversionFunction) {
             super();
             this.conversionFunction = conversionFunction;
         }
@@ -27,13 +67,9 @@ public class ConversionsOutput {
         @Override
         public byte[] convert(DataBuffer data) {
             try {
-                return (byte[]) conversionFunction.invoke(null, data);
+                return conversionFunction.apply(data.value);
             } catch (Exception e) {
-                try {
-                    return (byte[]) conversionFunction.invoke(null, data.value);
-                } catch (Exception e2) {
-                    return null;
-                }
+                return null;
             }
         }
     }

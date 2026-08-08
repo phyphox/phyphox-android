@@ -38,8 +38,6 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.lang.ref.WeakReference;
-import java.lang.reflect.Constructor;
-import java.lang.reflect.Method;
 import java.net.URL;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -413,14 +411,14 @@ public abstract class PhyphoxFile {
                     if (type == null)
                         type = "buffer";
 
-                    if (type.equals("buffer")) {
+                    if (type.equalsIgnoreCase("buffer")) {
                         String bufferName = getText();
                         DataBuffer buffer = experiment.getBuffer(bufferName);
                         if (buffer == null) {
                             throw new phyphoxFileException("Buffer \"" + bufferName + "\" not defined.", xpp.getLineNumber());
                         }
                         input = new DataInput(buffer, false);
-                    } else if(type.equals("value")){
+                    } else if(type.equalsIgnoreCase("value")){
                         double value;
                         try {
                             value = Double.valueOf(getText());
@@ -431,7 +429,8 @@ public abstract class PhyphoxFile {
                     } else {
                         throw new phyphoxFileException("Unknown input type \""+type+"\".", xpp.getLineNumber());
                     }
-                    switch (parameter){
+                    //Enumerated values are matched case-insensitively (see rules.yml, enum-case-insensitive)
+                    switch (parameter == null ? "" : parameter.toLowerCase()){
                         case "intensity": {
                             flashlightOutput.intensityInput = input;
                             break;
@@ -478,14 +477,14 @@ public abstract class PhyphoxFile {
                     if (type == null)
                         type = "buffer";
 
-                    if (type.equals("buffer")) {
+                    if (type.equalsIgnoreCase("buffer")) {
                         String bufferName = getText();
                         DataBuffer buffer = experiment.getBuffer(bufferName);
                         if (buffer == null) {
                             throw new phyphoxFileException("Buffer \"" + bufferName + "\" not defined.", xpp.getLineNumber());
                         }
                         input = new DataInput(buffer, false);
-                    } else if (type.equals("value")) {
+                    } else if (type.equalsIgnoreCase("value")) {
                         double value;
                         try {
                             value = Double.valueOf(getText());
@@ -520,7 +519,8 @@ public abstract class PhyphoxFile {
                     if(parameter == null)
                         parameter = "sine";
                     AudioOutput.Waveform waveform = AudioOutput.Waveform.SINE;
-                    switch (parameter){
+                    //Enumerated values are matched case-insensitively (see rules.yml, enum-case-insensitive)
+                    switch (parameter.toLowerCase()){
                         case "square":
                             waveform = AudioOutput.Waveform.SQUARE;
                             break;
@@ -565,9 +565,6 @@ public abstract class PhyphoxFile {
 
     // Blockparser for input or output assignments inside a bluetooth-block
     private static class BluetoothIoBlockParser extends xmlBlockParser {
-        protected static Class conversionsInput = (new ConversionsInput()).getClass();
-        protected static Class conversionsOutput = (new ConversionsOutput()).getClass();
-        protected static Class conversionsConfig = (new ConversionsConfig()).getClass();
         Vector<DataOutput> outputList;
         Vector<DataInput> inputList;
         Vector<Bluetooth.CharacteristicData> characteristics; // characteristics of the bluetooth input / output
@@ -614,24 +611,9 @@ public abstract class PhyphoxFile {
                     if (conversionFunctionName == null) {
                         throw new phyphoxFileException("Tag needs a conversion attribute.", xpp.getLineNumber());
                     }
-                    try {
-                        try {
-                            try {
-                                Class conversionClass = Class.forName("de.rwth_aachen.phyphox.Bluetooth.ConversionsOutput$" + conversionFunctionName);
-                                Constructor constructor = conversionClass.getConstructor(XmlPullParser.class);
-                                constructor.setAccessible(true);
-                                outputConversionFunction = (ConversionsOutput.OutputConversion) constructor.newInstance(xpp);
-                            } catch (Exception e) {
-                                Method conversionMethod = conversionsOutput.getDeclaredMethod(conversionFunctionName, new Class[]{DataBuffer.class});
-                                outputConversionFunction = new ConversionsOutput.SimpleOutputConversion(conversionMethod);
-                            }
-                        } catch (Exception e) {
-                            Method conversionMethod = conversionsOutput.getDeclaredMethod(conversionFunctionName, new Class[]{double.class});
-                            outputConversionFunction = new ConversionsOutput.SimpleOutputConversion(conversionMethod);
-                        }
-                    } catch (NoSuchMethodException e) {
+                    outputConversionFunction = ConversionsOutput.getConversion(conversionFunctionName);
+                    if (outputConversionFunction == null)
                         throw new phyphoxFileException("invalid conversion function: " + conversionFunctionName, xpp.getLineNumber());
-                    }
 
                     short offset = (short)getIntAttribute("offset", 0);
 
@@ -662,7 +644,7 @@ public abstract class PhyphoxFile {
                     boolean extraTime = false;
                     String extra = this.getStringAttribute("extra");
                     if (extra != null) {
-                        if (extra.equals("time")) {
+                        if (extra.equalsIgnoreCase("time")) { //Enumerated values are matched case-insensitively
                             extraTime = true;
                             if (characteristicsWithExtraTime.contains(uuid)) {
                                 throw new phyphoxFileException("extra=time can be used only once for a characteristic.");
@@ -679,19 +661,9 @@ public abstract class PhyphoxFile {
                        if (conversionFunctionName == null) {
                            throw new phyphoxFileException("Tag needs a conversion attribute.", xpp.getLineNumber());
                        }
-                        try {
-                            try {
-                                Class conversionClass = Class.forName("de.rwth_aachen.phyphox.Bluetooth.ConversionsInput$" + conversionFunctionName);
-                                Constructor constructor = conversionClass.getDeclaredConstructor(new Class[]{XmlPullParser.class});
-                                constructor.setAccessible(true);
-                                inputConversionFunction = (ConversionsInput.InputConversion)constructor.newInstance(xpp);
-                            } catch (Exception e) {
-                                Method conversionMethod = conversionsInput.getDeclaredMethod(conversionFunctionName, new Class[]{byte[].class});
-                                inputConversionFunction = new ConversionsInput.SimpleInputConversion(conversionMethod, xpp);
-                            }
-                        } catch (NoSuchMethodException e) {
+                        inputConversionFunction = ConversionsInput.getConversion(conversionFunctionName, xpp);
+                        if (inputConversionFunction == null)
                             throw new phyphoxFileException("invalid conversion function: " + conversionFunctionName, xpp.getLineNumber());
-                        }
                     }
 
                     // check if buffer exists
@@ -713,19 +685,9 @@ public abstract class PhyphoxFile {
                     if (conversionFunctionName == null) {
                         throw new phyphoxFileException("Tag needs a conversion attribute.", xpp.getLineNumber());
                     }
-                    try {
-                        try {
-                            Class conversionClass = Class.forName("de.rwth_aachen.phyphox.Bluetooth.ConversionsConfig$" + conversionFunctionName);
-                            Constructor constructor = conversionClass.getConstructor(XmlPullParser.class);
-                            constructor.setAccessible(true);
-                            configConversionFunction = (ConversionsConfig.ConfigConversion)constructor.newInstance(xpp);
-                        } catch (Exception e) {
-                            Method conversionMethod = conversionsConfig.getDeclaredMethod(conversionFunctionName, String.class);
-                            configConversionFunction = new ConversionsConfig.SimpleConfigConversion(conversionMethod);
-                        }
-                    } catch (NoSuchMethodException e) {
+                    configConversionFunction = ConversionsConfig.getConversion(conversionFunctionName);
+                    if (configConversionFunction == null)
                         throw new phyphoxFileException("invalid conversion function: " + conversionFunctionName, xpp.getLineNumber());
-                    }
                     try {
                         // add data to configs
                         String text = getText();
@@ -821,7 +783,7 @@ public abstract class PhyphoxFile {
 
                         //Check if there is a matching inputMapping
                         for (int i = 0; i < inputMapping.length; i++) {
-                            if (inputMapping[i].name.equals(mapping)) {
+                            if (inputMapping[i].name.equalsIgnoreCase(mapping)) { //Enumerated names are matched case-insensitively
                                 targetIndex = i;
                                 mappingIndex = i;
                                 break;
@@ -907,7 +869,7 @@ public abstract class PhyphoxFile {
                     inputMapping[mappingIndex].count++;
 
                     //The input may have different types...
-                    if (type.equals("value")) {
+                    if (type.equalsIgnoreCase("value")) {
                         //Just a value, Is this allowed?
                         if (inputMapping[mappingIndex].valueAllowed) {
                             double value;
@@ -920,7 +882,7 @@ public abstract class PhyphoxFile {
                         } else {
                             throw new phyphoxFileException("Value-type not allowed for input \""+inputMapping[mappingIndex].name+"\".", xpp.getLineNumber());
                         }
-                    } else if (type.equals("buffer")) {
+                    } else if (type.equalsIgnoreCase("buffer")) {
 
                         //Check the type
                         boolean clearAfterRead = getBooleanAttribute("clear", true); //Deprecated
@@ -959,7 +921,7 @@ public abstract class PhyphoxFile {
 
                     if (mapping != null) {
                         for (int i = 0; i < outputMapping.length; i++) {
-                            if (outputMapping[i].name.equals(mapping)) {
+                            if (outputMapping[i].name.equalsIgnoreCase(mapping)) { //Enumerated names are matched case-insensitively
                                 targetIndex = i;
                                 mappingIndex = i;
                                 break;
@@ -1252,7 +1214,7 @@ public abstract class PhyphoxFile {
             switch (tag.toLowerCase()) {
                 case "container": //A view defines an arangement of elements displayed to the user
                     String type = getStringAttribute("type");
-                    if (type != null && !type.equals("buffer")) //There currently is only one buffer type. This tag is for future additions.
+                    if (type != null && !type.equalsIgnoreCase("buffer")) //There currently is only one buffer type. This tag is for future additions.
                         throw new phyphoxFileException("Unknown container type \"" + type + "\".", xpp.getLineNumber());
 
                     int size = getIntAttribute("size",1);
@@ -1355,7 +1317,8 @@ public abstract class PhyphoxFile {
             String scaleStr = getStringAttribute(attribute);
             GraphView.scaleMode scale = GraphView.scaleMode.auto;
             if (scaleStr != null) {
-                switch (scaleStr) {
+                //Enumerated values are matched case-insensitively (see rules.yml, enum-case-insensitive)
+                switch (scaleStr.toLowerCase()) {
                     case "auto": scale = GraphView.scaleMode.auto;
                         break;
                     case "extend": scale = GraphView.scaleMode.extend;
@@ -1686,7 +1649,6 @@ public abstract class PhyphoxFile {
                     boolean signed = getBooleanAttribute("signed", true);
                     boolean decimal = getBooleanAttribute("decimal", true);
                     double defaultValue = getDoubleAttribute("default", 0.);
-                    boolean isEditable = getBooleanAttribute("editable", true);
 
                     double min = getDoubleAttribute("min", Double.NEGATIVE_INFINITY);
                     double max = getDoubleAttribute("max", Double.POSITIVE_INFINITY);
@@ -1704,7 +1666,6 @@ public abstract class PhyphoxFile {
                     ie.setDecimal(decimal); //May the user enter a decimal point (non-integer values)?
                     ie.setDefaultValue(defaultValue); //Default value before the user entered anything
                     ie.setLimits(min, max);
-                    ie.setEditable(isEditable);
                     newView.elements.add(ie);
                     break;
                 }
@@ -1794,18 +1755,14 @@ public abstract class PhyphoxFile {
                     String darkFilterStr = getStringAttribute("darkFilter");
                     String lightFilterStr = getStringAttribute("lightFilter");
                     if (darkFilterStr != null && !darkFilterStr.isEmpty()) {
-                        try {
-                            darkFilter = ExpView.ImageFilter.valueOf(darkFilterStr);
-                        } catch (Exception e) {
+                        darkFilter = Helper.enumFromStringIgnoreCase(ExpView.ImageFilter.class, darkFilterStr);
+                        if (darkFilter == null)
                             throw new phyphoxFileException("Unknown image filter: " + darkFilterStr, xpp.getLineNumber());
-                        }
                     }
                     if (lightFilterStr != null && !lightFilterStr.isEmpty()) {
-                        try {
-                            lightFilter = ExpView.ImageFilter.valueOf(lightFilterStr);
-                        } catch (Exception e) {
+                        lightFilter = Helper.enumFromStringIgnoreCase(ExpView.ImageFilter.class, lightFilterStr);
+                        if (lightFilter == null)
                             throw new phyphoxFileException("Unknown image filter: " + lightFilterStr, xpp.getLineNumber());
-                        }
                     }
 
 
@@ -1974,7 +1931,8 @@ public abstract class PhyphoxFile {
                     String rateStrategyStr = getStringAttribute("rateStrategy");
                     if (rateStrategyStr != null && !rateStrategyStr.isEmpty()) {
                         try {
-                            rateStrategy = SensorInput.SensorRateStrategy.valueOf(rateStrategyStr);
+                            //Enumerated values are matched case-insensitively (see rules.yml, enum-case-insensitive)
+                            rateStrategy = SensorInput.SensorRateStrategy.valueOf(rateStrategyStr.toLowerCase());
                         } catch (IllegalArgumentException e) {
                             throw new phyphoxFileException("Invalid rate strategy.", xpp.getLineNumber());
                         }
@@ -2190,20 +2148,21 @@ public abstract class PhyphoxFile {
                     }
 
                     CameraInput.AEStrategy aeStrategy;
-                    switch (aeStrategyStr) {
+                    //Enumerated values are matched case-insensitively (see rules.yml, enum-case-insensitive)
+                    switch (aeStrategyStr.toLowerCase()) {
                         case "mean": {
                             aeStrategy = CameraInput.AEStrategy.mean;
                             break;
                         }
-                        case "avoidOverexposure": {
+                        case "avoidoverexposure": {
                             aeStrategy = CameraInput.AEStrategy.avoidOverexposure;
                             break;
                         }
-                        case "avoidUnderexposure": {
+                        case "avoidunderexposure": {
                             aeStrategy = CameraInput.AEStrategy.avoidUnderxposure;
                             break;
                         }
-                        case "prioritizeFramerate": {
+                        case "prioritizeframerate": {
                             aeStrategy = CameraInput.AEStrategy.prioritizeFramerate;
                             break;
                         }
@@ -2249,8 +2208,6 @@ public abstract class PhyphoxFile {
                     double y1 = 1.0 - x1user;
                     double y2 = 1.0 - x2user;
 
-                    double thresholdAnalyzerThreshold = getDoubleAttribute("threshold", 0.5);
-
                     //Allowed input/output configuration
                     ioBlockParser.ioMapping[] outputMapping = {
                             new ioBlockParser.ioMapping() {{name = "t"; asRequired = true; minCount = 0; maxCount = 1; valueAllowed = false;}},
@@ -2259,7 +2216,6 @@ public abstract class PhyphoxFile {
                             new ioBlockParser.ioMapping() {{name = "hue"; asRequired = true; minCount = 0; maxCount = 1; valueAllowed = false;}},
                             new ioBlockParser.ioMapping() {{name = "saturation"; asRequired = true; minCount = 0; maxCount = 1; valueAllowed = false;}},
                             new ioBlockParser.ioMapping() {{name = "value"; asRequired = true; minCount = 0; maxCount = 1; valueAllowed = false;}},
-                            new ioBlockParser.ioMapping() {{name = "threshold"; asRequired = true; minCount = 0; maxCount = 1; valueAllowed = false;}},
                             new ioBlockParser.ioMapping() {{name = "shutterSpeed"; asRequired = true; minCount = 0; maxCount = 1; valueAllowed = false;}},
                             new ioBlockParser.ioMapping() {{name = "iso"; asRequired = true; minCount = 0; maxCount = 1; valueAllowed = false;}},
                             new ioBlockParser.ioMapping() {{name = "aperture"; asRequired = true; minCount = 0; maxCount = 1; valueAllowed = false;}},
@@ -2284,8 +2240,7 @@ public abstract class PhyphoxFile {
                             autoExposure,
                             lockedSetting.isEmpty() ? null : lockedSetting,
                             aeStrategy,
-                            aeFramerateTarget,
-                            thresholdAnalyzerThreshold);
+                            aeFramerateTarget);
 
                     break;
 
@@ -2386,7 +2341,7 @@ public abstract class PhyphoxFile {
                     String discoveryStr = getStringAttribute("discovery");
                     NetworkDiscovery.Discovery discovery = null;
                     if (discoveryStr != null) {
-                        switch (discoveryStr) {
+                        switch (discoveryStr.toLowerCase()) { //Enumerated values are matched case-insensitively
                             case "http":
                                 discovery = new NetworkDiscovery.Http(discoveryAddress);
                                 break;
@@ -2398,7 +2353,7 @@ public abstract class PhyphoxFile {
                     String serviceStr = getStringAttribute("service");
                     NetworkService.Service service = null;
                     if (serviceStr != null) {
-                        switch (serviceStr) {
+                        switch (serviceStr.toLowerCase()) { //Enumerated values are matched case-insensitively
                             case "http/get":
                                 service = new NetworkService.HttpGet();
                                 break;
@@ -2463,7 +2418,7 @@ public abstract class PhyphoxFile {
                     String conversionStr = getStringAttribute("conversion");
                     NetworkConversion.Conversion conversion = null;
                     if (conversionStr != null) {
-                        switch (conversionStr) {
+                        switch (conversionStr.toLowerCase()) { //Enumerated values are matched case-insensitively
                             case "none":
                                 conversion = new NetworkConversion.None();
                                 break;
@@ -2519,7 +2474,7 @@ public abstract class PhyphoxFile {
                     String datatype = getStringAttribute("datatype");
 
                     String type = getStringAttribute("type");
-                    if (type == null || type.equals("buffer")) {
+                    if (type == null || type.equalsIgnoreCase("buffer")) {
                         boolean clear = getBooleanAttribute("clear", false); //Deprecated
                         boolean keep = getBooleanAttribute("keep", !clear); //New attribute keep = !clear,
                         String bufferName = getText();
@@ -2643,7 +2598,7 @@ public abstract class PhyphoxFile {
                             new ioBlockParser.ioMapping() {},
                     };
                     ioBlockParser.ioMapping[] outputMapping = {
-                            new ioBlockParser.ioMapping() {{name = "batteryLevel"; asRequired = false; minCount = 0; maxCount = 1; repeatableOffset = -1; }},
+                            new ioBlockParser.ioMapping() {{name = "batteryLevel"; asRequired = true; minCount = 0; maxCount = 1; repeatableOffset = -1; }},
                             new ioBlockParser.ioMapping() {{name = "wifiSignalStrength"; asRequired = true; minCount = 0; maxCount = 1; repeatableOffset = -1; }},
                             new ioBlockParser.ioMapping() {{name = "systemVolume"; asRequired = true; minCount = 0; maxCount = 1; repeatableOffset = -1; }},
                             new ioBlockParser.ioMapping() {{name = "batteryVoltage"; asRequired = true; minCount = 0; maxCount = 1; repeatableOffset = -1; }},
@@ -3076,7 +3031,7 @@ public abstract class PhyphoxFile {
 
                     Analysis.mapAM.ZMode zMode = Analysis.mapAM.ZMode.average;
 
-                    switch (zModeStr) {
+                    switch (zModeStr.toLowerCase()) { //Enumerated values are matched case-insensitively
                         case "count":   zMode = Analysis.mapAM.ZMode.count;
                                         break;
                         case "sum":     zMode = Analysis.mapAM.ZMode.sum;
@@ -3224,7 +3179,16 @@ public abstract class PhyphoxFile {
                     experiment.analysis.add(new Analysis.crosscorrelationAM(experiment, inputs, outputs));
                 } break;
                 case "gausssmooth": { //Smooth the data with a Gauss profile
-                    double sigma = getDoubleAttribute("sigma", 0.);
+                    //A present sigma must be a positive width; omitting it keeps the module's
+                    //default of 3. A present value of zero or less is a mistake and rejected
+                    //rather than silently substituting the default (see gausssmooth-nonpositive-sigma).
+                    String sigmaStr = getStringAttribute("sigma");
+                    Double sigma = null;
+                    if (sigmaStr != null && !sigmaStr.isEmpty()) {
+                        sigma = getDoubleAttribute("sigma", Double.NaN);
+                        if (!(sigma > 0))
+                            throw new phyphoxFileException("Attribute \"sigma\" of gausssmooth must be greater than zero.", xpp.getLineNumber());
+                    }
 
                     ioBlockParser.ioMapping[] inputMapping = {
                             new ioBlockParser.ioMapping() {{name = "in"; asRequired = false; minCount = 1; maxCount = 1; valueAllowed = false; repeatableOffset = -1; }},
@@ -3235,7 +3199,7 @@ public abstract class PhyphoxFile {
                     (new ioBlockParser(xpp, experiment, parent, inputs, outputs, inputMapping, outputMapping, "as")).process(); //Load inputs and outputs
 
                     Analysis.gaussSmoothAM gsAM = new Analysis.gaussSmoothAM(experiment, inputs, outputs);
-                    if (sigma > 0)
+                    if (sigma != null)
                         gsAM.setSigma(sigma);
                     experiment.analysis.add(gsAM);
                 } break;
@@ -3263,7 +3227,7 @@ public abstract class PhyphoxFile {
 
                     Analysis.interpolateAM.InterpolationMethod method = Analysis.interpolateAM.InterpolationMethod.linear;
 
-                    switch (interpolationMethodStr) {
+                    switch (interpolationMethodStr.toLowerCase()) { //Enumerated values are matched case-insensitively
                         case "previous":   method = Analysis.interpolateAM.InterpolationMethod.previous;
                             break;
                         case "next":   method = Analysis.interpolateAM.InterpolationMethod.next;
@@ -3376,13 +3340,10 @@ public abstract class PhyphoxFile {
                     if (triggerModeStr == null)
                         triggerModeStr = "above";
 
-                    Analysis.eventstreamAM.TriggerMode triggerMode;
-
-                    try {
-                        triggerMode = Analysis.eventstreamAM.TriggerMode.valueOf(triggerModeStr);
-                    } catch (Exception e) {
+                    Analysis.eventstreamAM.TriggerMode triggerMode =
+                            Helper.enumFromStringIgnoreCase(Analysis.eventstreamAM.TriggerMode.class, triggerModeStr);
+                    if (triggerMode == null)
                         throw new phyphoxFileException("Unknown trigger mode " + triggerModeStr, xpp.getLineNumber());
-                    }
 
                     ioBlockParser.ioMapping[] inputMapping = {
                             new ioBlockParser.ioMapping() {{name = "data"; asRequired = true; minCount = 1; maxCount = 1; valueAllowed = false; repeatableOffset = -1; }},

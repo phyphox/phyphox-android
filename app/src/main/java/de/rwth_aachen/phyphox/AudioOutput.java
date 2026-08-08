@@ -253,7 +253,8 @@ public class AudioOutput {
 
         @Override
         public boolean setParameter(String parameter, DataInput input) {
-            switch (parameter) {
+            //Enumerated values are matched case-insensitively (see rules.yml, enum-case-insensitive)
+            switch (parameter.toLowerCase()) {
                 case "pan": pan = input;
                     return true;
                 case "amplitude": amplitude = input;
@@ -325,7 +326,8 @@ public class AudioOutput {
 
         @Override
         public boolean setParameter(String parameter, DataInput input) {
-            switch (parameter) {
+            //Enumerated values are matched case-insensitively (see rules.yml, enum-case-insensitive)
+            switch (parameter.toLowerCase()) {
                 case "pan": pan = input;
                     return true;
                 case "amplitude": amplitude = input;

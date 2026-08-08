@@ -158,6 +158,20 @@ public abstract class Helper {
         return true;
     }
 
+    //Enumerated attribute values in the phyphox file format are matched case-insensitively (see
+    //the enum-case-insensitive rule in phyphox-docs). This resolves an enum constant by name
+    //ignoring case, returning null if there is no match (so the caller can reject the value).
+    //Works for camelCase enum constants too, unlike Enum.valueOf on a lowercased string.
+    public static <E extends Enum<E>> E enumFromStringIgnoreCase(Class<E> enumClass, String value) {
+        if (value == null)
+            return null;
+        for (E constant : enumClass.getEnumConstants()) {
+            if (constant.name().equalsIgnoreCase(value))
+                return constant;
+        }
+        return null;
+    }
+
     public static boolean isDarkTheme(Resources res){
         int nightModelFlags = res.getConfiguration().uiMode & Configuration.UI_MODE_NIGHT_MASK;
 

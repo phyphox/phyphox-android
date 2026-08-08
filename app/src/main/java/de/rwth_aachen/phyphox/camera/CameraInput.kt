@@ -57,7 +57,6 @@ class CameraInput : Serializable, AnalyzingOpenGLRenderer.ExposureStatisticsList
     var dataHue: DataBuffer? = null
     var dataSaturation: DataBuffer? = null
     var dataValue: DataBuffer? = null
-    var dataThreshold: DataBuffer? = null
 
     var dataT: DataBuffer? = null
     var shutterSpeedDataBuffer: DataBuffer? = null
@@ -70,8 +69,6 @@ class CameraInput : Serializable, AnalyzingOpenGLRenderer.ExposureStatisticsList
     }
     var aeStrategy: AEStrategy = AEStrategy.mean
     var aeFramerateTarget: Double = 0.0
-
-    var thresholdAnalyzerThreshold: Double = 0.5
 
     val dataLock: Lock
 
@@ -504,8 +501,7 @@ class CameraInput : Serializable, AnalyzingOpenGLRenderer.ExposureStatisticsList
             autoExposure: Boolean,
             lockedSettings: String?,
             aeStrategy: AEStrategy,
-            aeFramerateTarget: Double,
-            thresholdAnalyzerThreshold: Double
+            aeFramerateTarget: Double
     ) {
 
         this._cameraSettingState = MutableStateFlow<CameraSettingState>(
@@ -526,17 +522,15 @@ class CameraInput : Serializable, AnalyzingOpenGLRenderer.ExposureStatisticsList
         if (buffers.size > 3 && buffers[3] != null) dataHue = buffers[3].buffer
         if (buffers.size > 4 && buffers[4] != null) dataSaturation = buffers[4].buffer
         if (buffers.size > 5 && buffers[5] != null) dataValue = buffers[5].buffer
-        if (buffers.size > 6 && buffers[6] != null) dataThreshold = buffers[6].buffer
 
-        if (buffers.size > 7 && buffers[7] != null) shutterSpeedDataBuffer = buffers[7].buffer
-        if (buffers.size > 8 && buffers[8] != null) isoDataBuffer = buffers[8].buffer
-        if (buffers.size > 9 && buffers[9] != null) apertureDataBuffer = buffers[9].buffer
-        if (buffers.size > 10 && buffers[10] != null) dataPixelPosition = buffers[10].buffer
+        if (buffers.size > 6 && buffers[6] != null) shutterSpeedDataBuffer = buffers[6].buffer
+        if (buffers.size > 7 && buffers[7] != null) isoDataBuffer = buffers[7].buffer
+        if (buffers.size > 8 && buffers[8] != null) apertureDataBuffer = buffers[8].buffer
+        if (buffers.size > 9 && buffers[9] != null) dataPixelPosition = buffers[9].buffer
 
         this.dataLock = lock
         this.aeStrategy = aeStrategy
         this.aeFramerateTarget = aeFramerateTarget
-        this.thresholdAnalyzerThreshold = thresholdAnalyzerThreshold
         this.cameraFeature = cameraFeature
     }
 
