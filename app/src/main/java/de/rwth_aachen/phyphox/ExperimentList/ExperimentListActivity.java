@@ -149,6 +149,11 @@ public class ExperimentListActivity extends AppCompatActivity {
     //Experiment activity, so it should not remain on the back stack below the experiment.
     private boolean launchedToViewFile = false;
 
+    //Local network permission handling for loading an experiment from a local address
+    private static final int LOCAL_NETWORK_LOAD_REQUEST_CODE = 5;
+    private Intent lastNetworkLoadIntent = null; //current load from a network scheme; only such a load may offer the local network permission
+    private Intent lastNetworkLoadRetryIntent = null; //the load to repeat once the permission has been granted
+
     @Override
     //The onCreate block will setup some onClickListeners and display a do-not-damage-your-phone
     //  warning message.
@@ -267,9 +272,32 @@ public class ExperimentListActivity extends AppCompatActivity {
             }
             return;
         }
+        if(requestCode == LOCAL_NETWORK_LOAD_REQUEST_CODE){
+            if(grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                if (lastNetworkLoadRetryIntent != null)
+                    handleIntent(lastNetworkLoadRetryIntent); //retry the load that needed the permission
+            } else {
+                showLocalNetworkSettingsRedirectDialog(this);
+            }
+            return;
+        }
         if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
             this.recreate();
         }
+    }
+
+    private void showLocalNetworkSettingsRedirectDialog(Activity activity){
+        AlertDialog.Builder builder = new AlertDialog.Builder(activity);
+        builder.setTitle(getString(R.string.localNetworkPermission));
+        builder.setMessage(getString(R.string.localNetworkPermissionMessage));
+        builder.setPositiveButton(getString(R.string.gotoSetting), (dialog, which) -> {
+            Intent intent = new Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS);
+            Uri uri = Uri.fromParts("package", activity.getPackageName(), null);
+            intent.setData(uri);
+            activity.startActivityForResult(intent, 1);
+        });
+        builder.setNegativeButton(getString(R.string.cancel), null);
+        builder.create().show();
     }
 
     private void  showSettingsRedirectDialog(Activity activity){
@@ -705,6 +733,21 @@ public class ExperimentListActivity extends AppCompatActivity {
     public void showError(String error) {
         if (progress != null)
             progress.dismiss();
+        //A failed load from a network address while the local network permission is missing may
+        //well be caused by exactly that - a hostname that resolves to a local address is not
+        //recognized by the up-front check in handleIntent. Explain and offer to grant.
+        if (lastNetworkLoadIntent != null && Helper.needsLocalNetworkPermission(this)) {
+            final Intent retryIntent = lastNetworkLoadIntent;
+            lastNetworkLoadIntent = null; //offer this once per load attempt
+            lastNetworkLoadRetryIntent = retryIntent;
+            new AlertDialog.Builder(this)
+                    .setTitle(getString(R.string.localNetworkPermission))
+                    .setMessage(error + "\n\n" + getString(R.string.localNetworkLoadMessage))
+                    .setPositiveButton(getString(R.string.ok), (d, w) -> ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.ACCESS_LOCAL_NETWORK}, LOCAL_NETWORK_LOAD_REQUEST_CODE))
+                    .setNegativeButton(getString(R.string.cancel), null)
+                    .show();
+            return;
+        }
         Toast.makeText(this, error, Toast.LENGTH_LONG).show();
     }
 
@@ -866,6 +909,7 @@ public class ExperimentListActivity extends AppCompatActivity {
         String scheme = intent.getScheme();
         if (scheme == null)
             return;
+        lastNetworkLoadIntent = null; //only a load from a network scheme (set below) may offer the local network permission
         boolean isZip = false;
         if (scheme.equals(ContentResolver.SCHEME_FILE)) {
             if (scheme.equals(ContentResolver.SCHEME_FILE) && !intent.getData().getPath().startsWith(getFilesDir().getPath()) && ContextCompat.checkSelfPermission(this, Manifest.permission.READ_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED) {
@@ -906,6 +950,18 @@ public class ExperimentListActivity extends AppCompatActivity {
                 new ZipIntentHandler(intent, this).execute();
             }
         } else if (scheme.equals(ContentResolver.SCHEME_CONTENT) || scheme.equals("phyphox") || scheme.equals("http") || scheme.equals("https")) {
+            if (!scheme.equals(ContentResolver.SCHEME_CONTENT)) {
+                lastNetworkLoadIntent = intent;
+                //Loading from the local network needs the local network permission. If the address
+                //already looks local (literal private IP, .local, ...), ask before the first
+                //attempt; other local addresses are caught when the load fails (see showError).
+                if (Helper.needsLocalNetworkPermission(this) && intent.getData() != null && Helper.isLikelyLocalNetworkAddress(intent.getData().toString())) {
+                    lastNetworkLoadRetryIntent = intent;
+                    ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.ACCESS_LOCAL_NETWORK}, LOCAL_NETWORK_LOAD_REQUEST_CODE);
+                    //If the permission is granted, the permission callback restarts the load with the same intent
+                    return;
+                }
+            }
             progress = ProgressDialog.show(this, res.getString(R.string.loadingTitle), res.getString(R.string.loadingText), true);
             new CopyIntentHandler(intent, this).execute();
         }

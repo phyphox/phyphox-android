@@ -215,6 +215,8 @@ public class Experiment extends AppCompatActivity implements View.OnClickListene
     private  RecyclerView recyclerView;
 
     static final int REQUEST_LOCAL_NETWORK_SCAN  = 2;
+    public static final int REQUEST_LOCAL_NETWORK_CONNECTIONS = 4; //local network permission for the experiment's network connections (3 is the Bluetooth scan code)
+    private boolean localNetworkPermissionAskedForConnections = false;
 
     OnBackPressedCallback backCallback = null; //Intercepts the back action when leaving needs confirmation or an element is in exclusive mode
 
@@ -459,10 +461,24 @@ public class Experiment extends AppCompatActivity implements View.OnClickListene
 
         if(requestCode == REQUEST_LOCAL_NETWORK_SCAN){
             if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                serverEnabled = true; //keep the state and the menu toggle in sync with the now running server
+                invalidateOptionsMenu();
                 startRemoteServer();
             } else {
                 showSettingsRedirectDialog(this);
             }
+            return;
+        }
+
+        if(requestCode == REQUEST_LOCAL_NETWORK_CONNECTIONS){
+            //Either the up-front request before connecting the experiment's network connections or
+            //a request triggered by a failed connection attempt. Continuing the connect flow is
+            //correct in both cases: at startup it resumes the dialog chain, later it re-runs
+            //discovery for connections that could not probe the network before, while established
+            //services recover through their own retry loops.
+            if (grantResults.length == 0 || grantResults[0] != PackageManager.PERMISSION_GRANTED)
+                Toast.makeText(this, getString(R.string.localNetworkDeniedHint), Toast.LENGTH_LONG).show();
+            connectNetworkConnections();
             return;
         }
 
@@ -835,6 +851,30 @@ public class Experiment extends AppCompatActivity implements View.OnClickListene
     }
 
     public void connectNetworkConnections() {
+        //If any connection is expected to touch the local network (discovery, or an address that
+        //looks local), ask for the local network permission before the first attempt. Addresses
+        //that only resolve to a local IP are caught later by the failed connection attempt (see
+        //NetworkConnection.requestFinished). Whatever the user answers, the startup continues -
+        //internet connections work without the permission.
+        if (!localNetworkPermissionAskedForConnections && de.rwth_aachen.phyphox.helper.Helper.needsLocalNetworkPermission(this)) {
+            for (NetworkConnection networkConnection : experiment.networkConnections) {
+                if (networkConnection.needsLocalNetwork()) {
+                    localNetworkPermissionAskedForConnections = true;
+                    new AlertDialog.Builder(this)
+                            .setTitle(getString(R.string.permissionRequired))
+                            .setMessage(getString(R.string.localNetworkExperimentMessage))
+                            .setPositiveButton(getString(R.string.ok), (d, w) -> ActivityCompat.requestPermissions(Experiment.this, new String[]{Manifest.permission.ACCESS_LOCAL_NETWORK}, REQUEST_LOCAL_NETWORK_CONNECTIONS))
+                            .setNegativeButton(getString(R.string.cancel), (d, w) -> {
+                                Toast.makeText(Experiment.this, getString(R.string.localNetworkDeniedHint), Toast.LENGTH_LONG).show();
+                                connectNetworkConnections();
+                            })
+                            .setCancelable(false)
+                            .show();
+                    return;
+                }
+            }
+        }
+
         for (NetworkConnection networkConnection : experiment.networkConnections) {
             if (networkConnection.specificAddress == null) {
                 networkConnection.connect(this);

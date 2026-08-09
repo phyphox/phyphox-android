@@ -332,6 +332,9 @@ THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND 
     <string name="localNetworkPermission">Local Network Permission Needed</string>
     <string name="localNetworkPermissionMessage">You have permanently disabled local network access. Please enable Nearby Devices in your device settings to discover local hardware.</string>
     <string name="localNetworkRationaleMessage">Local network access is required to connect to the remote server. Please grant the permission.</string>
+    <string name="localNetworkLoadMessage">The experiment could not be loaded from this address. If it is served from a device on your local network, phyphox needs permission to access the local network. Grant the permission and try again?</string>
+    <string name="localNetworkExperimentMessage">This experiment uses a connection to a device on your local network. phyphox needs permission to access the local network to reach it.</string>
+    <string name="localNetworkDeniedHint">Without local network permission, connections to devices on your local network will fail.</string>
     <string name="gotoSetting">Go to Settings</string>
     <string name="permissionRequired">Permission Required</string>
     <!-- Camera Feature -->

@@ -158,6 +158,68 @@ public abstract class Helper {
         return true;
     }
 
+    //Does the app need to ask for the local network permission before touching the local network?
+    //(The permission exists from SDK 37 on; below that there is nothing to request.)
+    public static boolean needsLocalNetworkPermission(android.content.Context context) {
+        return android.os.Build.VERSION.SDK_INT >= 37 &&
+                androidx.core.content.ContextCompat.checkSelfPermission(context, android.Manifest.permission.ACCESS_LOCAL_NETWORK) != android.content.pm.PackageManager.PERMISSION_GRANTED;
+    }
+
+    //Fast heuristic for "this address is on the local network", used to request the local network
+    //permission BEFORE the first connection attempt. Deliberately without any DNS resolution (this
+    //must not block): it recognizes literal private/link-local/loopback IPs, mDNS names (.local)
+    //and localhost. A hostname that merely resolves to a LAN address is not recognized - those
+    //cases are handled by requesting the permission after a failed connection attempt instead.
+    public static boolean isLikelyLocalNetworkAddress(String address) {
+        if (address == null || address.isEmpty())
+            return false;
+        //Reduce a URL or host:port to the bare host
+        String host = address;
+        int schemeIdx = host.indexOf("://");
+        if (schemeIdx >= 0)
+            host = host.substring(schemeIdx + 3);
+        int slash = host.indexOf('/');
+        if (slash >= 0)
+            host = host.substring(0, slash);
+        if (host.startsWith("[")) { //bracketed IPv6 literal
+            int end = host.indexOf(']');
+            if (end > 0)
+                host = host.substring(1, end);
+        } else {
+            int colon = host.indexOf(':');
+            if (colon >= 0 && host.indexOf(':', colon + 1) < 0) //single colon: host:port (multiple colons: bare IPv6)
+                host = host.substring(0, colon);
+        }
+        host = host.toLowerCase();
+
+        if (host.equals("localhost") || host.endsWith(".local"))
+            return true;
+
+        //IPv6 literals: loopback, link-local (fe80::/10), unique local (fc00::/7)
+        if (host.contains(":"))
+            return host.equals("::1") || host.startsWith("fe80:") || host.startsWith("fc") || host.startsWith("fd");
+
+        //IPv4 literals: loopback, RFC1918 private ranges, link-local
+        String[] parts = host.split("\\.");
+        if (parts.length != 4)
+            return false;
+        int[] b = new int[4];
+        for (int i = 0; i < 4; i++) {
+            try {
+                b[i] = Integer.parseInt(parts[i]);
+            } catch (NumberFormatException e) {
+                return false;
+            }
+            if (b[i] < 0 || b[i] > 255)
+                return false;
+        }
+        return b[0] == 127
+                || b[0] == 10
+                || (b[0] == 172 && b[1] >= 16 && b[1] <= 31)
+                || (b[0] == 192 && b[1] == 168)
+                || (b[0] == 169 && b[1] == 254);
+    }
+
     //Enumerated attribute values in the phyphox file format are matched case-insensitively (see
     //the enum-case-insensitive rule in phyphox-docs). This resolves an enum constant by name
     //ignoring case, returning null if there is no match (so the caller can reject the value).

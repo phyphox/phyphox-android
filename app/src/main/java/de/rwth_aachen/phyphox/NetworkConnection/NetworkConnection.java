@@ -105,6 +105,8 @@ public class NetworkConnection implements NetworkService.RequestCallback, Networ
         this.interval = interval;
 
         this.mainHandler = new android.os.Handler(ctx.getMainLooper());
+        if (ctx instanceof android.app.Activity)
+            this.activityRef = new java.lang.ref.WeakReference<>((android.app.Activity) ctx);
 
         mainHandler.post(new Runnable() {
             @Override
@@ -112,6 +114,18 @@ public class NetworkConnection implements NetworkService.RequestCallback, Networ
                 toast = Toast.makeText(ctx, "Error", Toast.LENGTH_LONG);
             }
         });
+    }
+
+    private java.lang.ref.WeakReference<android.app.Activity> activityRef = null;
+    private boolean localNetworkPermissionRequested = false;
+
+    //Whether this connection is expected to touch the local network, so the permission should be
+    //requested before the first connection attempt. Discovery always probes the local network; a
+    //fixed address counts if it looks local (literal private IP, .local, ...).
+    public boolean needsLocalNetwork() {
+        if (discovery != null)
+            return true;
+        return de.rwth_aachen.phyphox.helper.Helper.isLikelyLocalNetworkAddress(address);
     }
 
     protected void displayErrorMessage(final String message) {
@@ -332,9 +346,28 @@ public class NetworkConnection implements NetworkService.RequestCallback, Networ
             case genericError:
                 displayErrorMessage("Network error: Generic error. " + result.message);
                 break;
-            case noConnection:
-                displayErrorMessage("Network error: No connection to network service.");
+            case noConnection: {
+                //A connection failure may be caused by the missing local network permission - for
+                //example a hostname that resolves to a local address, which the up-front heuristic
+                //cannot recognize. Say so, and ask for the permission once; if it is granted, the
+                //periodic execution (and the MQTT reconnect loop) recover on their own.
+                final android.app.Activity activity = activityRef != null ? activityRef.get() : null;
+                if (activity != null && de.rwth_aachen.phyphox.helper.Helper.needsLocalNetworkPermission(activity)) {
+                    displayErrorMessage("Network error: No connection to network service. " + activity.getResources().getString(R.string.localNetworkDeniedHint));
+                    if (!localNetworkPermissionRequested) {
+                        localNetworkPermissionRequested = true;
+                        mainHandler.post(new Runnable() {
+                            @Override
+                            public void run() {
+                                androidx.core.app.ActivityCompat.requestPermissions(activity, new String[]{android.Manifest.permission.ACCESS_LOCAL_NETWORK}, de.rwth_aachen.phyphox.Experiment.REQUEST_LOCAL_NETWORK_CONNECTIONS);
+                            }
+                        });
+                    }
+                } else {
+                    displayErrorMessage("Network error: No connection to network service.");
+                }
                 break;
+            }
             case timeout:
                 displayErrorMessage("Network error: The connection timed out.");
                 break;
