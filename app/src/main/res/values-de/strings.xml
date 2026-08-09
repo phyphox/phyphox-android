@@ -429,4 +429,7 @@
     <string name="common_unit_short_micro_meter">μm</string>
     <string name="common_quantity_short_wavelength">λ</string>
     <string name="spectrum_orientation">Ausrichtung</string>
+    <string name="localNetworkLoadMessage">Das Experiment konnte unter dieser Adresse nicht geladen werden. Wenn es von einem Gerät in deinem lokalen Netzwerk bereitgestellt wird, benötigt phyphox die Berechtigung für den Zugriff auf das lokale Netzwerk. Berechtigung erteilen und erneut versuchen\?</string>
+    <string name="localNetworkExperimentMessage">Dieses Experiment verwendet eine Verbindung zu einem Gerät in deinem lokalen Netzwerk. phyphox benötigt die Berechtigung für den Zugriff auf das lokale Netzwerk, um eine Verbindung zu diesem Gerät herzustellen.</string>
+    <string name="localNetworkDeniedHint">Ohne die Berechtigung für den Zugriff auf das lokale Netzwerk können keine Verbindungen zu Geräten in deinem lokalen Netzwerk hergestellt werden.</string>
 </resources>
