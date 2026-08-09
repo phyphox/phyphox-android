@@ -610,7 +610,9 @@ public class RemoteServer {
             }
             //We only offer 8-digit precision, so we need to move the threshold to avoid receiving a close number multiple times.
             //Missing something will probably not be visible on a remote graph and a missing value will be recent after stopping anyway.
-            br.threshold += Math.pow(10, Math.floor(Math.log10(br.threshold / 1e7)));
+            //The nudge magnitude derives from the absolute value (log10 of a negative threshold would be NaN and break the request);
+            //its direction stays positive, so a value equal to an already delivered negative threshold does not pass the comparison again.
+            br.threshold += Math.pow(10, Math.floor(Math.log10(Math.abs(br.threshold) / 1e7)));
         }
         return br;
     }

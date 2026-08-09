@@ -11,7 +11,6 @@ import java.util.List;
 import javax.net.ssl.SSLSocketFactory;
 
 import de.rwth_aachen.phyphox.NetworkConnection.NetworkService;
-import de.rwth_aachen.phyphox.PhyphoxExperiment;
 
 /**
  * Base class for the MQTT network services. It drives a from-scratch {@link MqttClient} (MQTT
@@ -29,7 +28,6 @@ public abstract class MqttService extends NetworkService.Service {
     String clientID;
     String address; // scheme-normalised, used as the salt for the per-broker metadata id
     Context context;
-    PhyphoxExperiment experiment;
 
     // set by the subclasses before connect()
     String username = null;
