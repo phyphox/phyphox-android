@@ -2364,7 +2364,8 @@ public abstract class PhyphoxFile {
                                     String receiveTopicStr = getStringAttribute("receiveTopic");
                                     if (receiveTopicStr == null)
                                         receiveTopicStr = "";
-                                    service = new MqttCsv(receiveTopicStr, parent.getApplicationContext());
+                                    //username and password are optional for the plain mqtt services (brokers may require authentication without TLS)
+                                    service = new MqttCsv(receiveTopicStr, getStringAttribute("username"), getStringAttribute("password"), parent.getApplicationContext());
                                 }
                                 break;
                             case "mqtt/json": {
@@ -2375,7 +2376,8 @@ public abstract class PhyphoxFile {
                                         receiveTopicStr = "";
                                     if (sendTopicStr == null || sendTopicStr.isEmpty())
                                         throw new phyphoxFileException("sendTopic must be set for the mqtt/json service. Use mqtt/csv if you do not intent to send anything.", xpp.getLineNumber());
-                                    service = new MqttJson(receiveTopicStr, sendTopicStr, parent.getApplicationContext(),persistence);
+                                    //username and password are optional for the plain mqtt services (brokers may require authentication without TLS)
+                                    service = new MqttJson(receiveTopicStr, sendTopicStr, getStringAttribute("username"), getStringAttribute("password"), parent.getApplicationContext(), persistence);
                                 }
                                 break;
                             case "mqtts/json" : {
@@ -2383,6 +2385,7 @@ public abstract class PhyphoxFile {
                                 String sendTopicStr = getStringAttribute("sendTopic");
                                 String password = getStringAttribute("password");
                                 String username = getStringAttribute("username");
+                                String certificate = getStringAttribute("certificate");
                                 boolean persistence = getBooleanAttribute("persistence",false);
 
                                 if (receiveTopicStr == null)
@@ -2393,13 +2396,21 @@ public abstract class PhyphoxFile {
                                     throw new phyphoxFileException("password must be set for the mqtts/json service.", xpp.getLineNumber());
                                 if (username == null || username.isEmpty())
                                     throw new phyphoxFileException("username must be set for the mqtts/json service.", xpp.getLineNumber());
-                                service = new MqttTlsJson(receiveTopicStr,sendTopicStr,username,password,parent.getApplicationContext(),persistence);
+                                if (certificate != null && !certificate.isEmpty()) {
+                                    if (!Helper.isSafeResourceName(certificate))
+                                        throw new phyphoxFileException("Invalid certificate file name.", xpp.getLineNumber());
+                                    //The certificate is an experiment resource: delivered in the res
+                                    //directory of the container and copied along with the experiment.
+                                    experiment.resources.add(certificate);
+                                }
+                                service = new MqttTlsJson(receiveTopicStr,sendTopicStr,username,password,certificate,experiment.resourceFolder,parent.getApplicationContext(),persistence);
                             }
                             break;
                             case "mqtts/csv" : {
                                 String receiveTopicStr = getStringAttribute("receiveTopic");
                                 String password = getStringAttribute("password");
                                 String username = getStringAttribute("username");
+                                String certificate = getStringAttribute("certificate");
 
                                 if (receiveTopicStr == null)
                                     receiveTopicStr = "";
@@ -2407,7 +2418,14 @@ public abstract class PhyphoxFile {
                                     throw new phyphoxFileException("password must be set for the mqtts/csv service.", xpp.getLineNumber());
                                 if (username == null || username.isEmpty())
                                     throw new phyphoxFileException("username must be set for the mqtts/csv service.", xpp.getLineNumber());
-                                service = new MqttTlsCsv(receiveTopicStr,username,password,parent.getApplicationContext());
+                                if (certificate != null && !certificate.isEmpty()) {
+                                    if (!Helper.isSafeResourceName(certificate))
+                                        throw new phyphoxFileException("Invalid certificate file name.", xpp.getLineNumber());
+                                    //The certificate is an experiment resource: delivered in the res
+                                    //directory of the container and copied along with the experiment.
+                                    experiment.resources.add(certificate);
+                                }
+                                service = new MqttTlsCsv(receiveTopicStr,username,password,certificate,experiment.resourceFolder,parent.getApplicationContext());
                             }
                             break;
                             default:

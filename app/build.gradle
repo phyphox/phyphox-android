@@ -110,7 +110,8 @@ dependencies {
 
     testImplementation "com.google.truth:truth:1.4.5"
 
-    implementation "com.github.hannesa2:paho.mqtt.android:4.4"
+    //MQTT is handled by a from-scratch MQTT 3.1.1 client (NetworkConnection/Mqtt/MqttClient.java);
+    //the Eclipse Paho / hannesa2 "paho.mqtt.android" fork dependency was removed.
 
     implementation 'org.jetbrains.kotlinx:kotlinx-coroutines-android:1.9.0' //Used by the Bluetooth engine (also pulled in transitively by camera/lifecycle libraries)
     testImplementation 'org.jetbrains.kotlinx:kotlinx-coroutines-test:1.9.0'
