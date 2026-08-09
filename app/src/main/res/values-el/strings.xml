@@ -59,7 +59,7 @@
     <string name="stop">Τερματισμός</string>
     <string name="start">Εκκίνηση</string>
     <string name="clear_data">Διαγραφή δεδομένων</string>
-    <string name="clear_data_question">Διαγραφή εγγεγραμμένων δεδομένων;</string>
+    <string name="clear_data_question">Διαγραφή των καταγεγραμμένων δεδομένων;</string>
     <string name="clear">Διαγραφή</string>
     <string name="timed_stop">Τερματισμός χρονομετρημένης εκτέλεσης</string>
     <string name="timed_start">Εκκίνηση χρονομετρημένης εκτέλεσης</string>
@@ -403,4 +403,27 @@
     <string name="landscape_orientation">Οριζόντιος</string>
     <string name="spectrum_analysis_setting">Ρυθμίσεις Ανάλυσης Φάσματος</string>
     <string name="bl_scan_permission_required_title">Απαιτείται άδεια για αναζήτηση Bluetooth</string>
+    <string name="error">Σφάλμα</string>
+    <string name="invalidValue">Μη έγκυρη τιμή</string>
+    <string name="clear_data_question_select">Να διαγραφούν τα καταγεγραμμένα δεδομένα και τα ακόλουθα προαιρετικά στοιχεία;</string>
+    <string name="warning_photosensitivity">Προειδοποίηση σχετικά με τη φωτοευαισθησία</string>
+    <string name="bt_scan_permission_needed">Έχετε απενεργοποιήσει μόνιμα την πρόσβαση στη σάρωση Bluetooth. Παρακαλούμε ενεργοποιήστε την επιλογή «Κοντινές συσκευές» (\"Nearby Devices\") στις ρυθμίσεις της συσκευής σας για να εντοπίσετε συσκευές Bluetooth.</string>
+    <string name="bt_permission_granted">Η άδεια χορηγήθηκε: Μπορείτε πλέον να ανοίξετε το παράθυρο διαλόγου σάρωσης...</string>
+    <string name="localNetworkPermission">Απαιτείται άδεια πρόσβασης στο τοπικό δίκτυο</string>
+    <string name="localNetworkPermissionMessage">Έχετε απενεργοποιήσει την πρόσβαση στο τοπικό δίκτυο. Παρακαλούμε ενεργοποιήστε την επιλογή «Κοντινές συσκευές» ( \"Nearby Devices\") στις ρυθμίσεις της συσκευής σας για να εντοπίσετε τοπικό υλικό.</string>
+    <string name="localNetworkRationaleMessage">Απαιτείται πρόσβαση στο τοπικό δίκτυο για τη σύνδεση με τον απομακρυσμένο διακομιστή. Παρακαλώ, παραχωρήστε την άδεια.</string>
+    <string name="gotoSetting">Πήγαινε στις Ρυθμίσεις</string>
+    <string name="permissionRequired">Απαιτείται άδεια</string>
+    <string name="settingsFileNameFormat">Προεπιλεγμένα ονόματα αρχείων</string>
+    <string name="settingsFileNameFormatDetail">Πρότυπο για τα προεπιλεγμένα ονόματα αρχείων κατά την εξαγωγή δεδομένων, την κοινοποίηση ενός στιγμιότυπου οθόνης ή την αποθήκευση μιας κατάστασης. Διαθέσιμα σύμβολα κράτησης θέσης:
+\n{title} – τίτλος πειράματος
+\n{date} – τρέχουσα ημερομηνία
+\n{time} – τρέχουσα ώρα
+\n{startDate} – ημερομηνία έναρξης της μέτρησης
+\n{startTime} – ώρα έναρξης της μέτρησης
+\n{duration} – διάρκεια της μέτρησης</string>
+    <string name="spectrum_orientation">Προσανατολισμός</string>
+    <string name="localNetworkLoadMessage">Δεν ήταν δυνατή η φόρτωση του πειράματος από αυτή τη διεύθυνση. Εάν το πείραμα φιλοξενείται από μια συσκευή στο τοπικό σας δίκτυο, το phyphox χρειάζεται άδεια πρόσβασης στο τοπικό δίκτυο. Θέλετε να παραχωρήσετε την άδεια και να δοκιμάσετε ξανά;</string>
+    <string name="localNetworkExperimentMessage">Αυτό το πείραμα χρησιμοποιεί σύνδεση με μια συσκευή στο τοπικό σας δίκτυο. Το phyphox χρειάζεται άδεια πρόσβασης στο τοπικό δίκτυο για να συνδεθεί με τη συσκευή αυτή.</string>
+    <string name="localNetworkDeniedHint">Χωρίς άδεια πρόσβασης στο τοπικό δίκτυο, οι συνδέσεις με συσκευές στο τοπικό σας δίκτυο θα αποτύχουν.</string>
 </resources>
