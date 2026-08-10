@@ -193,7 +193,7 @@
     <string name="open_bluetooth_assets_title">Bluetooth சாதனத்திற்கான பரிசோதனைகள்</string>
     <string name="open_bluetooth_assets">உங்கள் சாதனத்திற்கான பின்வரும் பரிசோதனைகள் phyphox-லிருந்து கிடைக்கின்றன. நீங்கள் அவற்றைத் திறந்து பயன்படுத்தலாம் அல்லது பிரதான பட்டியலிலிருந்து எளிதாக அணுக உங்கள் சேகரிப்பில் அனைத்தையும் சேர்க்கலாம்.</string>
     <string name="bluetooth">Bluetooth Low Entergy (BLE) Bluetooth Smart</string>
-    <string name="bt_android_version">ஆண்ட்ராய்டு பதிவு 4.3-க்கும் குறைவான சாதனத்தில் Bluetooth Low Entergy (BLE)/Bluetooth Smart செயல்படாது.</string>
+    <string name="bt_android_version">இந்தச்சாதனத்தில் Bluetooth Low Entergy (BLE)/Bluetooth Smart செயல்படாது.</string>
     <string name="bt_pick_device">ஒரு சாதனத்தைத் தேர்ந்தெடுக்கவும்.</string>
     <string name="bt_scanning_generic">Bluetooth சாதனங்களை தேடுகிறது…</string>
     <string name="bt_scanning_specific1">இதன் வழியே Bluetooth சாதனங்களை தேடுகிறது</string>
@@ -275,7 +275,7 @@
     <string name="settings_mode_dark_system">சாதனத்தின்படி</string>
     <string name="common_unit_short_arbitrary_unit">arb. unit</string>
     <string name="common_unit_short_second">வி</string>
-    <string name="common_unit_short_milli_second">மி.வி</string>
+    <string name="common_unit_short_milli_second">மில்லி .வி</string>
     <string name="common_unit_short_hertz">Hz</string>
     <string name="common_unit_short_micro_tesla">µT</string>
     <string name="common_unit_short_lux">lx</string>
@@ -393,4 +393,40 @@
     <string name="wb_fluorescent">குழல்விளக்கு</string>
     <string name="wb_daylight">பகல்</string>
     <string name="wb_cloudy">மேகமூட்டம்</string>
+    <string name="error">பிழை</string>
+    <string name="invalidValue">தவறான மதிப்பு</string>
+    <string name="clear_data_question_select">பதிவுசெய்யப்பட்ட தரவு மற்றும் பின்வரும் விருப்பத் தேர்வுகளை அழிக்கவா\?</string>
+    <string name="warning_photosensitivity">ஒளி உணர்திறன் குறித்த எச்சரிக்கை</string>
+    <string name="warning_photosensitivity_message">இந்தச் சோதனை உயர் அதிர்வெண் ஒளித் துடிப்புகளை உருவாக்கக்கூடும். இது ஒளி உணர்திறன் வலிப்பு நோய் (epilepsy) உள்ளவர்களுக்கு அசௌகரியம் அல்லது வலிப்புத்தாக்கங்களைத் (epilepsy) தூண்டலாம்.
+\n
+\nஒளி மூலத்தை நேரடியாக உற்றுப் பார்ப்பதைத் தவிர்க்கவும்.</string>
+    <string name="device_overheating">சாதனம் அதிக வெப்பமடைகிறது</string>
+    <string name="device_heating_serious">சாதனம் மிகவும் சூடாகிறது. குளிர்ச்சியடைவதற்காக ஃப்ளாஷ்லைட் அணைக்கப்பட்டுள்ளது.</string>
+    <string name="which_spectrum_orientation">ஸ்பெக்ட்ரம் (spectrum) அடிப்படையில் உங்கள் சாதனத்தின் திசைநிலை என்ன\?</string>
+    <string name="portrait_orientation">செங்குத்து நிலை</string>
+    <string name="landscape_orientation">கிடைமட்ட நிலை</string>
+    <string name="spectrum_analysis_setting">நிறமாலை பகுப்பாய்வு அமைப்புகள்</string>
+    <string name="bl_scan_permission_required_title">Bluetooth-ஐத் தேடும் அனுமதி தேவை</string>
+    <string name="bt_scan_permission_needed">Bluetooth-ஐத் தேடும் அணுகலை நீங்கள் நிரந்தரமாக முடக்கியுள்ளீர்கள். Bluetooth சாதனங்களைக் கண்டறிய, உங்கள் சாதன அமைப்புகளில் \'அருகிலுள்ள சாதனங்கள்\' (Nearby Devices) என்பதை இயக்கவும்.</string>
+    <string name="bt_permission_granted">அனுமதி வழங்கப்பட்டது: நீங்கள் இப்போது தேடுதல் பெட்டியைத் திறக்கலாம்.</string>
+    <string name="localNetworkPermission">உள்ளூர் பிணைய (network) அனுமதி தேவை</string>
+    <string name="localNetworkPermissionMessage">உள்ளூர் பிணைய அணுகலை (local network access) நீங்கள் நிரந்தரமாக முடக்கியுள்ளீர்கள். அருகிலுள்ள வன்பொருளைக் கண்டறிய, உங்கள் சாதன அமைப்புகளில் \'அருகிலுள்ள சாதனங்கள்\' (Nearby Devices) என்பதை இயக்கவும்.</string>
+    <string name="localNetworkRationaleMessage">தொலைநிலை சேவையகத்துடன் (remote server) இணைவதற்கு உள்ளூர் பிணைய அணுகல் தேவைப்படுகிறது. தயவுசெய்து அதற்கான அனுமதியை வழங்கவும்.</string>
+    <string name="gotoSetting">அமைப்புகளுக்குச் செல்</string>
+    <string name="permissionRequired">அனுமதி தேவை</string>
+    <string name="settingsFileNameFormat">பொதுவான கோப்புப் பெயர்கள்</string>
+    <string name="settingsFileNameFormatDetail">தரவை ஏற்றுமதி செய்யும்போதோ, திரைப்பிடிப்பைப் பகிரும்போதோ அல்லது நிலையைச் சேமிக்கும்போதோ பயன்படுத்தப்படும் இயல்புநிலை கோப்புப் பெயர்களுக்கான வார்ப்புரு (template). பயன்படுத்தக்கூடிய இடங்காட்டிகள் (placeholders):
+\n{title} – பரிசோதனையின் தலைப்பு
+\n{date} – தற்போதைய தேதி
+\n{time} – தற்போதைய நேரம்
+\n{startDate} – அளவீடு தொடங்கிய தேதி
+\n{startTime} – அளவீடு தொடங்கிய நேரம்
+\n{duration} – அளவீட்டின் கால அளவு</string>
+    <string name="common_unit_short_nano_meter">நானோமீட்டர் (நா.மீ)</string>
+    <string name="common_unit_short_micro_meter">மைக்ரோமீட்டர் (மை.மீ)</string>
+    <string name="common_quantity_short_wavelength">λ</string>
+    <string name="spectrum_orientation">திசைநிலை</string>
+    <string name="localNetworkLoadMessage">இந்த முகவரியிலிருந்து பரிசோதனையை ஏற்ற முடியவில்லை. இது உங்கள் அருகிலுள்ள Network-ல் உள்ள ஒரு சாதனத்திலிருந்து வழங்கப்பட்டால், அந்த நெட்வொர்க்கை அணுக phyphox-க்கு அனுமதி தேவை. அனுமதியை வழங்கிவிட்டு மீண்டும் முயற்சிக்கவும்.</string>
+    <string name="localNetworkExperimentMessage">இந்தச் சோதனை உங்கள் உள்ளூர் பிணையத்தில் (local network) உள்ள ஒரு சாதனத்துடனான இணைப்பைப் பயன்படுத்துகிறது. அதை அணுகுவதற்கு, உள்ளூர் பிணையத்தை அணுகுவதற்கான அனுமதி phyphox-க்குத் தேவைப்படுகிறது.</string>
+    <string name="localNetworkDeniedHint">உள்ளூர் பிணைய அனுமதி இல்லாமல், உங்கள் உள்ளூர் பிணையத்தில் (local network) உள்ள சாதனங்களுக்கான இணைப்புகள் தோல்வியடையும்.</string>
 </resources>
