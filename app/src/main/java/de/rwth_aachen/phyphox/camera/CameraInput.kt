@@ -600,11 +600,13 @@ class CameraInput : Serializable, AnalyzingOpenGLRenderer.ExposureStatisticsList
         lockedSettingsChar?.let { chars ->
             for (pair in chars) {
                 // User might not provide the default value
+                // Setting names are matched case-insensitively: all later lookups use the
+                // lowercase canonical names, so the keys are folded here
                 if (!pair.contains("=")) {
-                    this.lockedSettings?.set(key = pair.trim(), value = "")
+                    this.lockedSettings?.set(key = pair.trim().lowercase(), value = "")
                 } else {
                     val (key, value) = pair.split("=")
-                    this.lockedSettings?.set(key.trim(), value.trim())
+                    this.lockedSettings?.set(key.trim().lowercase(), value.trim())
                 }
             }
         }

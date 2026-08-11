@@ -246,7 +246,8 @@ class BluetoothExperimentLoader(private val ctx: Context, private val callback: 
             }
         }
 
-        val isZip = !String(data, 0, min(8, data.size)).startsWith("<phyphox")
+        //Element names are matched case-insensitively, so the sniffer for a bare XML file has to fold, too
+        val isZip = !String(data, 0, min(8, data.size)).lowercase().startsWith("<phyphox")
         val file = File(tempPath, if (isZip) "bt.zip" else "bt.phyphox")
         try {
             FileOutputStream(file).use { out ->

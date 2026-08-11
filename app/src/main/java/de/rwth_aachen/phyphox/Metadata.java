@@ -37,23 +37,32 @@ public class Metadata {
 
     String resultBuffer;
 
+    //Identifiers are matched case-insensitively (see rules.yml, enum-case-insensitive), unknown
+    //identifiers are still rejected with an IllegalArgumentException.
     public Metadata(String identifier, Context ctx) throws IllegalArgumentException {
-        try {
-            metadata = DeviceMetadata.valueOf(identifier);
-            resultBuffer = getBuffered(ctx);
-            return;
-        } catch (IllegalArgumentException e) {
-            for (SensorInput.SensorName sensor : SensorInput.SensorName.values()) {
-                if (identifier.startsWith(sensor.name())) {
-                    sensorMetadata = SensorMetadata.valueOf(identifier.substring(sensor.name().length()));
-                    metadata = DeviceMetadata.sensorMetadata;
-                    this.sensor = sensor;
-                    resultBuffer = getBuffered(ctx);
-                    return;
+        for (DeviceMetadata deviceMetadata : DeviceMetadata.values()) {
+            if (deviceMetadata.name().equalsIgnoreCase(identifier)) {
+                metadata = deviceMetadata;
+                resultBuffer = getBuffered(ctx);
+                return;
+            }
+        }
+        String lowerIdentifier = identifier.toLowerCase();
+        for (SensorInput.SensorName sensor : SensorInput.SensorName.values()) {
+            if (lowerIdentifier.startsWith(sensor.name().toLowerCase())) {
+                String suffix = identifier.substring(sensor.name().length());
+                for (SensorMetadata candidate : SensorMetadata.values()) {
+                    if (candidate.name().equalsIgnoreCase(suffix)) {
+                        sensorMetadata = candidate;
+                        metadata = DeviceMetadata.sensorMetadata;
+                        this.sensor = sensor;
+                        resultBuffer = getBuffered(ctx);
+                        return;
+                    }
                 }
             }
-            throw e;
         }
+        throw new IllegalArgumentException("Unknown metadata identifier: " + identifier);
     }
 
     public String getBuffered(Context ctx) {
