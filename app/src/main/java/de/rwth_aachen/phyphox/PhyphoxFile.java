@@ -328,10 +328,17 @@ public abstract class PhyphoxFile {
             throw new phyphoxFileException("Invalid value \"" + att + "\" for boolean attribute \"" + identifier + "\".", xpp.getLineNumber());
         }
 
-        //Helper to receive a color attribute, if invalid or not present, return default
-        protected RGB getColorAttribute(String identifier, RGB defaultValue) {
+        //Helper to receive a color attribute, if not present, return default
+        //A present color has to be a named phyphox color or a six-digit hex RGB value, anything
+        //else is an error (maintainer decision 2026-08-12, see views-map-color-unparseable)
+        protected RGB getColorAttribute(String identifier, RGB defaultValue) throws phyphoxFileException {
             final String att = xpp.getAttributeValue(XmlPullParser.NO_NAMESPACE, identifier);
-            return RGB.fromPhyphoxString(att, parent.getResources(), defaultValue);
+            if (att == null)
+                return defaultValue;
+            RGB color = RGB.fromPhyphoxStringStrict(att, parent.getResources());
+            if (color == null)
+                throw new phyphoxFileException("Could not parse color \"" + att + "\" of attribute \"" + identifier + "\".", xpp.getLineNumber());
+            return color;
         }
 
         //These functions should be overriden with block-specific code
@@ -1641,7 +1648,9 @@ public abstract class PhyphoxFile {
                             }
                         }
                         if (at.attributes.containsKey("color")) {
-                            RGB localColor = RGB.fromPhyphoxString(at.attributes.get("color"), parent.getResources(), new RGB(parent.getResources().getColor(R.color.phyphox_primary)));
+                            RGB localColor = RGB.fromPhyphoxStringStrict(at.attributes.get("color"), parent.getResources());
+                            if (localColor == null)
+                                throw new phyphoxFileException("Could not parse color of input tag.", xpp.getLineNumber());
                             ge.setColor(localColor, i/3, parent.getResources());
                         }
                         if (at.attributes.containsKey("linewidth")) {
