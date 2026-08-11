@@ -1362,16 +1362,25 @@ class PlotRenderer extends Thread implements TextureView.SurfaceTextureListener 
 
     private void doUpdateTimeRanges() {
         nTimeRanges = 0;
-        if (graphSetup.trStarts == null || graphSetup.trStops == null || graphSetup.trStarts.size() == 0 || graphSetup.trStops.size() == 0)
+        //The lists are replaced wholesale on the UI thread whenever the time reference changes
+        //(a start or a pause), so they are picked up once here: reading graphSetup again while
+        //filling the buffer could see a longer list than the one it was allocated for.
+        final List<Double> trStarts = graphSetup.trStarts;
+        final List<Double> trStops = graphSetup.trStops;
+        final List<Double> systemTimeReferenceGap = graphSetup.systemTimeReferenceGap;
+        if (trStarts == null || trStops == null || trStarts.size() == 0 || trStops.size() == 0)
             return;
         if (!(graphSetup.timeOnX || graphSetup.timeOnY))
             return;
 
-        FloatBuffer timeRangesData = ByteBuffer.allocateDirect(graphSetup.trStarts.size() * 4 * 2 * 4).order(ByteOrder.nativeOrder()).asFloatBuffer();
-        for (int i = 0; i < graphSetup.trStarts.size() && i < graphSetup.trStops.size(); i++) {
+        //Each range contributes one quad (four vertices of two floats) per time axis, so a graph
+        //with time on both axes needs twice the space.
+        int quadsPerRange = (graphSetup.timeOnX ? 1 : 0) + (graphSetup.timeOnY ? 1 : 0);
+        FloatBuffer timeRangesData = ByteBuffer.allocateDirect(trStarts.size() * quadsPerRange * 4 * 2 * 4).order(ByteOrder.nativeOrder()).asFloatBuffer();
+        for (int i = 0; i < trStarts.size() && i < trStops.size(); i++) {
             if (graphSetup.timeOnX) {
-                float x1r = (float) (Double.isNaN(graphSetup.trStops.get(i)) ? graphSetup.minX : (graphSetup.trStops.get(i) + (graphSetup.absoluteTime ? graphSetup.systemTimeReferenceGap.get(i-1) : 0.0)));
-                float x2r = (float) (Double.isNaN(graphSetup.trStarts.get(i)) ? graphSetup.maxX : (graphSetup.trStarts.get(i) + (graphSetup.absoluteTime ? graphSetup.systemTimeReferenceGap.get(i) : 0.0)));
+                float x1r = (float) (Double.isNaN(trStops.get(i)) ? graphSetup.minX : (trStops.get(i) + (graphSetup.absoluteTime ? systemTimeReferenceGap.get(i-1) : 0.0)));
+                float x2r = (float) (Double.isNaN(trStarts.get(i)) ? graphSetup.maxX : (trStarts.get(i) + (graphSetup.absoluteTime ? systemTimeReferenceGap.get(i) : 0.0)));
                 float x1 = (float)(graphSetup.logX ? Math.log(x1r) : x1r);
                 float x2 = (float)(graphSetup.logX ? Math.log(x2r) : x2r);
                 float y1 = (float) (graphSetup.logY ? Math.log(graphSetup.minY) : graphSetup.minY);
@@ -1389,8 +1398,8 @@ class PlotRenderer extends Thread implements TextureView.SurfaceTextureListener 
             if (graphSetup.timeOnY) {
                 float x1 = (float) (graphSetup.logX ? Math.log(graphSetup.minX) : graphSetup.minX);
                 float x2 = (float) (graphSetup.logX ? Math.log(graphSetup.maxX) : graphSetup.maxX);
-                float y1r = (float) (Double.isNaN(graphSetup.trStops.get(i)) ? graphSetup.minY : (graphSetup.trStops.get(i) + (graphSetup.absoluteTime ? graphSetup.systemTimeReferenceGap.get(i-1) : 0.0)));
-                float y2r = (float) (Double.isNaN(graphSetup.trStarts.get(i)) ? graphSetup.maxY : (graphSetup.trStarts.get(i) + (graphSetup.absoluteTime ? graphSetup.systemTimeReferenceGap.get(i) : 0.0)));
+                float y1r = (float) (Double.isNaN(trStops.get(i)) ? graphSetup.minY : (trStops.get(i) + (graphSetup.absoluteTime ? systemTimeReferenceGap.get(i-1) : 0.0)));
+                float y2r = (float) (Double.isNaN(trStarts.get(i)) ? graphSetup.maxY : (trStarts.get(i) + (graphSetup.absoluteTime ? systemTimeReferenceGap.get(i) : 0.0)));
                 float y1 = (float)(graphSetup.logY ? Math.log(y1r) : y1r);
                 float y2 = (float)(graphSetup.logY ? Math.log(y2r) : y2r);
                 timeRangesData.put(x1);

@@ -1054,7 +1054,7 @@ public class RemoteServer {
         try {
 
             JSONArray json = new JSONArray();
-            for (ExperimentTimeReference.TimeMapping timeMapping : experiment.experimentTimeReference.timeMappings) {
+            for (ExperimentTimeReference.TimeMapping timeMapping : experiment.experimentTimeReference.getTimeMappings()) {
                 JSONObject eventJson = new JSONObject();
                 eventJson.put("event", timeMapping.event.name());
                 eventJson.put("experimentTime", timeMapping.experimentTime);

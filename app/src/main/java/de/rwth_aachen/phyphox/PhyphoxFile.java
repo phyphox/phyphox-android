@@ -1292,7 +1292,7 @@ public abstract class PhyphoxFile {
             Long systemTime = Long.parseLong(systemTimeStr);
             if (experimentTime < 0 || systemTime < 0)
                 throw new phyphoxFileException("An event requires both, an experiment time and a system time.", xpp.getLineNumber());
-            experiment.experimentTimeReference.timeMappings.add(new ExperimentTimeReference.TimeMapping(event, experimentTime, 0, systemTime));
+            experiment.experimentTimeReference.addRestoredMapping(event, experimentTime, systemTime);
         }
 
     }

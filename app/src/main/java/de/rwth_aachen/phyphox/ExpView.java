@@ -2032,7 +2032,7 @@ public class ExpView implements Serializable{
                 long trStopSystemTime = 0;
                 List<Double> systemTimeReferenceGap = new ArrayList<>();
                 long totalTimeReferenceGap = 0;
-                for (ExperimentTimeReference.TimeMapping tm : experimentTimeReference.timeMappings) {
+                for (ExperimentTimeReference.TimeMapping tm : experimentTimeReference.getTimeMappings()) {
                     if (tm.event == ExperimentTimeReference.TimeMappingEvent.START) {
                         starts.add(tm.experimentTime);
                         stops.add(trStop);
