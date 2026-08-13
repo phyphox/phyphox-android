@@ -1976,7 +1976,19 @@ public class Experiment extends AppCompatActivity implements View.OnClickListene
             sessionID = remote.sessionID;
         } else
             remote = new RemoteServer(experiment, this, sessionID);
-        remote.start();
+        if (!remote.start()) {
+            //The server socket could not be opened, usually because another app already uses the
+            //configured port. Leave remote access off and explain the problem to the user.
+            remote = null;
+            serverEnabled = false;
+            invalidateOptionsMenu();
+            new AlertDialog.Builder(this)
+                    .setTitle(R.string.remoteServerPortInUseTitle)
+                    .setMessage(res.getString(R.string.remoteServerPortInUse) + " (Port " + RemoteServer.httpServerPort + ")")
+                    .setPositiveButton(R.string.ok, null)
+                    .show();
+            return;
+        }
 
         //Announce this to the user as there are security concerns.
         final String addressList = RemoteServer.getAddresses(getBaseContext()).replaceAll("\\s+$", "");
