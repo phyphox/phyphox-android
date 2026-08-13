@@ -64,6 +64,7 @@ public class RemoteServer {
     HTTPServer httpServer; //Holds our http service
     ExecutorService executor;
     static int httpServerPort = 8080; //We have to pick a high port number. We may not use 80...
+    final static int defaultPort = 8080; //Default value of the port setting; must match the defaultValue in settings.xml
     Context context; //Resource reference for comfortable access
     Experiment callActivity; //Reference to the parent activity. Needed to provide its status on the webinterface
 
@@ -498,32 +499,55 @@ public class RemoteServer {
     }
 
     //This starts the http server and registers the handlers for several requests
-    public synchronized void start() {
-        httpServerPort = Integer.parseInt(PreferenceManager.getDefaultSharedPreferences(context).getString("remoteAccessPort", "8080"));
-        httpServer = new CorsHTTPServer(httpServerPort);
-        executor = Executors.newCachedThreadPool();
-        httpServer.setExecutor(executor);
-        HTTPServer.VirtualHost host = httpServer.getVirtualHost(null);
-
-        //Now register a handler for different requests. Every endpoint accepts POST as well as
-        //GET (see control-post in phyphox-docs); a POST body may be JSON or form-encoded, chosen
-        //by Content-Type. The handlers read their parameters through requestParams()/
-        //requestParamsList(), which merge body and query, so they do not need to care.
-        host.addContext("/", withErrorResponse(this::handleHome), "GET", "POST"); //The basic interface (index.html) when the user just calls the address
-        host.addContext("/style.css", withErrorResponse(this::handleStyle), "GET", "POST"); //The style sheet (style.css) linked from index.html
-        host.addContext("/logo", withErrorResponse(this::handleLogo), "GET", "POST"); //The phyphox logo, also included in style.css
-        host.addContext("/get", withErrorResponse(this::handleGet), "GET", "POST"); //A get command takes parameters which define, which buffers and how much of them is requested - the response is a JSON set with the data
-        host.addContext("/control", withErrorResponse(this::handleControl), "GET", "POST"); //The control command starts and stops measurements
-        host.addContext("/export", withErrorResponse(this::handleExport), "GET", "POST"); //The export command requests a data file containing sets as requested by the parameters
-        host.addContext("/config", withErrorResponse(this::handleConfig), "GET", "POST"); //The config command requests information on the currently active experiment configuration
-        host.addContext("/meta", withErrorResponse(this::handleMeta), "GET", "POST"); //The meta command requests information on the device
-        host.addContext("/time", withErrorResponse(this::handleTime), "GET", "POST"); //The meta command requests information on the current time reference
-        host.addContext("/res", withErrorResponse(this::handleRes), "GET", "POST"); //Fetch resource files (like images embedded in the experiment configuration)
-        try {
-            httpServer.start();
-        } catch (IOException e) {
-            throw new RuntimeException(e);
+    //If the port setting is at its default, we assume that the user does not care (or might not
+    //even know) which port is used, so if the default port is taken by another app, we simply
+    //count upwards from it until we find a free one.
+    //Returns false if no server socket could be opened, which usually means that another app
+    //already uses the configured port.
+    public synchronized boolean start() {
+        int configuredPort = Integer.parseInt(PreferenceManager.getDefaultSharedPreferences(context).getString("remoteAccessPort", String.valueOf(defaultPort)));
+        LinkedList<Integer> ports = new LinkedList<>();
+        ports.add(configuredPort);
+        if (configuredPort == defaultPort) {
+            for (int i = 1; i <= 100; i++)
+                ports.add(defaultPort + i);
         }
+
+        executor = Executors.newCachedThreadPool();
+        for (int port : ports) {
+            httpServerPort = port;
+            httpServer = new CorsHTTPServer(port);
+            httpServer.setExecutor(executor);
+            HTTPServer.VirtualHost host = httpServer.getVirtualHost(null);
+
+            //Now register a handler for different requests. Every endpoint accepts POST as well as
+            //GET (see control-post in phyphox-docs); a POST body may be JSON or form-encoded, chosen
+            //by Content-Type. The handlers read their parameters through requestParams()/
+            //requestParamsList(), which merge body and query, so they do not need to care.
+            host.addContext("/", withErrorResponse(this::handleHome), "GET", "POST"); //The basic interface (index.html) when the user just calls the address
+            host.addContext("/style.css", withErrorResponse(this::handleStyle), "GET", "POST"); //The style sheet (style.css) linked from index.html
+            host.addContext("/logo", withErrorResponse(this::handleLogo), "GET", "POST"); //The phyphox logo, also included in style.css
+            host.addContext("/get", withErrorResponse(this::handleGet), "GET", "POST"); //A get command takes parameters which define, which buffers and how much of them is requested - the response is a JSON set with the data
+            host.addContext("/control", withErrorResponse(this::handleControl), "GET", "POST"); //The control command starts and stops measurements
+            host.addContext("/export", withErrorResponse(this::handleExport), "GET", "POST"); //The export command requests a data file containing sets as requested by the parameters
+            host.addContext("/config", withErrorResponse(this::handleConfig), "GET", "POST"); //The config command requests information on the currently active experiment configuration
+            host.addContext("/meta", withErrorResponse(this::handleMeta), "GET", "POST"); //The meta command requests information on the device
+            host.addContext("/time", withErrorResponse(this::handleTime), "GET", "POST"); //The meta command requests information on the current time reference
+            host.addContext("/res", withErrorResponse(this::handleRes), "GET", "POST"); //Fetch resource files (like images embedded in the experiment configuration)
+            try {
+                httpServer.start();
+                return true;
+            } catch (IOException e) {
+                Log.w("remoteServer", "Could not start the remote server on port " + port + ".", e);
+            }
+        }
+
+        //No free port found. Clean up and report the configured port as blocked.
+        executor.shutdown();
+        executor = null;
+        httpServer = null;
+        httpServerPort = configuredPort;
+        return false;
     }
 
     //Stop the server by simply setting RUNNING to false
@@ -1054,7 +1078,7 @@ public class RemoteServer {
         try {
 
             JSONArray json = new JSONArray();
-            for (ExperimentTimeReference.TimeMapping timeMapping : experiment.experimentTimeReference.timeMappings) {
+            for (ExperimentTimeReference.TimeMapping timeMapping : experiment.experimentTimeReference.getTimeMappings()) {
                 JSONObject eventJson = new JSONObject();
                 eventJson.put("event", timeMapping.event.name());
                 eventJson.put("experimentTime", timeMapping.experimentTime);

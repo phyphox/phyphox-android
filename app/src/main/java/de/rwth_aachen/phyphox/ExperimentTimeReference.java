@@ -5,9 +5,15 @@ import android.os.SystemClock;
 import android.util.Log;
 
 import java.io.Serializable;
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
 
+//All access to the time mappings is serialized: they are written on the UI thread (start, pause,
+//reset) while several background threads read them - the analysis thread, the webserver, the
+//exporter and the network connections. The list itself is private, so no caller can iterate it
+//while it is being modified; getTimeMappings() hands out an immutable snapshot instead.
 public class ExperimentTimeReference implements Serializable {
     interface Listener {
         void onExperimentTimeReferenceUpdated(ExperimentTimeReference experimentTimeReference);
@@ -32,15 +38,38 @@ public class ExperimentTimeReference implements Serializable {
         }
     }
 
-    public List<TimeMapping> timeMappings = new LinkedList<>();
+    private final List<TimeMapping> timeMappings = new LinkedList<>();
 
     ExperimentTimeReference(Listener listener) {
         this.listener = listener;
         reset();
     }
 
+    //A snapshot for callers that need to look at all events. The TimeMapping objects are never
+    //modified after they have been created, so the copy stays valid for the caller.
+    public List<TimeMapping> getTimeMappings() {
+        synchronized (this) {
+            return Collections.unmodifiableList(new ArrayList<>(timeMappings));
+        }
+    }
+
+    public synchronized boolean hasMappings() {
+        return !timeMappings.isEmpty();
+    }
+
+    public synchronized TimeMapping getLastMapping() {
+        if (timeMappings.isEmpty())
+            return null;
+        return timeMappings.get(timeMappings.size() - 1);
+    }
+
+    //Restores an event of an experiment state saved earlier (see the events block of a state file).
+    public synchronized void addRestoredMapping(TimeMappingEvent event, Double experimentTime, long systemTime) {
+        timeMappings.add(new TimeMapping(event, experimentTime, 0, systemTime));
+    }
+
     public void logToDebug() {
-        for (TimeMapping mapping : timeMappings) {
+        for (TimeMapping mapping : getTimeMappings()) {
             Log.d("TimeReference", mapping.event.name() + ": experiment time = " + mapping.experimentTime + ", event time = " + mapping.eventTime + ", system time = " + mapping.systemTime);
         }
         Log.d("TimeReference", "...");
@@ -55,23 +84,27 @@ public class ExperimentTimeReference implements Serializable {
         }
         long systemTime = System.currentTimeMillis();
 
-        if (timeMappings.isEmpty()) {
-            if (event != TimeMappingEvent.START)
-                return;
-            timeMappings.add(new TimeMapping(event, 0.0, eventTime, systemTime));
-        } else {
-            TimeMapping last = timeMappings.get(timeMappings.size()-1);
-            switch (last.event) {
-                case START:
-                    if (event == TimeMappingEvent.START)
-                        return;
-                    timeMappings.add(new TimeMapping(event, getExperimentTimeFromEvent(eventTime), eventTime, systemTime));
-                    break;
-                case PAUSE:
-                    if (event == TimeMappingEvent.PAUSE)
-                        return;
-                    timeMappings.add(new TimeMapping(event, last.experimentTime, eventTime, systemTime));
-                    break;
+        //The listener is notified outside the lock: it walks the view elements, which read this
+        //object back and take locks of their own.
+        synchronized (this) {
+            if (timeMappings.isEmpty()) {
+                if (event != TimeMappingEvent.START)
+                    return;
+                timeMappings.add(new TimeMapping(event, 0.0, eventTime, systemTime));
+            } else {
+                TimeMapping last = timeMappings.get(timeMappings.size() - 1);
+                switch (last.event) {
+                    case START:
+                        if (event == TimeMappingEvent.START)
+                            return;
+                        timeMappings.add(new TimeMapping(event, getExperimentTimeFromEvent(eventTime), eventTime, systemTime));
+                        break;
+                    case PAUSE:
+                        if (event == TimeMappingEvent.PAUSE)
+                            return;
+                        timeMappings.add(new TimeMapping(event, last.experimentTime, eventTime, systemTime));
+                        break;
+                }
             }
         }
         if (listener != null)
@@ -79,12 +112,14 @@ public class ExperimentTimeReference implements Serializable {
     }
 
     public void reset() {
-        timeMappings.clear();
+        synchronized (this) {
+            timeMappings.clear();
+        }
         if (listener != null)
             listener.onExperimentTimeReferenceUpdated(this);
     }
 
-    public double getExperimentTimeFromEvent(long eventTime) {
+    public synchronized double getExperimentTimeFromEvent(long eventTime) {
         if (timeMappings.isEmpty())
             return 0.0;
         TimeMapping last = timeMappings.get(timeMappings.size()-1);
@@ -99,20 +134,20 @@ public class ExperimentTimeReference implements Serializable {
         return getExperimentTimeFromEvent(eventTime);
     }
 
-    public double getLinearTime() {
+    public synchronized double getLinearTime() {
         if (timeMappings.isEmpty())
             return 0.0;
         return (System.currentTimeMillis() - timeMappings.get(0).systemTime) * 0.001;
     }
 
-    public int getReferenceIndexFromExperimentTime(double t) {
+    public synchronized int getReferenceIndexFromExperimentTime(double t) {
         int i = 0;
         while (timeMappings.size() > i+1 && timeMappings.get(i+1).experimentTime <= t)
             i++;
         return i;
     }
 
-    public int getReferenceIndexFromLinearTime(double t) {
+    public synchronized int getReferenceIndexFromLinearTime(double t) {
         int i = 0;
         while (timeMappings.size() > i+1 && (timeMappings.get(i+1).systemTime - timeMappings.get(0).systemTime) * 0.001 <= t) {
             i++;
@@ -120,20 +155,23 @@ public class ExperimentTimeReference implements Serializable {
         return i;
     }
 
-    public long getSystemTimeReferenceByIndex(int i) {
-        if (timeMappings.isEmpty())
+    //An index is usually retrieved from one of the methods above and used in a separate call, so
+    //the list may have been reset in between. Out-of-range indices give the same answer as an
+    //empty list instead of throwing.
+    public synchronized long getSystemTimeReferenceByIndex(int i) {
+        if (i < 0 || i >= timeMappings.size())
             return 0;
         return timeMappings.get(i).systemTime;
     }
 
-    public boolean getPausedByIndex(int i) {
-        if (timeMappings.isEmpty())
+    public synchronized boolean getPausedByIndex(int i) {
+        if (i < 0 || i >= timeMappings.size())
             return true;
         return timeMappings.get(i).event == TimeMappingEvent.PAUSE;
     }
 
-    public double getExperimentTimeReferenceByIndex(int i) {
-        if (timeMappings.isEmpty())
+    public synchronized double getExperimentTimeReferenceByIndex(int i) {
+        if (i < 0 || i >= timeMappings.size())
             return 0.0;
         return timeMappings.get(i).experimentTime;
     }

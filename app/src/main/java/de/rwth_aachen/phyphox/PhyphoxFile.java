@@ -314,18 +314,31 @@ public abstract class PhyphoxFile {
             }
         }
 
-        //Helper to receive a boolean attribute, if invalid or not present, return default
-        protected boolean getBooleanAttribute(String identifier, boolean defaultValue) {
+        //Helper to receive a boolean attribute, if not present, return default
+        //Only "true" and "false" (in any capitalization) are accepted, anything else is an error
+        //(see rules.yml, enum-invalid-value / enum-case-insensitive)
+        protected boolean getBooleanAttribute(String identifier, boolean defaultValue) throws phyphoxFileException {
             final String att = xpp.getAttributeValue(XmlPullParser.NO_NAMESPACE, identifier);
             if (att == null)
                 return defaultValue;
-            return Boolean.valueOf(att);
+            if (att.equalsIgnoreCase("true"))
+                return true;
+            if (att.equalsIgnoreCase("false"))
+                return false;
+            throw new phyphoxFileException("Invalid value \"" + att + "\" for boolean attribute \"" + identifier + "\".", xpp.getLineNumber());
         }
 
-        //Helper to receive a color attribute, if invalid or not present, return default
-        protected RGB getColorAttribute(String identifier, RGB defaultValue) {
+        //Helper to receive a color attribute, if not present, return default
+        //A present color has to be a named phyphox color or a six-digit hex RGB value, anything
+        //else is an error (maintainer decision 2026-08-12, see views-map-color-unparseable)
+        protected RGB getColorAttribute(String identifier, RGB defaultValue) throws phyphoxFileException {
             final String att = xpp.getAttributeValue(XmlPullParser.NO_NAMESPACE, identifier);
-            return RGB.fromPhyphoxString(att, parent.getResources(), defaultValue);
+            if (att == null)
+                return defaultValue;
+            RGB color = RGB.fromPhyphoxStringStrict(att, parent.getResources());
+            if (color == null)
+                throw new phyphoxFileException("Could not parse color \"" + att + "\" of attribute \"" + identifier + "\".", xpp.getLineNumber());
+            return color;
         }
 
         //These functions should be overriden with block-specific code
@@ -518,9 +531,12 @@ public abstract class PhyphoxFile {
                     String parameter = getStringAttribute("waveform");
                     if(parameter == null)
                         parameter = "sine";
-                    AudioOutput.Waveform waveform = AudioOutput.Waveform.SINE;
+                    AudioOutput.Waveform waveform;
                     //Enumerated values are matched case-insensitively (see rules.yml, enum-case-insensitive)
                     switch (parameter.toLowerCase()){
+                        case "sine":
+                            waveform = AudioOutput.Waveform.SINE;
+                            break;
                         case "square":
                             waveform = AudioOutput.Waveform.SQUARE;
                             break;
@@ -528,7 +544,7 @@ public abstract class PhyphoxFile {
                             waveform = AudioOutput.Waveform.SAWTOOTH;
                             break;
                         default:
-                            break;
+                            throw new phyphoxFileException("Unknown waveform \"" + parameter + "\".", xpp.getLineNumber());
                     }
                     if (level == 1) {
                         //Tone plugin
@@ -1276,7 +1292,7 @@ public abstract class PhyphoxFile {
             Long systemTime = Long.parseLong(systemTimeStr);
             if (experimentTime < 0 || systemTime < 0)
                 throw new phyphoxFileException("An event requires both, an experiment time and a system time.", xpp.getLineNumber());
-            experiment.experimentTimeReference.timeMappings.add(new ExperimentTimeReference.TimeMapping(event, experimentTime, 0, systemTime));
+            experiment.experimentTimeReference.addRestoredMapping(event, experimentTime, systemTime);
         }
 
     }
@@ -1351,6 +1367,12 @@ public abstract class PhyphoxFile {
                     double size = getDoubleAttribute("size", 1.0);
                     RGB color = getColorAttribute("color", new RGB(parent.getResources().getColor(R.color.phyphox_white_100)));
                     String format = getStringAttribute("format");
+                    //Enumerated values are matched case-insensitively (see rules.yml, enum-case-insensitive)
+                    if (format != null && !(format.equalsIgnoreCase("float")
+                            || format.equalsIgnoreCase("degree-minutes")
+                            || format.equalsIgnoreCase("degree-minutes-seconds")
+                            || format.equalsIgnoreCase("ascii")))
+                        throw new phyphoxFileException("Unknown format \"" + format + "\".", xpp.getLineNumber());
                     String positiveUnit = getTranslatedAttribute("positiveUnit");
                     String negativeUnit = getTranslatedAttribute("negativeUnit");
                     //Allowed input/output configuration
@@ -1567,7 +1589,10 @@ public abstract class PhyphoxFile {
                     ge.setAspectRatio(aspectRatio); //Aspect ratio of the whole element area icluding axes
 
                     if (lineStyle != null) {
-                        ge.setStyle(GraphView.styleFromStr(lineStyle));
+                        GraphView.Style style = GraphView.styleFromStr(lineStyle);
+                        if (style == GraphView.Style.unknown)
+                            throw new phyphoxFileException("Unknown value \"" + lineStyle + "\" for style of graph element.", xpp.getLineNumber());
+                        ge.setStyle(style);
                     }
                     ge.setShowColorScale(showColorScale);
                     ge.setMapWidth(mapWidth);
@@ -1623,7 +1648,9 @@ public abstract class PhyphoxFile {
                             }
                         }
                         if (at.attributes.containsKey("color")) {
-                            RGB localColor = RGB.fromPhyphoxString(at.attributes.get("color"), parent.getResources(), new RGB(parent.getResources().getColor(R.color.phyphox_primary)));
+                            RGB localColor = RGB.fromPhyphoxStringStrict(at.attributes.get("color"), parent.getResources());
+                            if (localColor == null)
+                                throw new phyphoxFileException("Could not parse color of input tag.", xpp.getLineNumber());
                             ge.setColor(localColor, i/3, parent.getResources());
                         }
                         if (at.attributes.containsKey("linewidth")) {
@@ -1873,7 +1900,14 @@ public abstract class PhyphoxFile {
                     Boolean showValue = getBooleanAttribute("showValue", true);
                     RGB color = getColorAttribute("color", new RGB(parent.getResources().getColor(R.color.phyphox_white_100)));
 
-                    ExpView.SliderType sliderType = (Objects.equals(type, "range")) ? ExpView.SliderType.Range : ExpView.SliderType.Normal;
+                    //Enumerated values are matched case-insensitively (see rules.yml, enum-case-insensitive)
+                    ExpView.SliderType sliderType;
+                    if (type == null || type.equalsIgnoreCase("normal"))
+                        sliderType = ExpView.SliderType.Normal;
+                    else if (type.equalsIgnoreCase("range"))
+                        sliderType = ExpView.SliderType.Range;
+                    else
+                        throw new phyphoxFileException("Unknown slider type \"" + type + "\".", xpp.getLineNumber());
 
                     Vector<String> outStrings = new Vector<>();
                     if(sliderType == ExpView.SliderType.Normal){
@@ -2490,6 +2524,16 @@ public abstract class PhyphoxFile {
                         throw new phyphoxFileException("Missing id in send element.", xpp.getLineNumber());
 
                     String datatype = getStringAttribute("datatype");
+                    //Enumerated values are matched case-insensitively (see rules.yml, enum-case-insensitive)
+                    //Normalized to lowercase here so the send-time checks can compare exactly.
+                    if (datatype != null) {
+                        if (datatype.equalsIgnoreCase("number"))
+                            datatype = "number";
+                        else if (datatype.equalsIgnoreCase("array"))
+                            datatype = "array";
+                        else
+                            throw new phyphoxFileException("Unknown datatype \"" + datatype + "\".", xpp.getLineNumber());
+                    }
 
                     String type = getStringAttribute("type");
                     if (type == null || type.equalsIgnoreCase("buffer")) {
@@ -2504,14 +2548,14 @@ public abstract class PhyphoxFile {
                             sendable.additionalAttributes = new HashMap<>();
                             sendable.additionalAttributes.put("datatype", datatype);
                         }
-                    } else if (type.equals("meta")) {
+                    } else if (type.equalsIgnoreCase("meta")) {
                         String metaName = getText();
                         try {
                             sendable = new NetworkConnection.NetworkSendableData(new Metadata(metaName, parent));
                         } catch (IllegalArgumentException e) {
                             throw new phyphoxFileException("Unknown meta data \"" + metaName + "\".", xpp.getLineNumber());
                         }
-                    } else if (type.equals("time")) {
+                    } else if (type.equalsIgnoreCase("time")) {
                         sendable = new NetworkConnection.NetworkSendableData(experiment.experimentTimeReference);
                     } else {
                         throw new phyphoxFileException("Unknown type \"" + type + "\".", xpp.getLineNumber());
@@ -3607,7 +3651,8 @@ public abstract class PhyphoxFile {
                 //We can just race through all start tags until we reach the phyphox tag. Then let out phyphoxBlockParser take over.
                 int eventType = xpp.getEventType();
                 while (eventType != XmlPullParser.END_DOCUMENT) {
-                    if (eventType == XmlPullParser.START_TAG && xpp.getName().equals("phyphox")) {
+                    //Element names are matched case-insensitively, including the root element (see rules.yml, enum-case-insensitive)
+                    if (eventType == XmlPullParser.START_TAG && xpp.getName().equalsIgnoreCase("phyphox")) {
                         //Phyphox tag. This is what we need to read, but let's check the file version first.
                         String fileVersion = xpp.getAttributeValue(XmlPullParser.NO_NAMESPACE, "version");
                         if (fileVersion != null) {

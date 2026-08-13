@@ -170,7 +170,7 @@ public class AssetExperimentLoader {
             while (eventType != XmlPullParser.END_DOCUMENT) { //Go through all tags until the end...
                 switch (eventType) {
                     case XmlPullParser.START_TAG: //React to start tags
-                        switch (xpp.getName()) {
+                        switch (xpp.getName().toLowerCase()) { //Element names are matched case-insensitively
                             case "phyphox": //The phyphox tag is the root element of the experiment we want to interpret
                                 if (phyphoxDepth < 0) { //There should not be a phyphox tag within an phyphox tag, but who cares. Just ignore it if it happens
                                     phyphoxDepth = xpp.getDepth(); //Remember depth of phyphox tag
@@ -367,7 +367,7 @@ public class AssetExperimentLoader {
                         }
                         break;
                     case XmlPullParser.END_TAG: //React to end tags
-                        switch (xpp.getName()) {
+                        switch (xpp.getName().toLowerCase()) { //Element names are matched case-insensitively
                             case "phyphox": //We are leaving the phyphox tag
                                 if (xpp.getDepth() == phyphoxDepth) { //Check if we in fact reached the surface. There might have been something else called phyphox within.
                                     phyphoxDepth = -1;

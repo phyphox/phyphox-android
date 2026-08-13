@@ -13,6 +13,8 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicInteger;
 
+import javax.net.ssl.HttpsURLConnection;
+import javax.net.ssl.SSLPeerUnverifiedException;
 import javax.net.ssl.SSLSocket;
 import javax.net.ssl.SSLSocketFactory;
 
@@ -53,6 +55,7 @@ public class MqttClient {
     private final boolean cleanSession;
     private final int keepAliveSeconds;
     private final SSLSocketFactory sslSocketFactory; // null for a plain TCP connection
+    private final boolean verifyHostname; // check the certificate covers the host; on for the system trust store, off for a pinned custom CA
     private final String subscribeTopic; // "" if the client only publishes
     private final Listener listener;
 
@@ -71,7 +74,7 @@ public class MqttClient {
 
     public MqttClient(String host, int port, String clientId, String username, String password,
                       boolean cleanSession, int keepAliveSeconds, SSLSocketFactory sslSocketFactory,
-                      String subscribeTopic, Listener listener) {
+                      boolean verifyHostname, String subscribeTopic, Listener listener) {
         this.host = host;
         this.port = port;
         this.clientId = clientId;
@@ -80,6 +83,7 @@ public class MqttClient {
         this.cleanSession = cleanSession;
         this.keepAliveSeconds = keepAliveSeconds > 0 ? keepAliveSeconds : 60;
         this.sslSocketFactory = sslSocketFactory;
+        this.verifyHostname = verifyHostname;
         this.subscribeTopic = subscribeTopic == null ? "" : subscribeTopic;
         this.listener = listener;
     }
@@ -138,6 +142,15 @@ public class MqttClient {
                 s = sslSocketFactory.createSocket();
                 s.connect(new InetSocketAddress(host, port), CONNECT_TIMEOUT_MS);
                 ((SSLSocket) s).startHandshake();
+                //startHandshake validates the certificate chain but not the host name, so without
+                //this check a publicly trusted certificate for a different host would be accepted.
+                //Off for a pinned custom CA (certificate attribute), where the pin itself is the
+                //trust anchor - see network-mqtts-unofficial in phyphox-docs.
+                if (verifyHostname) {
+                    if (!HttpsURLConnection.getDefaultHostnameVerifier()
+                            .verify(host, ((SSLSocket) s).getSession()))
+                        throw new SSLPeerUnverifiedException("Host name " + host + " not verified");
+                }
             } else {
                 s = new Socket();
                 s.connect(new InetSocketAddress(host, port), CONNECT_TIMEOUT_MS);

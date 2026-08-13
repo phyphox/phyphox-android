@@ -36,7 +36,7 @@ public class FileNameFormat {
         Date now = new Date();
         Date start = now;
         double duration = 0.0;
-        if (timeReference != null && !timeReference.timeMappings.isEmpty()) {
+        if (timeReference != null && timeReference.hasMappings()) {
             start = new Date(timeReference.getSystemTimeReferenceByIndex(0));
             duration = timeReference.getExperimentTime();
         }

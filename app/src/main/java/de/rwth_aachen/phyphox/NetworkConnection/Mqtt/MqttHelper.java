@@ -113,7 +113,7 @@ public class MqttHelper {
                 JSONObject timeInfo = new JSONObject();
                 timeInfo.put("now", System.currentTimeMillis() / 1000.0);
                 JSONArray events = new JSONArray();
-                for (ExperimentTimeReference.TimeMapping timeMapping : item.getValue().timeReference.timeMappings) {
+                for (ExperimentTimeReference.TimeMapping timeMapping : item.getValue().timeReference.getTimeMappings()) {
                     JSONObject eventJson = new JSONObject();
                     eventJson.put("event", timeMapping.event.name());
                     eventJson.put("experimentTime", timeMapping.experimentTime);

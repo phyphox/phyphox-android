@@ -408,10 +408,10 @@ public class PhyphoxExperiment implements Serializable, ExperimentTimeReference.
         if (!loaded)
             return;
 
-        ExperimentTimeReference.TimeMapping event = experimentTimeReference.timeMappings.size() > 0 ? experimentTimeReference.timeMappings.get(experimentTimeReference.timeMappings.size() - 1) : null;
+        ExperimentTimeReference.TimeMapping event = experimentTimeReference.getLastMapping();
         if (event == null || event.event != ExperimentTimeReference.TimeMappingEvent.CLEAR)
             experimentTimeReference.registerEvent(ExperimentTimeReference.TimeMappingEvent.PAUSE);
-        event = experimentTimeReference.timeMappings.size() > 0 ? experimentTimeReference.timeMappings.get(experimentTimeReference.timeMappings.size() - 1) : null;
+        event = experimentTimeReference.getLastMapping();
         lastAnalysis = 0.0;
 
         //Recording
@@ -469,7 +469,7 @@ public class PhyphoxExperiment implements Serializable, ExperimentTimeReference.
 
         experimentTimeReference.registerEvent(ExperimentTimeReference.TimeMappingEvent.START);
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN_MR2) {
-            ExperimentTimeReference.TimeMapping event = experimentTimeReference.timeMappings.get(experimentTimeReference.timeMappings.size() - 1);
+            ExperimentTimeReference.TimeMapping event = experimentTimeReference.getLastMapping();
             Map<String, Bluetooth> uniqueBluetoothDevices = new HashMap<>();
             for (BluetoothInput bti : bluetoothInputs) {
                 uniqueBluetoothDevices.put(bti.idString != null && !bti.idString.isEmpty() ? bti.idString : bti.deviceAddress, bti);
@@ -649,7 +649,7 @@ public class PhyphoxExperiment implements Serializable, ExperimentTimeReference.
         root.appendChild(colorEl);
 
         Element eventsEl = doc.createElement("events");
-        for (ExperimentTimeReference.TimeMapping event : experimentTimeReference.timeMappings) {
+        for (ExperimentTimeReference.TimeMapping event : experimentTimeReference.getTimeMappings()) {
 
             Element eventEl = doc.createElement(event.event.name().toLowerCase());
             eventEl.setAttribute("experimentTime", event.experimentTime.toString());

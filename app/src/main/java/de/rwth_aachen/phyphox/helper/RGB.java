@@ -21,22 +21,12 @@ public class RGB implements Serializable {
         return new RGB(0xffffff & ((r << 16) | (g << 8) | b));
     }
 
-    public static RGB fromHexString(String rgb) {
-        String[] rgbsep;
-        if (rgb.charAt(0) == '#') {
-            return new RGB(Integer.parseInt(rgb.substring(1), 16));
-        } else {
-            rgbsep = rgb.replaceAll("[^\\d,]", "").split(",");
-            if (rgbsep.length == 3) {
-                return RGB.fromRGB(Integer.parseInt(rgbsep[0]) , Integer.parseInt(rgbsep[1]), Integer.parseInt(rgbsep[2]));
-            }
-        }
-        return new RGB(0x000000);
-    }
-
-    public static RGB fromPhyphoxString(String colorStr, Resources res, RGB fallback) {
+    //Strict parser used by the experiment file parser: returns null unless the string is a named
+    //phyphox color or a six-digit hex RGB value, optionally prefixed with '#'. Anything else is an
+    //error to be reported by the caller. Color names fold case like enumerated values.
+    public static RGB fromPhyphoxStringStrict(String colorStr, Resources res) {
         if (colorStr == null)
-            return fallback;
+            return null;
         //We first check for specific names. As we do not set prefix (like a hash), we have to be careful that these constants do not colide with a valid hex representation of RGB
         switch(colorStr.toLowerCase()) {
             case "orange": return new RGB(res.getColor(R.color.phyphox_primary));
@@ -56,11 +46,18 @@ public class RGB implements Serializable {
             case "weakwhite": return new RGB(res.getColor(R.color.phyphox_white_60));
         }
 
-        //Not a constant, so it hast to be hex...
-        if (colorStr.startsWith("#"))
-            return RGB.fromHexString(colorStr);
-        else
-            return RGB.fromHexString("#" + colorStr);
+        //Not a constant, so it has to be a six-digit hex value...
+        String hex = colorStr.startsWith("#") ? colorStr.substring(1) : colorStr;
+        if (hex.length() == 6 && hex.matches("[0-9a-fA-F]+"))
+            return new RGB(Integer.parseInt(hex, 16));
+        return null;
+    }
+
+    //Lenient variant for callers that must not fail on a bad value, like the experiment list
+    //scanner: an unparseable color falls back to the given default.
+    public static RGB fromPhyphoxString(String colorStr, Resources res, RGB fallback) {
+        RGB color = fromPhyphoxStringStrict(colorStr, res);
+        return color == null ? fallback : color;
     }
 
     public static RGB fromPhyphoxString(String colorStr, Resources res) {

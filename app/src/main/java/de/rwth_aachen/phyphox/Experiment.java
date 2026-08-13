@@ -33,6 +33,7 @@ import android.os.Handler;
 import android.os.PowerManager;
 import android.provider.ContactsContract;
 import android.provider.Settings;
+import android.text.Layout;
 import android.util.Log;
 import android.util.TypedValue;
 import android.view.Gravity;
@@ -155,6 +156,9 @@ public class Experiment extends AppCompatActivity implements View.OnClickListene
     //Status variables
     boolean measuring = false; //Measurement running?
     boolean loadCompleted = false; //Set to true when an experiment has been loaded successfully
+
+    float titleDefaultTextSize = 0f; //Size of the title before it has been fitted to the toolbar
+    int titleFittedForWidth = -1; //Toolbar width the title has last been fitted to
     boolean shutdown = false; //The activity should be stopped. Used to escape the measurement loop.
     boolean beforeStart = true; //Experiment has not yet been started even once
     boolean menuHintDismissed = false; //Remember that the user has clicked away the hint to the menu
@@ -699,10 +703,21 @@ public class Experiment extends AppCompatActivity implements View.OnClickListene
             }
 
             //We should set the experiment title....
-            TextView titleText = ((TextView) findViewById(R.id.titleText));
+            final TextView titleText = ((TextView) findViewById(R.id.titleText));
             titleText.setText(experiment.title);
-            float defaultSize = titleText.getTextSize();
-            TextViewCompat.setAutoSizeTextTypeUniformWithConfiguration(titleText, (int)(defaultSize*0.49), Math.round(defaultSize), 1, TypedValue.COMPLEX_UNIT_PX);
+            if (titleDefaultTextSize <= 0f)
+                titleDefaultTextSize = titleText.getTextSize();
+            fitTitle(titleText);
+            //This activity handles orientation changes itself, so the title has to be fitted again
+            //when the toolbar changes width. Its width does not depend on the title, so adjusting
+            //the title from here cannot trigger another round.
+            findViewById(R.id.customActionBar).addOnLayoutChangeListener((v, left, top, right, bottom, oldLeft, oldTop, oldRight, oldBottom) -> {
+                int width = right - left;
+                if (width == titleFittedForWidth)
+                    return;
+                titleFittedForWidth = width;
+                fitTitle(titleText);
+            });
 
 
             int startView = 0;
@@ -848,6 +863,28 @@ public class Experiment extends AppCompatActivity implements View.OnClickListene
 
         AlertDialog dialog = builder.create();
         dialog.show();
+    }
+
+    //Fits the experiment title into the toolbar. The title is what identifies an experiment on a
+    //student's screenshot, so it should not be reduced to an ellipsis if that can be avoided: it
+    //is shown at full size when it fits, shrunk down to at most 70% of that size to stay on a
+    //single line, and only wrapped onto a second line when even that does not fit. Same policy as
+    //iOS since 1.2.1.
+    private void fitTitle(final TextView titleText) {
+        if (titleDefaultTextSize <= 0f)
+            return;
+        final int minSize = Math.max(1, Math.round(titleDefaultTextSize * 0.7f));
+        titleText.setMaxLines(1);
+        TextViewCompat.setAutoSizeTextTypeUniformWithConfiguration(titleText, minSize, Math.round(titleDefaultTextSize), 1, TypedValue.COMPLEX_UNIT_PX);
+        //Whether the shrunk title fits can only be told after it has been laid out.
+        titleText.post(() -> {
+            Layout layout = titleText.getLayout();
+            if (layout == null || layout.getLineCount() < 1 || layout.getEllipsisCount(0) <= 0)
+                return; //It fits on one line, at the largest size that did.
+            TextViewCompat.setAutoSizeTextTypeWithDefaults(titleText, TextViewCompat.AUTO_SIZE_TEXT_TYPE_NONE);
+            titleText.setTextSize(TypedValue.COMPLEX_UNIT_PX, minSize);
+            titleText.setMaxLines(2);
+        });
     }
 
     public void connectNetworkConnections() {
@@ -1939,7 +1976,19 @@ public class Experiment extends AppCompatActivity implements View.OnClickListene
             sessionID = remote.sessionID;
         } else
             remote = new RemoteServer(experiment, this, sessionID);
-        remote.start();
+        if (!remote.start()) {
+            //The server socket could not be opened, usually because another app already uses the
+            //configured port. Leave remote access off and explain the problem to the user.
+            remote = null;
+            serverEnabled = false;
+            invalidateOptionsMenu();
+            new AlertDialog.Builder(this)
+                    .setTitle(R.string.remoteServerPortInUseTitle)
+                    .setMessage(res.getString(R.string.remoteServerPortInUse) + " (Port " + RemoteServer.httpServerPort + ")")
+                    .setPositiveButton(R.string.ok, null)
+                    .show();
+            return;
+        }
 
         //Announce this to the user as there are security concerns.
         final String addressList = RemoteServer.getAddresses(getBaseContext()).replaceAll("\\s+$", "");

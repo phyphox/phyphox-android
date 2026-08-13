@@ -14,11 +14,20 @@
             android:id="@+id/customActionBar"
             android:background="?attr/colorPrimary"
             android:theme="@style/ThemeOverlay.Phyphox.ActionBar">
+            <!-- The status bar inset is applied as padding to the toolbar, and its minHeight
+                 counts that padding, so the minimum is satisfied by the inset alone and the
+                 content area collapses to whatever the children happen to need - less than the
+                 standard action bar height, with the title and the icons ending up on different
+                 lines. Requesting that height for the title restores the standard content area,
+                 which lines the title up with the navigation button and the menu items.
+                 wrap_content keeps it able to grow when a long title needs a second line. -->
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
+                android:minHeight="?attr/actionBarSize"
                 android:gravity="center_vertical"
                 android:layout_gravity="center_vertical"
+                android:includeFontPadding="false"
                 android:ellipsize="end"
                 android:maxLines="1"
                 android:textColor="@color/phyphox_white_90"

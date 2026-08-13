@@ -77,7 +77,7 @@ public abstract class MqttService extends NetworkService.Service {
         }
 
         client = new MqttClient(host, port, clientID, username, password, true, 60, sslSocketFactory,
-                receiveTopic, new MqttClient.Listener() {
+                tls && certificateFileName == null, receiveTopic, new MqttClient.Listener() {
             @Override
             public void onMessage(String topic, byte[] payload) {
                 synchronized (data) {

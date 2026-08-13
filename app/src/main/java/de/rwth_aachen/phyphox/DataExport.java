@@ -242,7 +242,7 @@ public class DataExport implements Serializable {
                             dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.SSS 'UTC'XXX");
                         else
                             dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.SSS 'UTC'Z");
-                        for (ExperimentTimeReference.TimeMapping timeMapping : experiment.experimentTimeReference.timeMappings) {
+                        for (ExperimentTimeReference.TimeMapping timeMapping : experiment.experimentTimeReference.getTimeMappings()) {
                             data.append("\"").append(timeMapping.event.name()).append("\"").append(separator);
                             data.append(format.format(timeMapping.experimentTime)).append(separator);
                             data.append(longformat.format(timeMapping.systemTime/1000.)).append(separator);
@@ -366,7 +366,7 @@ public class DataExport implements Serializable {
                             dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.SSS 'UTC'XXX");
                         else
                             dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.SSS 'UTC'Z");
-                        for (ExperimentTimeReference.TimeMapping timeMapping : experiment.experimentTimeReference.timeMappings) {
+                        for (ExperimentTimeReference.TimeMapping timeMapping : experiment.experimentTimeReference.getTimeMappings()) {
                             xlsx.startRow();
                             xlsx.stringCell(timeMapping.event.name(), false);
                             xlsx.numberCell(timeMapping.experimentTime);
