@@ -416,7 +416,7 @@ public class RemoteServer {
             } catch (BadRequestException e) {
                 if (response.headersSent())
                     throw e;
-                return respondStatus(response, 400);
+                return respondError(response, 400, "Malformed request body.");
             } catch (RuntimeException e) {
                 Log.e("remoteServer", "Unhandled exception while serving " + request.getPath() + ".", e);
                 if (response.headersSent())
@@ -586,9 +586,18 @@ public class RemoteServer {
         return respond(response, result ? "{\"result\": true}" : "{\"result\": false}");
     }
 
-    protected int respondStatus(Response response, int status) throws IOException {
-        //A plain status code with an empty body (i.e. 400 for a bad request, like iOS)
-        response.sendHeaders(status, 0, System.currentTimeMillis(), null, null, null);
+    protected int respondError(Response response, int status, String reason) throws IOException {
+        //An error response is never empty: whatever the status code, it carries a JSON error
+        //object like the ones /export and /res send (see error-response-content-type in
+        //phyphox-docs). The reason text is human-readable and not part of the contract.
+        byte[] bytes = ("{\"error\": \"" + reason + "\"}").getBytes();
+        InputStream in = new ByteArrayInputStream(bytes);
+        try {
+            response.sendHeaders(status, bytes.length, System.currentTimeMillis(), null, "application/json", null);
+            response.sendBody(in, -1, null);
+        } finally {
+            in.close();
+        }
         return 0; // response fully handled
     }
 
@@ -737,7 +746,7 @@ public class RemoteServer {
         } catch (NumberFormatException e) {
             //A threshold that does not parse as a number: reject the bad request instead of
             //failing it with a server error (see get-invalid-threshold in phyphox-docs)
-            return respondStatus(response, 400);
+            return respondError(response, 400, "Invalid threshold.");
         }
 
         //A threshold referencing a buffer that does not exist is a bad request (unknown buffers
@@ -745,7 +754,7 @@ public class RemoteServer {
         //list still gets the session id and can notice the experiment change)
         for (BufferRequest buffer : buffers) {
             if (!buffer.reference.isEmpty() && experiment.getBuffer(buffer.name) != null && experiment.getBuffer(buffer.reference) == null)
-                return respondStatus(response, 400);
+                return respondError(response, 400, "Unknown reference buffer.");
         }
 
         //We now know what the query request. Let's build our answer
