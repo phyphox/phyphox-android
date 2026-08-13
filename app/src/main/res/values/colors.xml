@@ -2,7 +2,7 @@
 <resources>
 
     <color name="phyphox_primary">#ffff7e22</color>
-    <color name="phyphox_primary_weak">#ffffa500</color>
+    <color name="phyphox_primary_weak">#ffffc399</color>
     <color name="phyphox_rwth_primary">#ff00549f</color>
 
     <color name="phyphox_white_100">#ffffffff</color>

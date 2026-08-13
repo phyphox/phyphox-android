@@ -49,6 +49,10 @@ public class Metadata {
         }
         String lowerIdentifier = identifier.toLowerCase();
         for (SensorInput.SensorName sensor : SensorInput.SensorName.values()) {
+            //Custom sensors are selected by nameFilter, so per-sensor metadata for "custom" is
+            //ambiguous and not part of the identifier vocabulary.
+            if (sensor == SensorInput.SensorName.custom)
+                continue;
             if (lowerIdentifier.startsWith(sensor.name().toLowerCase())) {
                 String suffix = identifier.substring(sensor.name().length());
                 for (SensorMetadata candidate : SensorMetadata.values()) {
