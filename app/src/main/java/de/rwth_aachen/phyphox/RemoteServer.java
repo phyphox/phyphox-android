@@ -645,7 +645,12 @@ public class RemoteServer {
         Set<BufferRequest> buffers = new LinkedHashSet<>(); //This list will hold all requests
         List<String[]> params = requestParamsList(request);
         if (!params.isEmpty()) {
+            //First occurrence wins, so a buffer requested in both the body and the query is
+            //answered once, with the body's value (same convention as requestParams())
+            Set<String> seen = new LinkedHashSet<>();
             for (String[] param : params) {
+                if (!seen.add(param[0]))
+                    continue;
                 BufferRequest br = parseBufferRequest(param[0], param[1], forceFullUpdate);
                 buffers.add(br);
             }
