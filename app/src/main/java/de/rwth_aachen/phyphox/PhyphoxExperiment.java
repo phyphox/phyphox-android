@@ -32,7 +32,6 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
@@ -78,8 +77,36 @@ public class PhyphoxExperiment implements Serializable, ExperimentTimeReference.
     String baseCategory = ""; //The category of this experiment without translations
     String icon = ""; //The icon. This is either a base64-encoded drawable (typically png) or (if its length is 3 or less characters) it is a short form which should be used in a simple generated logo (like "gyr" for gyroscope). (The experiment list will use the first three characters of the title if this is completely empty)
     String description = "There is no description available for this experiment."; //A long text, explaining details about the experiment
-    public Map<String, String> links = new LinkedHashMap<>(); //This contains links to external documentation or similar stuff
-    public Map<String, String> highlightedLinks = new LinkedHashMap<>(); //This contains highlighted (= showing up in the menu) links to external documentation or similar stuff
+    //A link to external documentation or similar stuff. The label identifies the link (it is the
+    //key a translated link is matched on), displayText is what is actually shown to the user (the
+    //translation attribute of the applied translation block or the label itself) and highlighted
+    //links additionally show up in the experiment's menu.
+    //(See translation-link-matching in phyphox-docs for the semantics implemented here.)
+    public static class Link implements Serializable {
+        public final String label;
+        public final String displayText;
+        public final String url;
+        public final boolean highlighted;
+
+        public Link(String label, String displayText, String url, boolean highlighted) {
+            this.label = label;
+            this.displayText = displayText;
+            this.url = url;
+            this.highlighted = highlighted;
+        }
+    }
+
+    public List<Link> links = new ArrayList<>(); //This contains links to external documentation or similar stuff, with the selected translation block already applied
+
+    //The subset of links that should show up in the experiment's menu, in declaration order
+    public List<Link> getHighlightedLinks() {
+        List<Link> highlighted = new ArrayList<>();
+        for (Link link : links) {
+            if (link.highlighted)
+                highlighted.add(link);
+        }
+        return highlighted;
+    }
     public Vector<ExpView> experimentViews = new Vector<>(); //Instances of the experiment views (see expView.java) that define the views for this experiment
     public ExperimentTimeReference experimentTimeReference; //This class holds the time of the first sensor event as a reference to adjust the sensor time stamp for all sensors to start at a common zero
     public Vector<SensorInput> inputSensors = new Vector<>(); //Instances of sensorInputs (see sensorInput.java) which are used in this experiment

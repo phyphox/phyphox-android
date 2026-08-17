@@ -1170,7 +1170,7 @@ public class Experiment extends AppCompatActivity implements View.OnClickListene
         MenuItem calibratedMagnetometer = menu.findItem(R.id.action_calibrated_magnetometer);
         MenuItem forceGNSSItem = menu.findItem(R.id.action_force_gnss);
 
-        Iterator it = experiment.highlightedLinks.entrySet().iterator();
+        Iterator<PhyphoxExperiment.Link> it = experiment.getHighlightedLinks().iterator();
         for (int i = 1; i <= 5; i++) {
             MenuItem link;
             switch (i) {
@@ -1189,8 +1189,7 @@ public class Experiment extends AppCompatActivity implements View.OnClickListene
             }
             if (it.hasNext()) {
                 link.setVisible(true);
-                Map.Entry entry = (Map.Entry)it.next();
-                link.setTitle((String)entry.getKey());
+                link.setTitle(it.next().displayText);
             } else
                 link.setVisible(false);
         }
@@ -1534,8 +1533,7 @@ public class Experiment extends AppCompatActivity implements View.OnClickListene
             highlightLink = 4;
         }
         if (highlightLink >= 0) {
-            Map.Entry entry = (Map.Entry)experiment.highlightedLinks.entrySet().toArray()[highlightLink];
-            Uri uri = Uri.parse((String)entry.getValue());
+            Uri uri = Uri.parse(experiment.getHighlightedLinks().get(highlightLink).url);
             Intent intent = new Intent(Intent.ACTION_VIEW, uri);
             if (intent.resolveActivity(getPackageManager()) != null) {
                 startActivity(intent);
@@ -1689,10 +1687,10 @@ public class Experiment extends AppCompatActivity implements View.OnClickListene
 
         ll.addView(description);
 
-        for (String label : experiment.links.keySet()) {
+        for (PhyphoxExperiment.Link expLink : experiment.links) {
             Button btn = new Button(builder.getContext());
-            btn.setText(label);
-            final String url = experiment.links.get(label);
+            btn.setText(expLink.displayText);
+            final String url = expLink.url;
             btn.setOnClickListener(new View.OnClickListener() {
                 public void onClick(View view) {
                     Uri uri = Uri.parse(url);

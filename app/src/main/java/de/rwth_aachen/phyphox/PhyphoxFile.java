@@ -39,8 +39,10 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.lang.ref.WeakReference;
 import java.net.URL;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.UUID;
@@ -78,7 +80,39 @@ public abstract class PhyphoxFile {
 
     //translation maps any term for which a suitable translation is found to the current locale or, as fallback, to English
     private static Map<String, String> translation = new HashMap<>();
-    private static int languageRating = 0; //If we find a locale, it replaces previous translations as long as it has a higher rating than the previous one.
+    private static int languageRating = 0; //Rating of the best language seen so far, initialized from the root locale attribute. A translation block is only selected if it rates strictly better.
+
+    //A link element inside a translation block. Matched by label against the base links: a matched
+    //label replaces the base link in place, an unmatched label is an additional link appended after
+    //the base links, and a matched label with nothing but the label removes the base link
+    //(translation-link-matching in phyphox-docs). url and highlighted stay null when absent because
+    //an absent value inherits from the replaced base link.
+    private static class TranslatedLink {
+        String label;
+        String translation;
+        String url;
+        Boolean highlighted;
+
+        boolean removesBaseLink() {
+            return translation == null && url == null && highlighted == null;
+        }
+    }
+
+    //Content of a single translation block. Exactly one block is applied - the one whose locale
+    //best matches the user's locale, with the base strings of the file used where no block matches
+    //better. Blocks are never combined (translation-block-selection in phyphox-docs). All blocks
+    //are parsed into instances of this class first, then only the best-rated one is applied.
+    private static class TranslationBlock {
+        String locale; //Only used for error messages
+        String title = null;
+        String category = null;
+        String description = null;
+        Map<String, String> strings = new HashMap<>();
+        List<TranslatedLink> links = new ArrayList<>();
+    }
+
+    private static TranslationBlock selectedTranslationBlock = null; //The best-rated translation block seen so far
+    private static List<TranslationBlock> allTranslationBlocks = new ArrayList<>(); //All translation blocks, kept for validation independent of the user's locale
 
     //Simple helper to return either the translated term or the original one, if no translation could be found
     private static String translate(String input, Experiment parent) {
@@ -140,6 +174,8 @@ public abstract class PhyphoxFile {
     public static PhyphoxStream openXMLInputStream(Intent intent, Activity parent) {
         languageRating = 0;//If we find a locale, it replaces previous translations as long as it has a higher rating than the previous one.
         translation = new HashMap<>();
+        selectedTranslationBlock = null;
+        allTranslationBlocks = new ArrayList<>();
 
         PhyphoxStream phyphoxStream = new PhyphoxStream();
 
@@ -1082,12 +1118,23 @@ public abstract class PhyphoxFile {
                     experiment.description = getText().trim().replaceAll("(?m) +$", "").replaceAll("(?m)^ +", "");
                     break;
                 case "link": //Links to external sources like documentation (might be replaced by a later translation block)
+                    //The label is required and acts as the key a translated link is matched on; the
+                    //translation attribute and an empty URL are only meaningful inside a translation
+                    //block and are errors here (translation-link-matching in phyphox-docs)
                     boolean highlighted = getBooleanAttribute("highlight", false);
                     String label = getStringAttribute("label");
-                    String link = getText().trim().replaceAll("(?m) +$", "").replaceAll("(?m)^ +", "");
-                    experiment.links.put(label, link);
-                    if (highlighted)
-                        experiment.highlightedLinks.put(label, link);
+                    if (label == null)
+                        throw new phyphoxFileException("Missing label attribute for link.", xpp.getLineNumber());
+                    if (getStringAttribute("translation") != null)
+                        throw new phyphoxFileException("The translation attribute is not allowed on a link outside a translation block.", xpp.getLineNumber());
+                    for (PhyphoxExperiment.Link existing : experiment.links) {
+                        if (existing.label.equals(label))
+                            throw new phyphoxFileException("Duplicate link label \"" + label + "\".", xpp.getLineNumber());
+                    }
+                    String link = getText();
+                    if (link == null || link.isEmpty())
+                        throw new phyphoxFileException("Missing URL for link \"" + label + "\".", xpp.getLineNumber());
+                    experiment.links.add(new PhyphoxExperiment.Link(label, label, link, highlighted));
                     break;
                 case "category": //The experiment's category (might be replaced by a later translation block)
                     experiment.baseCategory = getText();
@@ -1153,6 +1200,74 @@ public abstract class PhyphoxFile {
                     throw new phyphoxFileException("Unknown tag "+tag, xpp.getLineNumber());
             }
         }
+
+        @Override
+        protected void done() throws phyphoxFileException {
+            //A link in a translation block that matches no base label is an addition, which needs
+            //a URL of its own. This is checked for every translation block, not just the applied
+            //one, so an invalid file fails to load regardless of the user's locale
+            //(translation-link-matching in phyphox-docs).
+            for (TranslationBlock block : allTranslationBlocks) {
+                for (TranslatedLink translatedLink : block.links) {
+                    if (translatedLink.url != null)
+                        continue;
+                    boolean matched = false;
+                    for (PhyphoxExperiment.Link baseLink : experiment.links) {
+                        if (baseLink.label.equals(translatedLink.label)) {
+                            matched = true;
+                            break;
+                        }
+                    }
+                    if (!matched)
+                        throw new phyphoxFileException("Link \"" + translatedLink.label + "\" in translation block \"" + block.locale + "\" matches no link and has no URL.");
+                }
+            }
+
+            //Apply the link elements of the selected translation block to the base links: a
+            //translated link matching a base label replaces it in its original position
+            //(inheriting URL and highlight where not given), a label-only link with no URL removes
+            //the base link, and an unmatched label is an additional link appended after the base
+            //links in declaration order. The displayed text is the translation attribute if
+            //present, otherwise the label as written - labels never pass through the
+            //string-translation mechanism.
+            if (selectedTranslationBlock != null) {
+                List<PhyphoxExperiment.Link> localized = new ArrayList<>();
+                for (PhyphoxExperiment.Link baseLink : experiment.links) {
+                    TranslatedLink translated = null;
+                    for (TranslatedLink translatedLink : selectedTranslationBlock.links) {
+                        if (translatedLink.label.equals(baseLink.label)) {
+                            translated = translatedLink;
+                            break;
+                        }
+                    }
+                    if (translated == null) {
+                        localized.add(baseLink);
+                    } else if (!translated.removesBaseLink()) {
+                        localized.add(new PhyphoxExperiment.Link(
+                                translated.label,
+                                translated.translation != null ? translated.translation : translated.label,
+                                translated.url != null ? translated.url : baseLink.url,
+                                translated.highlighted != null ? translated.highlighted : baseLink.highlighted));
+                    }
+                }
+                for (TranslatedLink translatedLink : selectedTranslationBlock.links) {
+                    boolean matched = false;
+                    for (PhyphoxExperiment.Link baseLink : experiment.links) {
+                        if (baseLink.label.equals(translatedLink.label)) {
+                            matched = true;
+                            break;
+                        }
+                    }
+                    if (!matched) //An unmatched label without a URL was rejected above
+                        localized.add(new PhyphoxExperiment.Link(
+                                translatedLink.label,
+                                translatedLink.translation != null ? translatedLink.translation : translatedLink.label,
+                                translatedLink.url,
+                                translatedLink.highlighted != null ? translatedLink.highlighted : false));
+                }
+                experiment.links = localized;
+            }
+        }
     }
 
     //Blockparser for the translations block
@@ -1168,48 +1283,96 @@ public abstract class PhyphoxFile {
                 case "translation": //A translation block holds all translation information for a single language
                     String thisLocale = getStringAttribute("locale");
                     int thisLaguageRating = Helper.getLanguageRating(parent.getResources(), thisLocale);
+                    //Every block is parsed so an invalid one fails to load regardless of the
+                    //user's locale, but only the best-rated one is applied (see done()). On equal
+                    //ratings the first block wins, and a block has to rate strictly better than
+                    //the root locale attribute to beat the base strings of the file
+                    //(translation-block-selection in phyphox-docs).
+                    TranslationBlock block = new TranslationBlock();
+                    block.locale = thisLocale;
+                    (new translationBlockParser(xpp, experiment, parent, block)).process();
+                    allTranslationBlocks.add(block);
                     if (thisLaguageRating > languageRating) { //Check if the language matches better than previous ones...
                         languageRating = thisLaguageRating;
-                        (new translationBlockParser(xpp, experiment, parent)).process(); //Jepp, use it!
-                    } else
-                        (new xmlBlockParser(xpp, experiment, parent)).process(); //Nope. Use the empty block parser to skip it
+                        selectedTranslationBlock = block;
+                    }
                     break;
                 default: //Unknown tag...
                     throw new phyphoxFileException("Unknown tag "+tag, xpp.getLineNumber());
             }
         }
 
+        @Override
+        protected void done() throws phyphoxFileException {
+            //Apply the selected block's title, category, description and strings. The links are
+            //applied when the root element is done, so base links defined after this block are
+            //still considered.
+            if (selectedTranslationBlock == null)
+                return;
+            if (selectedTranslationBlock.title != null)
+                experiment.title = selectedTranslationBlock.title;
+            if (selectedTranslationBlock.category != null)
+                experiment.category = selectedTranslationBlock.category;
+            if (selectedTranslationBlock.description != null)
+                experiment.description = selectedTranslationBlock.description;
+            translation = new HashMap<>(selectedTranslationBlock.strings);
+        }
+
     }
 
-    //Blockparser for a specific translation block
+    //Blockparser for a specific translation block. The content is not applied to the experiment
+    //directly but collected into a TranslationBlock, so that exactly one block - the best-rated
+    //one - can be applied after all blocks have been seen.
     private static class translationBlockParser extends xmlBlockParser {
 
-        translationBlockParser(XmlPullParser xpp, PhyphoxExperiment experiment, Experiment parent) {
+        private final TranslationBlock block;
+
+        translationBlockParser(XmlPullParser xpp, PhyphoxExperiment experiment, Experiment parent, TranslationBlock block) {
             super(xpp, experiment, parent);
+            this.block = block;
         }
 
         @Override
         protected void processStartTag(String tag) throws XmlPullParserException, phyphoxFileException, IOException {
             switch (tag.toLowerCase()) {
                 case "title": //A title in our language? Great, take it!
-                    experiment.title = getText();
+                    block.title = getText();
                     break;
                 case "category": //Category in the correct language
-                    experiment.category = getText();
+                    block.category = getText();
                     break;
                 case "description": //Description in the correct language
-                    experiment.description = getText().trim().replaceAll("(?m) +$", "").replaceAll("(?m)^ +", "");
+                    block.description = getText().trim().replaceAll("(?m) +$", "").replaceAll("(?m)^ +", "");
                     break;
                 case "link": //Links to external sources like documentation
-                    boolean highlighted = getBooleanAttribute("highlight", false);
-                    String label = getStringAttribute("label");
-                    String link = getText().trim().replaceAll("(?m) +$", "").replaceAll("(?m)^ +", "");
-                    experiment.links.put(label, link);
-                    if (highlighted)
-                        experiment.highlightedLinks.put(label, link);
+                    //Unlike a link at the root, the URL may be omitted (inherits from or removes
+                    //the matched base link) and highlight is kept tri-state so that an absent
+                    //attribute can inherit the base link's state (translation-link-matching in
+                    //phyphox-docs)
+                    TranslatedLink translatedLink = new TranslatedLink();
+                    translatedLink.label = getStringAttribute("label");
+                    if (translatedLink.label == null)
+                        throw new phyphoxFileException("Missing label attribute for link.", xpp.getLineNumber());
+                    for (TranslatedLink existing : block.links) {
+                        if (existing.label.equals(translatedLink.label))
+                            throw new phyphoxFileException("Duplicate link label \"" + translatedLink.label + "\" in translation block \"" + block.locale + "\".", xpp.getLineNumber());
+                    }
+                    translatedLink.translation = getStringAttribute("translation");
+                    String highlightAttribute = getStringAttribute("highlight");
+                    if (highlightAttribute == null)
+                        translatedLink.highlighted = null;
+                    else if (highlightAttribute.equalsIgnoreCase("true"))
+                        translatedLink.highlighted = true;
+                    else if (highlightAttribute.equalsIgnoreCase("false"))
+                        translatedLink.highlighted = false;
+                    else
+                        throw new phyphoxFileException("Invalid value \"" + highlightAttribute + "\" for boolean attribute \"highlight\".", xpp.getLineNumber());
+                    String url = getText();
+                    translatedLink.url = (url == null || url.isEmpty()) ? null : url;
+                    block.links.add(translatedLink);
                     break;
                 case "string": //Some other translation. In labels and names of view elements, the string defined here as the attribute "original" will be replaced by the text in this tag
-                    translation.put(getStringAttribute("original"), getText()); //Store it in our translation mapping
+                    block.strings.put(getStringAttribute("original"), getText()); //Store it in the block's translation mapping
                     break;
                 default: //Unknown tag
                     throw new phyphoxFileException("Unknown tag "+tag, xpp.getLineNumber());

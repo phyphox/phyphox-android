@@ -166,6 +166,15 @@ public class AssetExperimentLoader {
             boolean isLink = false;
             String link = null;
 
+            //Content of the current candidate translation block. Exactly one translation block
+            //applies - the best-rated one, first wins on ties (translation-block-selection in
+            //phyphox-docs) - so a block's content is collected here and only applied over the base
+            //strings after parsing, when no better block can follow anymore.
+            String trTitle = null;
+            String trFullDescription = null;
+            String trCategory = null;
+            String trLink = null;
+
             int languageRating = 0; //If we find a locale, it replaces previous translations as long as it has a higher rating than the previous one.
             while (eventType != XmlPullParser.END_DOCUMENT) { //Go through all tags until the end...
                 switch (eventType) {
@@ -196,13 +205,22 @@ public class AssetExperimentLoader {
                                 String thisLocale = xpp.getAttributeValue(null, "locale");
                                 int thisLaguageRating = Helper.getLanguageRating(environment.resources, thisLocale);
                                 if (translationDepth < 0 && thisLaguageRating > languageRating) {
+                                    //This block beats the running maximum and becomes the new
+                                    //candidate, replacing the previous candidate entirely - blocks
+                                    //are never combined. The last candidate is the selected block.
                                     languageRating = thisLaguageRating;
                                     translationDepth = xpp.getDepth(); //Remember depth of the translation block
+                                    trTitle = null;
+                                    trFullDescription = null;
+                                    trCategory = null;
+                                    trLink = null;
                                 }
                                 break;
                             case "title": //This should give us the experiment title
-                                if (xpp.getDepth() == phyphoxDepth + 1 || xpp.getDepth() == translationDepth + 1) //May be in phyphox root or from a valid translation
+                                if (xpp.getDepth() == phyphoxDepth + 1) //In phyphox root
                                     shortInfo.title = xpp.nextText().trim();
+                                else if (xpp.getDepth() == translationDepth + 1) //From the candidate translation block
+                                    trTitle = xpp.nextText().trim();
                                 break;
                             case "state-title":
                                 if (xpp.getDepth() == phyphoxDepth + 1 || xpp.getDepth() == translationDepth + 1) //May be in phyphox root or from a valid translation
@@ -243,19 +261,24 @@ public class AssetExperimentLoader {
                                 }
                                 break;
                             case "description": //This should give us the experiment description, but we only need the first line
-                                if (xpp.getDepth() == phyphoxDepth + 1 || xpp.getDepth() == translationDepth + 1) {
+                                //Remove any whitespaces and take the first line until the first line break
+                                if (xpp.getDepth() == phyphoxDepth + 1) { //In phyphox root
                                     shortInfo.fullDescription = xpp.nextText().trim().replaceAll("(?m) +$", "").replaceAll("(?m)^ +", "");
                                     shortInfo.description = shortInfo.fullDescription.trim().split("\n", 2)[0];
-                                } //May be in phyphox root or from a valid translation
-                                //Remove any whitespaces and take the first line until the first line break
+                                } else if (xpp.getDepth() == translationDepth + 1) //From the candidate translation block
+                                    trFullDescription = xpp.nextText().trim().replaceAll("(?m) +$", "").replaceAll("(?m)^ +", "");
                                 break;
                             case "category": //This should give us the experiment category
-                                if (xpp.getDepth() == phyphoxDepth + 1 || xpp.getDepth() == translationDepth + 1) //May be in phyphox root or from a valid translation
+                                if (xpp.getDepth() == phyphoxDepth + 1) //In phyphox root
                                     category = xpp.nextText().trim();
+                                else if (xpp.getDepth() == translationDepth + 1) //From the candidate translation block
+                                    trCategory = xpp.nextText().trim();
                                 break;
                             case "link": //This should give us a link if the experiment is only a dummy entry with a link
-                                if (xpp.getDepth() == phyphoxDepth+1 || xpp.getDepth() == translationDepth+1) //May be in phyphox root or from a valid translation
+                                if (xpp.getDepth() == phyphoxDepth+1) //In phyphox root
                                     link = xpp.nextText().trim();
+                                else if (xpp.getDepth() == translationDepth+1) //From the candidate translation block
+                                    trLink = xpp.nextText().trim();
                                 break;
                             case "color": //This is the base color for design decisions (icon background color and category color)
                                 if (xpp.getDepth() == phyphoxDepth + 1 || xpp.getDepth() == translationDepth + 1) { //May be in phyphox root or from a valid translation
@@ -405,6 +428,19 @@ public class AssetExperimentLoader {
                 }
                 eventType = xpp.next(); //Next event in the file...
             }
+
+            //Apply the selected translation block (the last candidate) over the base strings
+            if (trTitle != null)
+                shortInfo.title = trTitle;
+            if (trFullDescription != null) {
+                shortInfo.fullDescription = trFullDescription;
+                shortInfo.description = trFullDescription.trim().split("\n", 2)[0];
+            }
+            if (trCategory != null)
+                category = trCategory;
+            if (trLink != null && !trLink.isEmpty()) //An empty URL inherits the base link's URL
+                link = trLink;
+
             //Sanity check: We need a title!
             if (shortInfo.title == null) {
                 return invalidExperiment(data.experimentXML, "Invalid: \" + experimentXML + \" misses a title.", data.isTemp, data.isAsset, environment);
