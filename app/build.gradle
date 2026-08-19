@@ -8,12 +8,12 @@ android {
         targetSdkVersion 37
         compileSdk 37
 
-        versionName "1.2.1-beta3"
+        versionName "1.2.1-beta4"
         //  format  WXXYYZZ, where WW is major, XX is minor, YY is patch, and ZZ is build
-        versionCode 1020103 //1.02.01-03
+        versionCode 1020104 //1.02.01-04
 
         // Note that the following locales have not yet been released and are currently included for testing: bn, gu, kn, or, ta,
-        def locales = ['en', 'bn', 'cs', 'de', 'el', 'es', 'fr', 'gu', 'hi', 'it', 'ja', 'ka', 'kn', 'nl', 'or', 'pl', 'pt', 'ru', 'sr', 'b+sr+Latn', 'ta', 'tr', 'vi', 'zh-rCN', 'zh-rTW']
+        def locales = ['en', 'bn', 'cs', 'de', 'el', 'es', 'fr', 'gu', 'hi', 'it', 'ja', 'ka', 'ko', 'kn', 'nl', 'or', 'pl', 'pt', 'ru', 'sr', 'b+sr+Latn', 'ta', 'tr', 'vi', 'zh-rCN', 'zh-rTW']
         buildConfigField "String[]", "LOCALE_ARRAY", "new String[]{\""+locales.join("\",\"")+"\"}"
         resourceConfigurations += locales
 
