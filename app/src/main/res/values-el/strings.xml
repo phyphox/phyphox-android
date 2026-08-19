@@ -14,7 +14,7 @@
     <string name="experimentsPhyphoxOrgURL">http://phyphox.org/experiments</string>
     <string name="faqPhyphoxOrg">Συχνές ερωτήσεις</string>
     <string name="faqPhyphoxOrgURL">http://phyphox.org/faq</string>
-    <string name="remotePhyphoxOrg">Απομακρυσμένος Έλεγχος</string>
+    <string name="remotePhyphoxOrg">Βοήθεια για τον έλεγχο εξ αποστάσεως</string>
     <string name="remotePhyphoxOrgURL">http://phyphox.org/remote-control</string>
     <string name="translationToWebsiteURL">http://phyphox.org/languages#el</string>
     <string name="warning">Προειδοποίηση</string>
@@ -75,7 +75,7 @@
     <string name="share">Διαμοιρασμός εικόνας οθόνης</string>
     <string name="share_subject">Screenshot του phyphox</string>
     <string name="share_pick_share">Επιλογή του τρόπου διαμοιρασμού</string>
-    <string name="remoteServer">Απομακρυσμένη πρόσβαση</string>
+    <string name="remoteServer">Να επιτρέπεται απομακρυσμένη πρόσβαση</string>
     <string name="remoteServerWarning">Πρόκειται να επιτρέψετε απομακρυσμένη πρόσβαση στην λήψη δεδομένων. Αυτό θα πρέπει να επιτρέπεται μόνο σε έμπιστο δίκτυο! Επίσης σημειώστε ότι η απευθείας πρόσβαση ανάμεσα σε συσκευές μπορεί να μην είναι δυνατή σε πολλά εταιρικά ή πανεπιστημιακά δίκτυα
 \n
 \nΓια μέγιστη ασφάλεια και επίδοση συνδεθείτε σε αυτή τη συσκευή με tethering (mobile hotspot).
@@ -164,7 +164,7 @@
     <string name="rename">Μετονομασία</string>
     <string name="loadingBluetoothConnectionText">Σύνδεση με συσκευή Bluetooth…</string>
     <string name="remoteServerNoNetwork">Αρχικά θα πρέπει να δημιουργήσετε μια σύνδεση Wifi με την κινητή συσκευή. Παρακαλώ ενεργοποιήστε το Wifi ή δημιουργήστε ένα hotspot.</string>
-    <string name="remoteColorMapWarning">To χρωματικό γράφημα στην απομακρυσμένη διεπαφή είναι μόνο μια προσέγγιση. Σε αντίθεση με το ενσωματωμένο στην εφαρμογή γράφημα, για την ώρα, δεν μπορεί να διαχειριστεί μη ισαπέχουσες τιμές ή λογαριθμικές κλίμακες στους άξονες x και y. Συνεπώς τα δεδομένα σε μεταβαλλόμενα διαστήματα μπορεί να εμφανίζονται σε λάθος θέση.</string>
+    <string name="remoteColorMapWarning">To χρωματικό γράφημα στην απομακρυσμένη διεπαφή αναπαρίσταται κατά προσέγγιση. Σε αντίθεση με το ενσωματωμένο γράφημα στην εφαρμογή , προς το παρόν, δεν μπορεί να διαχειριστεί μη ισαπέχουσες τιμές ή λογαριθμικές κλίμακες στους άξονες x και y. Συνεπώς τα δεδομένα σε μεταβαλητά διαστήματα μπορεί να εμφανίζονται σε λάθος θέση.</string>
     <string name="force_gnss">Θέση μόνο από δορυφόρο</string>
     <string name="fontSize">Μέγεθος γραμματοσειράς</string>
     <string name="open_zip_title">Άνοιγμα ομάδας πειραμάτων</string>
@@ -174,7 +174,7 @@
     <string name="open_bluetooth_assets">Τα επόμενα πειράματα για τη συσκευή σας είναι διαθέσιμα από το phyphox. Μπορείτε είτε απλά να τα ανοίξετε και να τα χρησιμοποιήσετε είτε να τα προσθέσετε όλα στη συλλογή σας ώστε να έχετε εύκολη πρόσβαση σ\' αυτά από το κυρίως μενού.</string>
     <string name="start_hint">Πατήστε το τρίγωνο για να ξεκινήσετε το πείραμα.</string>
     <string name="bluetooth">Bluetooth χαμηλής ενέργειας</string>
-    <string name="bt_android_version">Το Bluetooth χαμηλής ενέργειας δεν υποστηρίζεται στις εκδόσεις του Android που είναι προγενέστερες από την 4.3.</string>
+    <string name="bt_android_version">Το Bluetooth χαμηλής ενέργειας δεν υποστηρίζεται στην συσκευή αυτή</string>
     <string name="bt_pick_device">Παρακαλώ επιλέξτε συσκευή.</string>
     <string name="bt_scanning_generic">Ανίχνευση για συσκευές Bluetooth…</string>
     <string name="bt_scanning_specific1">Ανίχνευση για συσκευές Βluetooth με</string>
@@ -426,4 +426,9 @@
     <string name="localNetworkLoadMessage">Δεν ήταν δυνατή η φόρτωση του πειράματος από αυτή τη διεύθυνση. Εάν το πείραμα φιλοξενείται από μια συσκευή στο τοπικό σας δίκτυο, το phyphox χρειάζεται άδεια πρόσβασης στο τοπικό δίκτυο. Θέλετε να παραχωρήσετε την άδεια και να δοκιμάσετε ξανά;</string>
     <string name="localNetworkExperimentMessage">Αυτό το πείραμα χρησιμοποιεί σύνδεση με μια συσκευή στο τοπικό σας δίκτυο. Το phyphox χρειάζεται άδεια πρόσβασης στο τοπικό δίκτυο για να συνδεθεί με τη συσκευή αυτή.</string>
     <string name="localNetworkDeniedHint">Χωρίς άδεια πρόσβασης στο τοπικό δίκτυο, οι συνδέσεις με συσκευές στο τοπικό σας δίκτυο θα αποτύχουν.</string>
+    <string name="common_unit_short_nano_meter">nm</string>
+    <string name="common_unit_short_micro_meter">μm</string>
+    <string name="common_quantity_short_wavelength">λ</string>
+    <string name="remoteServerPortInUseTitle">Δεν μπόρεσε να ενεργοποιηθεί η απομακρυσμένη πρόσβαση</string>
+    <string name="remoteServerPortInUse">Η απομακρυσμένη πρόσβαση δεν επιτυγχάνεται γιατί η θύρα χρησιμοποιείται ήδη από άλλη εφαρμογή. Σταματήστε την εφαρμογή που χρησιμοποιεί τη θύρα ή ορίστε μια διαφορετική θύρα από τις ρυθμίσεις του phyphox.</string>
 </resources>

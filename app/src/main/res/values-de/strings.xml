@@ -432,4 +432,6 @@
     <string name="localNetworkLoadMessage">Das Experiment konnte unter dieser Adresse nicht geladen werden. Wenn es von einem Gerät in deinem lokalen Netzwerk bereitgestellt wird, benötigt phyphox die Berechtigung für den Zugriff auf das lokale Netzwerk. Berechtigung erteilen und erneut versuchen\?</string>
     <string name="localNetworkExperimentMessage">Dieses Experiment verwendet eine Verbindung zu einem Gerät in deinem lokalen Netzwerk. phyphox benötigt die Berechtigung für den Zugriff auf das lokale Netzwerk, um eine Verbindung zu diesem Gerät herzustellen.</string>
     <string name="localNetworkDeniedHint">Ohne die Berechtigung für den Zugriff auf das lokale Netzwerk können keine Verbindungen zu Geräten in deinem lokalen Netzwerk hergestellt werden.</string>
+    <string name="remoteServerPortInUseTitle">Konnte Fernzugriff nicht aktivieren</string>
+    <string name="remoteServerPortInUse">Der Fernzugriff konnte nicht aktiviert werden, da der Port bereits von einer anderen App auf diesem Gerät verwendet wird. Beende die App, die den Port verwendet, oder lege in den phyphox-Einstellungen einen anderen Port fest.</string>
 </resources>
