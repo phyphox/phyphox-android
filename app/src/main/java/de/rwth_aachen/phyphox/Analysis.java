@@ -37,6 +37,53 @@ public class Analysis {
     public static native void fftw3crosscorrelation(float[] x, float[] y, int n);
     public static native void fftw3autocorrelation(float[] x, int n);
 
+    //Round to the nearest integer with ties rounding half away from zero (C rounding, like the
+    //formula language's round; -0.5 becomes -1). Non-finite values pass through unchanged.
+    //Math.round is not usable here: it rounds half up (-0.5 -> 0), turns NaN into 0 and clamps
+    //infinities to +-Long.MAX_VALUE. Math.floor(x+0.5) is not usable either: it fails for the
+    //largest double below 0.5, which x+0.5 rounds up to 1.
+    public static double roundHalfAwayFromZero(double x) {
+        if (Math.abs(x % 1) == 0.5)
+            return x > 0 ? Math.ceil(x) : Math.floor(x);
+        return Math.rint(x);
+    }
+
+    //The domain of gcd is non-negative integers: fractional values are rounded half away from
+    //zero like the formula language's round, while negative inputs, non-finite inputs and
+    //values at or beyond 2^64 yield NaN. Euclid's algorithm runs on integer-valued doubles,
+    //for which the % operation is exact, so this matches the exact integer arithmetic on iOS.
+    public static double gcdOfDoubles(double a, double b) {
+        if (Double.isNaN(a) || Double.isInfinite(a) || Double.isNaN(b) || Double.isInfinite(b) || a < 0 || b < 0)
+            return Double.NaN;
+        double ra = roundHalfAwayFromZero(a);
+        double rb = roundHalfAwayFromZero(b);
+        if (ra >= 0x1.0p64 || rb >= 0x1.0p64)
+            return Double.NaN;
+        while (rb > 0) {
+            double tmp = ra % rb;
+            ra = rb;
+            rb = tmp;
+        }
+        return ra;
+    }
+
+    //Same domain as gcd. lcm(0,x) is 0 by the usual convention, including lcm(0,0), and a
+    //result at or beyond 2^64 counts as overflow yielding NaN.
+    public static double lcmOfDoubles(double a, double b) {
+        if (Double.isNaN(a) || Double.isInfinite(a) || Double.isNaN(b) || Double.isInfinite(b) || a < 0 || b < 0)
+            return Double.NaN;
+        double ra = roundHalfAwayFromZero(a);
+        double rb = roundHalfAwayFromZero(b);
+        if (ra >= 0x1.0p64 || rb >= 0x1.0p64)
+            return Double.NaN;
+        if (ra == 0 || rb == 0)
+            return 0.;
+        //ra/gcd is exact, so this is the smallest intermediate; overflow here means the lcm
+        //itself does not fit
+        double result = (ra / gcdOfDoubles(ra, rb)) * rb;
+        return result >= 0x1.0p64 ? Double.NaN : result;
+    }
+
     public static class FFT implements Serializable {
         private int n, logn; //input size, power-of-two filled size, log2 of input size (integer)
         private double [] cos, sin; //Lookup table
@@ -746,8 +793,8 @@ public class Analysis {
             while (anyInput) { //For each value of output buffer
                 anyInput = false;
 
-                long a = 1;
-                long b = 1;
+                double a = 1;
+                double b = 1;
 
                 for (int j = 0; j < inputArrays.size() && j < 2; j++) { //For each input buffer
                     Double in[] = inputArrays.get(j);
@@ -758,24 +805,19 @@ public class Analysis {
                     }
                     if (i < size) { //New value from this iterator
                         if (j == 0)
-                            a = Math.round(in[i]);
+                            a = in[i];
                         else
-                            b = Math.round(in[i]);
+                            b = in[i];
                         anyInput = true;
                     } else {
                         if (j == 0)
-                            a = Math.round(in[size-1]);
+                            a = in[size-1];
                         else
-                            b = Math.round(in[size-1]);
+                            b = in[size-1];
                     }
                 }
                 if (anyInput) { //There was a new value. Append the result.
-                    while (b > 0) {
-                        long tmp = b;
-                        b = a % b;
-                        a = tmp;
-                    }
-                    outputs.get(0).append(a);
+                    outputs.get(0).append(gcdOfDoubles(a, b));
                 } else //No values left. Let's stop here...
                     break;
                 i++;
@@ -801,8 +843,8 @@ public class Analysis {
             while (anyInput) { //For each value of output buffer
                 anyInput = false;
 
-                long a = 1;
-                long b = 1;
+                double a = 1;
+                double b = 1;
 
                 for (int j = 0; j < inputArrays.size() && j < 2; j++) { //For each input buffer
                     Double in[] = inputArrays.get(j);
@@ -813,26 +855,19 @@ public class Analysis {
                     }
                     if (i < size) { //New value from this iterator
                         if (j == 0)
-                            a = Math.round(in[i]);
+                            a = in[i];
                         else
-                            b = Math.round(in[i]);
+                            b = in[i];
                         anyInput = true;
                     } else {
                         if (j == 0)
-                            a = Math.round(in[size-1]);
+                            a = in[size-1];
                         else
-                            b = Math.round(in[size-1]);
+                            b = in[size-1];
                     }
                 }
                 if (anyInput) { //There was a new value. Append the result.
-                    long a0 = a;
-                    long b0 = b;
-                    while (b > 0) {
-                        long tmp = b;
-                        b = a % b;
-                        a = tmp;
-                    }
-                    outputs.get(0).append(a0*(b0/a));
+                    outputs.get(0).append(lcmOfDoubles(a, b));
                 } else //No values left. Let's stop here...
                     break;
                 i++;
@@ -876,7 +911,9 @@ public class Analysis {
             int size = inputArraySizes.get(0);
             for (int i = 0; i < size; i++) {
                 if (!floor && !ceil)
-                    outputs.get(0).append(Math.round(array[i]));
+                    //Non-finite values pass through unchanged and ties round half away from
+                    //zero, like the formula language's round
+                    outputs.get(0).append(roundHalfAwayFromZero(array[i]));
                 else if (floor) {
                     outputs.get(0).append(Math.floor(array[i]));
                 } else {
@@ -1531,9 +1568,10 @@ public class Analysis {
                     continue;
                 //Degenerate ranges (such as minx equal to maxx) make the bin index non-finite;
                 //clamp before rounding so infinities fall outside the bounds check below (a
-                //NaN index becomes bin 0) instead of wrapping in the long-to-int cast
-                int x = (int)Math.round(Math.min(Math.max((mapWidth-1)*(xin[i]-minx)/(maxx-minx), -1.), (double)mapWidth));
-                int y = (int)Math.round(Math.min(Math.max((mapHeight-1)*(yin[i]-miny)/(maxy-miny), -1.), (double)mapHeight));
+                //NaN index becomes bin 0) instead of wrapping in the long-to-int cast. Ties
+                //round half away from zero like on iOS: -0.5 falls outside the grid.
+                int x = (int)roundHalfAwayFromZero(Math.min(Math.max((mapWidth-1)*(xin[i]-minx)/(maxx-minx), -1.), (double)mapWidth));
+                int y = (int)roundHalfAwayFromZero(Math.min(Math.max((mapHeight-1)*(yin[i]-miny)/(maxy-miny), -1.), (double)mapHeight));
                 if (x < 0 || x >= mapWidth || y < 0 || y >= mapHeight)
                     continue;
                 int index = x + y*mapWidth;
@@ -2911,8 +2949,15 @@ public class Analysis {
                 return;
 
             byte[] encoded = new byte[n];
-            for (int i = 0; i < n; i++)
-                encoded[i] = (byte)((int)Math.round(in[i]) & 0xff);
+            for (int i = 0; i < n; i++) {
+                //Ties round half away from zero and non-finite or out-of-int-range values
+                //become 0 instead of Java's long coercion, matching iOS
+                double rounded = roundHalfAwayFromZero(in[i]);
+                if (Double.isNaN(rounded) || Math.abs(rounded) > Integer.MAX_VALUE)
+                    encoded[i] = 0;
+                else
+                    encoded[i] = (byte)((int)rounded & 0xff);
+            }
 
             BitmapFactory.Options options = new BitmapFactory.Options();
             options.inPreferredConfig = Bitmap.Config.ARGB_8888;
