@@ -35,7 +35,6 @@ public class Analysis {
     public static native void nativePower(double[] x, double[] y);
     public static native void fftw3complex(float[] xy, int n);
     public static native void fftw3crosscorrelation(float[] x, float[] y, int n);
-    public static native void fftw3autocorrelation(float[] x, int n);
 
     //Round to the nearest integer with ties rounding half away from zero (C rounding, like the
     //formula language's round; -0.5 becomes -1). Non-finite values pass through unchanged.
@@ -712,6 +711,11 @@ public class Analysis {
 
                 int sizeA = inputArraySizes.get(0);
                 int sizeB = inputArraySizes.get(1);
+
+                //Any empty input yields an empty output, as documented and as the Java
+                //fallback below behaves - the native code would substitute default operands
+                if (sizeA == 0 || sizeB == 0)
+                    return;
 
                 Double[] a = inputArrays.get(0);
                 Double[] b = inputArrays.get(1);
@@ -1757,7 +1761,12 @@ public class Analysis {
                 if (inputArrays.size() == 0)
                     return;
 
+                //A provided im input truncates the transform to the shorter of re and im;
+                //only an absent im input is zero-filled to re's length
+                boolean hasIm = inputArrays.size() > 1 && inputArrays.get(1) != null;
                 int size = inputArraySizes.get(0);
+                if (hasIm)
+                    size = Math.min(size, inputArraySizes.get(1));
                 if (size < 2)
                     return;
 
@@ -1765,7 +1774,7 @@ public class Analysis {
 
                 for (int i = 0; i < size; i++) {
                     xy[2 * i] = inputArrays.get(0)[i].floatValue();
-                    xy[2 * i + 1] = (inputArrays.size() > 1 && inputArraySizes.get(1) > i ? inputArrays.get(1)[i].floatValue() : 0.f);
+                    xy[2 * i + 1] = hasIm ? inputArrays.get(1)[i].floatValue() : 0.f;
                 }
 
                 fftw3complex(xy, size);
@@ -1779,7 +1788,12 @@ public class Analysis {
                 }
             } else {
 
+                //A provided im input truncates the transform to the shorter of re and im;
+                //only an absent im input is zero-filled to re's length
+                boolean hasIm = inputArrays.size() > 1 && inputArrays.get(1) != null;
                 int size = inputArrays.get(0).length;
+                if (hasIm)
+                    size = Math.min(size, inputArrays.get(1).length);
                 if (size < 2)
                     return;
 
@@ -1787,19 +1801,13 @@ public class Analysis {
                     fft.prepare(size);
                 }
 
-                Double x[] = Arrays.copyOf(inputArrays.get(0), fft.np2);
-                Double y[];
-                if (inputArrays.size() > 1)
-                    y = Arrays.copyOf(inputArrays.get(1), fft.np2);
-                else
-                    y = new Double[fft.np2];
-
-                //Fill any unused inputs with zeros
+                //Copy the first size values and zero-pad up to the power of two used for the
+                //calculation
+                Double x[] = new Double[fft.np2];
+                Double y[] = new Double[fft.np2];
                 for (int i = 0; i < fft.np2; i++) {
-                    if (x[i] == null)
-                        x[i] = 0.;
-                    if (y[i] == null)
-                        y[i] = 0.;
+                    x[i] = i < size ? inputArrays.get(0)[i] : 0.;
+                    y[i] = hasIm && i < size ? inputArrays.get(1)[i] : 0.;
                 }
 
                 fft.calculate(x, y);
@@ -2132,14 +2140,14 @@ public class Analysis {
                 if (asize == 0 || bsize == 0)
                     return;
 
-                //The actual calculation
+                //The actual calculation. The output is the raw correlation sum without any
+                //normalization, matching the default of numpy.correlate and MATLAB xcorr.
                 int compRange = asize - bsize;
                 for (int i = 0; i < compRange; i++) {
                     double sum = 0.;
                     for (int j = 0; j < bsize; j++) {
                         sum += a[j+i]*b[j];
                     }
-                    sum /= (double)(compRange); //Normalize bynumber of values
                     outputs.get(0).append(sum);
                 }
             }
