@@ -521,6 +521,19 @@ public abstract class PhyphoxFile {
                 case "input": {
                     String parameter = getStringAttribute("parameter");
 
+                    if (level == 1) {
+                        //Direct input. It takes no type attribute - its text is always the
+                        //name of the data container holding the waveform, so a type
+                        //attribute is ignored like on iOS.
+                        String bufferName = getText();
+                        DataBuffer buffer = experiment.getBuffer(bufferName);
+                        if (buffer == null) {
+                            throw new phyphoxFileException("Buffer \"" + bufferName + "\" not defined.", xpp.getLineNumber());
+                        }
+                        currentPlugin = audioOutput.new AudioOutputPluginDirect(new DataInput(buffer, false));
+                        break;
+                    }
+
                     DataInput input;
                     String type = getStringAttribute("type");
                     if (type == null)
@@ -544,10 +557,7 @@ public abstract class PhyphoxFile {
                     } else {
                         throw new phyphoxFileException("Unknown input type \""+type+"\".", xpp.getLineNumber());
                     }
-                    if (level == 1) {
-                        //Direct input
-                        currentPlugin = audioOutput.new AudioOutputPluginDirect(input);
-                    } else if (level == 2) {
+                    if (level == 2) {
                         //Parameter
                         if (currentPlugin != null) {
                             if (parameter == null)
@@ -950,7 +960,7 @@ public abstract class PhyphoxFile {
                         else {
                             inputList.set(targetIndex, new DataInput(buffer, keep));
                         }
-                    } else if (type.equals("empty")) {
+                    } else if (type.equalsIgnoreCase("empty")) { //Enumerated values are matched case-insensitively
                         //No input, Is this allowed?
                         if (inputMapping[mappingIndex].emptyAllowed) {
                             inputList.set(targetIndex, new DataInput());
@@ -3266,6 +3276,10 @@ public abstract class PhyphoxFile {
                         default:        throw new phyphoxFileException("Unknown zMode " + zModeStr, xpp.getLineNumber());
                     }
 
+                    //A missing z input with zMode sum or average is a permanent configuration
+                    //error, not an intermediate state, so it rejects the file at load
+                    final boolean zRequired = zMode != Analysis.mapAM.ZMode.count;
+
                     ioBlockParser.ioMapping[] inputMapping = {
                             new ioBlockParser.ioMapping() {{name = "mapWidth"; asRequired = true; minCount = 1; maxCount = 1; valueAllowed = true; repeatableOffset = -1; }},
                             new ioBlockParser.ioMapping() {{name = "minX"; asRequired = true; minCount = 1; maxCount = 1; valueAllowed = true; repeatableOffset = -1; }},
@@ -3275,7 +3289,7 @@ public abstract class PhyphoxFile {
                             new ioBlockParser.ioMapping() {{name = "maxY"; asRequired = true; minCount = 1; maxCount = 1; valueAllowed = true; repeatableOffset = -1; }},
                             new ioBlockParser.ioMapping() {{name = "x"; asRequired = true; minCount = 1; maxCount = 1; valueAllowed = true; repeatableOffset = -1; }},
                             new ioBlockParser.ioMapping() {{name = "y"; asRequired = true; minCount = 1; maxCount = 1; valueAllowed = true; repeatableOffset = -1; }},
-                            new ioBlockParser.ioMapping() {{name = "z"; asRequired = true; minCount = 0; maxCount = 1; valueAllowed = true; repeatableOffset = -1; }}
+                            new ioBlockParser.ioMapping() {{name = "z"; asRequired = true; minCount = zRequired ? 1 : 0; maxCount = 1; valueAllowed = true; repeatableOffset = -1; }}
                     };
                     ioBlockParser.ioMapping[] outputMapping = {
                             new ioBlockParser.ioMapping() {{name = "x"; asRequired = true; minCount = 1; maxCount = 1; repeatableOffset = -1; }},
@@ -3310,7 +3324,9 @@ public abstract class PhyphoxFile {
                             new ioBlockParser.ioMapping() {{name = "y"; asRequired = true; minCount = 0; maxCount = 1; valueAllowed = false; repeatableOffset = -1; }}
                     };
                     ioBlockParser.ioMapping[] outputMapping = {
-                            new ioBlockParser.ioMapping() {{name = "x"; asRequired = true; minCount = 0; maxCount = 1; repeatableOffset = -1; }},
+                            //The x output is required: without it the module has nowhere to
+                            //write and used to crash at runtime instead of failing at load
+                            new ioBlockParser.ioMapping() {{name = "x"; asRequired = true; minCount = 1; maxCount = 1; repeatableOffset = -1; }},
                             new ioBlockParser.ioMapping() {{name = "y"; asRequired = true; minCount = 0; maxCount = 1; repeatableOffset = -1; }},
                     };
                     (new ioBlockParser(xpp, experiment, parent, inputs, outputs, inputMapping, outputMapping, "as")).process(); //Load inputs and outputs
@@ -3436,10 +3452,11 @@ public abstract class PhyphoxFile {
                             new ioBlockParser.ioMapping() {{name = "d"; asRequired = true; minCount = 1; maxCount = 1; valueAllowed = true; repeatableOffset = -1; }},
                             new ioBlockParser.ioMapping() {{name = "xi"; asRequired = true; minCount = 1; maxCount = 1; valueAllowed = true; repeatableOffset = -1; }}
                     };
+                    //Each output exists at most once - repeats were accepted but never written
                     ioBlockParser.ioMapping[] outputMapping = {
-                            new ioBlockParser.ioMapping() {{name = "yi0"; asRequired = false; minCount = 1; maxCount = 0; repeatableOffset = 0; }},
-                            new ioBlockParser.ioMapping() {{name = "yi1"; asRequired = true; minCount = 0; maxCount = 0; repeatableOffset = 0; }},
-                            new ioBlockParser.ioMapping() {{name = "yi2"; asRequired = true; minCount = 0; maxCount = 0; repeatableOffset = 0; }},
+                            new ioBlockParser.ioMapping() {{name = "yi0"; asRequired = false; minCount = 1; maxCount = 1; repeatableOffset = -1; }},
+                            new ioBlockParser.ioMapping() {{name = "yi1"; asRequired = true; minCount = 0; maxCount = 1; repeatableOffset = -1; }},
+                            new ioBlockParser.ioMapping() {{name = "yi2"; asRequired = true; minCount = 0; maxCount = 1; repeatableOffset = -1; }},
                     };
                     (new ioBlockParser(xpp, experiment, parent, inputs, outputs, inputMapping, outputMapping, "as")).process(); //Load inputs and outputs
 
@@ -3469,8 +3486,9 @@ public abstract class PhyphoxFile {
                             new ioBlockParser.ioMapping() {{name = "y"; asRequired = true; minCount = 1; maxCount = 1; valueAllowed = false; repeatableOffset = -1; }},
                             new ioBlockParser.ioMapping() {{name = "xi"; asRequired = true; minCount = 1; maxCount = 1; valueAllowed = true; repeatableOffset = -1; }}
                     };
+                    //The output exists at most once - repeats were accepted but never written
                     ioBlockParser.ioMapping[] outputMapping = {
-                            new ioBlockParser.ioMapping() {{name = "out"; asRequired = false; minCount = 1; maxCount = 0; repeatableOffset = 0; }},
+                            new ioBlockParser.ioMapping() {{name = "out"; asRequired = false; minCount = 1; maxCount = 1; repeatableOffset = -1; }},
                     };
                     (new ioBlockParser(xpp, experiment, parent, inputs, outputs, inputMapping, outputMapping, "as")).process(); //Load inputs and outputs
 
