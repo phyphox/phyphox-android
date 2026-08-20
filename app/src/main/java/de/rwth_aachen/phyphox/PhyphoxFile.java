@@ -826,7 +826,7 @@ public abstract class PhyphoxFile {
             if (additionalTags != null) {
                 at = new AdditionalTag();
                 for (int i = 0; i < xpp.getAttributeCount(); i++)
-                    at.attributes.put(xpp.getAttributeName(i).toLowerCase(), xpp.getAttributeValue(i));
+                    at.attributes.put(xpp.getAttributeName(i), xpp.getAttributeValue(i)); //Attribute names are matched exactly, as everywhere else in the format
                 at.name = tag.toLowerCase();
             }
 
@@ -1097,6 +1097,74 @@ public abstract class PhyphoxFile {
                         throw new phyphoxFileException("A minimum of " + outputMapping[i].minCount + " outputs was expected for " + outputMapping[i].name + " but " + outputMapping[i].count + " were found.", xpp.getLineNumber());
                 }
             }
+        }
+    }
+
+    //Specialized ioBlockParser for the graph element: output tags use the usual slot logic of
+    //ioBlockParser, but input tags are collected in document order together with their axis and
+    //styling attributes, so that the graph element code can implement the decided dataset pairing
+    //(see graph-multiset-input-order in phyphox-docs). The axis attribute is required on every
+    //graph input.
+    private static class graphIoBlockParser extends ioBlockParser {
+
+        public static class GraphInput {
+            String axis;
+            DataInput input;
+            Map<String, String> attributes = new HashMap<>();
+        }
+
+        Vector<GraphInput> graphInputs;
+
+        graphIoBlockParser(XmlPullParser xpp, PhyphoxExperiment experiment, Experiment parent, Vector<GraphInput> graphInputs, Vector<DataOutput> outputList, ioMapping[] outputMapping) {
+            super(xpp, experiment, parent, null, outputList, null, outputMapping, "axis", null);
+            this.graphInputs = graphInputs;
+        }
+
+        @Override
+        protected void processStartTag(String tag) throws IOException, XmlPullParserException, phyphoxFileException {
+            if (!tag.equalsIgnoreCase("input")) {
+                super.processStartTag(tag);
+                return;
+            }
+
+            String axis = getStringAttribute("axis");
+            if (axis == null)
+                throw new phyphoxFileException("The axis attribute is required for every graph input.", xpp.getLineNumber());
+
+            GraphInput gi = new GraphInput();
+            //Enumerated names are matched case-insensitively
+            if (axis.equalsIgnoreCase("x"))
+                gi.axis = "x";
+            else if (axis.equalsIgnoreCase("y"))
+                gi.axis = "y";
+            else if (axis.equalsIgnoreCase("z"))
+                gi.axis = "z";
+            else
+                throw new phyphoxFileException("Could not find mapping for input \""+axis+"\".", xpp.getLineNumber());
+
+            for (int i = 0; i < xpp.getAttributeCount(); i++)
+                gi.attributes.put(xpp.getAttributeName(i), xpp.getAttributeValue(i)); //Attribute names are matched exactly, as everywhere else in the format
+
+            String type = getStringAttribute("type");
+            if (type == null)
+                type = "buffer";
+
+            boolean clearAfterRead = getBooleanAttribute("clear", true); //Deprecated
+            boolean keep = getBooleanAttribute("keep", !clearAfterRead); //New attribute keep = !clear
+
+            if (type.equalsIgnoreCase("buffer")) { //Enumerated values are matched case-insensitively
+                String bufferName = getText();
+                DataBuffer buffer = experiment.getBuffer(bufferName);
+                if (buffer == null)
+                    throw new phyphoxFileException("Buffer \""+bufferName+"\" not defined.", xpp.getLineNumber());
+                gi.input = new DataInput(buffer, keep);
+            } else if (type.equalsIgnoreCase("value") || type.equalsIgnoreCase("empty")) {
+                throw new phyphoxFileException("Value-type not allowed for input \""+gi.axis+"\".", xpp.getLineNumber());
+            } else {
+                throw new phyphoxFileException("Unknown input type \""+type+"\".", xpp.getLineNumber());
+            }
+
+            graphInputs.add(gi);
         }
     }
 
@@ -1709,14 +1777,7 @@ public abstract class PhyphoxFile {
 
                     boolean followX = getBooleanAttribute("followX", false);
 
-                    //Allowed input/output configuration
-                    Vector<ioBlockParser.AdditionalTag> ats = new Vector<>();
-                    ioBlockParser.ioMapping[] inputMapping = {
-                            new ioBlockParser.ioMapping() {{name = "y"; asRequired = false; minCount = 1; maxCount = 0; valueAllowed = false; repeatableOffset = 0;}},
-                            new ioBlockParser.ioMapping() {{name = "x"; asRequired = true; minCount = 0; maxCount = 0; valueAllowed = false; repeatableOffset = 1;}},
-                            new ioBlockParser.ioMapping() {{name = "z"; asRequired = true; minCount = 0; maxCount = 0; valueAllowed = false; repeatableOffset = 2;}}
-                    };
-
+                    //Allowed output configuration (inputs are collected in document order by the graphIoBlockParser)
                     ioBlockParser.ioMapping[] outputMapping = {
                             new ioBlockParser.ioMapping() {{ name = "x"; asRequired = true; minCount = 0; maxCount = 0; valueAllowed = false; repeatableOffset = 0;}},
                             new ioBlockParser.ioMapping() {{ name = "xcal"; asRequired = true; minCount = 0; maxCount = 0; valueAllowed = false; repeatableOffset = 1;}},
@@ -1726,26 +1787,97 @@ public abstract class PhyphoxFile {
                             new ioBlockParser.ioMapping() {{ name = "zcal"; asRequired = true; minCount = 0; maxCount = 0; valueAllowed = false; repeatableOffset = 5;}},
                     };
 
-                    (new ioBlockParser(xpp, experiment, parent, inputs, outputs, inputMapping, outputMapping, "axis", ats)).process(); //Load inputs and outputs
+                    Vector<graphIoBlockParser.GraphInput> graphInputs = new Vector<>();
+                    (new graphIoBlockParser(xpp, experiment, parent, graphInputs, outputs, outputMapping)).process(); //Load inputs and outputs
 
-                    Vector<String> inStrings = new Vector<>();
-                    for (int i = 0; i < inputs.size(); i++) {
-                        if (i % 3 == 2) {
-                            //This is a z entry. For efficiency reasons, we only handle x and y and encode z as an additional graph of different style
-                            if (inputs.get(i) != null) {
-                                inStrings.add(inputs.get(i).buffer.name);
-                                inStrings.add(null);
-                                ioBlockParser.AdditionalTag at = new ioBlockParser.AdditionalTag();
-                                at.name = ats.get(i).name;
-                                at.attributes.put("style", "mapZ");
-                                ats.add(i+1, at);
-                            }
-                        } else {
-                            if (inputs.get(i) != null)
-                                inStrings.add(inputs.get(i).buffer.name);
-                            else
-                                inStrings.add(null);
+                    int xCount = 0, yCount = 0;
+                    for (graphIoBlockParser.GraphInput gi : graphInputs) {
+                        if (gi.axis.equals("x"))
+                            xCount++;
+                        else if (gi.axis.equals("y"))
+                            yCount++;
+                    }
+                    if (yCount < 1)
+                        throw new phyphoxFileException("A minimum of 1 inputs was expected for y but 0 were found.", xpp.getLineNumber());
+
+                    //Pair x and y inputs into datasets following the decided model (see
+                    //graph-multiset-input-order and graph-multiset-omitted-x in phyphox-docs):
+                    //every y input is one dataset. With exactly as many x inputs as y inputs
+                    //(z inputs do not count), they are matched 1-on-1 in order of appearance
+                    //regardless of interleaving. Otherwise each y is plotted against the most
+                    //recent preceding x input, or against its element index if none preceded it,
+                    //and an x input that no y input uses - trailing, or shadowed - is an error.
+                    //Styling attributes on an x input apply to its matched dataset; a shared x
+                    //styles only the first dataset that uses it.
+                    graphIoBlockParser.GraphInput[] yForDataset = new graphIoBlockParser.GraphInput[yCount];
+                    graphIoBlockParser.GraphInput[] xForDataset = new graphIoBlockParser.GraphInput[yCount];
+                    graphIoBlockParser.GraphInput[] zForDataset = new graphIoBlockParser.GraphInput[yCount];
+                    boolean[] xStylesDataset = new boolean[yCount];
+                    {
+                        int yi = 0;
+                        for (graphIoBlockParser.GraphInput gi : graphInputs) {
+                            if (gi.axis.equals("y"))
+                                yForDataset[yi++] = gi;
                         }
+                    }
+                    if (xCount == yCount) {
+                        int xi = 0;
+                        for (graphIoBlockParser.GraphInput gi : graphInputs) {
+                            if (gi.axis.equals("x")) {
+                                xForDataset[xi] = gi;
+                                xStylesDataset[xi] = true;
+                                xi++;
+                            }
+                        }
+                    } else {
+                        graphIoBlockParser.GraphInput precedingX = null;
+                        boolean precedingXUsed = true;
+                        int yi = 0;
+                        for (graphIoBlockParser.GraphInput gi : graphInputs) {
+                            if (gi.axis.equals("x")) {
+                                if (!precedingXUsed)
+                                    throw new phyphoxFileException("Graph input \"" + precedingX.input.buffer.name + "\" on axis x is not used by any y input.", xpp.getLineNumber());
+                                precedingX = gi;
+                                precedingXUsed = false;
+                            } else if (gi.axis.equals("y")) {
+                                xForDataset[yi] = precedingX;
+                                xStylesDataset[yi] = !precedingXUsed;
+                                precedingXUsed = true;
+                                yi++;
+                            }
+                        }
+                        if (!precedingXUsed)
+                            throw new phyphoxFileException("Graph input \"" + precedingX.input.buffer.name + "\" on axis x is not used by any y input.", xpp.getLineNumber());
+                    }
+
+                    //z inputs attach to the dataset of the most recent preceding y input, or to the first dataset if none preceded
+                    {
+                        int ySeen = 0;
+                        for (graphIoBlockParser.GraphInput gi : graphInputs) {
+                            if (gi.axis.equals("y"))
+                                ySeen++;
+                            else if (gi.axis.equals("z"))
+                                zForDataset[Math.max(ySeen - 1, 0)] = gi;
+                        }
+                    }
+
+                    //Build the flat input list of the graph element: a pair of buffer names
+                    //(y, x or null) per dataset. For efficiency reasons z is not handled
+                    //separately but encoded as an additional graph of style mapZ following its
+                    //dataset.
+                    Vector<String> inStrings = new Vector<>();
+                    int[] curveOfDataset = new int[yCount];
+                    int[] curveOfZ = new int[yCount];
+                    for (int i = 0; i < yCount; i++) {
+                        curveOfDataset[i] = inStrings.size() / 2;
+                        inStrings.add(yForDataset[i].input.buffer.name);
+                        inStrings.add(xForDataset[i] != null ? xForDataset[i].input.buffer.name : null);
+                        if (zForDataset[i] != null) {
+                            curveOfZ[i] = inStrings.size() / 2;
+                            inStrings.add(zForDataset[i].input.buffer.name);
+                            inStrings.add(null);
+                        } else
+                            curveOfZ[i] = -1;
                     }
 
                     Vector<String> outStrings = new Vector<>();
@@ -1786,60 +1918,57 @@ public abstract class PhyphoxFile {
                     ge.setSuppressScientificNotation(suppressScientificNotation);
 
                     if (!globalColor) {
-                        for (int i = 0; i < Math.ceil(inputs.size() / 3); i++) {
+                        for (int i = 0; i < yCount; i++) {
                             switch (i % 6) {
-                                case 0: ge.setColor(new RGB(parent.getResources().getColor(R.color.phyphox_primary)), i, parent.getResources());
+                                case 0: ge.setColor(new RGB(parent.getResources().getColor(R.color.phyphox_primary)), curveOfDataset[i], parent.getResources());
                                     break;
-                                case 1: ge.setColor(new RGB(parent.getResources().getColor(R.color.phyphox_green)), i, parent.getResources());
+                                case 1: ge.setColor(new RGB(parent.getResources().getColor(R.color.phyphox_green)), curveOfDataset[i], parent.getResources());
                                     break;
-                                case 2: ge.setColor(new RGB(parent.getResources().getColor(R.color.phyphox_blue_60)), i, parent.getResources());
+                                case 2: ge.setColor(new RGB(parent.getResources().getColor(R.color.phyphox_blue_60)), curveOfDataset[i], parent.getResources());
                                     break;
-                                case 3: ge.setColor(new RGB(parent.getResources().getColor(R.color.phyphox_yellow)), i, parent.getResources());
+                                case 3: ge.setColor(new RGB(parent.getResources().getColor(R.color.phyphox_yellow)), curveOfDataset[i], parent.getResources());
                                     break;
-                                case 4: ge.setColor(new RGB(parent.getResources().getColor(R.color.phyphox_magenta)), i, parent.getResources());
+                                case 4: ge.setColor(new RGB(parent.getResources().getColor(R.color.phyphox_magenta)), curveOfDataset[i], parent.getResources());
                                     break;
-                                case 5: ge.setColor(new RGB(parent.getResources().getColor(R.color.phyphox_red)), i, parent.getResources());
+                                case 5: ge.setColor(new RGB(parent.getResources().getColor(R.color.phyphox_red)), curveOfDataset[i], parent.getResources());
                                     break;
                             }
                         }
                     }
-                    for (int i = 0; i < ats.size(); i++) {
-                        ioBlockParser.AdditionalTag at = ats.get(i);
-                        if (at == null)
-                            continue;
-                        if (!at.name.equals("input") && !at.name.equals("output") ) {
-                            throw new phyphoxFileException("Unknown tag "+at.name+" found by ioBlockParser.", xpp.getLineNumber());
-                        }
-                        if (at.attributes.containsKey("style")) {
-                            try {
-                                GraphView.Style style = GraphView.styleFromStr(at.attributes.get("style"));
-                                if (style == GraphView.Style.unknown)
-                                    throw new phyphoxFileException("Unknown value for style of input tag.", xpp.getLineNumber());
-                                ge.setStyle(style, i/3);
-                            } catch (Exception e) {
-                                throw new phyphoxFileException("Could not parse style of input tag.", xpp.getLineNumber());
+                    //Apply per-input styling attributes to each dataset. Applied in the order
+                    //x, y, z, so that attributes on the y input override those of its x input
+                    //and attributes on a z input override both.
+                    for (int i = 0; i < yCount; i++) {
+                        graphIoBlockParser.GraphInput[] styleSources = {xStylesDataset[i] ? xForDataset[i] : null, yForDataset[i], zForDataset[i]};
+                        for (graphIoBlockParser.GraphInput gi : styleSources) {
+                            if (gi == null)
+                                continue;
+                            if (gi.attributes.containsKey("style")) {
+                                try {
+                                    GraphView.Style style = GraphView.styleFromStr(gi.attributes.get("style"));
+                                    if (style == GraphView.Style.unknown)
+                                        throw new phyphoxFileException("Unknown value for style of input tag.", xpp.getLineNumber());
+                                    ge.setStyle(style, curveOfDataset[i]);
+                                } catch (Exception e) {
+                                    throw new phyphoxFileException("Could not parse style of input tag.", xpp.getLineNumber());
+                                }
+                            }
+                            if (gi.attributes.containsKey("color")) {
+                                RGB localColor = RGB.fromPhyphoxStringStrict(gi.attributes.get("color"), parent.getResources());
+                                if (localColor == null)
+                                    throw new phyphoxFileException("Could not parse color of input tag.", xpp.getLineNumber());
+                                ge.setColor(localColor, curveOfDataset[i], parent.getResources());
+                            }
+                            if (gi.attributes.containsKey("lineWidth")) {
+                                try {
+                                    ge.setLineWidth(Double.valueOf(gi.attributes.get("lineWidth")), curveOfDataset[i]);
+                                } catch (Exception e) {
+                                    throw new phyphoxFileException("Could not parse lineWidth of input tag.", xpp.getLineNumber());
+                                }
                             }
                         }
-                        if (at.attributes.containsKey("color")) {
-                            RGB localColor = RGB.fromPhyphoxStringStrict(at.attributes.get("color"), parent.getResources());
-                            if (localColor == null)
-                                throw new phyphoxFileException("Could not parse color of input tag.", xpp.getLineNumber());
-                            ge.setColor(localColor, i/3, parent.getResources());
-                        }
-                        if (at.attributes.containsKey("linewidth")) {
-                            try {
-                                ge.setLineWidth(Double.valueOf(at.attributes.get("linewidth")), i/3);
-                            } catch (Exception e) {
-                                throw new phyphoxFileException("Could not parse linewidth of input tag.", xpp.getLineNumber());
-                            }
-                        }
-                        if (at.attributes.containsKey("mapwidth")) {
-                            try {
-                                ge.setMapWidth(Integer.valueOf(at.attributes.get("mapwidth")), i/3);
-                            } catch (Exception e) {
-                                throw new phyphoxFileException("Could not parse mapWidth of input tag.", xpp.getLineNumber());
-                            }
-                        }
+                        if (curveOfZ[i] >= 0)
+                            ge.setStyle(GraphView.Style.mapZ, curveOfZ[i]);
                     }
 
                     newView.elements.add(ge);
