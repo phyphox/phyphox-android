@@ -437,8 +437,6 @@ public class Analysis {
         protected void update() {
             Double in[] = inputArrays.get(0);
             int size = inputArraySizes.get(0);
-            if (size == 0)
-                return;
 
             double sum = 0.;
             int count = 0;
@@ -448,10 +446,10 @@ public class Analysis {
                 sum += in[i];
                 count++;
             }
-            if (count == 0)
-                return;
 
-            double avg = sum/count;
+            //An empty or all-non-finite input is an intermediate error state: average delivers
+            //single values, so each connected output receives NaN instead of nothing
+            double avg = count == 0 ? Double.NaN : sum/count;
 
             if (outputs.size() > 0 && outputs.get(0) != null) {
                 outputs.get(0).append(avg);
@@ -461,17 +459,18 @@ public class Analysis {
             if (outputs.size() > 1 && outputs.get(1) != null) {
                 if (count < 2) {
                     outputs.get(1).append(Double.NaN);
+                } else {
+                    sum = 0.;
+                    count = 0;
+                    for (int i = 0; i < size; i++) {
+                        if (in[i].isNaN() || in[i].isInfinite())
+                            continue;;
+                        sum += (in[i]-avg)*(in[i]-avg);
+                        count++;
+                    }
+                    double std = Math.sqrt(sum/(count-1));
+                    outputs.get(1).append(std);
                 }
-                sum = 0.;
-                count = 0;
-                for (int i = 0; i < size; i++) {
-                    if (in[i].isNaN() || in[i].isInfinite())
-                        continue;;
-                    sum += (in[i]-avg)*(in[i]-avg);
-                    count++;
-                }
-                double std = Math.sqrt(sum/(count-1));
-                outputs.get(1).append(std);
             }
         }
     }
@@ -1111,15 +1110,19 @@ public class Analysis {
         protected void update() {
             Double array[] = inputArrays.get(0);
             Double array2[] = inputArrays.get(1);
-            int size = inputArraySizes.get(0);
-            if (size > inputArraySizes.get(1))
-                size = inputArraySizes.get(1);
+            int size1 = inputArraySizes.get(0);
+            int size2 = inputArraySizes.get(1);
+            //Like add/subtract/multiply/divide: the shorter input repeats its last value and the
+            //output has the length of the longest input; any empty input yields an empty output
+            if (size1 == 0 || size2 == 0)
+                return;
+            int size = Math.max(size1, size2);
             if (deg) {
                 for (int i = 0; i < size; i++)
-                    outputs.get(0).append(180. / Math.PI * Math.atan2(array[i], array2[i]));
+                    outputs.get(0).append(180. / Math.PI * Math.atan2(array[Math.min(i, size1-1)], array2[Math.min(i, size2-1)]));
             } else {
                 for (int i = 0; i < size; i++)
-                    outputs.get(0).append(Math.atan2(array[i], array2[i]));
+                    outputs.get(0).append(Math.atan2(array[Math.min(i, size1-1)], array2[Math.min(i, size2-1)]));
             }
         }
     }
@@ -1173,24 +1176,29 @@ public class Analysis {
                     its.add(null);
             }
 
-            if (multiple && inputs.size() > 2 && inputs.get(2) != null)
+            //A NaN threshold value participates in the comparisons like any number; only an
+            //absent threshold input or an empty threshold buffer selects the default of 0.
+            if (multiple && inputs.size() > 2 && inputs.get(2) != null && inputs.get(2).getFilledSize() > 0)
                 threshold = inputs.get(2).getValue();
 
             double max = Double.NEGATIVE_INFINITY; //This will hold the maximum value
-            double x = Double.NEGATIVE_INFINITY; //The x location of the maximum
+            double x = Double.NaN; //The x location of the maximum
             double currentX = -1; //Current x during iteration
+            boolean found = false;
 
-            while (its.get(1).hasNext()) { //For each value of input1
+            //An x input shorter than y truncates processing to the common length; only an
+            //omitted x input auto-generates indices.
+            while (its.get(1).hasNext() && (its.get(0) == null || its.get(0).hasNext())) { //For each value of input1
                 double v = (double)its.get(1).next();
 
                 //if input2 is given set x to this value. Otherwise generate x by incrementing it by 1.
-                if (its.get(0) != null && its.get(0).hasNext())
+                if (its.get(0) != null)
                     currentX = (double)its.get(0).next();
                 else
                     currentX += 1;
 
                 if (multiple && v < threshold) {
-                    if (!Double.isInfinite(x)) {
+                    if (found) {
                         if (outputs.size() > 0 && outputs.get(0) != null) {
                             outputs.get(0).append(max);
                         }
@@ -1198,22 +1206,33 @@ public class Analysis {
                             outputs.get(1).append(x);
                         }
                         max = Double.NEGATIVE_INFINITY;
-                        x = Double.NEGATIVE_INFINITY;
+                        x = Double.NaN;
+                        found = false;
                     }
                 } else if (v > max) {
                     //Set maximum and location of maximum
                     max = v;
                     x = currentX;
+                    found = true;
                 }
             }
 
             //Done. Append result to output1 and output2 if used.
-            if (!Double.isInfinite(x)) {
+            if (found) {
                 if (outputs.size() > 0 && outputs.get(0) != null) {
                     outputs.get(0).append(max);
                 }
                 if (outputs.size() > 1 && outputs.get(1) != null) {
                     outputs.get(1).append(x);
+                }
+            } else if (!multiple) {
+                //An empty or all-invalid input is an intermediate error state: in single mode
+                //each connected output receives NaN instead of nothing
+                if (outputs.size() > 0 && outputs.get(0) != null) {
+                    outputs.get(0).append(Double.NaN);
+                }
+                if (outputs.size() > 1 && outputs.get(1) != null) {
+                    outputs.get(1).append(Double.NaN);
                 }
             }
 
@@ -1249,24 +1268,29 @@ public class Analysis {
                     its.add(null);
             }
 
-            if (multiple && inputs.size() > 2 && inputs.get(2) != null)
+            //A NaN threshold value participates in the comparisons like any number; only an
+            //absent threshold input or an empty threshold buffer selects the default of 0.
+            if (multiple && inputs.size() > 2 && inputs.get(2) != null && inputs.get(2).getFilledSize() > 0)
                 threshold = inputs.get(2).getValue();
 
             double min = Double.POSITIVE_INFINITY; //This will hold the minimum value
-            double x = Double.NEGATIVE_INFINITY; //The x location of the minimum
+            double x = Double.NaN; //The x location of the minimum
             double currentX = -1; //Current x during iteration
+            boolean found = false;
 
-            while (its.get(1).hasNext()) { //For each value of input1
+            //An x input shorter than y truncates processing to the common length; only an
+            //omitted x input auto-generates indices.
+            while (its.get(1).hasNext() && (its.get(0) == null || its.get(0).hasNext())) { //For each value of input1
                 double v = (double)its.get(1).next();
 
                 //if input2 is given set x to this value. Otherwise generate x by incrementing it by 1.
-                if (its.get(0) != null && its.get(0).hasNext())
+                if (its.get(0) != null)
                     currentX = (double)its.get(0).next();
                 else
                     currentX += 1;
 
                 if (multiple && v > threshold) {
-                    if (!Double.isInfinite(x)) {
+                    if (found) {
                         if (outputs.size() > 0 && outputs.get(0) != null) {
                             outputs.get(0).append(min);
                         }
@@ -1274,22 +1298,33 @@ public class Analysis {
                             outputs.get(1).append(x);
                         }
                         min = Double.POSITIVE_INFINITY;
-                        x = Double.NEGATIVE_INFINITY;
+                        x = Double.NaN;
+                        found = false;
                     }
                 } else if (v < min) {
-                    //Set maximum and location of maximum
+                    //Set minimum and location of minimum
                     min = v;
                     x = currentX;
+                    found = true;
                 }
             }
 
             //Done. Append result to output1 and output2 if used.
-            if (!Double.isInfinite(x)) {
+            if (found) {
                 if (outputs.size() > 0 && outputs.get(0) != null) {
                     outputs.get(0).append(min);
                 }
                 if (outputs.size() > 1 && outputs.get(1) != null) {
                     outputs.get(1).append(x);
+                }
+            } else if (!multiple) {
+                //An empty or all-invalid input is an intermediate error state: in single mode
+                //each connected output receives NaN instead of nothing
+                if (outputs.size() > 0 && outputs.get(0) != null) {
+                    outputs.get(0).append(Double.NaN);
+                }
+                if (outputs.size() > 1 && outputs.get(1) != null) {
+                    outputs.get(1).append(Double.NaN);
                 }
             }
 
@@ -1313,12 +1348,12 @@ public class Analysis {
 
         @Override
         protected void update() {
-            //Update the threshold from buffer or convert numerical string
-            double vthreshold = Double.NaN;
-            if (inputs.size() > 2)
+            //A NaN threshold value participates like any number: no comparison with it is ever
+            //true, so no crossing is found and NaN is output. Only an absent threshold input or
+            //an empty threshold buffer selects the default of 0.
+            double vthreshold = 0.;
+            if (inputs.size() > 2 && inputs.get(2) != null && inputs.get(2).getFilledSize() > 0)
                 vthreshold = inputs.get(2).getValue();
-            if (Double.isNaN(vthreshold))
-                vthreshold = 0.;
 
             //Get iterators
             Vector<Iterator> its = new Vector<>();
@@ -1329,8 +1364,11 @@ public class Analysis {
                     its.add(null);
             }
 
-            double last = Double.NaN; //Last value that did not trigger. Start with a NaN as result
-            double currentX = -1; //Position of last no-trigger value.
+            double result = Double.NaN; //x of the crossing; NaN if no crossing is found
+            double currentX = -1; //Current x during iteration
+            //We want to cross (!) the threshold: any value not on the trigger side - NaN
+            //included - arms the trigger, and the next value on the trigger side fires
+            boolean onOppositeSide = false;
             while (its.get(1).hasNext()) { //For each value of input1
                 double v = (double)its.get(1).next();
 
@@ -1340,23 +1378,16 @@ public class Analysis {
                 else
                     currentX += 1;
 
-                //Only trigger if the last and the current value are valid,
-                if (!(Double.isNaN(last) || Double.isNaN(v))) {
-                    if (falling) {
-                        if (last >= vthreshold && v < vthreshold) {
-                            //Falling trigger and value went below threshold -> break
-                            break;
-                        }
-                    } else {
-                        if (last <= vthreshold && v > vthreshold) {
-                            //Rising trigger and value went above threshold -> break
-                            break;
-                        }
+                if (falling ? (v < vthreshold) : (v > vthreshold)) {
+                    if (onOppositeSide) {
+                        result = currentX;
+                        break;
                     }
+                } else {
+                    onOppositeSide = true;
                 }
-                last = v;
             }
-            outputs.get(0).append(currentX); //Append final x position to output1
+            outputs.get(0).append(result); //Append the x position of the crossing to output1
 
         }
     }
@@ -1372,16 +1403,18 @@ public class Analysis {
         protected void update() {
             Iterator it = inputs.get(0).getIterator();
             double x0 = 0.;
-            if (inputs.size() > 1 && inputs.get(1) != null)
+            if (inputs.size() > 1 && inputs.get(1) != null && inputs.get(1).getFilledSize() > 0)
                 x0 = inputs.get(1).getValue();
-            if (Double.isNaN(x0))
-                x0 = 0.;
 
             double dx = 1.;
-            if (inputs.size() > 2 && inputs.get(2) != null)
+            if (inputs.size() > 2 && inputs.get(2) != null && inputs.get(2).getFilledSize() > 0)
                 dx = inputs.get(2).getValue();
-            if (Double.isNaN(dx))
-                dx = 1.;
+
+            //Any invalid dx - zero, negative or non-finite - and a non-finite x0 are error
+            //states yielding empty outputs; there is no silent substitution. Only absent inputs
+            //(or empty parameter buffers) keep the documented defaults x0 = 0 and dx = 1.
+            if (Double.isNaN(x0) || Double.isInfinite(x0) || Double.isNaN(dx) || Double.isInfinite(dx) || dx <= 0)
+                return;
 
             Vector<Double> binStarts = new Vector<>();
             Vector<Double> binCounts = new Vector<>();
@@ -1390,7 +1423,14 @@ public class Analysis {
                 double v = (double)it.next();
                 if (Double.isNaN(v) || Double.isInfinite(v))
                     continue;
-                int binIndex = (int)((v-x0)/dx);
+                //Bins are lower-edge inclusive: floor semantics. Truncation toward zero would
+                //give bin 0 double width, collecting everything in (x0-dx, x0+dx).
+                double ratio = Math.floor((v-x0)/dx);
+                //A finite ratio can still exceed the int range - skip the value instead of
+                //clamping it into a bogus bin
+                if (ratio < Integer.MIN_VALUE || ratio > Integer.MAX_VALUE)
+                    continue;
+                int binIndex = (int)ratio;
                 if (binStarts.size() == 0) {
                     binStarts.add(x0+binIndex*dx);
                     binCounts.add(1.);
@@ -1454,13 +1494,22 @@ public class Analysis {
                 || inputArraySizes.get(3) < 1 || inputArraySizes.get(4) < 1 || inputArraySizes.get(5) < 1)
                 return;
 
-            int mapWidth = inputArrays.get(0)[0].intValue();
+            //A non-finite or non-positive grid size is an error state yielding empty outputs
+            double mapWidthValue = inputArrays.get(0)[0];
+            double mapHeightValue = inputArrays.get(3)[0];
+            if (Double.isNaN(mapWidthValue) || Double.isInfinite(mapWidthValue) || Double.isNaN(mapHeightValue) || Double.isInfinite(mapHeightValue))
+                return;
+
+            int mapWidth = (int)mapWidthValue;
             double minx = inputArrays.get(1)[0];
             double maxx = inputArrays.get(2)[0];
 
-            int mapHeight = inputArrays.get(3)[0].intValue();
+            int mapHeight = (int)mapHeightValue;
             double miny = inputArrays.get(4)[0];
             double maxy = inputArrays.get(5)[0];
+
+            if (mapWidth <= 0 || mapHeight <= 0)
+                return;
 
             int n = Math.min(inputArraySizes.get(6), inputArraySizes.get(7));
             if (zMode != ZMode.count)
@@ -1468,18 +1517,27 @@ public class Analysis {
 
             Double[] xin = inputArrays.get(6);
             Double[] yin = inputArrays.get(7);
-            Double[] zin = inputArrays.get(8);
+            Double[] zin = zMode != ZMode.count ? inputArrays.get(8) : null;
 
             double[] zsumout = new double[mapHeight*mapWidth];
             int[] nout = new int[mapHeight*mapWidth];
 
             for (int i = 0; i < n; i++) {
-                int x = (int)Math.round((mapWidth-1)*(xin[i]-minx)/(maxx-minx));
-                int y = (int)Math.round((mapHeight-1)*(yin[i]-miny)/(maxy-miny));
+                //Points with a non-finite x, y or z are skipped instead of being binned at
+                //index 0 (or poisoning their bin's z sum)
+                if (xin[i].isNaN() || xin[i].isInfinite() || yin[i].isNaN() || yin[i].isInfinite())
+                    continue;
+                if (zin != null && (zin[i].isNaN() || zin[i].isInfinite()))
+                    continue;
+                //Degenerate ranges (such as minx equal to maxx) make the bin index non-finite;
+                //clamp before rounding so infinities fall outside the bounds check below (a
+                //NaN index becomes bin 0) instead of wrapping in the long-to-int cast
+                int x = (int)Math.round(Math.min(Math.max((mapWidth-1)*(xin[i]-minx)/(maxx-minx), -1.), (double)mapWidth));
+                int y = (int)Math.round(Math.min(Math.max((mapHeight-1)*(yin[i]-miny)/(maxy-miny), -1.), (double)mapHeight));
                 if (x < 0 || x >= mapWidth || y < 0 || y >= mapHeight)
                     continue;
                 int index = x + y*mapWidth;
-                if (zMode != ZMode.count) {
+                if (zin != null) {
                     zsumout[index] += zin[i];
                 }
                 nout[index]++;
@@ -1533,10 +1591,8 @@ public class Analysis {
                     continue;
                 //Get iterator
                 Iterator it = inputs.get(i).getIterator();
-                if (it == null) { //non-buffer value
-                    double v = inputs.get(i).getValue();
-                    if (!Double.isNaN(v))
-                        outputs.get(0).append(v);
+                if (it == null) { //non-buffer value, appended as is - a literal NaN included
+                    outputs.get(0).append(inputs.get(i).getValue());
                     continue;
                 }
                 //Append all data from input to the output buffer
@@ -1581,20 +1637,29 @@ public class Analysis {
             if (inputs.size() > 2 && inputs.get(2) != null)
                 ity = inputs.get(2).getIterator();
 
+            //A non-finite factor is an error state yielding empty outputs (and a factor <= 0
+            //generates no output either)
+            if (Double.isNaN(inFactor) || Double.isInfinite(inFactor))
+                return;
+
+            //Processing truncates to the shortest present buffer; only an absent y input keeps
+            //processing all of x (with 0 as the y contribution)
             if (inFactor > 1) {
                 int factor = (int)Math.round(inFactor);
-                while (itx.hasNext()) {
+                while (itx.hasNext() && (ity == null || ity.hasNext())) {
                     double newx = 0.;
                     double newy = 0.;
+                    int used = 0;
                     for (int i = 0; i < factor; i++) {
-                        if (!itx.hasNext())
+                        if (!itx.hasNext() || (ity != null && !ity.hasNext()))
                             break;
                         double x = (double) itx.next();
                         double y;
-                        if (ity != null && ity.hasNext())
+                        if (ity != null)
                             y = (double) ity.next();
                         else
                             y = 0.;
+                        used++;
                         if (i == 0) {
                             newx = x;
                             newy = y;
@@ -1605,25 +1670,27 @@ public class Analysis {
                                 newx += x;
                         }
                     }
+                    //The incomplete final chunk is averaged over the number of values actually
+                    //summed, not the nominal factor
                     if (averageX)
-                        newx /= (double) factor;
+                        newx /= (double) used;
                     if (averageY)
-                        newy /= (double) factor;
+                        newy /= (double) used;
 
                     outputs.get(0).append(newx);
-                    if (outputs.size() > 1)
+                    if (outputs.size() > 1 && outputs.get(1) != null)
                         outputs.get(1).append(newy);
                 }
-            } else {
+            } else if (inFactor > 0) {
                 int factor = (int) Math.round(1. / inFactor);
-                while (itx.hasNext()) {
+                while (itx.hasNext() && (ity == null || ity.hasNext())) {
                     double newx = (double)itx.next();
                     double newy = 0.;
-                    if (ity != null && ity.hasNext())
+                    if (ity != null)
                         newy = (double)ity.next();
                     for (int i = 0; i < factor; i++) {
                         outputs.get(0).append(newx);
-                        if (outputs.size() > 1)
+                        if (outputs.size() > 1 && outputs.get(1) != null)
                             outputs.get(1).append(newy);
                     }
                 }
@@ -1801,7 +1868,9 @@ public class Analysis {
             Double x[] = inputs.get(0).buffer.getArray();
             Double y[] = inputs.get(1).buffer.getArray();
 
-            int n = inputs.get(1).buffer.getFilledSize();
+            //An x input shorter than y truncates processing to the common length - the
+            //interpolation below reads x at the found period position
+            int n = Math.min(inputs.get(0).buffer.getFilledSize(), inputs.get(1).buffer.getFilledSize());
 
             //Get dx and overlap
             int dx = (int)inputs.get(2).getValue();
@@ -2117,8 +2186,10 @@ public class Analysis {
             Double y[] = inputArrays.get(1);
             if (inputArraySizes.get(2) == 0)
                 return;
-            d = inputArrays.get(2)[0];
-            if (d <= 0.0 || Double.isNaN(d))
+            //d is read from the last element of its buffer, the convention for single-value
+            //inputs; a non-positive or non-finite d is an error state yielding empty outputs
+            d = inputArrays.get(2)[inputArraySizes.get(2)-1];
+            if (d <= 0.0 || Double.isNaN(d) || Double.isInfinite(d))
                 return;
             Double xout[] = inputArrays.get(3);
             int incount = Math.min(inputArraySizes.get(0), inputArraySizes.get(1));
@@ -2405,10 +2476,6 @@ public class Analysis {
     //You can set start, stop and length. The first value will match start, the last value will match stop
     //Databuffers allowed for all parameters
     public static class rampGeneratorAM extends AnalysisModule implements Serializable {
-        //Defaults as string values as this might be set to a dataBuffer
-        double vstart = 0.;
-        double vstop = 100.;
-        int vlength = -1;
 
         protected rampGeneratorAM(PhyphoxExperiment experiment, Vector<DataInput> inputs, Vector<DataOutput> outputs) {
             super(experiment, inputs, outputs);
@@ -2416,16 +2483,44 @@ public class Analysis {
 
         @Override
         protected void update() {
-            if (inputs.size() > 0 && inputs.get(0) != null)
+            //An empty start/stop buffer and a non-finite start/stop value are errors yielding
+            //empty output (a value-type input is never empty)
+            double vstart = 0.;
+            double vstop = 100.;
+            if (inputs.size() > 0 && inputs.get(0) != null) {
+                if (inputs.get(0).getFilledSize() == 0)
+                    return;
                 vstart = inputs.get(0).getValue();
-            if (inputs.size() > 1 && inputs.get(1) != null)
+            }
+            if (inputs.size() > 1 && inputs.get(1) != null) {
+                if (inputs.get(1).getFilledSize() == 0)
+                    return;
                 vstop = inputs.get(1).getValue();
-            if (inputs.size() > 2 && inputs.get(2) != null)
-                vlength = (int)inputs.get(2).getValue();
+            }
+            if (Double.isNaN(vstart) || Double.isInfinite(vstart) || Double.isNaN(vstop) || Double.isInfinite(vstop))
+                return;
 
-            //If length is not set, use the size of the output buffer
-            if (vlength < 0)
+            //An explicit length of 0, an empty length buffer and a non-finite or negative
+            //length all yield an empty output; only an absent length input falls back to the
+            //output buffer's size.
+            int vlength;
+            if (inputs.size() > 2 && inputs.get(2) != null) {
+                if (inputs.get(2).getFilledSize() == 0)
+                    return;
+                double l = inputs.get(2).getValue();
+                if (Double.isNaN(l) || Double.isInfinite(l) || l < 0)
+                    return;
+                vlength = (int)l;
+            } else {
                 vlength = outputs.get(0).size();
+            }
+
+            if (vlength == 1) {
+                //A single-point ramp outputs its start value: the step is undefined for one
+                //point and used to produce NaN through the division by length-1
+                outputs.get(0).append(vstart);
+                return;
+            }
 
             //Write ramp to output buffer
             for (int i = 0; i < vlength; i++) {
@@ -2440,9 +2535,6 @@ public class Analysis {
     //You can set the value and length.
     //Databuffers allowed for all parameters
     public static class constGeneratorAM extends AnalysisModule implements Serializable {
-        //Defaults as string values as this might be set to a dataBuffer
-        double vvalue = 0.;
-        int vlength = -1;
 
         protected constGeneratorAM(PhyphoxExperiment experiment, Vector<DataInput> inputs, Vector<DataOutput> outputs) {
             super(experiment, inputs, outputs);
@@ -2450,14 +2542,30 @@ public class Analysis {
 
         @Override
         protected void update() {
-            if (inputs.size() > 0 && inputs.get(0) != null)
+            //An absent value input keeps the default 0; a present input with an empty buffer is
+            //an error yielding empty output. A present NaN value is permitted and fills the
+            //output with NaN as a deliberate initialization.
+            double vvalue = 0.;
+            if (inputs.size() > 0 && inputs.get(0) != null) {
+                if (inputs.get(0).getFilledSize() == 0)
+                    return;
                 vvalue = inputs.get(0).getValue();
-            if (inputs.size() > 1 && inputs.get(1) != null)
-                vlength = (int)inputs.get(1).getValue();
+            }
 
-            //If length is not set, use the size of the output buffer
-            if (vlength < 0)
+            //An explicit length of 0, an empty length buffer and a non-finite or negative
+            //length all yield an empty output; only an absent length input falls back to the
+            //output buffer's size.
+            int vlength;
+            if (inputs.size() > 1 && inputs.get(1) != null) {
+                if (inputs.get(1).getFilledSize() == 0)
+                    return;
+                double l = inputs.get(1).getValue();
+                if (Double.isNaN(l) || Double.isInfinite(l) || l < 0)
+                    return;
+                vlength = (int)l;
+            } else {
                 vlength = outputs.get(0).size();
+            }
 
             //Write values to output
             for (int i = 0; i < vlength; i++) {
@@ -2477,14 +2585,28 @@ public class Analysis {
         @Override
         protected void update() {
 
+            //A present but non-finite from/to/length value is an error state yielding empty
+            //outputs; only an absent input or an empty parameter buffer keeps the defaults.
             int start = 0;
             int end = -1;
-            if (inputs.size() > 0 && inputs.get(0) != null)
-                start = (int)inputs.get(0).getValue();
-            if (inputs.size() > 1 && inputs.get(1) != null)
-                end = (int)inputs.get(1).getValue();
-            if (inputs.size() > 2 && inputs.get(2) != null)
-                end = start + (int)inputs.get(2).getValue();
+            if (inputs.size() > 0 && inputs.get(0) != null && inputs.get(0).getFilledSize() > 0) {
+                double v = inputs.get(0).getValue();
+                if (Double.isNaN(v) || Double.isInfinite(v))
+                    return;
+                start = (int)v;
+            }
+            if (inputs.size() > 1 && inputs.get(1) != null && inputs.get(1).getFilledSize() > 0) {
+                double v = inputs.get(1).getValue();
+                if (Double.isNaN(v) || Double.isInfinite(v))
+                    return;
+                end = (int)v;
+            }
+            if (inputs.size() > 2 && inputs.get(2) != null && inputs.get(2).getFilledSize() > 0) {
+                double v = inputs.get(2).getValue();
+                if (Double.isNaN(v) || Double.isInfinite(v))
+                    return;
+                end = start + (int)v;
+            }
 
             if (start < 0) {
                 start = 0;
@@ -2575,23 +2697,38 @@ public class Analysis {
 
         @Override
         protected void update() {
+            //A NaN threshold participates in the comparisons like any number (no trigger ever
+            //fires); only an absent input or an empty buffer selects the default of 0.
             double threshold = 0.;
-            int distance = 0;
-            int index = 0;
-            int skip = 0;
+            //index/skip/last are the module's own state loop: absent inputs or empty buffers
+            //keep the documented start defaults (0/0/NaN). A present but non-finite
+            //distance/index/skip value is an error state yielding empty outputs - which resets
+            //the state loop to its start defaults on the next run.
+            double distanceValue = 0.;
+            double indexValue = 0.;
+            double skipValue = 0.;
             double last = Double.NaN;
 
             Double[] data = inputArrays.get(0);
             if (inputArrays.size() > 1 && inputArrays.get(1) != null && inputArraySizes.get(1) > 0)
                 threshold = inputArrays.get(1)[inputArraySizes.get(1)-1];
             if (inputArrays.size() > 2 && inputArrays.get(2) != null && inputArraySizes.get(2) > 0)
-                distance = inputArrays.get(2)[inputArraySizes.get(2)-1].intValue();
+                distanceValue = inputArrays.get(2)[inputArraySizes.get(2)-1];
             if (inputArrays.size() > 3 && inputArrays.get(3) != null && inputArraySizes.get(3) > 0)
-                index = inputArrays.get(3)[inputArraySizes.get(3)-1].intValue();
+                indexValue = inputArrays.get(3)[inputArraySizes.get(3)-1];
             if (inputArrays.size() > 4 && inputArrays.get(4) != null && inputArraySizes.get(4) > 0)
-                skip = inputArrays.get(4)[inputArraySizes.get(4)-1].intValue();
+                skipValue = inputArrays.get(4)[inputArraySizes.get(4)-1];
             if (inputArrays.size() > 5 && inputArrays.get(5) != null && inputArraySizes.get(5) > 0)
                 last = inputArrays.get(5)[inputArraySizes.get(5)-1];
+
+            if (Double.isNaN(distanceValue) || Double.isInfinite(distanceValue)
+                    || Double.isNaN(indexValue) || Double.isInfinite(indexValue)
+                    || Double.isNaN(skipValue) || Double.isInfinite(skipValue))
+                return;
+
+            int distance = (int)distanceValue;
+            int index = (int)indexValue;
+            int skip = (int)skipValue;
 
             int i = 0;
             int n = inputArraySizes.get(0);
@@ -2658,7 +2795,7 @@ public class Analysis {
     //Take data as input along with width of the moving average (number of values to average)
     //Output is just the resulting moving average
     //Parameter dropIncomplete determines whether values are emitted if less than width values have been taken into account
-    //With dropIncomplete true, it will output n-width+1 values for an input of n data values
+    //With dropIncomplete true, it will output n-width values for an input of n data values
     //With dropIncomplete false, it will output n values
     public static class movingaverageAM extends AnalysisModule implements Serializable {
         boolean dropIncomplete = false;
@@ -2671,21 +2808,34 @@ public class Analysis {
 
         @Override
         protected void update() {
+            //The documented default width of 10 is kept for an absent input or an empty width
+            //buffer; a present but invalid width - non-finite or negative - is an error state
+            //yielding empty output and must not act as some substitute width.
             int width = 10;
 
             Double[] data = inputArrays.get(0);
-            if (inputArrays.size() > 1 && inputArrays.get(1) != null && inputArraySizes.get(1) > 0)
-                width = inputArrays.get(1)[inputArraySizes.get(1)-1].intValue();
+            if (inputArrays.size() > 1 && inputArrays.get(1) != null && inputArraySizes.get(1) > 0) {
+                double widthValue = inputArrays.get(1)[inputArraySizes.get(1)-1];
+                if (Double.isNaN(widthValue) || Double.isInfinite(widthValue) || widthValue < 0)
+                    return;
+                width = (int)widthValue;
+            }
 
             int start = dropIncomplete ? width : 0;
 
             for (int i = start; i < inputArraySizes.get(0); i++) {
                 int substart = Math.max(i-width, 0);
+                //Skip non-finite values inside the window, aligning with average and binning; a
+                //window without any finite value yields NaN
                 double sum = 0.0;
+                int count = 0;
                 for (int j = substart; j <= i; j++) {
+                    if (data[j].isNaN() || data[j].isInfinite())
+                        continue;
                     sum += data[j];
+                    count++;
                 }
-                sum /= (double)(i - substart + 1);
+                sum /= (double)count;
                 outputs.get(0).append(sum);
             }
         }
@@ -2707,17 +2857,27 @@ public class Analysis {
             Double[] data = inputArrays.get(0);
 
             int n = inputArraySizes.get(0);
-            int index = n;
+
+            //A present but non-finite index or overlap is an error state yielding empty
+            //outputs. Finite values are clamped into range - negative and out-of-range positive
+            //indices alike. Absent inputs or empty buffers keep the defaults (index = input
+            //length, overlap = 0).
+            double indexValue = n;
             if (inputArrays.size() > 1 && inputArrays.get(1) != null && inputArraySizes.get(1) > 0)
-                index = inputArrays.get(1)[inputArraySizes.get(1)-1].intValue();
-            int overlap = 0;
+                indexValue = inputArrays.get(1)[inputArraySizes.get(1)-1];
+            double overlapValue = 0;
             if (inputArrays.size() > 2 && inputArrays.get(2) != null && inputArraySizes.get(2) > 0)
-                overlap = inputArrays.get(2)[inputArraySizes.get(2)-1].intValue();
+                overlapValue = inputArrays.get(2)[inputArraySizes.get(2)-1];
+            if (Double.isNaN(indexValue) || Double.isInfinite(indexValue) || Double.isNaN(overlapValue) || Double.isInfinite(overlapValue))
+                return;
+
+            int index = (int)Math.min(Math.max(indexValue, 0), n);
+            int overlap = (int)Math.min(Math.max(overlapValue, -(n + 1.)), n + 1.);
 
             int limit = Math.min(index, n);
             if (outputs.size() > 0 && outputs.get(0) != null)
                 outputs.get(0).append(Arrays.copyOfRange(data, 0, limit), limit);
-            limit = Math.max(limit - overlap, 0);
+            limit = Math.min(Math.max(limit - overlap, 0), n);
             if (outputs.size() > 1 && outputs.get(1) != null)
                 outputs.get(1).append(Arrays.copyOfRange(data, limit, n), n-limit);
 
