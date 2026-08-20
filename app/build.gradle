@@ -72,6 +72,12 @@ android {
         buildConfig true
     }
 
+    testOptions {
+        //JVM unit tests touch classes whose static initializers call android.util.Log
+        //(e.g. Analysis); let those calls return defaults instead of throwing
+        unitTests.returnDefaultValues = true
+    }
+
     ndkVersion '28.0.13004108'
 }
 
