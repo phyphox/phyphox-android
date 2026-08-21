@@ -182,7 +182,7 @@
     <string name="pick_exportFormat">데이터 형식을 선택하세요.</string>
     <string name="noDrawableData">표시할 데이터가 없습니다.</string>
     <string name="categoryNewExperiment">간단한 사용자 지정 실험</string>
-    <string name="categoryRawSensor">기본 센서</string>
+    <string name="categoryRawSensor">기본 센서(raw sensors)</string>
     <string name="categoryPhyphoxOrg">Phyphox에 기여하기</string>
     <string name="categoryPhyphoxOrgHint">목록 하단에 phyphox를 후원할 수 있는 새로운 옵션이 있습니다.</string>
     <string name="experimentinfo_hint">이 실험의 사용 방법을 알아보려면 실험 정보를 확인하세요.</string>
@@ -429,4 +429,6 @@
     <string name="localNetworkLoadMessage">이 주소에서 실험을 불러올 수 없습니다. 로컬 네트워크의 기기에서 제공되는 경우, phyphox에 로컬 네트워크 접근 권한이 필요합니다. 권한을 허용하고 다시 시도하시겠습니까\?</string>
     <string name="localNetworkExperimentMessage">이 실험은 로컬 네트워크의 기기 연결을 사용합니다. 해당 기기에 도달하려면 phyphox에 로컬 네트워크 접근 권한이 필요합니다.</string>
     <string name="localNetworkDeniedHint">로컬 네트워크 권한이 없으면 로컬 네트워크의 기기 연결에 실패합니다.</string>
+    <string name="remoteServerPortInUseTitle">원격 접속을 활성화할 수 없습니다</string>
+    <string name="remoteServerPortInUse">이 기기의 다른 앱에서 포트를 이미 사용 중이므로 원격 접속을 활성화할 수 없습니다. 해당 포트를 사용 중인 앱을 종료하거나 phyphox 설정에서 다른 포트를 지정하세요.</string>
 </resources>
