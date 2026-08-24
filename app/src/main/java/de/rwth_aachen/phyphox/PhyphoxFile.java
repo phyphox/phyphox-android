@@ -1675,15 +1675,15 @@ public abstract class PhyphoxFile {
                         ExpView.valueElement.Mapping map = ve.new Mapping(translate(at.content, parent));
                         if (at.attributes.containsKey("min")) {
                             try {
-                                map.min = Double.valueOf(at.attributes.get("min"));
-                            } catch (Exception e) {
+                                map.min = parseNumber(at.attributes.get("min"));
+                            } catch (NumberFormatException e) {
                                 throw new phyphoxFileException("Could not parse min of map tag.", xpp.getLineNumber());
                             }
                         }
                         if (at.attributes.containsKey("max")) {
                             try {
-                                map.max = Double.valueOf(at.attributes.get("max"));
-                            } catch (Exception e) {
+                                map.max = parseNumber(at.attributes.get("max"));
+                            } catch (NumberFormatException e) {
                                 throw new phyphoxFileException("Could not parse max of map tag.", xpp.getLineNumber());
                             }
                         }
@@ -2001,8 +2001,8 @@ public abstract class PhyphoxFile {
                             }
                             if (gi.attributes.containsKey("lineWidth")) {
                                 try {
-                                    ge.setLineWidth(Double.valueOf(gi.attributes.get("lineWidth")), curveOfDataset[i]);
-                                } catch (Exception e) {
+                                    ge.setLineWidth(parseNumber(gi.attributes.get("lineWidth")), curveOfDataset[i]);
+                                } catch (NumberFormatException e) {
                                     throw new phyphoxFileException("Could not parse lineWidth of input tag.", xpp.getLineNumber());
                                 }
                             }
@@ -2066,15 +2066,15 @@ public abstract class PhyphoxFile {
                             ExpView.buttonElement.ButtonMapping map = be.new ButtonMapping(translate(at.content, parent));
                             if (at.attributes.containsKey("min")) {
                                 try {
-                                    map.min = Double.valueOf(at.attributes.get("min"));
-                                } catch (Exception e) {
+                                    map.min = parseNumber(at.attributes.get("min"));
+                                } catch (NumberFormatException e) {
                                     throw new phyphoxFileException("Could not parse min of map tag.", xpp.getLineNumber());
                                 }
                             }
                             if (at.attributes.containsKey("max")) {
                                 try {
-                                    map.max = Double.valueOf(at.attributes.get("max"));
-                                } catch (Exception e) {
+                                    map.max = parseNumber(at.attributes.get("max"));
+                                } catch (NumberFormatException e) {
                                     throw new phyphoxFileException("Could not parse max of map tag.", xpp.getLineNumber());
                                 }
                             }
