@@ -91,6 +91,52 @@ abstract class CorpusTestEnvironment {
         return result;
     }
 
+    //Minimal reader for the expected.yml next to a file in valid/ or generated/, which records
+    //what each platform's loading path does with a file exercising a construct the spec marks
+    //as platform-limited:
+    //
+    //  bluetooth-address.phyphox:
+    //    parser:
+    //      android: accepts
+    //      ios: rejects
+    //
+    //Returns the Android expectation ("accepts" or "rejects"), or null if the file has no
+    //entry - the default, in which case it simply has to load like every other valid file.
+    static String androidExpectation(File corpus, String relativePath) throws IOException {
+        String corpusPath = corpus.getAbsolutePath();
+        File dir = new File(corpus, relativePath).getParentFile();
+        while (dir != null && dir.getAbsolutePath().startsWith(corpusPath)) {
+            File expected = new File(dir, "expected.yml");
+            if (expected.isFile()) {
+                String expectation = platformClassification(expected).get(new File(relativePath).getName());
+                if (expectation != null)
+                    return expectation;
+            }
+            dir = dir.getParentFile();
+        }
+        return null;
+    }
+
+    //Per top-level "<file>.phyphox:" entry, the "android:" line nested under "parser:". Like
+    //parserClassification above, this is deliberately not a full YAML parser.
+    private static java.util.Map<String, String> platformClassification(File expectedYml) throws IOException {
+        java.util.Map<String, String> result = new java.util.LinkedHashMap<>();
+        Pattern fileEntry = Pattern.compile("^([^\\s:#]+\\.phyphox):");
+        Pattern androidEntry = Pattern.compile("^\\s+android:\\s*(accepts|rejects)\\b");
+        String currentFile = null;
+        for (String line : Files.readAllLines(expectedYml.toPath(), StandardCharsets.UTF_8)) {
+            Matcher m = fileEntry.matcher(line);
+            if (m.find()) {
+                currentFile = m.group(1);
+                continue;
+            }
+            m = androidEntry.matcher(line);
+            if (m.find() && currentFile != null)
+                result.put(currentFile, m.group(1));
+        }
+        return result;
+    }
+
     //The version attribute of the root phyphox element as {major, minor}, or null if the file
     //does not declare one (which the parser allows).
     static int[] declaredVersion(File file) throws IOException {

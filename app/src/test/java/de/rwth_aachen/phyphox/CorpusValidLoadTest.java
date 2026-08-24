@@ -1,5 +1,6 @@
 package de.rwth_aachen.phyphox;
 
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assume.assumeTrue;
 
@@ -18,7 +19,9 @@ import java.util.List;
 //Every file in phyphox-docs' corpus/valid and corpus/generated whose declared format version is
 //at most PhyphoxFile.phyphoxFileVersion must load through the real loading path without error.
 //Files declaring a newer version are skipped, not failed - they exist for future format
-//versions. Contract: phyphox-docs/corpus/README.md, "The app test suites".
+//versions. A file with an entry in its directory's expected.yml exercises a construct with a
+//deliberate platform difference: if that entry maps android to "rejects", the refusal is
+//asserted instead of the load. Contract: phyphox-docs/corpus/README.md, "The app test suites".
 @RunWith(ParameterizedRobolectricTestRunner.class)
 @Config(sdk = 35)
 public class CorpusValidLoadTest {
@@ -44,19 +47,29 @@ public class CorpusValidLoadTest {
     }
 
     @Test
-    public void loadsWithoutError() throws Exception {
+    public void matchesExpectedLoadResult() throws Exception {
         assumeTrue("No phyphox-docs checkout found next to this repository - corpus skipped.",
                 !CorpusTestEnvironment.CORPUS_MISSING.equals(relativePath));
 
-        File file = new File(CorpusTestEnvironment.findCorpus(), relativePath);
+        File corpus = CorpusTestEnvironment.findCorpus();
+        File file = new File(corpus, relativePath);
         int[] declared = CorpusTestEnvironment.declaredVersion(file);
         if (declared != null)
             assumeTrue("Declares format version " + declared[0] + "." + declared[1]
                             + " > supported " + PhyphoxFile.phyphoxFileVersion + " - skipped.",
                     CorpusTestEnvironment.versionAtMostSupported(declared));
 
+        String expectation = CorpusTestEnvironment.androidExpectation(corpus, relativePath);
+
         Experiment activity = CorpusTestEnvironment.fullyEquippedActivity();
         PhyphoxExperiment experiment = CorpusTestEnvironment.load(file, activity);
-        assertTrue(relativePath + " failed to load: " + experiment.message, experiment.loaded);
+
+        if ("rejects".equals(expectation))
+            //A recorded platform difference: the refusal is contract, so assert it rather than
+            //excusing the file from the corpus.
+            assertFalse(relativePath + " loaded although expected.yml maps android to \"rejects\"",
+                    experiment.loaded);
+        else
+            assertTrue(relativePath + " failed to load: " + experiment.message, experiment.loaded);
     }
 }
