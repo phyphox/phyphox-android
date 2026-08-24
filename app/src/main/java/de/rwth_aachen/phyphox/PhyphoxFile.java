@@ -3963,6 +3963,105 @@ public abstract class PhyphoxFile {
 
     }
 
+    //Load a phyphoxExperiment from an already opened PhyphoxStream. Every experiment goes through
+    //this path, whichever way its stream was obtained. It is also the entry point used by the
+    //corpus conformance tests (app/src/test), which is why it is public.
+    public static PhyphoxExperiment loadExperiment(PhyphoxStream input, Experiment parent) {
+        //Reset the per-parse translation state. openXMLInputStream does this too, but callers
+        //that bring their own PhyphoxStream (like the corpus tests) do not go through it.
+        languageRating = 0;
+        translation = new HashMap<>();
+        selectedTranslationBlock = null;
+        allTranslationBlocks = new ArrayList<>();
+
+        //New experiment
+        PhyphoxExperiment experiment = new PhyphoxExperiment();
+
+        if (input.inputStream == null) { //If opening the stream failed, abort and relay the error message
+            experiment.message = input.errorMessage;
+            return experiment;
+        }
+
+        experiment.isLocal = input.isLocal; //The experiment needs to know if it is local
+        experiment.source = input.source;
+        experiment.crc32 = input.crc32;
+        experiment.resourceFolder = input.resourceFolder;
+        try {
+            //Setup the pull parser
+            BufferedReader reader = new BufferedReader(new InputStreamReader(input.inputStream));
+
+            XmlPullParser xpp = Xml.newPullParser();
+            xpp.setFeature(XmlPullParser.FEATURE_PROCESS_NAMESPACES, true);
+            xpp.setInput(reader);
+
+            //We can just race through all start tags until we reach the phyphox tag. Then let out phyphoxBlockParser take over.
+            int eventType = xpp.getEventType();
+            while (eventType != XmlPullParser.END_DOCUMENT) {
+                //Element names are matched case-insensitively, including the root element (see rules.yml, enum-case-insensitive)
+                if (eventType == XmlPullParser.START_TAG && xpp.getName().equalsIgnoreCase("phyphox")) {
+                    //Phyphox tag. This is what we need to read, but let's check the file version first.
+                    String fileVersion = xpp.getAttributeValue(XmlPullParser.NO_NAMESPACE, "version");
+                    if (fileVersion != null) {
+                        //A file version has been given. (If not, some user probably created the file manually. Let's allow this although it should not be encouraged.)
+                        //Parse the file version and the version of this class
+                        int split = fileVersion.indexOf('.'); //File version
+                        int phyphoxSplit = phyphoxFileVersion.indexOf('.'); //Class version
+                        try {
+                            //Version strings are supposed to be of the form "x.y" with x being the major version number and y being minor.
+
+                            //File versions
+                            experiment.versionMajor = Integer.valueOf(fileVersion.substring(0, split));
+                            experiment.versionMinor = Integer.valueOf(fileVersion.substring(split + 1));
+
+                            //Class versions
+                            int phyphoxMajor = Integer.valueOf(phyphoxFileVersion.substring(0, phyphoxSplit));
+                            int phyphoxMinor = Integer.valueOf(phyphoxFileVersion.substring(phyphoxSplit + 1));
+
+                            //This class needs to be newer than the file. Otherwise ask the user to update.
+                            if (experiment.versionMajor > phyphoxMajor || (experiment.versionMajor == phyphoxMajor && experiment.versionMinor > phyphoxMinor)) {
+                                experiment.message = "This experiment has been created for a more recent version of phyphox. Please update phyphox to load this experiment.";
+                                return experiment;
+                            }
+                        } catch (NumberFormatException e) {
+                            experiment.message = "Unable to interpret the file version of this experiment.";
+                            return experiment;
+                        }
+
+                        String globalLocale = xpp.getAttributeValue(XmlPullParser.NO_NAMESPACE, "locale");
+                        languageRating = Helper.getLanguageRating(parent.getResources(), globalLocale);
+                    }
+                    (new phyphoxBlockParser(xpp, experiment, parent)).process();
+                }
+                eventType = xpp.next();
+            }
+        } catch (XmlPullParserException e) { //Catch pullparser errors
+            experiment.message = "XML Error in line "+ e.getLineNumber() +": " + e.getMessage();
+            return experiment;
+        } catch (phyphoxFileException e) { //Catch our own errors
+            experiment.message = e.getMessage();
+            return experiment;
+        } catch (IOException e) { //Catch IO errors
+            experiment.message = "Unhandled IO error while loading this experiment: " + e.getMessage();
+            return experiment;
+        } catch (RuntimeException e) { //Those are a thing, too... For example, for some reason an undefined xml prefix throws a RuntimeException.
+            experiment.message = "Unhandled RuntimeException while loading this experiment: " + e.getMessage();
+            e.printStackTrace();
+            return experiment;
+
+        }
+
+        //Sanity check: If the experiment did not define any views, we cannot use it
+        if (experiment.experimentViews.size() == 0) {
+            experiment.message = "Bad experiment definition: No valid view found.";
+            return experiment;
+        }
+
+        //We are done without any problems that we know of.
+        experiment.loaded = true;
+        return experiment;
+
+    }
+
     //This AsyncTask will load a phyphoxExperiment from an intent and return it by passing it to
     //onExperimentLoaded of the activity given in the constructor.
     protected static class loadXMLAsyncTask extends AsyncTask<String, Void, PhyphoxExperiment> {
@@ -3976,94 +4075,9 @@ public abstract class PhyphoxFile {
 
         //Load the file from the intent
         protected PhyphoxExperiment doInBackground(String... params) {
-            //New experiment
-            PhyphoxExperiment experiment = new PhyphoxExperiment();
-
-            //Open the input stream (see above)
+            //Open the input stream (see above) and load the experiment from it
             PhyphoxStream input = openXMLInputStream(intent, parent.get());
-            if (input.inputStream == null) { //If this failed, abort and relay the error message
-                experiment.message = input.errorMessage;
-                return experiment;
-            }
-
-            experiment.isLocal = input.isLocal; //The experiment needs to know if it is local
-            experiment.source = input.source;
-            experiment.crc32 = input.crc32;
-            experiment.resourceFolder = input.resourceFolder;
-            try {
-                //Setup the pull parser
-                BufferedReader reader = new BufferedReader(new InputStreamReader(input.inputStream));
-
-                XmlPullParser xpp = Xml.newPullParser();
-                xpp.setFeature(XmlPullParser.FEATURE_PROCESS_NAMESPACES, true);
-                xpp.setInput(reader);
-
-                //We can just race through all start tags until we reach the phyphox tag. Then let out phyphoxBlockParser take over.
-                int eventType = xpp.getEventType();
-                while (eventType != XmlPullParser.END_DOCUMENT) {
-                    //Element names are matched case-insensitively, including the root element (see rules.yml, enum-case-insensitive)
-                    if (eventType == XmlPullParser.START_TAG && xpp.getName().equalsIgnoreCase("phyphox")) {
-                        //Phyphox tag. This is what we need to read, but let's check the file version first.
-                        String fileVersion = xpp.getAttributeValue(XmlPullParser.NO_NAMESPACE, "version");
-                        if (fileVersion != null) {
-                            //A file version has been given. (If not, some user probably created the file manually. Let's allow this although it should not be encouraged.)
-                            //Parse the file version and the version of this class
-                            int split = fileVersion.indexOf('.'); //File version
-                            int phyphoxSplit = phyphoxFileVersion.indexOf('.'); //Class version
-                            try {
-                                //Version strings are supposed to be of the form "x.y" with x being the major version number and y being minor.
-
-                                //File versions
-                                experiment.versionMajor = Integer.valueOf(fileVersion.substring(0, split));
-                                experiment.versionMinor = Integer.valueOf(fileVersion.substring(split + 1));
-
-                                //Class versions
-                                int phyphoxMajor = Integer.valueOf(phyphoxFileVersion.substring(0, phyphoxSplit));
-                                int phyphoxMinor = Integer.valueOf(phyphoxFileVersion.substring(phyphoxSplit + 1));
-
-                                //This class needs to be newer than the file. Otherwise ask the user to update.
-                                if (experiment.versionMajor > phyphoxMajor || (experiment.versionMajor == phyphoxMajor && experiment.versionMinor > phyphoxMinor)) {
-                                    experiment.message = "This experiment has been created for a more recent version of phyphox. Please update phyphox to load this experiment.";
-                                    return experiment;
-                                }
-                            } catch (NumberFormatException e) {
-                                experiment.message = "Unable to interpret the file version of this experiment.";
-                                return experiment;
-                            }
-
-                            String globalLocale = xpp.getAttributeValue(XmlPullParser.NO_NAMESPACE, "locale");
-                            languageRating = Helper.getLanguageRating(parent.get().getResources(), globalLocale);
-                        }
-                        (new phyphoxBlockParser(xpp, experiment, parent.get())).process();
-                    }
-                    eventType = xpp.next();
-                }
-            } catch (XmlPullParserException e) { //Catch pullparser errors
-                experiment.message = "XML Error in line "+ e.getLineNumber() +": " + e.getMessage();
-                return experiment;
-            } catch (phyphoxFileException e) { //Catch our own errors
-                experiment.message = e.getMessage();
-                return experiment;
-            } catch (IOException e) { //Catch IO errors
-                experiment.message = "Unhandled IO error while loading this experiment: " + e.getMessage();
-                return experiment;
-            } catch (RuntimeException e) { //Those are a thing, too... For example, for some reason an undefined xml prefix throws a RuntimeException.
-                experiment.message = "Unhandled RuntimeException while loading this experiment: " + e.getMessage();
-                e.printStackTrace();
-                return experiment;
-
-            }
-
-            //Sanity check: If the experiment did not define any views, we cannot use it
-            if (experiment.experimentViews.size() == 0) {
-                experiment.message = "Bad experiment definition: No valid view found.";
-                return experiment;
-            }
-
-            //We are done without any problems that we know of.
-            experiment.loaded = true;
-            return experiment;
-
+            return loadExperiment(input, parent.get());
         }
 
         @Override

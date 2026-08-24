@@ -76,6 +76,9 @@ android {
         //JVM unit tests touch classes whose static initializers call android.util.Log
         //(e.g. Analysis); let those calls return defaults instead of throwing
         unitTests.returnDefaultValues = true
+        //The corpus conformance tests parse experiment files through the real loading path
+        //under Robolectric, which needs the app's resources and assets
+        unitTests.includeAndroidResources = true
     }
 
     ndkVersion '28.0.13004108'
@@ -115,6 +118,8 @@ dependencies {
     androidTestScreenshotImplementation 'androidx.test.espresso:espresso-core:3.7.0'
 
     testImplementation "com.google.truth:truth:1.4.5"
+    testImplementation 'org.robolectric:robolectric:4.16.1'
+    testImplementation 'androidx.test:core:1.7.0'
 
     //MQTT is handled by a from-scratch MQTT 3.1.1 client (NetworkConnection/Mqtt/MqttClient.java);
     //the Eclipse Paho / hannesa2 "paho.mqtt.android" fork dependency was removed.
