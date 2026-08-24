@@ -10,6 +10,9 @@ import android.hardware.SensorManager;
 import android.hardware.camera2.CameraCharacteristics;
 import android.hardware.camera2.CameraManager;
 import android.hardware.camera2.CameraMetadata;
+import android.graphics.ImageFormat;
+import android.util.Range;
+import android.util.Size;
 
 import androidx.test.core.app.ApplicationProvider;
 
@@ -17,6 +20,9 @@ import org.robolectric.Robolectric;
 import org.robolectric.Shadows;
 import org.robolectric.shadows.ShadowCameraCharacteristics;
 import org.robolectric.shadows.ShadowSensor;
+import org.robolectric.shadows.StreamConfigurationMapBuilder;
+
+import de.rwth_aachen.phyphox.camera.helper.CameraHelper;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -208,7 +214,22 @@ abstract class CorpusTestEnvironment {
         shadowCharacteristics.set(CameraCharacteristics.REQUEST_AVAILABLE_CAPABILITIES, new int[]{
                 CameraMetadata.REQUEST_AVAILABLE_CAPABILITIES_BACKWARD_COMPATIBLE,
                 CameraMetadata.REQUEST_AVAILABLE_CAPABILITIES_DEPTH_OUTPUT});
+        //Characteristics every real camera reports and the app dereferences without a null
+        //check when it collects camera and depth metadata.
+        shadowCharacteristics.set(CameraCharacteristics.INFO_SUPPORTED_HARDWARE_LEVEL,
+                CameraMetadata.INFO_SUPPORTED_HARDWARE_LEVEL_FULL);
+        shadowCharacteristics.set(CameraCharacteristics.SCALER_STREAM_CONFIGURATION_MAP,
+                StreamConfigurationMapBuilder.newBuilder()
+                        .addOutputSize(new Size(1920, 1080))
+                        .addOutputSize(ImageFormat.DEPTH16, new Size(240, 180))
+                        .build());
+        shadowCharacteristics.set(CameraCharacteristics.CONTROL_AE_AVAILABLE_TARGET_FPS_RANGES,
+                new Range[]{new Range<>(15, 30)});
         Shadows.shadowOf(cameraManager).addCamera("0", characteristics);
+        //The app enumerates the cameras when the experiment list loads and caches the result;
+        //the depth input and the device metadata read that cache and dereference it without a
+        //null check, so a test device has to fill it just like the app does.
+        CameraHelper.updateCameraList(cameraManager);
 
         //The parser takes the hosting Experiment activity as its context. It only uses the
         //activity as a Context and for its sensorManager field, so an attached but not started

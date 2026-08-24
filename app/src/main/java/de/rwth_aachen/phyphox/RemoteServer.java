@@ -1173,6 +1173,11 @@ public class RemoteServer {
 
             JSONObject sensorsJson = new JSONObject();
             for (SensorInput.SensorName sensor : SensorInput.SensorName.values()) {
+                //Custom sensors are selected by nameFilter, so per-sensor metadata for "custom"
+                //is ambiguous and not part of the identifier vocabulary (see Metadata.java) -
+                //asking for it would throw and turn the whole response into a 500.
+                if (sensor == SensorInput.SensorName.custom)
+                    continue;
                 JSONObject sensorJson = new JSONObject();
                 for (Metadata.SensorMetadata sensorMetadata : Metadata.SensorMetadata.values()) {
                     String identifier = sensorMetadata.toString();
