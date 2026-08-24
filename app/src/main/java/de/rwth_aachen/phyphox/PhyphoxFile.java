@@ -332,21 +332,56 @@ public abstract class PhyphoxFile {
             return translate(xpp.getAttributeValue(XmlPullParser.NO_NAMESPACE, identifier), parent);
         }
 
-        //Helper to receive an integer typed attribute, if invalid or not present, return default
-        protected int getIntAttribute(String identifier, int defaultValue) {
-            try {
-                return Integer.valueOf(xpp.getAttributeValue(XmlPullParser.NO_NAMESPACE, identifier));
-            } catch (Exception e) {
+        //Lexical space of a number in the phyphox file format (see rules.yml,
+        //number-invalid-value): plain decimal notation plus the special values NaN and
+        //+-Infinity matched case-insensitively. Deliberately narrower than Java's own parsers,
+        //which also accept hexadecimal floats, type suffixes and surrounding whitespace that
+        //do not parse on other platforms.
+        private final static Pattern floatLexical = Pattern.compile("[+-]?([0-9]+(\\.[0-9]*)?|\\.[0-9]+)([eE][+-]?[0-9]+)?|[nN][aA][nN]|[+-]?[iI][nN][fF][iI][nN][iI][tT][yY]");
+        private final static Pattern intLexical = Pattern.compile("[+-]?[0-9]+");
+
+        //Parse a number from the lexical space above, throwing NumberFormatException on
+        //anything outside it. Double.parseDouble only accepts the exact spellings "NaN",
+        //"Infinity", "+Infinity" and "-Infinity", so the special values are matched here.
+        protected double parseNumber(String str) throws NumberFormatException {
+            if (!floatLexical.matcher(str).matches())
+                throw new NumberFormatException(str);
+            if (str.equalsIgnoreCase("NaN"))
+                return Double.NaN;
+            if (str.equalsIgnoreCase("Infinity") || str.equalsIgnoreCase("+Infinity"))
+                return Double.POSITIVE_INFINITY;
+            if (str.equalsIgnoreCase("-Infinity"))
+                return Double.NEGATIVE_INFINITY;
+            return Double.parseDouble(str);
+        }
+
+        //Helper to receive an integer typed attribute, if not present, return default
+        //A present value has to be sign and digits only, anything else is an error
+        //(see rules.yml, number-invalid-value)
+        protected int getIntAttribute(String identifier, int defaultValue) throws phyphoxFileException {
+            final String att = xpp.getAttributeValue(XmlPullParser.NO_NAMESPACE, identifier);
+            if (att == null)
                 return defaultValue;
+            if (!intLexical.matcher(att).matches())
+                throw new phyphoxFileException("Invalid value \"" + att + "\" for integer attribute \"" + identifier + "\".", xpp.getLineNumber());
+            try {
+                return Integer.parseInt(att);
+            } catch (NumberFormatException e) {
+                throw new phyphoxFileException("Invalid value \"" + att + "\" for integer attribute \"" + identifier + "\".", xpp.getLineNumber());
             }
         }
 
-        //Helper to receive a double typed attribute, if invalid or not present, return default
-        protected double getDoubleAttribute(String identifier, double defaultValue) {
-            try {
-                return Double.valueOf(xpp.getAttributeValue(XmlPullParser.NO_NAMESPACE, identifier));
-            } catch (Exception e) {
+        //Helper to receive a double typed attribute, if not present, return default
+        //A present value outside the format's lexical space is an error
+        //(see rules.yml, number-invalid-value)
+        protected double getDoubleAttribute(String identifier, double defaultValue) throws phyphoxFileException {
+            final String att = xpp.getAttributeValue(XmlPullParser.NO_NAMESPACE, identifier);
+            if (att == null)
                 return defaultValue;
+            try {
+                return parseNumber(att);
+            } catch (NumberFormatException e) {
+                throw new phyphoxFileException("Invalid value \"" + att + "\" for numeric attribute \"" + identifier + "\".", xpp.getLineNumber());
             }
         }
 
@@ -1102,8 +1137,9 @@ public abstract class PhyphoxFile {
 
     //Specialized ioBlockParser for the graph element: output tags use the usual slot logic of
     //ioBlockParser, but input tags are collected in document order together with their axis and
-    //styling attributes, so that the graph element code can implement the decided dataset pairing
-    //(see graph-multiset-input-order in phyphox-docs). The axis attribute is required on every
+    //styling attributes, so that the graph element code can pair x/y/z inputs into datasets by
+    //their order of appearance (see "How the input tags form datasets" on the graph page of
+    //phyphox-docs, docs/file-format/views/graph.md). The axis attribute is required on every
     //graph input.
     private static class graphIoBlockParser extends ioBlockParser {
 
@@ -1487,13 +1523,17 @@ public abstract class PhyphoxFile {
                     newBuffer.setStatic(isStatic);
 
                     if (strInit != null && !strInit.isEmpty()) {
-                        String strInitArray[] = strInit.split(",");
+                        //Split with a negative limit, so a trailing comma yields an empty
+                        //entry (an error, see rules.yml, number-invalid-value) instead of
+                        //being silently dropped. Note that entries may deliberately be NaN,
+                        //which is the documented way to put a gap marker into a buffer.
+                        String strInitArray[] = strInit.split(",", -1);
                         Double init[] = new Double[strInitArray.length];
                         for (int i = 0; i < init.length; i++) {
                             try {
-                                init[i] = Double.parseDouble(strInitArray[i].trim());
-                            } catch (Exception e) {
-                                init[i] = Double.NaN;
+                                init[i] = parseNumber(strInitArray[i].trim());
+                            } catch (NumberFormatException e) {
+                                throw new phyphoxFileException("Invalid value \"" + strInitArray[i].trim() + "\" in init attribute of data-container \"" + name + "\".", xpp.getLineNumber());
                             }
                         }
                         newBuffer.setInit(init);
