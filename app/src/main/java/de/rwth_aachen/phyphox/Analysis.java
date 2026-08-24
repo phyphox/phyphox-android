@@ -368,7 +368,7 @@ public class Analysis {
             if (outputs.get(0) != null)
                 outputs.get(0).append(linearTime ? experiment.analysisLinearTime : experiment.analysisTime);
             if (outputs.size() > 1 && outputs.get(1) != null)
-                outputs.get(1).append(linearTime ? experiment.experimentTimeReference.getSystemTimeReferenceByIndex(0) * 0.001 : experiment.experimentTimeReference.getSystemTimeReferenceByIndex(experiment.experimentTimeReference.getReferenceIndexFromExperimentTime(experiment.analysisTime)) * 0.001);
+                outputs.get(1).append(linearTime ? experiment.experimentTimeReference.getSystemTimeReferenceByIndexOrNow(0) * 0.001 : experiment.experimentTimeReference.getSystemTimeReferenceByIndexOrNow(experiment.experimentTimeReference.getReferenceIndexFromExperimentTime(experiment.analysisTime)) * 0.001);
         }
     }
 
