@@ -1,6 +1,8 @@
 package de.rwth_aachen.phyphox.ExperimentList;
 
+import static de.rwth_aachen.phyphox.ExperimentList.model.Const.EXPERIMENT_ISASSET;
 import static de.rwth_aachen.phyphox.ExperimentList.model.Const.EXPERIMENT_ISTEMP;
+import static de.rwth_aachen.phyphox.ExperimentList.model.Const.EXPERIMENT_XML;
 import static de.rwth_aachen.phyphox.ExperimentList.model.Const.EXPERIMENT_PRESELECTED_BLUETOOTH_ADDRESS;
 import static de.rwth_aachen.phyphox.ExperimentList.model.Const.PREFS_NAME;
 import static de.rwth_aachen.phyphox.ExperimentList.model.Const.phyphoxCatHintRelease;
@@ -910,6 +912,30 @@ public class ExperimentListActivity extends AppCompatActivity {
         if (scheme == null)
             return;
         lastNetworkLoadIntent = null; //only a load from a network scheme (set below) may offer the local network permission
+
+        //phyphox://asset=<url-encoded path> opens an experiment bundled with the app (see
+        //transferring-experiments.md in phyphox-docs) - no server involved, so it is dispatched
+        //here, before the network branch below, as the same intent the experiment list itself
+        //uses to open a bundled experiment. The path is taken from the raw URI string: Uri's
+        //host/authority accessors normalize their case, which would corrupt the case-sensitive
+        //asset path. Any other phyphox:// URL keeps the https-rewrite behavior of
+        //PhyphoxFile.openXMLInputStream. Mirrored on iOS - the two must stay in step.
+        String dataString = intent.getDataString();
+        if (scheme.equals("phyphox") && dataString != null && dataString.startsWith("phyphox://asset=")) {
+            String path = Uri.decode(dataString.substring("phyphox://asset=".length()));
+            if (path.isEmpty() || path.startsWith("/") || path.contains("..")) {
+                showError("Invalid experiment asset path.");
+                return;
+            }
+            Intent assetIntent = new Intent(this, Experiment.class);
+            assetIntent.putExtra(EXPERIMENT_XML, path);
+            assetIntent.putExtra(EXPERIMENT_ISASSET, true);
+            assetIntent.setAction(Intent.ACTION_VIEW);
+            startActivity(assetIntent);
+            finishIfViewIntentDispatcher();
+            return;
+        }
+
         boolean isZip = false;
         if (scheme.equals(ContentResolver.SCHEME_FILE)) {
             if (scheme.equals(ContentResolver.SCHEME_FILE) && !intent.getData().getPath().startsWith(getFilesDir().getPath()) && ContextCompat.checkSelfPermission(this, Manifest.permission.READ_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED) {
