@@ -405,10 +405,11 @@ public class RemoteServer {
     //well-formed request carrying a bad value (which each endpoint answers in its own way).
     private static class BadRequestException extends RuntimeException {}
 
-    //Wraps a context handler so that an unhandled exception becomes jlhttp's plain 500 error
-    //response. Without this, the exception would escape to jlhttp's connection handling, which
-    //builds a fresh response without the CORS header set in handleTransaction. A
-    //BadRequestException instead becomes a clean 400.
+    //Wraps a context handler so that an unhandled exception becomes a clean 500 carrying the
+    //API's JSON error object. Without this, the exception would escape to jlhttp's connection
+    //handling, which answers with an HTML error page and without the CORS header set in
+    //handleTransaction - and an error response is never empty in this API, whatever the status
+    //code. A BadRequestException instead becomes a clean 400.
     private HTTPServer.ContextHandler withErrorResponse(HTTPServer.ContextHandler handler) {
         return (request, response) -> {
             try {
@@ -417,11 +418,15 @@ public class RemoteServer {
                 if (response.headersSent())
                     throw e;
                 return respondError(response, 400, "Malformed request body.");
-            } catch (RuntimeException e) {
+            } catch (RuntimeException | StackOverflowError | AssertionError e) {
+                //Errors are caught alongside exceptions because they reach us the same way: a
+                //failure deep in a framework call should still be answered, not turned into a
+                //broken connection. Everything else (OutOfMemoryError and friends) is left
+                //alone - answering it is not this method's business.
                 Log.e("remoteServer", "Unhandled exception while serving " + request.getPath() + ".", e);
                 if (response.headersSent())
                     throw e; //Too late for an error response, let jlhttp abort the connection
-                return 500;
+                return respondError(response, 500, "Internal error while serving " + request.getPath() + ".");
             }
         };
     }
@@ -591,7 +596,7 @@ public class RemoteServer {
         //An error response is never empty: whatever the status code, it carries a JSON error
         //object like the ones /export and /res send (see error-response-content-type in
         //phyphox-docs). The reason text is human-readable and not part of the contract.
-        byte[] bytes = ("{\"error\": \"" + reason + "\"}").getBytes();
+        byte[] bytes = ("{\"error\": " + JSONObject.quote(reason) + "}").getBytes();
         InputStream in = new ByteArrayInputStream(bytes);
         try {
             response.sendHeaders(status, bytes.length, System.currentTimeMillis(), null, "application/json", null);
