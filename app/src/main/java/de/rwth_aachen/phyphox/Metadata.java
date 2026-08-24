@@ -6,6 +6,7 @@ import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
 import android.hardware.SensorManager;
 import android.hardware.camera2.CameraCharacteristics;
+import android.hardware.camera2.CameraManager;
 import android.os.Build;
 import android.util.Size;
 
@@ -69,7 +70,30 @@ public class Metadata {
         throw new IllegalArgumentException("Unknown metadata identifier: " + identifier);
     }
 
+    //The camera and depth values below read the camera list CameraHelper caches. The experiment
+    //list fills it when it loads, but nothing guarantees that a caller came that way - the
+    //remote interface's /meta does not - and an unenumerated list would report a device without
+    //any cameras.
+    private static boolean readsCameraList(DeviceMetadata metadata) {
+        switch (metadata) {
+            case depthFrontSensor:
+            case depthFrontResolution:
+            case depthFrontRate:
+            case depthBackSensor:
+            case depthBackResolution:
+            case depthBackRate:
+            case camera2api:
+            case camera2apiFull:
+                return true;
+            default:
+                return false;
+        }
+    }
+
     public String getBuffered(Context ctx) {
+        if (readsCameraList(metadata))
+            CameraHelper.ensureCameraList((CameraManager) ctx.getSystemService(Context.CAMERA_SERVICE));
+
         switch (metadata) {
             case uniqueID:
                 final String settingName = "NetworkMetadataUUID";
