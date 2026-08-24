@@ -293,6 +293,30 @@ public abstract class PhyphoxFile {
     }
 
     //A xmlBlockParser loads all the xml data into the experiment within a specific xml block
+    //Lexical space of a number in the phyphox file format (see rules.yml,
+    //number-invalid-value): plain decimal notation plus the special values NaN and
+    //+-Infinity matched case-insensitively. Deliberately narrower than Java's own parsers,
+    //which also accept hexadecimal floats, type suffixes and surrounding whitespace that
+    //do not parse on other platforms.
+    private final static Pattern floatLexical = Pattern.compile("[+-]?([0-9]+(\\.[0-9]*)?|\\.[0-9]+)([eE][+-]?[0-9]+)?|[nN][aA][nN]|[+-]?[iI][nN][fF][iI][nN][iI][tT][yY]");
+
+    //Parse a number from the lexical space above, throwing NumberFormatException on
+    //anything outside it. Double.parseDouble only accepts the exact spellings "NaN",
+    //"Infinity", "+Infinity" and "-Infinity", so the special values are matched here.
+    //Static at this level because the same lexical space also applies to numbers arriving
+    //through the remote API (RemoteServer's /set endpoint).
+    public static double parseNumber(String str) throws NumberFormatException {
+        if (!floatLexical.matcher(str).matches())
+            throw new NumberFormatException(str);
+        if (str.equalsIgnoreCase("NaN"))
+            return Double.NaN;
+        if (str.equalsIgnoreCase("Infinity") || str.equalsIgnoreCase("+Infinity"))
+            return Double.POSITIVE_INFINITY;
+        if (str.equalsIgnoreCase("-Infinity"))
+            return Double.NEGATIVE_INFINITY;
+        return Double.parseDouble(str);
+    }
+
     //For each block type, this a class has to be derived, which overrides processStartTag and
     // processEndTag
     protected static class xmlBlockParser {
@@ -332,28 +356,7 @@ public abstract class PhyphoxFile {
             return translate(xpp.getAttributeValue(XmlPullParser.NO_NAMESPACE, identifier), parent);
         }
 
-        //Lexical space of a number in the phyphox file format (see rules.yml,
-        //number-invalid-value): plain decimal notation plus the special values NaN and
-        //+-Infinity matched case-insensitively. Deliberately narrower than Java's own parsers,
-        //which also accept hexadecimal floats, type suffixes and surrounding whitespace that
-        //do not parse on other platforms.
-        private final static Pattern floatLexical = Pattern.compile("[+-]?([0-9]+(\\.[0-9]*)?|\\.[0-9]+)([eE][+-]?[0-9]+)?|[nN][aA][nN]|[+-]?[iI][nN][fF][iI][nN][iI][tT][yY]");
         private final static Pattern intLexical = Pattern.compile("[+-]?[0-9]+");
-
-        //Parse a number from the lexical space above, throwing NumberFormatException on
-        //anything outside it. Double.parseDouble only accepts the exact spellings "NaN",
-        //"Infinity", "+Infinity" and "-Infinity", so the special values are matched here.
-        protected double parseNumber(String str) throws NumberFormatException {
-            if (!floatLexical.matcher(str).matches())
-                throw new NumberFormatException(str);
-            if (str.equalsIgnoreCase("NaN"))
-                return Double.NaN;
-            if (str.equalsIgnoreCase("Infinity") || str.equalsIgnoreCase("+Infinity"))
-                return Double.POSITIVE_INFINITY;
-            if (str.equalsIgnoreCase("-Infinity"))
-                return Double.NEGATIVE_INFINITY;
-            return Double.parseDouble(str);
-        }
 
         //Helper to receive an integer typed attribute, if not present, return default
         //A present value has to be sign and digits only, anything else is an error

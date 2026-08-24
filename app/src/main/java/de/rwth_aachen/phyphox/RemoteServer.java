@@ -21,6 +21,7 @@ import net.freeutils.httpserver.HTTPServer;
 import net.freeutils.httpserver.HTTPServer.Request;
 import net.freeutils.httpserver.HTTPServer.Response;
 import org.json.JSONArray;
+import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
@@ -529,6 +530,7 @@ public class RemoteServer {
             host.addContext("/logo", withErrorResponse(this::handleLogo), "GET", "POST"); //The phyphox logo, also included in style.css
             host.addContext("/get", withErrorResponse(this::handleGet), "GET", "POST"); //A get command takes parameters which define, which buffers and how much of them is requested - the response is a JSON set with the data
             host.addContext("/control", withErrorResponse(this::handleControl), "GET", "POST"); //The control command starts and stops measurements
+            host.addContext("/set", withErrorResponse(this::handleSet), "GET", "POST"); //Bulk write of buffer values from a JSON body (GET is registered so it can be answered with a clean result:false instead of a 405)
             host.addContext("/export", withErrorResponse(this::handleExport), "GET", "POST"); //The export command requests a data file containing sets as requested by the parameters
             host.addContext("/config", withErrorResponse(this::handleConfig), "GET", "POST"); //The config command requests information on the currently active experiment configuration
             host.addContext("/meta", withErrorResponse(this::handleMeta), "GET", "POST"); //The meta command requests information on the device
@@ -911,6 +913,108 @@ public class RemoteServer {
             }
         } else
             return respond(response, false);
+    }
+
+    //The /set endpoint writes values into one or more buffers in a single request - the bulk,
+    //array-valued counterpart of control?cmd=set, which can also write the non-finite values a
+    //buffer may legitimately hold. Unlike every other endpoint it takes only a JSON body (the
+    //payload is structured, so the flat parameter convention does not apply):
+    //  {"buffers": {"abc": [1, 2.5, null, "nan"]}, "mode": "replace"}
+    //Array entries are JSON numbers, null (which writes NaN, matching /get's representation of
+    //every non-finite value) or strings in the file format's number lexical space (parsed by
+    //PhyphoxFile.parseNumber, so "nan"/"Infinity"/"-infinity" work and "inf" does not). The
+    //request is atomic: everything is validated first, and on any error nothing is written.
+    //Specified in phyphox-docs/docs/remote-interface/openapi.yaml (API 1.1.0); this mirror must
+    //stay in step with iOS.
+    public int handleSet(Request request, Response response) throws IOException {
+        //A GET or a form-encoded body is a well-formed request that cannot carry the documented
+        //shape - rejected with result:false, while a body that is not parseable JSON at all is
+        //a 400 like everywhere else (BadRequestException via withErrorResponse).
+        if (!hasJsonBody(request))
+            return respondSetError(response, "A JSON body of the form {\"buffers\": {...}} is required.");
+
+        JSONObject json;
+        try {
+            json = new JSONObject(readBody(request));
+        } catch (JSONException e) {
+            throw new BadRequestException();
+        }
+
+        //Validate everything first: the mode, every buffer name and every entry...
+        boolean append = false;
+        if (json.has("mode")) {
+            Object mode = json.opt("mode");
+            if ("append".equals(mode))
+                append = true;
+            else if (!"replace".equals(mode)) //Anything but the two enum strings, including null
+                return respondSetError(response, "Unknown mode \"" + mode + "\".");
+        }
+
+        JSONObject buffersObj = json.optJSONObject("buffers");
+        if (buffersObj == null)
+            return respondSetError(response, "A \"buffers\" object is required.");
+
+        Map<DataBuffer, double[]> writes = new LinkedHashMap<>();
+        Iterator<String> names = buffersObj.keys();
+        while (names.hasNext()) {
+            String name = names.next();
+            DataBuffer db = experiment.getBuffer(name);
+            if (db == null)
+                return respondSetError(response, "Unknown buffer \"" + name + "\".");
+            JSONArray entries = buffersObj.optJSONArray(name);
+            if (entries == null)
+                return respondSetError(response, "The values for buffer \"" + name + "\" must be an array.");
+            double[] values = new double[entries.length()];
+            for (int i = 0; i < entries.length(); i++) {
+                Object entry = entries.opt(i);
+                if (entry == JSONObject.NULL) {
+                    values[i] = Double.NaN;
+                } else if (entry instanceof Number) {
+                    values[i] = ((Number) entry).doubleValue();
+                } else if (entry instanceof String) {
+                    try {
+                        values[i] = PhyphoxFile.parseNumber((String) entry);
+                    } catch (NumberFormatException e) {
+                        return respondSetError(response, "Invalid value \"" + entry + "\" for buffer \"" + name + "\".");
+                    }
+                } else {
+                    //Booleans, nested arrays/objects
+                    return respondSetError(response, "Invalid entry for buffer \"" + name + "\": must be a number, null or a number string.");
+                }
+            }
+            writes.put(db, values);
+        }
+
+        //...then write. An empty buffers object is a valid no-op and does not mark new data.
+        if (!writes.isEmpty()) {
+            callActivity.remoteInput = true;
+            experiment.newData = true;
+
+            //Defocus the input element in the API interface otherwise it might not be updated and will reenter the old value
+            callActivity.requestDefocus();
+
+            experiment.dataLock.lock();
+            try {
+                for (Map.Entry<DataBuffer, double[]> write : writes.entrySet()) {
+                    DataBuffer db = write.getKey();
+                    if (!append)
+                        db.clear(false); //Normal buffer semantics apply, so this cannot clear a written static buffer
+                    for (double v : write.getValue())
+                        db.append(v);
+                }
+            } finally {
+                experiment.dataLock.unlock();
+            }
+        }
+        return respond(response, true);
+    }
+
+    private int respondSetError(Response response, String error) throws IOException {
+        try {
+            return respond(response, new JSONObject().put("result", false).put("error", error).toString());
+        } catch (JSONException e) {
+            return respond(response, false); //Cannot happen for the string messages used here
+        }
     }
 
     //The export query has the form export?format=1&set1=On&set3=On
