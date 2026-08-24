@@ -21,7 +21,6 @@ import net.freeutils.httpserver.HTTPServer;
 import net.freeutils.httpserver.HTTPServer.Request;
 import net.freeutils.httpserver.HTTPServer.Response;
 import org.json.JSONArray;
-import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
