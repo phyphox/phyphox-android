@@ -18,6 +18,7 @@ import androidx.collection.ArraySet;
 import org.w3c.dom.Attr;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
+import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 
 import java.io.ByteArrayInputStream;
@@ -636,7 +637,9 @@ public class PhyphoxExperiment implements Serializable, ExperimentTimeReference.
 
     }
 
-    private String writeStateFile(String customTitle, OutputStream os) {
+    //Package-private rather than private so StateFileWriterTest can drive it directly - the
+    //async wrapper above would only add an executor and a callback to the test.
+    String writeStateFile(String customTitle, OutputStream os) {
 
         if (source == null)
             return "Source is null.";
@@ -662,10 +665,21 @@ public class PhyphoxExperiment implements Serializable, ExperimentTimeReference.
 
         root.normalize();
 
+        //Drop the metadata of a previous save before appending fresh elements below. Collect
+        //first and remove afterwards: getChildNodes() is a live NodeList, so removing item i
+        //shifts the next sibling into index i and the loop would skip it. The elements below
+        //are appended back-to-back, so that skip left a stale element behind on every re-save
+        //(a saved state carries exactly one state-title - the writer replaces, never
+        //accumulates; a duplicate makes the file unloadable on iOS).
         NodeList children = root.getChildNodes();
-        for (int i = 0; i < children.getLength(); i++)
-            if (children.item(i).getNodeName().equals("state-title") || children.item(i).getNodeName().equals("color") || children.item(i).getNodeName().equals("events") )
-                root.removeChild(children.item(i));
+        List<Node> obsolete = new ArrayList<>();
+        for (int i = 0; i < children.getLength(); i++) {
+            String name = children.item(i).getNodeName();
+            if (name.equals("state-title") || name.equals("color") || name.equals("events"))
+                obsolete.add(children.item(i));
+        }
+        for (Node node : obsolete)
+            root.removeChild(node);
 
         Element customTitleEl = doc.createElement("state-title");
         customTitleEl.setTextContent(customTitle);
