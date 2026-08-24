@@ -13,9 +13,7 @@ import org.junit.runner.RunWith;
 import org.robolectric.ParameterizedRobolectricTestRunner;
 import org.robolectric.annotation.Config;
 
-import java.io.ByteArrayInputStream;
 import java.io.File;
-import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.util.ArrayList;
@@ -41,18 +39,6 @@ import java.util.Map;
 public class AnalysisGoldenVectorTest {
 
     private static final String VECTORS = "analysis/vectors";
-
-    //Cases whose expectation has been reported to phyphox-docs as wrong and that are skipped
-    //with the finding until it is resolved there. Never add a case here because the app
-    //disagrees with the reference - a value mismatch is a finding to report, and which side is
-    //right is a docs decision. Only a fixture that contradicts itself belongs here.
-    private static final Map<String, String> REPORTED_EXPECTATIONS = new LinkedHashMap<String, String>() {{
-        put("if/true-branch-array.phyphox",
-                "the case declares no comparison attribute, so the condition is false and the "
-                        + "output stays untouched (empty) - in the app and in the reference's own "
-                        + "if_() alike - but the expectation is the true branch [7, 8, 9]. The "
-                        + "case description says less=true; the attribute is missing from if.yml.");
-    }};
 
     private final String relativePath;
 
@@ -92,16 +78,11 @@ public class AnalysisGoldenVectorTest {
                             + " > supported " + PhyphoxFile.phyphoxFileVersion + " - skipped.",
                     CorpusTestEnvironment.versionAtMostSupported(declared));
 
-        for (Map.Entry<String, String> reported : REPORTED_EXPECTATIONS.entrySet())
-            assumeTrue("Expectation reported to phyphox-docs: " + reported.getValue(),
-                    !relativePath.endsWith(reported.getKey()));
-
         JSONObject expected = readJson(new File(corpus,
                 relativePath.substring(0, relativePath.length() - ".phyphox".length()) + ".expected.json"));
 
         Experiment activity = CorpusTestEnvironment.fullyEquippedActivity();
-        PhyphoxExperiment experiment = CorpusTestEnvironment.load(
-                new ByteArrayInputStream(withMinimalView(file)), activity);
+        PhyphoxExperiment experiment = CorpusTestEnvironment.load(file, activity);
         assertTrue(relativePath + " failed to load: " + experiment.message, experiment.loaded);
 
         //The expectations, indexed by the 1-based count of executed cycles they apply after.
@@ -130,22 +111,6 @@ public class AnalysisGoldenVectorTest {
         if (!findings.isEmpty())
             fail(expected.getString("module") + "/" + expected.getString("case") + ": "
                     + String.join("; ", findings));
-    }
-
-    //TEMPORARY, reported to phyphox-docs: the generated vectors declare no views at all, but
-    //both parsers refuse such a file - Android with "No valid view found", iOS with
-    //missingElement("view") - so nothing would load. Until the generator emits a views block,
-    //the runner adds an empty one; it does not touch anything the vectors are about, since a
-    //view only displays buffers and is never rendered here. Remove this once the vectors carry
-    //a view of their own.
-    private static byte[] withMinimalView(File file) throws IOException {
-        String content = new String(Files.readAllBytes(file.toPath()), StandardCharsets.UTF_8);
-        if (content.contains("<views"))
-            return content.getBytes(StandardCharsets.UTF_8);
-        //A view needs a name and at least one element to count on Android, and a separator is
-        //the only element that displays no buffer at all.
-        return content.replace("</phyphox>", "<views><view label=\"Data\"><separator/></view></views></phyphox>")
-                .getBytes(StandardCharsets.UTF_8);
     }
 
     //One analysis pass, the way PhyphoxExperiment.processAnalysis runs it: the module loop in
