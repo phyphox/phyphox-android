@@ -96,8 +96,13 @@ public class ViewSnapshotTest {
             new Configuration("dark-tablet", "en-rUS-sw600dp-w800dp-h1280dp-normal-port-night-mdpi", 1.0f, 800, SettingsFragment.DARK_MODE_ON),
             new Configuration("light-phone-large-font", "en-rUS-w411dp-h891dp-normal-port-notnight-mdpi", 1.3f, 411, SettingsFragment.DARK_MODE_OFF),
             new Configuration("dark-phone-large-font", "en-rUS-w411dp-h891dp-normal-port-night-mdpi", 1.3f, 411, SettingsFragment.DARK_MODE_ON),
-            //No RTL language ships yet, so this is layout mirroring only: the direction is
-            //forced on the element, which is what the ldrtl qualifier means for its layout.
+            //The RTL pass of the snapshot contract. It currently pins an UNMIRRORED layout, and
+            //that is correct: RTL is not implemented yet, because no RTL translation is finished
+            //(maintainer, 2026-08-25). The app therefore does not declare android:supportsRtl,
+            //and without it the platform ignores layout direction entirely - forcing the
+            //direction on the element, as this configuration does, changes nothing. When an RTL
+            //language lands and the flag is set, these goldens change in one visible step, which
+            //is exactly what they are for.
             new Configuration("rtl-phone", "en-rUS-ldrtl-w411dp-h891dp-normal-port-notnight-mdpi", 1.0f, 411, SettingsFragment.DARK_MODE_OFF, true),
     };
 
