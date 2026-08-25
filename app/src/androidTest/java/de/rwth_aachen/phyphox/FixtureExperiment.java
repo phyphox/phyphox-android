@@ -39,6 +39,30 @@ final class FixtureExperiment {
         }
     }
 
+    //The theme is a phyphox setting, applied the way the collection applies it. Set it before
+    //launching: AppCompat resolves the night mode when the activity is created.
+    static void applyThemeSetting(String setting) {
+        Context app = getInstrumentation().getTargetContext();
+        androidx.preference.PreferenceManager.getDefaultSharedPreferences(app)
+                .edit()
+                .putString(app.getString(R.string.setting_dark_mode_key), setting)
+                .commit();
+        getInstrumentation().runOnMainSync(() ->
+                de.rwth_aachen.phyphox.SettingsActivity.SettingsFragment.setApplicationTheme(setting));
+    }
+
+    //The one-off hints ("Touch the triangle to start the experiment.") float over the screen and
+    //would land in every golden and in the way of every tap. The app stops showing them once
+    //they have been dismissed a few times, so the suites start from that state.
+    static void suppressHints() {
+        getInstrumentation().getTargetContext()
+                .getSharedPreferences(de.rwth_aachen.phyphox.ExperimentList.model.Const.PREFS_NAME, 0)
+                .edit()
+                .putInt("menuHintDismissCount", 3)
+                .putInt("startHintDismissCount", 3)
+                .commit();
+    }
+
     //Starts the fixture and returns the running activity once its experiment is loaded.
     //
     //Deliberately not ActivityScenario: everything it does waits for the main looper to go idle,
@@ -48,6 +72,7 @@ final class FixtureExperiment {
     //unaffected - it ignores messages scheduled further than a few milliseconds ahead.
     static Experiment launch(String fixture) throws IOException {
         Context app = getInstrumentation().getTargetContext();
+        suppressHints();
         copyToPrivateDir(fixture, app);
 
         Intent intent = new Intent(app, Experiment.class);

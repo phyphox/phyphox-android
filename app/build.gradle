@@ -81,6 +81,9 @@ android {
             def fixtures = file("$rootDir/../phyphox-docs/fixtures/views")
             if (fixtures.isDirectory())
                 assets.srcDirs += fixtures
+            //The graph goldens travel with the test APK: they are compared on the device, where
+            //the graphs are rendered (see GraphSnapshotTest for how they are recorded).
+            assets.srcDirs += file("src/androidTest/goldens")
         }
     }
 
