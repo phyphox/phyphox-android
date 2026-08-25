@@ -3557,6 +3557,11 @@ public class ExpView implements Serializable{
                 View rangeSliderView = inflater.inflate(R.layout.range_slider, null);
                 rangeSlider = rangeSliderView.findViewById(R.id.sliderView);
                 rangeSlider.setLabelBehavior(LabelFormatter.LABEL_GONE);
+                //The label bubble is gone, but the formatter is also what an accessibility
+                //service reads out ("Range start, ..."). Without it TalkBack announces the
+                //internal step index - "4" for a slider showing 20 - because the slider works in
+                //step units below (see the note there).
+                rangeSlider.setLabelFormatter(value -> numberFormatter(getSteppedValue(value)));
                 rangeSlider.setLayoutParams(getTableRowParams(0.9f));
                 if(stepSize != 0.0) {
                     //Note: Android's requirements for the step size to perfectly fit into the given range seems rather restrictive and is quite prone to errors given the limited floating point precision and values converted from user strings. So, if we need steps, we make our own and can make sure that the behavior matches our iOS implementation.
@@ -3592,6 +3597,9 @@ public class ExpView implements Serializable{
                     slider.setValueTo((float)maxValue);
                 }
                 slider.setLabelBehavior(LabelFormatter.LABEL_GONE);
+                //Same as for the range slider above: this formatter is what a screen reader
+                //announces, so it has to undo the step conversion.
+                slider.setLabelFormatter(value -> numberFormatter(getSteppedValue(value)));
                 slider.setValue((float)defaultValue);
                 slider.setLayoutParams(getTableRowParams(0.9f));
                 slider.addOnChangeListener((slider, value, fromUser) -> {
