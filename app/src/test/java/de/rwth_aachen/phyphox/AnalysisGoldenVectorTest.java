@@ -30,7 +30,8 @@ import java.util.Map;
 //data arrives through container init values, and a statement of what the output buffers must
 //hold after a given number of analysis cycles. The experiment is loaded through the real parser
 //and never started - the timer case relies on the experiment time being exactly zero - and the
-//analysis kernel is driven directly, once per cycle, with cycle numbers 0, 1, 2, ...
+//analysis kernel is driven directly, once per cycle, with cycle numbers 0, 1, 2, ..., with the
+//requireFill gate applied from the second run on and the rest of the scheduling layer left out.
 //Contract: phyphox-docs/corpus/analysis/README.md, "The runner contract".
 //A mismatch is a finding to report back, not something to code around: either the reference
 //expectation or this implementation is wrong, and which one is a docs decision.
@@ -97,6 +98,8 @@ public class AnalysisGoldenVectorTest {
         List<String> findings = new ArrayList<>();
         int cycles = expected.getInt("cycles");
         for (int cycle = 0; cycle < cycles; cycle++) {
+            if (cycle > 0 && gatedByRequireFill(experiment))
+                continue;
             runAnalysisCycle(experiment, cycle);
 
             JSONObject buffers = afterCycle.get(cycle + 1);
@@ -113,11 +116,26 @@ public class AnalysisGoldenVectorTest {
                     + String.join("; ", findings));
     }
 
+    //The block-level requireFill gate, with the ruled semantics: the first run after opening or
+    //starting is exempt, later runs only happen once the observed buffer holds enough values.
+    //The app expresses that exemption as "lastAnalysis != 0", i.e. through the experiment time,
+    //which stays flat zero in an experiment that was never started - so the runner counts
+    //executed runs instead of asking the clock. Everything else about the gate is read from the
+    //experiment exactly as processAnalysis reads it.
+    private static boolean gatedByRequireFill(PhyphoxExperiment experiment) {
+        if (experiment.requireFill == null)
+            return false;
+        int threshold = experiment.requireFillThreshold;
+        if (experiment.requireFillDynamic != null && experiment.requireFillDynamic.getFilledSize() > 0)
+            threshold = (int) experiment.requireFillDynamic.value;
+        return experiment.requireFill.getFilledSize() < threshold;
+    }
+
     //One analysis pass, the way PhyphoxExperiment.processAnalysis runs it: the module loop in
     //document order, each module deciding by its cycles attribute whether it runs at all. What
-    //is deliberately left out is everything the scheduling layer above the kernel does - sleep,
-    //dynamicSleep, onUserInput and requireFill must not gate these runs - and the sensor, audio
-    //and network plumbing that a vector experiment does not have.
+    //is deliberately left out is the rest of the scheduling layer above the kernel - sleep,
+    //dynamicSleep and onUserInput must not gate these runs, while requireFill is applied by the
+    //caller - and the sensor, audio and network plumbing a vector experiment does not have.
     private static void runAnalysisCycle(PhyphoxExperiment experiment, int cycle) {
         experiment.dataLock.lock();
         try {
