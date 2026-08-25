@@ -19,12 +19,14 @@ import java.util.Locale;
 //                             host script does not have to discover which port was picked.
 //                             iOS: -phyphoxRemotePort.
 //  debug.phyphox.autoConfirm  confirms the notices an experiment shows when it opens - the
-//                             network privacy warning, the vendor sensor warning, the
-//                             photosensitivity warning - and declines the offer to save a
-//                             downloaded experiment locally. They are informational (their only
-//                             action is OK), but unattended they stall the run: the network
-//                             privacy notice in particular gates the connection setup, so the
-//                             network fixture experiments cannot run without this. It skips no
+//                             network privacy warning and the photosensitivity warning - and
+//                             declines the offer to save a downloaded experiment locally. They
+//                             are informational (their only action is OK), but unattended they
+//                             stall the run: the network privacy notice in particular gates the
+//                             connection setup, so the network fixture experiments cannot run
+//                             without this. Exactly those three, the same set as iOS's
+//                             -phyphoxAutoConfirm and the switch-bypassed-ui test row; the
+//                             Android-only vendor sensor warning is not bypassed. It skips no
 //                             user choice and no system permission dialog, which the app cannot
 //                             dismiss anyway. iOS: -phyphoxAutoConfirm.
 //
