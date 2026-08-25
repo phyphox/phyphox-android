@@ -84,6 +84,16 @@ android {
     ndkVersion '28.0.13004108'
 }
 
+//The conformance corpus and the analysis golden vectors live in a phyphox-docs checkout next to
+//this repository, so Gradle cannot see them change: after a corpus update the unit test task
+//reports itself up to date and quietly does not re-run. Declaring the directory as an input
+//fixes that. CI checks the sibling out fresh every time and is unaffected either way.
+tasks.withType(Test).configureEach {
+    def corpus = file("$rootDir/../phyphox-docs/corpus")
+    if (corpus.isDirectory())
+        inputs.dir(corpus).withPathSensitivity(PathSensitivity.RELATIVE).withPropertyName("phyphoxDocsCorpus")
+}
+
 dependencies {
     implementation fileTree(dir: 'libs', include: ['*.jar'])
 

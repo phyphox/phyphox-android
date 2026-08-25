@@ -106,12 +106,12 @@ jobs:
           arch: ${{ env.EMULATOR_ARCH }}
           target: ${{ env.EMULATOR_TARGET }}
           ram-size: 4096M
-          # Every line of this script runs in its own shell, so anything with a loop or a
-          # remembered exit code lives in a script file instead (permission grants, the run
-          # itself and the logcat dump).
+          # Every line of this script runs in its own shell, so the exit code the log wrapper
+          # has to preserve lives in a script file rather than inline. The driver grants the
+          # runtime permissions an unattended run cannot confirm itself (since 2026-08-25).
           script: |
             cd phyphox-android && ./gradlew installRegularDebug && cd ..
-            DOCS=phyphox-docs sh phyphox-android/tools/t1_ci_run.sh experiments sh phyphox-android/tools/t1_experiments_ci.sh
+            sh phyphox-android/tools/t1_ci_run.sh experiments python3 phyphox-docs/tools/t1_experiments.py --platform android --emulator --require-rows
       - name: Keep the per-experiment results
         if: always()
         uses: actions/upload-artifact@v4

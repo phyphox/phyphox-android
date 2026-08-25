@@ -69,18 +69,16 @@ def close(a, b, tol=1e-6):
     return abs(a - b) <= tol + tol * abs(b)
 
 
-def consecutive_from_one(values):
-    return values == [float(i + 1) for i in range(len(values))]
-
-
-#The fixtures require the poll counter to arrive without gaps. A gap means a response that the
-#app fetched but never stored: a completed request parks its result and the analysis loop
-#copies it into the buffers once per pass, so a response that arrives before the previous one
-#was consumed is overwritten (dataReady/pushDataToBuffers, identically on both platforms).
-#That happens on a loaded emulator with the fixtures' 0.2 s interval, so the message says what
-#a gap means rather than only that there is one.
-GAP_NOTE = ("gaps are polls whose response was superseded before the analysis loop consumed "
-            "it - by design on both platforms when the loop is slower than the poll interval")
+def strictly_increasing_poll_counter(values):
+    """The fixture's poll counter as the contract requires it: positive
+    integers, strictly increasing, no duplicates - but not gap-free. A
+    completed request parks its result until the next analysis pass copies it
+    into the buffers, so a response arriving before the parked one is consumed
+    overwrites it, identically on both platforms. A busy device therefore
+    drops values at the fixtures' 0.2 s interval; a value going backwards or
+    appearing twice is a real defect (fixtures/network/README.md)."""
+    return (all(v >= 1 and v == int(v) for v in values)
+            and all(b > a for a, b in zip(values, values[1:])))
 
 
 def check_http_get_receive(buffers):
@@ -88,9 +86,9 @@ def check_http_get_receive(buffers):
     seq, value = buffers["seq"], buffers["value"]
     if not seq:
         findings.append("seq stayed empty - no poll completed")
-    elif not consecutive_from_one(seq):
-        findings.append("seq is not the consecutive sequence 1..k: %s (%s)"
-                        % (seq[:12], GAP_NOTE))
+    elif not strictly_increasing_poll_counter(seq):
+        findings.append("seq is not a strictly increasing sequence of positive "
+                        "integers: %s" % seq[:12])
     if len(value) != len(seq):
         findings.append("value has %d entries for %d polls" % (len(value), len(seq)))
     for n, v in zip(seq, value):
@@ -111,9 +109,9 @@ def check_http_get_send_roundtrip(buffers):
             break
     if not seq:
         findings.append("seq stayed empty - no round trip completed")
-    elif not consecutive_from_one(seq):
-        findings.append("seq is not the consecutive sequence 1..k: %s (%s)"
-                        % (seq[:12], GAP_NOTE))
+    elif not strictly_increasing_poll_counter(seq):
+        findings.append("seq is not a strictly increasing sequence of positive "
+                        "integers: %s" % seq[:12])
     return findings
 
 
