@@ -41,24 +41,6 @@ public class AnalysisGoldenVectorTest {
 
     private static final String VECTORS = "analysis/vectors";
 
-    //Cases whose failure has been reported and is waiting for a decision, skipped with the
-    //finding so the rest of the corpus stays useful. An entry here is a report, not a fix: it
-    //states what the app does and why that differs from what the case pins, and it goes away
-    //when the divergence is resolved. Never add one to make a red case quiet.
-    private static final Map<String, String> REPORTED = new LinkedHashMap<String, String>() {{
-        put("execution/requirefill-first-run-exempt.phyphox",
-                "the app exempts the first run through the experiment clock - processAnalysis "
-                        + "gates on \"requireFill != null && lastAnalysis != 0\", and lastAnalysis "
-                        + "holds the experiment time, which stays exactly 0 while an experiment "
-                        + "has never been started. So in the never-started state this case pins, "
-                        + "EVERY pass is exempt and the second cycle appends again (out holds "
-                        + "1, 2, 1, 2). Once the experiment has been started the gate behaves as "
-                        + "ruled. Fixing it means keying the exemption on a run having happened "
-                        + "rather than on the clock, which changes what analysis-on-user-input "
-                        + "does before the first start - a production change, so reported rather "
-                        + "than made here.");
-    }};
-
     private final String relativePath;
 
     public AnalysisGoldenVectorTest(String relativePath) {
@@ -96,10 +78,6 @@ public class AnalysisGoldenVectorTest {
             assumeTrue("Declares format version " + declared[0] + "." + declared[1]
                             + " > supported " + PhyphoxFile.phyphoxFileVersion + " - skipped.",
                     CorpusTestEnvironment.versionAtMostSupported(declared));
-
-        for (Map.Entry<String, String> reported : REPORTED.entrySet())
-            assumeTrue("Reported to phyphox-docs: " + reported.getValue(),
-                    !relativePath.endsWith(reported.getKey()));
 
         JSONObject expected = readJson(new File(corpus,
                 relativePath.substring(0, relativePath.length() - ".phyphox".length()) + ".expected.json"));

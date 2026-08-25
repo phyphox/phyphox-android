@@ -124,6 +124,7 @@ public class PhyphoxExperiment implements Serializable, ExperimentTimeReference.
     double analysisSleep = 0.; //Pause between analysis cycles. At 0 analysis is done as fast as possible.
     DataBuffer analysisDynamicSleep = null;
     double lastAnalysis = 0.0; //This variable holds the system time of the moment the last analysis process finished. This is necessary for experiments, which do analysis after given intervals
+    boolean analysisRan = false; //Whether an analysis pass has run since the experiment was opened or (re)started. The first run is exempt from the requireFill gate (spec/analysis.yml, decided 2026-08-24), and this cannot be read off lastAnalysis: that holds the experiment time, which is exactly zero as long as the experiment has never been started.
     double analysisTime; //This variable holds the experiment time of the moment the current analysis process started.
     double analysisLinearTime; //Same with the current system time
     boolean analysisOnUserInput = false; //Do the data analysis only if there is fresh input from the user.
@@ -327,7 +328,7 @@ public class PhyphoxExperiment implements Serializable, ExperimentTimeReference.
         } else
             cycle = 0;
 
-        if (requireFill != null && lastAnalysis != 0) {
+        if (requireFill != null && analysisRan) {
             int threshold = requireFillThreshold;
             if (requireFillDynamic != null && requireFillDynamic.getFilledSize() > 0)
                 threshold = (int)requireFillDynamic.value;
@@ -392,6 +393,7 @@ public class PhyphoxExperiment implements Serializable, ExperimentTimeReference.
         recordingUsed = true;
         newData = true; //We have fresh data to present.
         lastAnalysis = experimentTimeReference.getExperimentTime(); //Remember when we were done this time
+        analysisRan = true; //A run that was gated above does not get here, so this marks a pass that actually happened
     }
 
     //called by the main loop after everything is processed. Here we have to send all the analysis results to the appropriate views
@@ -441,6 +443,7 @@ public class PhyphoxExperiment implements Serializable, ExperimentTimeReference.
             experimentTimeReference.registerEvent(ExperimentTimeReference.TimeMappingEvent.PAUSE);
         event = experimentTimeReference.getLastMapping();
         lastAnalysis = 0.0;
+        analysisRan = false; //The first run after the next start is exempt from the requireFill gate again
 
         //Recording
         if (audioRecord != null && audioRecord.getState() == AudioRecord.STATE_INITIALIZED)
