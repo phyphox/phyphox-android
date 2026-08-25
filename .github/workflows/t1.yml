@@ -104,13 +104,24 @@ jobs:
             for p in RECORD_AUDIO ACCESS_FINE_LOCATION ACCESS_COARSE_LOCATION CAMERA; do
               adb shell pm grant de.rwth_aachen.phyphox android.permission.$p || true
             done
+            # Keep the device log whatever the driver says: the failures that only show up
+            # here - an experiment whose remote API never comes up, an app that stops
+            # answering mid-run - cannot be told apart from a slow emulator without it.
+            set +e
             python3 phyphox-docs/tools/t1_experiments.py --platform android --emulator --require-rows
+            rc=$?
+            adb logcat -d > logcat-experiments.txt
+            adb logcat -d -b crash > logcat-experiments-crash.txt
+            exit $rc
       - name: Keep the per-experiment results
         if: always()
         uses: actions/upload-artifact@v4
         with:
           name: t1-experiments-results
-          path: t1-results.json
+          path: |
+            t1-results.json
+            logcat-experiments.txt
+            logcat-experiments-crash.txt
           if-no-files-found: ignore
 
   network-fixtures:
