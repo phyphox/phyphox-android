@@ -192,10 +192,12 @@ class Driver:
         return self.get_json("%s/control?cmd=%s" % (self.base, cmd))
 
     def read_buffers(self, names):
+        #A null in the response is a NaN (the API cannot spell one in JSON); it is kept as
+        #such rather than dropped, so a buffer that filled with NaNs cannot pass for empty.
         query = "&".join("%s=full" % name for name in names)
         data = self.get_json("%s/get?%s" % (self.base, query))
-        return {name: [v for v in data["buffer"].get(name, {}).get("buffer", [])
-                       if v is not None]
+        return {name: [float("nan") if v is None else v
+                       for v in data["buffer"].get(name, {}).get("buffer", [])]
                 for name in names}
 
     # ------------------------------------------------------------- the run
