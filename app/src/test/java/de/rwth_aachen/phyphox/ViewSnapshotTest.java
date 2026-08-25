@@ -29,6 +29,7 @@ import java.util.List;
 import java.util.Locale;
 
 import de.rwth_aachen.phyphox.ExperimentList.model.Const;
+import de.rwth_aachen.phyphox.SettingsActivity.SettingsFragment;
 
 // phyphox-test: view-snapshots
 //Golden images of the non-graph view elements, rendered from phyphox-docs' view fixtures
@@ -65,30 +66,48 @@ public class ViewSnapshotTest {
         final float fontScale;
         final int widthDp;
         final boolean rtl;
+        final String themeSetting; //the phyphox setting, see SettingsFragment.DARK_MODE_*
 
-        Configuration(String name, String qualifiers, float fontScale, int widthDp) {
-            this(name, qualifiers, fontScale, widthDp, false);
+        Configuration(String name, String qualifiers, float fontScale, int widthDp,
+                      String themeSetting) {
+            this(name, qualifiers, fontScale, widthDp, themeSetting, false);
         }
 
-        Configuration(String name, String qualifiers, float fontScale, int widthDp, boolean rtl) {
+        Configuration(String name, String qualifiers, float fontScale, int widthDp,
+                      String themeSetting, boolean rtl) {
             this.name = name;
             this.qualifiers = qualifiers;
             this.fontScale = fontScale;
             this.widthDp = widthDp;
+            this.themeSetting = themeSetting;
             this.rtl = rtl;
+        }
+
+        @Override
+        public String toString() {
+            return name;
         }
     }
 
     private static final Configuration[] CONFIGURATIONS = {
-            new Configuration("light-phone", "en-rUS-w411dp-h891dp-normal-port-notnight-mdpi", 1.0f, 411),
-            new Configuration("dark-phone", "en-rUS-w411dp-h891dp-normal-port-night-mdpi", 1.0f, 411),
-            new Configuration("light-tablet", "en-rUS-sw600dp-w800dp-h1280dp-normal-port-notnight-mdpi", 1.0f, 800),
-            new Configuration("dark-tablet", "en-rUS-sw600dp-w800dp-h1280dp-normal-port-night-mdpi", 1.0f, 800),
-            new Configuration("light-phone-large-font", "en-rUS-w411dp-h891dp-normal-port-notnight-mdpi", 1.3f, 411),
-            new Configuration("dark-phone-large-font", "en-rUS-w411dp-h891dp-normal-port-night-mdpi", 1.3f, 411),
+            new Configuration("light-phone", "en-rUS-w411dp-h891dp-normal-port-notnight-mdpi", 1.0f, 411, SettingsFragment.DARK_MODE_OFF),
+            new Configuration("dark-phone", "en-rUS-w411dp-h891dp-normal-port-night-mdpi", 1.0f, 411, SettingsFragment.DARK_MODE_ON),
+            new Configuration("light-tablet", "en-rUS-sw600dp-w800dp-h1280dp-normal-port-notnight-mdpi", 1.0f, 800, SettingsFragment.DARK_MODE_OFF),
+            new Configuration("dark-tablet", "en-rUS-sw600dp-w800dp-h1280dp-normal-port-night-mdpi", 1.0f, 800, SettingsFragment.DARK_MODE_ON),
+            new Configuration("light-phone-large-font", "en-rUS-w411dp-h891dp-normal-port-notnight-mdpi", 1.3f, 411, SettingsFragment.DARK_MODE_OFF),
+            new Configuration("dark-phone-large-font", "en-rUS-w411dp-h891dp-normal-port-night-mdpi", 1.3f, 411, SettingsFragment.DARK_MODE_ON),
             //No RTL language ships yet, so this is layout mirroring only: the direction is
             //forced on the element, which is what the ldrtl qualifier means for its layout.
-            new Configuration("rtl-phone", "en-rUS-ldrtl-w411dp-h891dp-normal-port-notnight-mdpi", 1.0f, 411, true),
+            new Configuration("rtl-phone", "en-rUS-ldrtl-w411dp-h891dp-normal-port-notnight-mdpi", 1.0f, 411, SettingsFragment.DARK_MODE_OFF, true),
+    };
+
+    //The follow-system setting resolves to whatever the system says. That resolution is worth
+    //pinning, but not worth doubling the whole matrix (snapshot contract), so it rides on one
+    //fixture.
+    private static final String SPOT_CHECK_FIXTURE = "values.phyphox";
+    private static final Configuration[] SPOT_CHECKS = {
+            new Configuration("system-light-phone", "en-rUS-w411dp-h891dp-normal-port-notnight-mdpi", 1.0f, 411, SettingsFragment.DARK_MODE_SYSTEM),
+            new Configuration("system-dark-phone", "en-rUS-w411dp-h891dp-normal-port-night-mdpi", 1.0f, 411, SettingsFragment.DARK_MODE_SYSTEM),
     };
 
     private final String fixture;
@@ -110,6 +129,8 @@ public class ViewSnapshotTest {
         for (String fixture : FIXTURES)
             for (Configuration configuration : CONFIGURATIONS)
                 parameters.add(new Object[]{fixture, configuration});
+        for (Configuration configuration : SPOT_CHECKS)
+            parameters.add(new Object[]{SPOT_CHECK_FIXTURE, configuration});
         return parameters;
     }
 
@@ -124,6 +145,18 @@ public class ViewSnapshotTest {
         Locale.setDefault(Locale.US);
         RuntimeEnvironment.setQualifiers(configuration.qualifiers);
         RuntimeEnvironment.setFontScale(configuration.fontScale);
+
+        //The theme is a phyphox setting rather than the system's: the app reads it when the
+        //collection opens and hands it to AppCompat, which is what the experiment activity then
+        //renders with (ExperimentListActivity.onCreate). The snapshot suite opens the experiment
+        //directly, so it applies the setting the same way.
+        androidx.preference.PreferenceManager
+                .getDefaultSharedPreferences(RuntimeEnvironment.getApplication())
+                .edit()
+                .putString(RuntimeEnvironment.getApplication()
+                        .getString(R.string.setting_dark_mode_key), configuration.themeSetting)
+                .commit();
+        SettingsFragment.setApplicationTheme(configuration.themeSetting);
 
         ActivityController<Experiment> controller = launch();
         try {
