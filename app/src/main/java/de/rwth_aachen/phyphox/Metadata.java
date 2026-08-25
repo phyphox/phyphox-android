@@ -11,6 +11,8 @@ import android.os.Build;
 import android.util.Size;
 
 import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
+import java.util.List;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.UUID;
@@ -38,6 +40,20 @@ public class Metadata {
 
     String resultBuffer;
 
+    //The sensors that have per-sensor metadata. Custom sensors are selected by nameFilter, so
+    //per-sensor metadata for "custom" is ambiguous and not part of the identifier vocabulary -
+    //the constructor below rejects it. Everything that walks the sensors to collect metadata
+    //walks this list instead of SensorName.values(), because asking for an identifier outside
+    //the vocabulary throws: over the remote interface that used to cost the whole /meta
+    //response, in the exporter a corrupt xlsx with an unterminated row.
+    public static List<SensorInput.SensorName> sensorsWithMetadata() {
+        List<SensorInput.SensorName> result = new ArrayList<>();
+        for (SensorInput.SensorName sensor : SensorInput.SensorName.values())
+            if (sensor != SensorInput.SensorName.custom)
+                result.add(sensor);
+        return result;
+    }
+
     //Identifiers are matched case-insensitively (see rules.yml, enum-case-insensitive), unknown
     //identifiers are still rejected with an IllegalArgumentException.
     public Metadata(String identifier, Context ctx) throws IllegalArgumentException {
@@ -49,11 +65,7 @@ public class Metadata {
             }
         }
         String lowerIdentifier = identifier.toLowerCase();
-        for (SensorInput.SensorName sensor : SensorInput.SensorName.values()) {
-            //Custom sensors are selected by nameFilter, so per-sensor metadata for "custom" is
-            //ambiguous and not part of the identifier vocabulary.
-            if (sensor == SensorInput.SensorName.custom)
-                continue;
+        for (SensorInput.SensorName sensor : sensorsWithMetadata()) {
             if (lowerIdentifier.startsWith(sensor.name().toLowerCase())) {
                 String suffix = identifier.substring(sensor.name().length());
                 for (SensorMetadata candidate : SensorMetadata.values()) {

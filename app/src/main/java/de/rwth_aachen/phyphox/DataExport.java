@@ -217,7 +217,7 @@ public class DataExport implements Serializable {
                             data.append("\"").append(identifier).append("\"").append(separator);
                             data.append("\"").append(new Metadata(identifier, ctx).get("")).append("\"").append("\n");
                         }
-                        for (SensorInput.SensorName sensor : SensorInput.SensorName.values()) {
+                        for (SensorInput.SensorName sensor : Metadata.sensorsWithMetadata()) {
                             for (Metadata.SensorMetadata sensorMetadata : Metadata.SensorMetadata.values()) {
                                 String identifier = sensorMetadata.toString();
                                 data.append("\"").append(sensor.name()).append(" ").append(identifier).append("\"").append(separator);
@@ -342,7 +342,7 @@ public class DataExport implements Serializable {
                             xlsx.stringCell(new Metadata(identifier, ctx).get(""), false);
                             xlsx.endRow();
                         }
-                        for (SensorInput.SensorName sensor : SensorInput.SensorName.values()) {
+                        for (SensorInput.SensorName sensor : Metadata.sensorsWithMetadata()) {
                             for (Metadata.SensorMetadata sensorMetadata : Metadata.SensorMetadata.values()) {
                                 String identifier = sensorMetadata.toString();
 
