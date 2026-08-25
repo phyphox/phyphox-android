@@ -118,6 +118,7 @@ import de.rwth_aachen.phyphox.helper.WindowInsetHelper;
 import de.rwth_aachen.phyphox.camera.CameraInput;
 import de.rwth_aachen.phyphox.camera.depth.DepthInput;
 import de.rwth_aachen.phyphox.helper.DecimalTextWatcher;
+import de.rwth_aachen.phyphox.helper.DebugSwitches;
 import de.rwth_aachen.phyphox.helper.Helper;
 import de.rwth_aachen.phyphox.NetworkConnection.NetworkConnection;
 
@@ -512,6 +513,18 @@ public class Experiment extends AppCompatActivity implements View.OnClickListene
         if (experiment == null || !experiment.loaded)
             return;
 
+        //An unattended run cannot tap the informational notices below, and the network privacy
+        //notice gates the connection setup that follows them, so a driver can confirm them all
+        //in advance through a shell-only system property (see DebugSwitches). The chain then
+        //continues with the network and bluetooth connections as if the user had dismissed each
+        //notice; the offer to save a downloaded experiment locally counts as declined.
+        if (DebugSwitches.autoConfirm()) {
+            dataPolicyDismissed = true;
+            sensorWarningDismissed = true;
+            photosensitivityWarningDismissed = true;
+            saveLocallyDismissed = true;
+        }
+
         //Privacy policy
         if (!dataPolicyDismissed && experiment.networkConnections.size() > 0) {
             Set<String> sensors = new HashSet<>();
@@ -789,6 +802,12 @@ public class Experiment extends AppCompatActivity implements View.OnClickListene
                 experiment.flashlightOutput.initHardware(null);
             }
 
+
+            //An unattended run enables remote access through a shell-only system property instead
+            //of the menu toggle, which would need someone to confirm its dialog (see
+            //DebugSwitches).
+            if (DebugSwitches.remoteEnabled())
+                serverEnabled = true;
 
             //Start the remote server if activated
             startRemoteServer();

@@ -53,6 +53,7 @@ import java.util.Set;
 import java.util.Vector;
 
 import de.rwth_aachen.phyphox.helper.FileNameFormat;
+import de.rwth_aachen.phyphox.helper.DebugSwitches;
 import de.rwth_aachen.phyphox.helper.Helper;
 
 //RemoteServer implements a web interface to remote control the experiment and receive the data
@@ -510,10 +511,16 @@ public class RemoteServer {
     //Returns false if no server socket could be opened, which usually means that another app
     //already uses the configured port.
     public synchronized boolean start() {
-        int configuredPort = Integer.parseInt(PreferenceManager.getDefaultSharedPreferences(context).getString("remoteAccessPort", String.valueOf(defaultPort)));
+        //An unattended run pins the port through a shell-only system property (see
+        //DebugSwitches), because a host script cannot see which port the ladder below settled
+        //on. A pinned port is used as it is: if it is taken, the run should fail loudly rather
+        //than serve somewhere the script does not look.
+        int debugPort = DebugSwitches.remotePort();
+        int configuredPort = debugPort > 0 ? debugPort
+                : Integer.parseInt(PreferenceManager.getDefaultSharedPreferences(context).getString("remoteAccessPort", String.valueOf(defaultPort)));
         LinkedList<Integer> ports = new LinkedList<>();
         ports.add(configuredPort);
-        if (configuredPort == defaultPort) {
+        if (debugPort == 0 && configuredPort == defaultPort) {
             for (int i = 1; i <= 100; i++)
                 ports.add(defaultPort + i);
         }
