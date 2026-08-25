@@ -56,6 +56,7 @@ jobs:
           api-level: ${{ env.API_LEVEL }}
           arch: ${{ env.EMULATOR_ARCH }}
           target: ${{ env.EMULATOR_TARGET }}
+          ram-size: 4096M
           script: |
             cd phyphox-android && ./gradlew installRegularDebug && cd ..
             adb shell setprop debug.phyphox.remote 1
@@ -64,8 +65,16 @@ jobs:
             adb forward tcp:8080 tcp:8080
             # Wait for the experiment to be up and serving before probing it.
             for i in $(seq 1 30); do curl -sf http://127.0.0.1:8080/config > /dev/null && break; sleep 1; done
-            python3 phyphox-docs/tools/contract_test.py --android http://127.0.0.1:8080 --allow-control
-            adb shell setprop debug.phyphox.remote '""'
+            sh phyphox-android/tools/t1_ci_run.sh remote-contract python3 phyphox-docs/tools/contract_test.py --android http://127.0.0.1:8080 --allow-control
+            adb shell setprop debug.phyphox.remote '""' || true
+
+      - name: Keep the device log
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: t1-remote-contract-logs
+          path: logcat-remote-contract*.txt
+          if-no-files-found: ignore
 
   experiments-e2e:
     runs-on: ubuntu-latest
@@ -96,12 +105,13 @@ jobs:
           api-level: ${{ env.API_LEVEL }}
           arch: ${{ env.EMULATOR_ARCH }}
           target: ${{ env.EMULATOR_TARGET }}
+          ram-size: 4096M
           # Every line of this script runs in its own shell, so anything with a loop or a
           # remembered exit code lives in a script file instead (permission grants, the run
           # itself and the logcat dump).
           script: |
             cd phyphox-android && ./gradlew installRegularDebug && cd ..
-            DOCS=phyphox-docs phyphox-android/tools/t1_experiments_ci.sh
+            DOCS=phyphox-docs sh phyphox-android/tools/t1_ci_run.sh experiments sh phyphox-android/tools/t1_experiments_ci.sh
       - name: Keep the per-experiment results
         if: always()
         uses: actions/upload-artifact@v4
@@ -109,8 +119,7 @@ jobs:
           name: t1-experiments-results
           path: |
             t1-results.json
-            logcat-experiments.txt
-            logcat-experiments-crash.txt
+            logcat-experiments*.txt
           if-no-files-found: ignore
 
   network-fixtures:
@@ -150,13 +159,16 @@ jobs:
           api-level: ${{ env.API_LEVEL }}
           arch: ${{ env.EMULATOR_ARCH }}
           target: ${{ env.EMULATOR_TARGET }}
+          ram-size: 4096M
           script: |
             cd phyphox-android && ./gradlew installRegularDebug && cd ..
-            python3 phyphox-android/tools/t1_network_fixtures.py --docs phyphox-docs --out network-fixtures.json
+            sh phyphox-android/tools/t1_ci_run.sh network-fixtures python3 phyphox-android/tools/t1_network_fixtures.py --docs phyphox-docs --out network-fixtures.json
       - name: Keep the per-fixture results
         if: always()
         uses: actions/upload-artifact@v4
         with:
           name: t1-network-fixture-results
-          path: network-fixtures.json
+          path: |
+            network-fixtures.json
+            logcat-network-fixtures*.txt
           if-no-files-found: ignore

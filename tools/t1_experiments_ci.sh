@@ -8,8 +8,8 @@
 # argument is passed on to the driver.
 #
 # This is a script rather than a few lines in the workflow because the emulator action runs its
-# "script:" one line per shell - a for loop, or an exit code kept in a variable, does not
-# survive that (it fails with "Syntax error: end of file unexpected").
+# "script:" one line per shell - a for loop does not survive that (it fails with "Syntax error:
+# end of file unexpected"). The device log is kept by tools/t1_ci_run.sh, which wraps this.
 set -u
 
 DOCS=${DOCS:-phyphox-docs}
@@ -21,12 +21,4 @@ for permission in RECORD_AUDIO ACCESS_FINE_LOCATION ACCESS_COARSE_LOCATION CAMER
     adb shell pm grant de.rwth_aachen.phyphox "android.permission.$permission" || true
 done
 
-python3 "$DOCS/tools/t1_experiments.py" --platform android --emulator --require-rows "$@"
-rc=$?
-
-# Keep the device log whatever the driver said: an app that died and an emulator that merely
-# answered too slowly look the same from the host without it.
-adb logcat -d > logcat-experiments.txt 2>&1 || true
-adb logcat -d -b crash > logcat-experiments-crash.txt 2>&1 || true
-
-exit $rc
+exec python3 "$DOCS/tools/t1_experiments.py" --platform android --emulator --require-rows "$@"
