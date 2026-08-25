@@ -4033,6 +4033,14 @@ public abstract class PhyphoxFile {
                         String globalLocale = xpp.getAttributeValue(XmlPullParser.NO_NAMESPACE, "locale");
                         languageRating = Helper.getLanguageRating(parent.getResources(), globalLocale);
                     }
+
+                    //isLink marks an entry that is not an experiment at all but a pointer to a
+                    //web page (the collection scanner reads it as well and opens the link when
+                    //the entry is tapped). Such a file has no views, so it has to be recognized
+                    //here too - otherwise a file arriving by URL, QR code or share ends in "No
+                    //valid view found" instead of opening its link. iOS does the same.
+                    String isLinkAttribute = xpp.getAttributeValue(XmlPullParser.NO_NAMESPACE, "isLink");
+                    experiment.isLink = isLinkAttribute != null && isLinkAttribute.equalsIgnoreCase("true");
                     (new phyphoxBlockParser(xpp, experiment, parent)).process();
                 }
                 eventType = xpp.next();
@@ -4053,8 +4061,9 @@ public abstract class PhyphoxFile {
 
         }
 
-        //Sanity check: If the experiment did not define any views, we cannot use it
-        if (experiment.experimentViews.size() == 0) {
+        //Sanity check: If the experiment did not define any views, we cannot use it - unless it
+        //is a link entry, which never has views and is not run but opened (see isLink above).
+        if (experiment.experimentViews.size() == 0 && !experiment.isLink) {
             experiment.message = "Bad experiment definition: No valid view found.";
             return experiment;
         }

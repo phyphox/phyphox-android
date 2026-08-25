@@ -66,6 +66,7 @@ public class PhyphoxExperiment implements Serializable, ExperimentTimeReference.
 
     boolean loaded = false; //Set to true if this instance holds a successfully loaded experiment
     boolean isLocal; //Set to true if this experiment was loaded from a local file. (if false, the experiment can be added to the library)
+    public boolean isLink = false; //Set to true if this file is not an experiment but an entry pointing at a web page. Such a file has no views and is never run: opening it opens its first link (see Experiment.openLinkEntry).
     byte[] source = null; //This holds the original source file
     Set<String> resources = new ArraySet<>();
     String resourceFolder = null;

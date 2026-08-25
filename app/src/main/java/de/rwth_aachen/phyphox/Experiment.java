@@ -513,14 +513,17 @@ public class Experiment extends AppCompatActivity implements View.OnClickListene
         if (experiment == null || !experiment.loaded)
             return;
 
-        //An unattended run cannot tap the informational notices below, and the network privacy
-        //notice gates the connection setup that follows them, so a driver can confirm them all
-        //in advance through a shell-only system property (see DebugSwitches). The chain then
-        //continues with the network and bluetooth connections as if the user had dismissed each
-        //notice; the offer to save a downloaded experiment locally counts as declined.
+        //An unattended run cannot tap the notices below, and the network privacy notice gates
+        //the connection setup that follows them, so a driver can confirm them in advance through
+        //a shell-only system property (see DebugSwitches). Exactly three are bypassed, the same
+        //three as iOS's -phyphoxAutoConfirm and the ones the switch-bypassed-ui test row pins:
+        //the network privacy notice, the photosensitivity warning, and the offer to save a
+        //downloaded experiment locally, which counts as declined. The vendor sensor warning is
+        //deliberately not among them - it exists only on Android, so bypassing it would put a
+        //dialog outside that row's scope. The chain then continues with the network and
+        //bluetooth connections as if the user had dismissed each notice.
         if (DebugSwitches.autoConfirm()) {
             dataPolicyDismissed = true;
-            sensorWarningDismissed = true;
             photosensitivityWarningDismissed = true;
             saveLocallyDismissed = true;
         }
@@ -670,6 +673,16 @@ public class Experiment extends AppCompatActivity implements View.OnClickListene
             progress = null;
         }
         this.experiment = experiment; //Store the loaded experiment
+
+        //A link entry is not an experiment: it points at a web page and has no views at all.
+        //Tapping it in the collection opens the link, and a file arriving by URL, QR code or
+        //share has to do the same - it used to end up here as "no valid view found" (iOS opened
+        //the link from its URL path since 2026-08-25; the two must behave alike).
+        if (experiment.loaded && experiment.isLink) {
+            openLinkEntry();
+            return;
+        }
+
         if (experiment.loaded) { //Everything went fine, no errors
             if (experiment.gpsIn != null) {
                 experiment.gpsIn.prepare(res);
@@ -1968,6 +1981,32 @@ public class Experiment extends AppCompatActivity implements View.OnClickListene
         experiment.newUserInput = true;
         if (remote != null && serverEnabled)
             remote.forceFullUpdate = true;
+    }
+
+    //Open the web page a link entry points at and leave - the same thing tapping the entry in
+    //the experiment list does (ExperimentItemAdapter), including its complaint about a URL that
+    //cannot be opened.
+    private void openLinkEntry() {
+        String url = experiment.links.isEmpty() ? null : experiment.links.get(0).url;
+        try {
+            Uri uri = Uri.parse(url);
+            if (uri.getScheme().equals("http") || uri.getScheme().equals("https")) {
+                Intent intent = new Intent(Intent.ACTION_VIEW, uri);
+                if (intent.resolveActivity(getPackageManager()) != null) {
+                    startActivity(intent);
+                    finish();
+                    return;
+                }
+            }
+        } catch (Exception ignored) {
+            //Falls through to the complaint below, like the experiment list does.
+        }
+        new AlertDialog.Builder(this)
+                .setTitle("Invalid URL")
+                .setMessage("This entry is just a link, but its URL is invalid.")
+                .setPositiveButton(R.string.ok, (dialog, id) -> finish())
+                .setOnCancelListener(dialog -> finish())
+                .show();
     }
 
     //Start the remote server (see remoteServer class)
