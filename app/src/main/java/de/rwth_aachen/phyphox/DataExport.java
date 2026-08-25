@@ -89,6 +89,17 @@ public class DataExport implements Serializable {
             this.sources.add(new SourceMapping(name, source));
         }
 
+        //How many rows this set exports: as many as its longest column holds, with the shorter
+        //ones padded out (ruled 2026-08-25, export-set-row-count in phyphox-docs). Sizing by the
+        //first column instead truncated every longer column, and dropped the whole set whenever
+        //the first container happened to be empty while the others held data.
+        int rowCount() {
+            int rows = 0;
+            for (Double[] column : data)
+                rows = Math.max(rows, column.length);
+            return rows;
+        }
+
         //Retrieve all data from the dataBuffers
         public void getData() {
             data = new Double[sources.size()][];
@@ -181,7 +192,8 @@ public class DataExport implements Serializable {
                             zstream.write(header.getBytes()); //Write the header to the zip-file
 
                         //Then add all the data
-                        for (int i = 0; i < set.data[0].length; i++) { //For each row of data... The first column determines the number of rows
+                        int rows = set.rowCount();
+                        for (int i = 0; i < rows; i++) { //For each row of data - as many as the longest column holds
                             //Construct the data row
                             StringBuilder data = new StringBuilder();
                             for (int j = 0; j < set.data.length; j++) { //For each column within this row
@@ -313,7 +325,8 @@ public class DataExport implements Serializable {
                         xlsx.endRow();
 
                         //Create all the data rows
-                        for (int i = 0; i < set.data[0].length; i++) { //For each row of data (number of rows determined by first entry in dataset)
+                        int rows = set.rowCount();
+                        for (int i = 0; i < rows; i++) { //For each row of data - as many as the longest column holds
                             xlsx.startRow();
                             for (int j = 0; j < set.data.length; j++) { //For each column
                                 if (i < set.data[j].length) //Is there data for this cell?
