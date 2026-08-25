@@ -73,13 +73,24 @@ def consecutive_from_one(values):
     return values == [float(i + 1) for i in range(len(values))]
 
 
+#The fixtures require the poll counter to arrive without gaps. A gap means a response that the
+#app fetched but never stored: a completed request parks its result and the analysis loop
+#copies it into the buffers once per pass, so a response that arrives before the previous one
+#was consumed is overwritten (dataReady/pushDataToBuffers, identically on both platforms).
+#That happens on a loaded emulator with the fixtures' 0.2 s interval, so the message says what
+#a gap means rather than only that there is one.
+GAP_NOTE = ("gaps are polls whose response was superseded before the analysis loop consumed "
+            "it - by design on both platforms when the loop is slower than the poll interval")
+
+
 def check_http_get_receive(buffers):
     findings = []
     seq, value = buffers["seq"], buffers["value"]
     if not seq:
         findings.append("seq stayed empty - no poll completed")
     elif not consecutive_from_one(seq):
-        findings.append("seq is not the consecutive sequence 1..k: %s" % seq[:12])
+        findings.append("seq is not the consecutive sequence 1..k: %s (%s)"
+                        % (seq[:12], GAP_NOTE))
     if len(value) != len(seq):
         findings.append("value has %d entries for %d polls" % (len(value), len(seq)))
     for n, v in zip(seq, value):
@@ -101,7 +112,8 @@ def check_http_get_send_roundtrip(buffers):
     if not seq:
         findings.append("seq stayed empty - no round trip completed")
     elif not consecutive_from_one(seq):
-        findings.append("seq is not the consecutive sequence 1..k: %s" % seq[:12])
+        findings.append("seq is not the consecutive sequence 1..k: %s (%s)"
+                        % (seq[:12], GAP_NOTE))
     return findings
 
 
