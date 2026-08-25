@@ -12,7 +12,7 @@ android {
         //  format  WXXYYZZ, where WW is major, XX is minor, YY is patch, and ZZ is build
         versionCode 1020104 //1.02.01-04
 
-        // Note that the following locales have not yet been released and are currently included for testing: bn, gu, kn, or, ta,
+        // Note that the following locales have not yet been released and are currently included for testing: bn, gu, kn, or
         def locales = ['en', 'bn', 'cs', 'de', 'el', 'es', 'fr', 'gu', 'hi', 'it', 'ja', 'ka', 'ko', 'kn', 'nl', 'or', 'pl', 'pt', 'ru', 'sr', 'b+sr+Latn', 'ta', 'tr', 'vi', 'zh-rCN', 'zh-rTW']
         buildConfigField "String[]", "LOCALE_ARRAY", "new String[]{\""+locales.join("\",\"")+"\"}"
         resourceConfigurations += locales
@@ -72,6 +72,18 @@ android {
         buildConfig true
     }
 
+    sourceSets {
+        androidTest {
+            //The view fixtures are served straight out of the phyphox-docs checkout next to this
+            //repository - the same sibling convention the corpus tests use - so they cannot drift
+            //from the shared set. A plain clone without the sibling simply has no fixture assets
+            //and the fixture tests skip themselves.
+            def fixtures = file("$rootDir/../phyphox-docs/fixtures/views")
+            if (fixtures.isDirectory())
+                assets.srcDirs += fixtures
+        }
+    }
+
     testOptions {
         //JVM unit tests touch classes whose static initializers call android.util.Log
         //(e.g. Analysis); let those calls return defaults instead of throwing
@@ -89,6 +101,11 @@ android {
 //reports itself up to date and quietly does not re-run. Declaring the directory as an input
 //fixes that. CI checks the sibling out fresh every time and is unaffected either way.
 tasks.withType(Test).configureEach {
+    //Golden images are recorded rather than compared when asked for explicitly:
+    //  ./gradlew testRegularDebugUnitTest -Pphyphox.goldens=record
+    if (project.hasProperty("phyphox.goldens"))
+        systemProperty "phyphox.goldens", project.property("phyphox.goldens")
+
     def corpus = file("$rootDir/../phyphox-docs/corpus")
     if (corpus.isDirectory())
         inputs.dir(corpus).withPathSensitivity(PathSensitivity.RELATIVE).withPropertyName("phyphoxDocsCorpus")
@@ -121,6 +138,17 @@ dependencies {
     testImplementation 'junit:junit:4.13.2'
 
     //Automated screenshot generation
+    //Instrumentation tests of the regular flavor: the view behavior, chrome and accessibility
+    //suites (test matrix, tier T1). The screenshot flavor keeps its own set below.
+    androidTestImplementation 'junit:junit:4.13.2'
+    androidTestImplementation 'androidx.test:core:1.7.0'
+    androidTestImplementation 'androidx.test:runner:1.7.0'
+    androidTestImplementation 'androidx.test:rules:1.7.0'
+    androidTestImplementation 'androidx.test.ext:junit:1.3.0'
+    androidTestImplementation 'androidx.test.espresso:espresso-core:3.7.0'
+    androidTestImplementation 'androidx.test.espresso:espresso-accessibility:3.7.0'
+    androidTestImplementation 'androidx.test.uiautomator:uiautomator:2.3.0'
+
     androidTestScreenshotImplementation 'junit:junit:4.13.2'
     androidTestScreenshotImplementation 'tools.fastlane:screengrab:2.1.1'
     androidTestScreenshotImplementation 'androidx.test:rules:1.7.0'
