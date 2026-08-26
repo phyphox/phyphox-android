@@ -54,6 +54,14 @@ import de.rwth_aachen.phyphox.SettingsActivity.SettingsFragment;
 //Recorded once per device profile: the T1 job runs the suites on a phone and on a tablet, and
 //the goldens of both live side by side (light-phone.png next to light-tablet.png).
 //
+//A golden is pixels, so it belongs to the exact profile it was recorded on - "tablet" is not a
+//size. Record on the profiles the workflow names, or the sizes will not match:
+//
+//    pixel_6                 1080x2400 at 420dpi
+//    10.1in WXGA (Tablet)    1280x800 at 160dpi
+//
+//A mismatch that reports two different sizes means the recording device was not one of them.
+//
 //and the images are reviewed like any other change before they become the reference.
 @RunWith(AndroidJUnit4.class)
 public class GraphSnapshotTest {
