@@ -72,6 +72,12 @@ android {
         buildConfig true
     }
 
+    androidResources {
+        //Assets from several source directories are merged flat, and both phyphox-docs fixture
+        //directories carry a README.md - which would collide. Nothing reads them on the device.
+        ignoreAssetsPattern '!.svn:!.git:!.ds_store:!*.scc:.*:!CVS:!thumbs.db:!picasa.ini:!*~:!README.md'
+    }
+
     sourceSets {
         androidTest {
             //The view fixtures are served straight out of the phyphox-docs checkout next to this
@@ -81,6 +87,11 @@ android {
             def fixtures = file("$rootDir/../phyphox-docs/fixtures/views")
             if (fixtures.isDirectory())
                 assets.srcDirs += fixtures
+            //The network fixtures come along for the chrome suites: opening one is what brings
+            //up the network privacy notice.
+            def networkFixtures = file("$rootDir/../phyphox-docs/fixtures/network")
+            if (networkFixtures.isDirectory())
+                assets.srcDirs += networkFixtures
             //The graph goldens travel with the test APK: they are compared on the device, where
             //the graphs are rendered (see GraphSnapshotTest for how they are recorded).
             assets.srcDirs += file("src/androidTest/goldens")

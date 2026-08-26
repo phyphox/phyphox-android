@@ -60,6 +60,9 @@ final class FixtureExperiment {
                 .edit()
                 .putInt("menuHintDismissCount", 3)
                 .putInt("startHintDismissCount", 3)
+                //The collection greets a fresh install with a warning dialog about not damaging
+                //the phone; it has its own "do not show again", which is what this sets.
+                .putBoolean("skipWarning", true)
                 .commit();
     }
 
@@ -82,6 +85,31 @@ final class FixtureExperiment {
         intent.putExtra(Const.EXPERIMENT_ISASSET, false);
         app.startActivity(intent);
         return awaitLoaded();
+    }
+
+    //The host as the device reaches it: the emulator's alias for the machine running the tests,
+    //where the suites serve a fixture over http to exercise the "opened from elsewhere" path.
+    static String hostFromDevice() {
+        return "10.0.2.2:8115";
+    }
+
+    //One of the experiments shipped with the app, opened the way a deep link opens it.
+    static Experiment launchAsset(String asset) {
+        launchAssetWithoutWaiting(asset);
+        return awaitLoaded();
+    }
+
+    //The same, for the cases that expect something other than a loaded experiment - a permission
+    //dialog, for instance.
+    static void launchAssetWithoutWaiting(String asset) {
+        Context app = getInstrumentation().getTargetContext();
+        suppressHints();
+        Intent intent = new Intent(app, Experiment.class);
+        intent.setAction(Intent.ACTION_VIEW);
+        intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
+        intent.putExtra(Const.EXPERIMENT_XML, asset);
+        intent.putExtra(Const.EXPERIMENT_ISASSET, true);
+        app.startActivity(intent);
     }
 
     //Closes the experiment again, so the next fixture starts from the collection.
