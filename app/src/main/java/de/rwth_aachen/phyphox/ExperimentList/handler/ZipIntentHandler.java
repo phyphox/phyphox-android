@@ -58,7 +58,10 @@ public class ZipIntentHandler extends AsyncTask<String, Void, String> {
             while ((entry = zis.getNextEntry()) != null) {
                 File f = new File(tempPath, entry.getName());
                 String canonicalPath = f.getCanonicalPath();
-                if (!canonicalPath.startsWith(tempPath.getCanonicalPath())) {
+                //The separator matters: without it a name like "../temp_zipx.phyphox" would pass
+                //this check, because the extraction directory is a plain string prefix of a
+                //sibling next to it.
+                if (!canonicalPath.startsWith(tempPath.getCanonicalPath() + File.separator)) {
                     return "Security exception: The zip file appears to be tempered with to perform a path traversal attack. Please contact the source of your experiment package or contact the phyphox team for details and help on this issue.";
                 }
                 if (!(entry.getName().endsWith(".phyphox") || f.getParentFile().getName().equals("res")))
