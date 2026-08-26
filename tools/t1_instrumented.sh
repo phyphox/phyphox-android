@@ -27,16 +27,23 @@ FIXTURE_SERVER=$!
 
 rc=0
 
+# The output goes to the job log AND to a file, and the verdict is read from the file
+# afterwards: piping it into grep would swallow everything a reader needs when something fails.
+run_suite() {
+    log=$1
+    shift
+    adb shell am instrument -w "$@" $RUNNER 2>&1 | tee "$log"
+    grep -q "^OK" "$log" || rc=1
+}
+
 adb shell pm revoke $PACKAGE android.permission.RECORD_AUDIO
-adb shell am instrument -w -e class de.rwth_aachen.phyphox.PermissionFlowTest $RUNNER \
-    | tee instrumented-permission-denied.txt | grep -q "^OK" || rc=1
+run_suite instrumented-permission-denied.txt -e class de.rwth_aachen.phyphox.PermissionFlowTest
 
 adb shell pm grant $PACKAGE android.permission.RECORD_AUDIO
 adb shell pm grant $PACKAGE android.permission.CAMERA
 adb shell pm grant $PACKAGE android.permission.ACCESS_FINE_LOCATION
 
-adb shell am instrument -w -e notClass de.rwth_aachen.phyphox.PermissionFlowTest $RUNNER \
-    | tee instrumented-suites.txt | grep -q "^OK" || rc=1
+run_suite instrumented-suites.txt -e notClass de.rwth_aachen.phyphox.PermissionFlowTest
 
 kill $FIXTURE_SERVER 2>/dev/null
 

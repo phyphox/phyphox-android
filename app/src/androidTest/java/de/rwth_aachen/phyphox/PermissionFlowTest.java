@@ -9,6 +9,7 @@ import androidx.core.content.ContextCompat;
 import androidx.test.ext.junit.runners.AndroidJUnit4;
 import androidx.test.uiautomator.By;
 import androidx.test.uiautomator.UiDevice;
+import androidx.test.uiautomator.UiObject2;
 import androidx.test.uiautomator.Until;
 
 import org.junit.After;
@@ -31,13 +32,16 @@ import org.junit.runner.RunWith;
 //and the test asserts whichever path the current state calls for, naming it in the failure
 //message so a single run is never mistaken for both.
 //
-//What the denied path asserts is what the app actually does: it does not put up the system
-//request when the experiment opens, it refuses the experiment with "Need permission to record
-//audio." and stays usable.
+//The denied path has two shapes, and which one appears is up to the device rather than the app:
+//where the microphone has never been refused for good, phyphox asks and the system dialog comes
+//up; where Android has stopped asking, phyphox refuses the experiment itself with "Need
+//permission to record audio.". The test answers the dialog if it appears and then asserts the
+//same ending either way - phyphox in front, saying why the experiment did not open.
 @RunWith(AndroidJUnit4.class)
 public class PermissionFlowTest {
 
     private static final String AUDIO_EXPERIMENT = "audio_scope.phyphox";
+    private static final String PACKAGE = "de.rwth_aachen.phyphox";
 
     private UiDevice device() {
         return UiDevice.getInstance(getInstrumentation());
@@ -69,15 +73,28 @@ public class PermissionFlowTest {
 
     private void deniedPathLeavesTheAppStanding() throws Exception {
         FixtureExperiment.launchAssetWithoutWaiting(AUDIO_EXPERIMENT);
-        Thread.sleep(5000);
 
-        //Without the microphone the app does not ask again at this point - it refuses the
-        //experiment and says why. What matters is that the refusal is legible and the app stays
-        //usable; a blank screen or a crash would not be.
-        assertTrue("the app is gone after opening an experiment it has no permission for",
-                device().hasObject(By.pkg("de.rwth_aachen.phyphox").depth(0)));
+        //Two shapes, depending on what the device remembers. On a fresh device phyphox asks for
+        //the microphone and the system dialog comes up; where the request was already refused
+        //for good, Android does not ask again and phyphox refuses the experiment itself. Both
+        //end the same way, and that ending is what this pins.
+        UiObject2 deny = device().wait(Until.findObject(By.textStartsWith("Don")), 20000);
+        if (deny != null) {
+            deny.click();
+            assertTrue("the permission dialog stayed after it was answered",
+                    device().wait(Until.gone(By.textStartsWith("Don")), 10000));
+        }
+
+        assertTrue("the app is not in the foreground after the microphone was refused (top "
+                        + "package: " + topPackage() + ")",
+                device().wait(Until.hasObject(By.pkg(PACKAGE).depth(0)), 15000));
         assertTrue("nothing explains why the experiment did not open",
-                device().wait(Until.hasObject(By.textContains("permission")), 10000));
+                device().wait(Until.hasObject(By.textContains("permission")), 15000));
+    }
+
+    private String topPackage() {
+        UiObject2 root = device().findObject(By.depth(0));
+        return root == null ? "none" : String.valueOf(root.getApplicationPackage());
     }
 
 }
