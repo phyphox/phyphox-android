@@ -681,53 +681,76 @@ public class RemoteServer {
         return buffers;
     }
 
-    protected void buildBuffer(BufferRequest buffer, DataBuffer db, DecimalFormat format, StringBuilder sb) {
-        //Get the threshold reference data buffer
-        DataBuffer db_reference = buffer.reference.isEmpty() ? db : experiment.getBuffer(buffer.reference);
+    //Everything an answer needs from one buffer, copied while the data lock is held so that the
+    //formatting - the slow half by far, a DecimalFormat call per value - can happen without it.
+    //Building the JSON under the lock made a big buffer on a slow phone hold up the analysis and
+    //every other reader for as long as the whole response took to write.
+    protected static class BufferSnapshot {
+        final BufferRequest request;
+        final String name;
+        final int size;
+        final double value;      //The last value, which is all a single-value request needs
+        final Double[] data;     //null for a single-value request: its array is never copied
+        final Double[] reference;
+        final int n;
 
+        BufferSnapshot(BufferRequest request, DataBuffer db, DataBuffer referenceBuffer) {
+            this.request = request;
+            this.name = db.name;
+            this.size = db.size;
+            this.value = db.value;
+            if (Double.isNaN(request.threshold)) {
+                this.data = null;
+                this.reference = null;
+                this.n = 0;
+            } else {
+                this.data = db.getArray();
+                int filled = db.getFilledSize();
+                if (referenceBuffer == db) {
+                    this.reference = this.data;
+                } else {
+                    this.reference = referenceBuffer.getArray();
+                    filled = Math.min(filled, referenceBuffer.getFilledSize());
+                }
+                this.n = filled;
+            }
+        }
+    }
+
+    protected void buildBuffer(BufferSnapshot buffer, DecimalFormat format, StringBuilder sb) {
         //Buffer name
         sb.append("\"");
-        sb.append(db.name);
+        sb.append(buffer.name);
 
         //Buffer size
         sb.append("\":{\"size\":");
-        sb.append(db.size);
+        sb.append(buffer.size);
 
         //Does the response contain a single value, the whole buffer or a part of it?
         sb.append(",\"updateMode\":\"");
-        if (Double.isNaN(buffer.threshold))
+        if (Double.isNaN(buffer.request.threshold))
             sb.append("single");
-        else if (Double.isInfinite(buffer.threshold))
+        else if (Double.isInfinite(buffer.request.threshold))
             sb.append("full");
         else
             sb.append("partial");
         sb.append("\", \"buffer\":[");
 
-        if (Double.isNaN(buffer.threshold)) //Single value. Get the last one directly from our buffer class
-            if (Double.isNaN(db.value) || Double.isInfinite(db.value))
+        if (Double.isNaN(buffer.request.threshold)) //Single value, taken from the buffer class
+            if (Double.isNaN(buffer.value) || Double.isInfinite(buffer.value))
                 sb.append("null");
             else
-                sb.append(format.format(db.value));
+                sb.append(format.format(buffer.value));
         else {
             //Get all the values...
             boolean firstValue = true; //Find first iteration, so the other ones can add a separator
-            Double[] data = db.getArray();
-            int n = db.getFilledSize();
-            Double[] dataRef;
-            if (db_reference == db)
-                dataRef = data;
-            else {
-                dataRef = db_reference.getArray();
-                n = Math.min(n, db_reference.getFilledSize());
-            }
-
 
             Double v;
-            for (int i = 0; i < n; i++) {
+            for (int i = 0; i < buffer.n; i++) {
                 //Simultaneously get the values from both iterators
-                v = data[i];
-                Double v_dep = dataRef[i];
-                if (v_dep <= buffer.threshold) //Skip this value if it is below the threshold or NaN
+                v = buffer.data[i];
+                Double v_dep = buffer.reference[i];
+                if (v_dep <= buffer.request.threshold) //Skip this value if it is below the threshold or NaN
                     continue;
 
                 //Add a separator if this is not the first value
@@ -770,65 +793,68 @@ public class RemoteServer {
                 return respondError(response, 400, "Unknown reference buffer.");
         }
 
-        //We now know what the query request. Let's build our answer
-        StringBuilder sb;
-
-        //Lock the data, to get a consistent data block
+        //Lock the data only to copy it, so all the buffers in one answer still belong to the same
+        //moment, and let the formatting - which is the expensive part and needs nothing the
+        //analysis could change - run afterwards.
+        List<BufferSnapshot> snapshots = new ArrayList<>();
         experiment.dataLock.lock();
         try {
-            //First let's take a guess at how much memory we will need
-            int sizeEstimate = 0;
-            for (BufferRequest buffer : buffers) {
-                DataBuffer db = experiment.getBuffer(buffer.name);
-                if (db != null)
-                    sizeEstimate += 14 * db.size + 100;
-            }
-
-            //Create the string builder
-            sb = new StringBuilder(sizeEstimate);
-
-            boolean firstBuffer = true; //Helper to recognize the first iteration
-
-            //Set our decimal format (English to make sure we use decimal points, not comma
-            DecimalFormat format = (DecimalFormat) NumberFormat.getInstance(Locale.ENGLISH);
-            format.applyPattern("0.#######E0");
-
-            //Start building...
-            sb.append("{\"buffer\":{\n");
             for (BufferRequest buffer : buffers) {
                 DataBuffer db = experiment.getBuffer(buffer.name);
                 if (db == null)
                     continue;
-                if (firstBuffer)
-                    firstBuffer = false;
-                else
-                    sb.append(",\n"); //Separate the object with a comma, if this is not the first item
-
-                buildBuffer(buffer, db, format, sb);
+                DataBuffer reference = buffer.reference.isEmpty() ? db
+                        : experiment.getBuffer(buffer.reference);
+                snapshots.add(new BufferSnapshot(buffer, db, reference));
             }
-
-            //We also send the experiment status
-            sb.append("\n},\n\"status\":{\n");
-
-            //Session ID
-            sb.append("\"session\":\"");
-            sb.append(sessionID);
-
-            //Measuring?
-            sb.append("\", \"measuring\":");
-            sb.append(callActivity.measuring);
-
-            //Timed run?
-            sb.append(", \"timedRun\":");
-            sb.append(callActivity.timedRun);
-
-            //Countdown state
-            sb.append(", \"countDown\":");
-            sb.append(callActivity.millisUntilFinished);
-            sb.append("\n}\n}\n");
         } finally {
             experiment.dataLock.unlock();
         }
+
+        //First let's take a guess at how much memory we will need
+        int sizeEstimate = 0;
+        for (BufferSnapshot buffer : snapshots)
+            sizeEstimate += 14 * buffer.size + 100;
+
+        //Create the string builder
+        StringBuilder sb = new StringBuilder(sizeEstimate);
+
+        boolean firstBuffer = true; //Helper to recognize the first iteration
+
+        //Set our decimal format (English to make sure we use decimal points, not comma
+        DecimalFormat format = (DecimalFormat) NumberFormat.getInstance(Locale.ENGLISH);
+        format.applyPattern("0.#######E0");
+
+        //Start building...
+        sb.append("{\"buffer\":{\n");
+        for (BufferSnapshot buffer : snapshots) {
+            if (firstBuffer)
+                firstBuffer = false;
+            else
+                sb.append(",\n"); //Separate the object with a comma, if this is not the first item
+
+            buildBuffer(buffer, format, sb);
+        }
+
+        //We also send the experiment status
+        sb.append("\n},\n\"status\":{\n");
+
+        //Session ID
+        sb.append("\"session\":\"");
+        sb.append(sessionID);
+
+        //Measuring?
+        sb.append("\", \"measuring\":");
+        sb.append(callActivity.measuring);
+
+        //Timed run?
+        sb.append(", \"timedRun\":");
+        sb.append(callActivity.timedRun);
+
+        //Countdown state
+        sb.append(", \"countDown\":");
+        sb.append(callActivity.millisUntilFinished);
+        sb.append("\n}\n}\n");
 
         //Done. Build a string and return it as usual
         return respond(response, sb.toString());
