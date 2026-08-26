@@ -19,6 +19,12 @@ on:
     branches: [development, 'release/**']
   workflow_dispatch:
 
+# Same as test.yml, and it matters more here: five jobs, each with an emulator, are minutes of CI
+# time that a superseded push has no use for.
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ github.ref != 'refs/heads/master' }}
+
 env:
   API_LEVEL: 36
   EMULATOR_ARCH: x86_64

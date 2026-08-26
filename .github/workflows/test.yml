@@ -5,6 +5,14 @@
 # the tests exists for plain local clones without the sibling.
 name: tests
 on: [push, pull_request]
+
+# A new push supersedes the run of the one before it, so the queue does not fill with results
+# nobody is waiting for any more. Not on master: what master reports is the record of a released
+# commit, and that is worth keeping even when two land in a row.
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ github.ref != 'refs/heads/master' }}
+
 jobs:
   t0:
     runs-on: ubuntu-latest
