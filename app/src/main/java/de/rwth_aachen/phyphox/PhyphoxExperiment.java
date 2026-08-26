@@ -120,7 +120,16 @@ public class PhyphoxExperiment implements Serializable, ExperimentTimeReference.
     public final Vector<DataBuffer> dataBuffers = new Vector<>(); //Instances of dataBuffers (see dataBuffer.java) that are used to store sensor data, analysis results etc.
     public final Map<String, Integer> dataMap = new HashMap<>(); //This maps key names (string) defined in the experiment-file to the index of a dataBuffer
     public Vector<Analysis.AnalysisModule> analysis = new Vector<>(); //Instances of analysisModules (see analysis.java) that define all the mathematical processes in this experiment
-    public Lock dataLock = new ReentrantLock();
+    //Fair on purpose. Everything that reads buffer data takes this lock - the remote server's
+    //get and export handlers, the exporter, the state writer - while the analysis and the sensor
+    //callbacks take it over and over, several times per pass with no gap in between. A non-fair
+    //lock lets a thread that re-acquires immediately barge past a waiter, so on a device slow
+    //enough that the analysis never leaves a gap, a reader is starved indefinitely: the lab saw
+    //every export of doppler fail on a Galaxy A3 while a 167-byte /get went unanswered for
+    //minutes and /config, the one endpoint that touches no buffer, replied instantly. FIFO costs
+    //a park/unpark per contended acquisition, which is nothing next to the few hundred
+    //acquisitions a second this sees.
+    public Lock dataLock = new ReentrantLock(true);
 
     double analysisSleep = 0.; //Pause between analysis cycles. At 0 analysis is done as fast as possible.
     DataBuffer analysisDynamicSleep = null;
