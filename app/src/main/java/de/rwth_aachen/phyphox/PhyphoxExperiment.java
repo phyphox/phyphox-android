@@ -515,6 +515,7 @@ public class PhyphoxExperiment implements Serializable, ExperimentTimeReference.
         }
 
         newUserInput = true; //Set this to true to execute analysis at least ones with default values.
+        analysisRan = false; //The first run after starting is exempt from the requireFill gate as well - the passes that ran while the experiment was merely open must not arm it, or an input that only delivers data once the analysis has run (audio recording) would wait for a run that waits for its data.
 
         for (SensorInput sensor : inputSensors)
             sensor.start();
