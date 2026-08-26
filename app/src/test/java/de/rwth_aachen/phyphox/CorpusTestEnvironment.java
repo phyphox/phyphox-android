@@ -60,6 +60,19 @@ abstract class CorpusTestEnvironment {
         return null;
     }
 
+    //The shared fixtures live in the same phyphox-docs checkout as the corpus, one directory
+    //per set (views/, network/, containers/ ...).
+    static File findFixtures(String set) {
+        File dir = new File(System.getProperty("user.dir")).getAbsoluteFile();
+        for (int i = 0; i < 8 && dir != null; i++) {
+            File fixtures = new File(new File(new File(dir, "phyphox-docs"), "fixtures"), set);
+            if (fixtures.isDirectory())
+                return fixtures;
+            dir = dir.getParentFile();
+        }
+        return null;
+    }
+
     //All .phyphox files under dir, as paths relative to base, sorted for stable test names.
     static List<String> listPhyphoxFiles(File base, File dir) {
         List<String> result = new ArrayList<>();

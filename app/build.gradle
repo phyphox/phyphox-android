@@ -92,6 +92,11 @@ android {
             def networkFixtures = file("$rootDir/../phyphox-docs/fixtures/network")
             if (networkFixtures.isDirectory())
                 assets.srcDirs += networkFixtures
+            //And the container archives, which the save-to-collection suite opens the way a file
+            //manager hands one over.
+            def containerFixtures = file("$rootDir/../phyphox-docs/fixtures/containers")
+            if (containerFixtures.isDirectory())
+                assets.srcDirs += containerFixtures
             //The graph goldens travel with the test APK: they are compared on the device, where
             //the graphs are rendered (see GraphSnapshotTest for how they are recorded).
             assets.srcDirs += file("src/androidTest/goldens")
@@ -123,6 +128,11 @@ tasks.withType(Test).configureEach {
     def corpus = file("$rootDir/../phyphox-docs/corpus")
     if (corpus.isDirectory())
         inputs.dir(corpus).withPathSensitivity(PathSensitivity.RELATIVE).withPropertyName("phyphoxDocsCorpus")
+
+    //Same for the container fixtures, which the intake test reads straight out of the checkout.
+    def containerFixtures = file("$rootDir/../phyphox-docs/fixtures/containers")
+    if (containerFixtures.isDirectory())
+        inputs.dir(containerFixtures).withPathSensitivity(PathSensitivity.RELATIVE).withPropertyName("phyphoxDocsContainerFixtures")
 }
 
 dependencies {

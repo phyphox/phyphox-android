@@ -163,6 +163,7 @@ jobs:
       # phyphox-test: accessibility-smoke
       # phyphox-test: switch-bypassed-ui
       # phyphox-test: translations-ui
+      # phyphox-test: save-to-collection
       - name: View, chrome and language suites
         uses: reactivecircus/android-emulator-runner@v2
         with:
