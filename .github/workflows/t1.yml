@@ -125,6 +125,18 @@ jobs:
   view-and-chrome-suites:
     runs-on: ubuntu-latest
     timeout-minutes: 90
+    strategy:
+      fail-fast: false
+      matrix:
+        #Two device profiles, because the layouts differ across the sw600dp boundary and the
+        #graph goldens are recorded per device class. The tablet run is not a copy of the phone
+        #run: it is where a tablet-only layout regression shows up.
+        include:
+          - profile: pixel_6
+            device: phone
+          - profile: 10.1in WXGA (Tablet)
+            device: tablet
+    name: view-and-chrome-suites (${{ matrix.device }})
     steps:
       - uses: actions/checkout@v5
         with:
@@ -157,6 +169,7 @@ jobs:
           api-level: ${{ env.API_LEVEL }}
           arch: ${{ env.EMULATOR_ARCH }}
           target: ${{ env.EMULATOR_TARGET }}
+          profile: ${{ matrix.profile }}
           ram-size: 4096M
           script: |
             sh phyphox-android/tools/t1_instrumented.sh phyphox-android
@@ -164,7 +177,7 @@ jobs:
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: t1-instrumented-logs
+          name: t1-instrumented-logs-${{ matrix.device }}
           path: |
             logcat-instrumented*.txt
             instrumented-*.txt

@@ -42,13 +42,17 @@ import de.rwth_aachen.phyphox.SettingsActivity.SettingsFragment;
 //over its content directly.
 //
 //Goldens ship as test assets (app/src/androidTest/goldens), so the comparison happens on the
-//device. Recording writes the images to the app's external files directory instead:
+//device, and they are keyed by device class - a run on the tablet profile compares against
+//tablet goldens. Recording writes the images to the app's external files directory instead:
 //
 //    adb shell am instrument -w -e phyphox.goldens record \
 //        -e class de.rwth_aachen.phyphox.GraphSnapshotTest \
 //        de.rwth_aachen.phyphox.test/androidx.test.runner.AndroidJUnitRunner
 //    adb pull /sdcard/Android/data/de.rwth_aachen.phyphox/files/goldens/graphs \
 //        app/src/androidTest/goldens/graphs
+//
+//Recorded once per device profile: the T1 job runs the suites on a phone and on a tablet, and
+//the goldens of both live side by side (light-phone.png next to light-tablet.png).
 //
 //and the images are reviewed like any other change before they become the reference.
 @RunWith(AndroidJUnit4.class)
@@ -64,6 +68,14 @@ public class GraphSnapshotTest {
     //once its surface exists.
     private static final long SETTLE_MILLIS = 3000;
 
+    //Phone or tablet, the way the layouts decide it: a smallest width of 600dp is where the
+    //tablet resources take over. The goldens are per device class, so the same suite run on a
+    //tablet profile compares against tablet goldens instead of failing on the phone's.
+    private String deviceClass() {
+        return getInstrumentation().getTargetContext().getResources().getConfiguration()
+                .smallestScreenWidthDp >= 600 ? "tablet" : "phone";
+    }
+
     private boolean recording() {
         return "record".equals(getArguments().getString("phyphox.goldens"));
     }
@@ -78,7 +90,8 @@ public class GraphSnapshotTest {
             for (String theme : new String[]{SettingsFragment.DARK_MODE_OFF,
                     SettingsFragment.DARK_MODE_ON}) {
                 String configuration =
-                        (SettingsFragment.DARK_MODE_ON.equals(theme) ? "dark" : "light") + "-phone";
+                        (SettingsFragment.DARK_MODE_ON.equals(theme) ? "dark" : "light")
+                                + "-" + deviceClass();
                 findings.addAll(capture(fixture, theme, configuration));
             }
         }
