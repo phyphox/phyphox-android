@@ -19,6 +19,7 @@ import androidx.test.uiautomator.By;
 import androidx.test.uiautomator.UiDevice;
 import androidx.test.uiautomator.UiObject2;
 import androidx.test.uiautomator.UiObjectNotFoundException;
+import androidx.test.uiautomator.StaleObjectException;
 import androidx.test.uiautomator.UiScrollable;
 import androidx.test.uiautomator.UiSelector;
 import androidx.test.uiautomator.Until;
@@ -176,33 +177,85 @@ public class SaveToCollectionTest {
                 + expected + ": " + added);
     }
 
-    //The collection as the user reaches it, with the experiment closed: a save that writes the
-    //file but never registers or refreshes the entry has to fail here, which is why this does not
-    //look at the directory or open anything by intent.
-    private UiObject2 findInCollection(String title) throws Exception {
-        FixtureExperiment.close(FixtureExperiment.activity());
+    //Closes whatever experiment is open and returns to the collection, waiting until it is
+    //really gone - otherwise the next lookup would find the experiment that is still on screen.
+    private Experiment backToCollection() {
+        Experiment open = FixtureExperiment.activity();
+        FixtureExperiment.close(open);
+        long deadline = System.currentTimeMillis() + 10000;
+        while (FixtureExperiment.activity() != null && System.currentTimeMillis() < deadline)
+            settle(100);
         FixtureExperiment.bringToForeground();
-
-        UiObject2 entry = device().wait(Until.findObject(By.text(title)), 10000);
-        if (entry == null) {
-            try {
-                UiScrollable list = new UiScrollable(new UiSelector().scrollable(true));
-                list.setAsVerticalList();
-                list.scrollTextIntoView(title);
-            } catch (UiObjectNotFoundException e) {
-                //Nothing to scroll, or the entry is not there at all - the assertion below says so
-            }
-            entry = device().wait(Until.findObject(By.text(title)), 5000);
-        }
-        assertNotNull("the collection does not list \"" + title + "\" after saving it", entry);
-        return entry;
+        return open;
     }
 
-    //Opens an entry by tapping it in the collection, the way the user does.
-    private Experiment openFromCollection(String title) throws Exception {
+    //Opens a saved experiment the way the user does: find its entry in the collection and tap it.
+    //A save that writes the file but never registers or refreshes the entry fails here, which is
+    //the point of going through the list rather than opening anything by intent.
+    //
+    //Both halves have to be retried rather than done once. The collection rebuilds its list in
+    //onResume, so an entry found a moment earlier can go stale under the tap (that is a
+    //StaleObjectException, and it is what made this flaky in CI), and a tap that lands during the
+    //rebuild is swallowed without opening anything.
+    private Experiment openFromCollection(String title) {
         FixtureExperiment.suppressHints();
-        findInCollection(title).click();
-        return FixtureExperiment.awaitLoaded();
+        Experiment previous = backToCollection();
+
+        boolean everListed = false;
+        long deadline = System.currentTimeMillis() + 40000;
+        while (System.currentTimeMillis() < deadline) {
+            UiObject2 entry = device().wait(Until.findObject(By.text(title)), 2000);
+            if (entry == null) {
+                scrollTowards(title);
+                continue;
+            }
+            everListed = true;
+            try {
+                entry.click();
+            } catch (StaleObjectException e) {
+                continue; //the list rebuilt under the tap - look it up again
+            }
+            Experiment opened = awaitOpened(previous, 8000);
+            if (opened != null)
+                return opened;
+            FixtureExperiment.bringToForeground(); //the tap did not take, try once more
+        }
+        throw new AssertionError(everListed
+                ? "tapping \"" + title + "\" in the collection never opened it"
+                : "the collection does not list \"" + title + "\" after saving it");
+    }
+
+    //A loaded experiment activity that is not the one we came from, or null within the timeout.
+    //Identity rather than title: reopening a saved experiment gives it the same title as the one
+    //that was just closed.
+    private Experiment awaitOpened(Experiment previous, long millis) {
+        long deadline = System.currentTimeMillis() + millis;
+        while (System.currentTimeMillis() < deadline) {
+            Experiment activity = FixtureExperiment.activity();
+            if (activity != null && activity != previous
+                    && activity.experiment != null && activity.experiment.loaded)
+                return activity;
+            settle(100);
+        }
+        return null;
+    }
+
+    private void scrollTowards(String title) {
+        try {
+            UiScrollable list = new UiScrollable(new UiSelector().scrollable(true));
+            list.setAsVerticalList();
+            list.scrollTextIntoView(title);
+        } catch (UiObjectNotFoundException e) {
+            //Nothing to scroll, or the entry is not there (yet) - the caller's deadline decides
+        }
+    }
+
+    private void settle(long millis) {
+        try {
+            Thread.sleep(millis);
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+        }
     }
 
     //The drawable an image element ended up with, or null if it has none. The fixture image is
