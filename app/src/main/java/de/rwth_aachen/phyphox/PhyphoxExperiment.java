@@ -726,9 +726,20 @@ public class PhyphoxExperiment implements Serializable, ExperimentTimeReference.
 
             Attr attr = doc.createAttribute("init");
 
+            //Under the data lock like every other reader of a buffer: this runs on its own
+            //thread while the analysis keeps writing, and copying a list that grows underneath
+            //throws (see DataExport.collectData).
+            Double[] values;
+            dataLock.lock();
+            try {
+                values = buffer.getArray();
+            } finally {
+                dataLock.unlock();
+            }
+
             StringBuilder sb = new StringBuilder();
             boolean first = true;
-            for (double v : buffer.getArray()) {
+            for (double v : values) {
                 if (first)
                     first = false;
                 else

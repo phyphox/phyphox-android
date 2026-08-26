@@ -433,13 +433,28 @@ public class DataExport implements Serializable {
         this.exportSets.add(set);
     }
 
+    //Take the snapshot every export starts from. The buffers are written by the analysis and
+    //sensor threads while this runs, so it happens under the experiment's data lock: without it
+    //a buffer can grow between the moment its size is read and the moment it is copied, and
+    //LinkedList.toArray walks off the end of the array it just sized (seen as a 500 on /export
+    //of a running experiment, ArrayIndexOutOfBoundsException from DataBuffer.getArray). Locking
+    //once around all sets also makes the sets consistent with each other, which is what a
+    //snapshot is supposed to be.
+    private void collectData() {
+        experiment.dataLock.lock();
+        try {
+            for (int i = 0; i < exportSets.size(); i++) {
+                exportSets.get(i).getData();
+            }
+        } finally {
+            experiment.dataLock.unlock();
+        }
+    }
+
     //Export the data (this will show dialogs to the user)
     public void export(Activity c, boolean minimalistic) {
 
-        //Retrieve all the data
-        for (int i = 0; i < exportSets.size(); i++) {
-            exportSets.get(i).getData();
-        }
+        collectData();
 
         final String fileName = FileNameFormat.formatFilename(c, experiment.title, experiment.experimentTimeReference);
         showFormatDialog(exportSets, c, minimalistic, fileName);
@@ -517,9 +532,7 @@ public class DataExport implements Serializable {
     //The user will select the exportSets and file format in the browser and will download the
     //   resulting file there as well.
     protected File exportDirect(ExportFormat format, File cacheDir, boolean minimalistic, final String fileName, Context ctx) {
-        for (int i = 0; i < exportSets.size(); i++) {
-            exportSets.get(i).getData();
-        }
+        collectData();
 
         format.setFilenameBase(fileName);
 
