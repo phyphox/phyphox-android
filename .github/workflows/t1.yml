@@ -122,6 +122,54 @@ jobs:
             logcat-experiments*.txt
           if-no-files-found: ignore
 
+  view-and-chrome-suites:
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          path: phyphox-android
+          submodules: recursive
+      - uses: actions/checkout@v5
+        with:
+          repository: phyphox/phyphox-docs
+          path: phyphox-docs
+      - uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: 21
+          cache: gradle
+      - name: Enable KVM
+        run: |
+          echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
+          sudo udevadm control --reload-rules
+          sudo udevadm trigger --name-match=kvm
+      # phyphox-test: graph-snapshots
+      # phyphox-test: view-behavior
+      # phyphox-test: app-chrome
+      # phyphox-test: lifecycle
+      # phyphox-test: accessibility-smoke
+      # phyphox-test: switch-bypassed-ui
+      # phyphox-test: translations-ui
+      - name: View, chrome and language suites
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: ${{ env.API_LEVEL }}
+          arch: ${{ env.EMULATOR_ARCH }}
+          target: ${{ env.EMULATOR_TARGET }}
+          ram-size: 4096M
+          script: |
+            sh phyphox-android/tools/t1_instrumented.sh phyphox-android
+      - name: Keep the device log and the captured screens
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: t1-instrumented-logs
+          path: |
+            logcat-instrumented*.txt
+            instrumented-*.txt
+          if-no-files-found: ignore
+
   network-fixtures:
     runs-on: ubuntu-latest
     timeout-minutes: 45
