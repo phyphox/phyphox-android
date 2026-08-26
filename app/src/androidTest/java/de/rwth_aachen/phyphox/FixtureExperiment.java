@@ -112,6 +112,18 @@ final class FixtureExperiment {
         app.startActivity(intent);
     }
 
+    //Brings the app back to the front without recreating anything - the way tapping its icon
+    //does. Launching the fixture again instead would start a fresh experiment, which is a
+    //different thing entirely.
+    static void bringToForeground() {
+        Context app = getInstrumentation().getTargetContext();
+        Intent intent = app.getPackageManager().getLaunchIntentForPackage(app.getPackageName());
+        if (intent == null)
+            throw new AssertionError("the app has no launcher intent");
+        intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_RESET_TASK_IF_NEEDED);
+        app.startActivity(intent);
+    }
+
     //Closes the experiment again, so the next fixture starts from the collection.
     static void close(Experiment activity) {
         if (activity != null)
