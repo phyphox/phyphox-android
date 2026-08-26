@@ -444,7 +444,13 @@ public class PhyphoxExperiment implements Serializable, ExperimentTimeReference.
             experimentTimeReference.registerEvent(ExperimentTimeReference.TimeMappingEvent.PAUSE);
         event = experimentTimeReference.getLastMapping();
         lastAnalysis = 0.0;
-        analysisRan = false; //The first run after the next start is exempt from the requireFill gate again
+        //analysisRan is deliberately NOT reset here. Stopping does not exempt anything: the ruled
+        //semantics exempt the first run after opening or after STARTING, and startAllIO does that
+        //reset. Disarming the gate at stop instead armed it for the paused passes that follow a
+        //stop (handleInputViews runs one whenever there is user input while not measuring) - and
+        //those run with the analysis inputs already consumed, so every module with a non-append
+        //output overwrote its results with nothing. The recorded data was gone and the export
+        //that followed held only headers.
 
         //Recording
         if (audioRecord != null && audioRecord.getState() == AudioRecord.STATE_INITIALIZED)

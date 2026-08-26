@@ -100,6 +100,27 @@ public class RequireFillFirstRunTest {
                 2, executedPasses(experiment));
     }
 
+    //Stopping is the other half of the rule: it exempts nothing. The passes that follow a stop
+    //run with the analysis inputs already consumed, so letting them through overwrites every
+    //non-append result with nothing - see StopKeepsResultsTest for that symptom.
+    @Test
+    public void stoppingDoesNotExemptAPass() throws Exception {
+        PhyphoxExperiment experiment = load();
+
+        runAnalysisPass(experiment, false);
+        experiment.startAllIO();
+        runAnalysisPass(experiment, true);
+        assertEquals(2, executedPasses(experiment));
+
+        experiment.stopAllIO();
+
+        runAnalysisPass(experiment, false);
+        runAnalysisPass(experiment, false);
+        assertEquals("stopping must not exempt anything - the exemption is for opening and "
+                        + "starting, and a run after stopping is neither",
+                2, executedPasses(experiment));
+    }
+
     //And the same once more after a stop/start cycle, which is the path that used to work while
     //the first start did not.
     @Test
