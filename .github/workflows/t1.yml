@@ -137,12 +137,27 @@ jobs:
         #Two device profiles, because the layouts differ across the sw600dp boundary and the
         #graph goldens are recorded per device class. The tablet run is not a copy of the phone
         #run: it is where a tablet-only layout regression shows up.
+        #
+        #And two suite selections, because the language sweep was 222 of the 492 seconds this job
+        #spent instrumenting: it restarts the app once per enabled language, which nothing else
+        #does, and that made this the longest job in the workflow. It needs both profiles like
+        #everything else here - what it looks for is text that does not fit, and what fits
+        #depends on the screen.
+        #Spelled out rather than crossed, so what runs is what is written here.
         include:
-          - profile: pixel_6
+          - suite: chrome
+            profile: pixel_6
             device: phone
-          - profile: 10.1in WXGA (Tablet)
+          - suite: chrome
+            profile: 10.1in WXGA (Tablet)
             device: tablet
-    name: view-and-chrome-suites (${{ matrix.device }})
+          - suite: translations
+            profile: pixel_6
+            device: phone
+          - suite: translations
+            profile: 10.1in WXGA (Tablet)
+            device: tablet
+    name: view-and-chrome-suites (${{ matrix.suite }}, ${{ matrix.device }})
     steps:
       - uses: actions/checkout@v5
         with:
@@ -162,15 +177,17 @@ jobs:
           echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
           sudo udevadm control --reload-rules
           sudo udevadm trigger --name-match=kvm
+      # The chrome selection:
       # phyphox-test: graph-snapshots
       # phyphox-test: view-behavior
       # phyphox-test: app-chrome
       # phyphox-test: lifecycle
       # phyphox-test: accessibility-smoke
       # phyphox-test: switch-bypassed-ui
-      # phyphox-test: translations-ui
       # phyphox-test: save-to-collection
-      - name: View, chrome and language suites
+      # and the translations selection:
+      # phyphox-test: translations-ui
+      - name: ${{ matrix.suite }} suites
         uses: reactivecircus/android-emulator-runner@v2
         with:
           api-level: ${{ env.API_LEVEL }}
@@ -179,12 +196,12 @@ jobs:
           profile: ${{ matrix.profile }}
           ram-size: 4096M
           script: |
-            sh phyphox-android/tools/t1_instrumented.sh phyphox-android
+            sh phyphox-android/tools/t1_instrumented.sh phyphox-android ${{ matrix.suite }}
       - name: Keep the device log and the captured screens
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: t1-instrumented-logs-${{ matrix.device }}
+          name: t1-instrumented-logs-${{ matrix.suite }}-${{ matrix.device }}
           path: |
             logcat-instrumented*.txt
             instrumented-*.txt

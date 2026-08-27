@@ -3,19 +3,33 @@
 # accessibility and the language rendering - as CI runs them and as a developer can run them
 # against a booted emulator:
 #
-#     tools/t1_instrumented.sh .
+#     tools/t1_instrumented.sh .                 # everything except the language sweep
+#     tools/t1_instrumented.sh . translations    # only the language sweep
+#     tools/t1_instrumented.sh . all             # both, in one run
 #
-# The argument is the app checkout (CI runs from the workspace that holds it next to
-# phyphox-docs).
+# The first argument is the app checkout (CI runs from the workspace that holds it next to
+# phyphox-docs). The second selects which suites to run, and exists because the language sweep is
+# 222 of the 492 seconds the whole set took: walking every enabled language means restarting the
+# app once per language, which nothing else does. Splitting it into its own job takes it off the
+# critical path of the T1 workflow, at the price of a second emulator and a second install.
 #
 # The permission suite runs twice on purpose, once with the microphone revoked and once granted:
 # "pm grant" and "pm revoke" restart the app, and the instrumentation lives in that process, so a
-# test cannot change the permission itself (see PermissionFlowTest).
+# test cannot change the permission itself (see PermissionFlowTest). It belongs to the chrome
+# selection; the language sweep needs no permission of its own.
 set -u
 
 APP=${1:-.}
+SUITES=${2:-chrome}
 RUNNER=de.rwth_aachen.phyphox.test/androidx.test.runner.AndroidJUnitRunner
 PACKAGE=de.rwth_aachen.phyphox
+LANGUAGE_SUITE=de.rwth_aachen.phyphox.TranslationsUiTest
+PERMISSION_SUITE=de.rwth_aachen.phyphox.PermissionFlowTest
+
+case $SUITES in
+    chrome|translations|all) ;;
+    *) echo "Unknown suite selection \"$SUITES\" (chrome, translations or all)" >&2; exit 2 ;;
+esac
 
 cd "$APP" && ./gradlew installRegularDebug installRegularDebugAndroidTest || exit 1
 cd - > /dev/null || exit 1
@@ -36,19 +50,25 @@ run_suite() {
     grep -q "^OK" "$log" || rc=1
 }
 
-adb shell pm revoke $PACKAGE android.permission.RECORD_AUDIO
-run_suite instrumented-permission-denied.txt -e class de.rwth_aachen.phyphox.PermissionFlowTest
+if [ "$SUITES" != "translations" ]; then
+    adb shell pm revoke $PACKAGE android.permission.RECORD_AUDIO
+    run_suite instrumented-$SUITES-permission-denied.txt -e class $PERMISSION_SUITE
+fi
 
 adb shell pm grant $PACKAGE android.permission.RECORD_AUDIO
 adb shell pm grant $PACKAGE android.permission.CAMERA
 adb shell pm grant $PACKAGE android.permission.ACCESS_FINE_LOCATION
 
-run_suite instrumented-suites.txt -e notClass de.rwth_aachen.phyphox.PermissionFlowTest
+case $SUITES in
+    chrome)       run_suite instrumented-$SUITES-suites.txt -e notClass "$PERMISSION_SUITE,$LANGUAGE_SUITE" ;;
+    translations) run_suite instrumented-$SUITES-suites.txt -e class "$LANGUAGE_SUITE" ;;
+    all)          run_suite instrumented-$SUITES-suites.txt -e notClass "$PERMISSION_SUITE" ;;
+esac
 
 kill $FIXTURE_SERVER 2>/dev/null
 
-adb logcat -d > logcat-instrumented.txt 2>&1 || true
-adb logcat -d -s phyphoxA11y > instrumented-accessibility-findings.txt 2>&1 || true
-adb logcat -d -s phyphoxI18n > instrumented-language-findings.txt 2>&1 || true
+adb logcat -d > logcat-instrumented-$SUITES.txt 2>&1 || true
+adb logcat -d -s phyphoxA11y > instrumented-$SUITES-accessibility-findings.txt 2>&1 || true
+adb logcat -d -s phyphoxI18n > instrumented-$SUITES-language-findings.txt 2>&1 || true
 
 exit $rc
