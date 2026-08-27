@@ -9,6 +9,7 @@ import androidx.core.content.ContextCompat;
 import androidx.test.ext.junit.runners.AndroidJUnit4;
 import androidx.test.uiautomator.By;
 import androidx.test.uiautomator.UiDevice;
+import androidx.test.uiautomator.StaleObjectException;
 import androidx.test.uiautomator.UiObject2;
 import androidx.test.uiautomator.Until;
 
@@ -80,9 +81,26 @@ public class PermissionFlowTest {
         //end the same way, and that ending is what this pins.
         UiObject2 deny = device().wait(Until.findObject(By.textStartsWith("Don")), 20000);
         if (deny != null) {
-            deny.click();
-            assertTrue("the permission dialog stayed after it was answered",
-                    device().wait(Until.gone(By.textStartsWith("Don")), 10000));
+            //Answered until it is really gone, rather than tapped once. A dialog that is still
+            //animating in swallows the tap, and the app cannot put it back up - the denied branch
+            //of onRequestPermissionsResult does nothing at all - so a dialog that is still there
+            //means the tap did not land. Seen on the tablet profile in CI.
+            long deadline = System.currentTimeMillis() + 20000;
+            boolean gone = false;
+            while (!gone && System.currentTimeMillis() < deadline) {
+                UiObject2 button = device().findObject(By.textStartsWith("Don"));
+                if (button == null) {
+                    gone = true;
+                    break;
+                }
+                try {
+                    button.click();
+                } catch (StaleObjectException e) {
+                    //The dialog changed under the tap - look it up again and answer that one
+                }
+                gone = device().wait(Until.gone(By.textStartsWith("Don")), 5000);
+            }
+            assertTrue("the permission dialog stayed after it was answered", gone);
         }
 
         assertTrue("the app is not in the foreground after the microphone was refused (top "
