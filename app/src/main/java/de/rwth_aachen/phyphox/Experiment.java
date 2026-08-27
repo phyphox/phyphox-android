@@ -105,6 +105,8 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 import java.util.UUID;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
 
 import de.rwth_aachen.phyphox.Bluetooth.Bluetooth;
 import de.rwth_aachen.phyphox.Bluetooth.BluetoothInput;
@@ -176,6 +178,10 @@ public class Experiment extends AppCompatActivity implements View.OnClickListene
     private boolean serverEnabled = false; //Is the remote server activated?
     boolean remoteIntentMeasuring = false; //Is the remote interface expecting that the measurement is running?
     boolean updateState = false; //This is set to true when a state changed is initialized remotely. The measurement state will then be set to remoteIntentMeasuring.
+    //Set by a remote cmd=start while it waits for the update loop to carry the start out
+    volatile CountDownLatch remoteStartVerdict = null;
+    volatile boolean remoteStartSucceeded = false;
+    static final long REMOTE_START_TIMEOUT_MS = 5000;
     public boolean remoteInput = false; //Has there been an data input (inputViews for now) from the remote server that should be processed?
     public boolean shouldDefocus = false; //Should the current view loose focus? (Neccessary to remotely edit an input view, which has focus on this device)
     private String sessionID = "";
@@ -1653,14 +1659,22 @@ public class Experiment extends AppCompatActivity implements View.OnClickListene
 
             //If a state change has been requested (on another thread, i.e. remote server), do so
             if (updateState) {
+                boolean started;
                 if (remoteIntentMeasuring) {
-                    if (timedRun)
-                        startTimedMeasurement();
-                    else
-                        startMeasurement();
-                } else
+                    started = timedRun ? startTimedMeasurement() : startMeasurement();
+                } else {
                     stopMeasurement();
+                    started = false;
+                }
                 updateState = false;
+                //Release a remote cmd=start waiting for this. A stop that raced in front of it
+                //reports false, which is the honest answer: the experiment is not running.
+                CountDownLatch verdict = remoteStartVerdict;
+                if (verdict != null) {
+                    remoteStartSucceeded = started;
+                    remoteStartVerdict = null;
+                    verdict.countDown();
+                }
             }
 
             updateBackCallbackState();
@@ -1750,8 +1764,9 @@ public class Experiment extends AppCompatActivity implements View.OnClickListene
         dialog.show();
     }
 
-    //Start a measurement
-    public void startMeasurement() {
+    //Start a measurement. Returns false if the experiment refused to start, which the remote
+    //interface has to report back (see remoteStartMeasurement).
+    public boolean startMeasurement() {
         //Disable play-button highlight
         beforeStart = false;
 
@@ -1772,7 +1787,7 @@ public class Experiment extends AppCompatActivity implements View.OnClickListene
                   }
                  };
                  Bluetooth.errorDialog.run();
-                 return;
+                 return false;
 	        }
         } catch (DepthInput.DepthInputException e) {
             stopMeasurement(); // stop experiment
@@ -1836,10 +1851,13 @@ public class Experiment extends AppCompatActivity implements View.OnClickListene
             }.start();
         }
         invalidateOptionsMenu();
+        return true;
     }
 
-    //Start a timed measurement
-    public void startTimedMeasurement() {
+    //Start a timed measurement. Returns false if it refused to start; true once the countdown is
+    //running, which is what the remote interface reports for a timed run (see the openapi spec:
+    //"begin measuring, or begin the countdown if timed run is on").
+    public boolean startTimedMeasurement() {
         //No more turning off during the measurement
         setKeepScreenOn(true);
 
@@ -1872,7 +1890,7 @@ public class Experiment extends AppCompatActivity implements View.OnClickListene
                     }
                 };
                 Bluetooth.errorDialog.run();
-                return;
+                return false;
             }
         }
 
@@ -1883,7 +1901,7 @@ public class Experiment extends AppCompatActivity implements View.OnClickListene
                     try {
                         audioOutput.init();
                     } catch (Exception e) {
-                        return;
+                        return false;
                     }
                 }
             } else
@@ -1931,6 +1949,7 @@ public class Experiment extends AppCompatActivity implements View.OnClickListene
             }
         }.start();
         invalidateOptionsMenu();
+        return true;
     }
 
     //Stop the measurement
@@ -2135,10 +2154,32 @@ public class Experiment extends AppCompatActivity implements View.OnClickListene
         updateState = true;
     }
 
-    //Called by remote server to start the measurement from other thread
-    public void remoteStartMeasurement() {
+    //Called by remote server to start the measurement from other thread.
+    //
+    //Unlike the other commands this one answers whether the measurement actually began, because
+    //that is what the remote interface promises for cmd=start: an experiment can refuse to start
+    //(most commonly with a Bluetooth device that is not connected yet) and a client has no other
+    //way to tell than a second request for status.measuring. The start itself has to happen on
+    //the main thread, so this hands the intent to the update loop and waits for it to report
+    //back. The loop runs every 400 ms while nothing is measured, and the remote server only
+    //answers while the activity is started (onStop stops it), so the wait below is short in
+    //practice; the timeout is a safety net for a start that blocks, not the expected case.
+    public boolean remoteStartMeasurement() {
+        CountDownLatch verdict = new CountDownLatch(1);
+        remoteStartVerdict = verdict;
         remoteIntentMeasuring = true;
         updateState = true;
+        try {
+            if (!verdict.await(REMOTE_START_TIMEOUT_MS, TimeUnit.MILLISECONDS)) {
+                remoteStartVerdict = null;
+                return measuring; //never processed - report what is actually the case
+            }
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            remoteStartVerdict = null;
+            return measuring;
+        }
+        return remoteStartSucceeded;
     }
 
     //Called by remote server request a defocus from other thread

@@ -870,8 +870,11 @@ public class RemoteServer {
         if (cmd != null) {
             switch (cmd) {
                 case "start": //Start the measurement
-                    callActivity.remoteStartMeasurement();
-                    return respond(response, true);
+                    //The only command whose result says more than "accepted": it reports whether
+                    //the measurement actually began, because an experiment can refuse to start
+                    //(a Bluetooth device that is not connected, for instance) and a client would
+                    //otherwise have to read status.measuring back to find out.
+                    return respond(response, callActivity.remoteStartMeasurement());
                 case "stop": //Stop the measurement
                     callActivity.remoteStopMeasurement();
                     return respond(response, true);
