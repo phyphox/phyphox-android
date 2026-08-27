@@ -69,13 +69,34 @@ open class Bluetooth(
     @JvmField
     var requestMTU: Int = 0
 
+    /**
+     * The block that owns the GATT connection to this device. Blocks that name the same device
+     * with the same id share one connection, so every one of them but the first points at that
+     * first one and none of the state below is its own. Set by [shareConnections].
+     */
     @Transient
-    @JvmField
-    protected var btDevice: BluetoothDevice? = null
+    private var owner: Bluetooth = this
+
+    /** all blocks sharing this connection, this one first. Only maintained on the owner. */
+    @Transient
+    private var sharing: MutableList<Bluetooth> = mutableListOf(this)
+
+    /** true if this block owns its connection rather than borrowing another block's */
+    private val ownsConnection get() = owner === this
 
     @Transient
-    @JvmField
-    protected var btGatt: BluetoothGatt? = null
+    private var ownDevice: BluetoothDevice? = null
+
+    @Transient
+    private var ownGatt: BluetoothGatt? = null
+
+    protected var btDevice: BluetoothDevice?
+        get() = owner.ownDevice
+        set(value) { owner.ownDevice = value }
+
+    protected var btGatt: BluetoothGatt?
+        get() = owner.ownGatt
+        set(value) { owner.ownGatt = value }
 
     @Transient
     private var eventCharacteristic: BluetoothGattCharacteristic? = null
@@ -113,21 +134,33 @@ open class Bluetooth(
     protected var toast: Toast? = null
 
     @Transient
-    private var queue: BleCommandQueue? = null
+    private var ownQueue: BleCommandQueue? = null
+
+    private var queue: BleCommandQueue?
+        get() = owner.ownQueue
+        set(value) { owner.ownQueue = value }
 
     /** completed by onConnectionStateChange while a connection attempt is awaited */
     @Transient
     private var connectionEvent: CompletableDeferred<Boolean>? = null
 
-    /** true while this object's own GATT client holds a connection (kept up to date by the callback) */
+    /** true while the owning block's GATT client holds a connection (kept up to date by the callback) */
     @Transient
     @Volatile
-    private var gattConnected = false
+    private var ownGattConnected = false
 
     /** true once the services of the current connection have been discovered */
     @Transient
     @Volatile
-    private var servicesDiscovered = false
+    private var ownServicesDiscovered = false
+
+    private var gattConnected: Boolean
+        get() = owner.ownGattConnected
+        set(value) { owner.ownGattConnected = value }
+
+    private var servicesDiscovered: Boolean
+        get() = owner.ownServicesDiscovered
+        set(value) { owner.ownServicesDiscovered = value }
 
     @Transient
     private var reconnectJob: Job? = null
@@ -179,14 +212,26 @@ open class Bluetooth(
     @Throws(BluetoothException::class)
     open fun connect(knownDevices: Map<String, BluetoothDevice>?) {
         var reusedDevice = false
-        if (btDevice == null) {
-            reusedDevice = findDevice(knownDevices)
-        }
-        if (btDevice == null)
-            return //user aborted the scan dialog
+        if (ownsConnection) {
+            if (btDevice == null) {
+                reusedDevice = findDevice(knownDevices)
+            }
+            if (btDevice == null)
+                return //user aborted the scan dialog
 
-        if (btGatt == null || !isConnected()) {
-            openConnection()
+            if (btGatt == null || !isConnected()) {
+                openConnection()
+            }
+        } else {
+            //Another block of this experiment already connected to this device (same id), so
+            //there is nothing to search for and nothing to open - only this block's own
+            //characteristics still have to be set up on that connection. The owner is connected
+            //first, because ownership follows the same order the blocks are connected in.
+            if (btDevice == null)
+                return //the owner's scan dialog was cancelled
+            if (!isConnected())
+                throw BluetoothException(context.resources.getString(R.string.bt_exception_no_connection), this)
+            reusedDevice = true
         }
 
         eventCharacteristic = try {
@@ -317,6 +362,11 @@ open class Bluetooth(
      * Close the connection to the GATT server of the device.
      */
     open fun closeConnection() {
+        mapping.clear()
+        saveTime.clear()
+        valuesSize = 0
+        if (!ownsConnection)
+            return //not ours to close - the owning block does that
         reconnectJob?.cancel()
         reconnectJob = null
         closeGattOnly()
@@ -352,10 +402,14 @@ open class Bluetooth(
     open fun stop() {
         isRunning = false
         stopAcquisition()
-        reconnectJob?.cancel()
-        reconnectJob = null
         mainHandler.post { toast?.cancel() }
-        queue?.clear()
+        //The queue and the reconnect belong to the connection, which other blocks of this
+        //experiment may still be using, so they are only dropped once nobody is running.
+        if (sharing.none { it.isRunning }) {
+            owner.reconnectJob?.cancel()
+            owner.reconnectJob = null
+            queue?.clear()
+        }
     }
 
     /**
@@ -503,23 +557,31 @@ open class Bluetooth(
     private fun handleDisconnect() {
         queue?.clear()
         synchronized(this) {
-            if (!isRunning || reconnectJob?.isActive == true)
+            if (sharing.none { it.isRunning } || reconnectJob?.isActive == true)
                 return
-            forcedBreak = true
+            for (b in sharing)
+                b.forcedBreak = true
             reconnectJob = deviceScope.launch {
-                stopAcquisition()
+                for (b in sharing)
+                    b.pauseAcquisition()
                 displayErrorMessage(context.resources.getString(R.string.bt_exception_disconnected) + BluetoothException.getMessage(this@Bluetooth), false)
 
                 var backoff = RECONNECT_INITIAL_BACKOFF_MS
-                while (isActive && isRunning) {
+                while (isActive && sharing.any { it.isRunning }) {
                     delay(backoff)
                     try {
-                        connect(null) //reuses btDevice, reopens the GATT connection and reconfigures
-                        if (isRunning) {
-                            forcedBreak = false
-                            startAcquisition()
-                            mainHandler.post { toast?.cancel() }
+                        //Reopens the GATT connection and reconfigures the owner, then every
+                        //block borrowing this connection, which is where their characteristics
+                        //are looked up again on the freshly discovered services.
+                        for (b in sharing)
+                            b.connect(null)
+                        for (b in sharing) {
+                            if (b.isRunning) {
+                                b.forcedBreak = false
+                                b.resumeAcquisition()
+                            }
                         }
+                        mainHandler.post { toast?.cancel() }
                         return@launch
                     } catch (e: BluetoothException) {
                         displayErrorMessage(e.message, false)
@@ -529,6 +591,16 @@ open class Bluetooth(
             }
         }
     }
+
+    //Same-class access to the protected hooks above, so the owning block can drive the blocks
+    //that share its connection.
+    internal fun dispatchNotification(data: ByteArray, characteristic: BluetoothGattCharacteristic) =
+        retrieveData(data, characteristic)
+
+    internal fun pauseAcquisition() = stopAcquisition()
+
+    @Throws(BluetoothException::class)
+    internal fun resumeAcquisition() = startAcquisition()
 
     //
     // GATT plumbing
@@ -589,7 +661,11 @@ open class Bluetooth(
             }
 
             val data = characteristic.value ?: return
-            retrieveData(data, characteristic)
+            //One connection can serve several blocks of the experiment (an input and an output
+            //block naming the same device), so the notification goes to each of them. A block
+            //that does not map this characteristic ignores it.
+            for (b in sharing)
+                b.dispatchNotification(data, characteristic)
         }
 
         @Suppress("DEPRECATION", "OVERRIDE_DEPRECATION")
@@ -840,6 +916,7 @@ open class Bluetooth(
         fun execute(vararg params: Vector<out Bluetooth>) {
             Thread {
                 var errorMessage: String? = null
+                shareConnections(*params)
                 outer@ for (v in params) {
                     for (b in v) {
                         try {
@@ -934,6 +1011,46 @@ open class Bluetooth(
                 }
             }
             return result
+        }
+
+        /**
+         * Decide which block owns the connection to each device: blocks naming the same device
+         * with the same id describe ONE physical device (that is what the id is for - see the
+         * device count in Experiment.onExperimentLoaded and the per-device event characteristic
+         * in PhyphoxExperiment.startAllIO), so they get one GATT connection between them instead
+         * of one each. The first block of a group in connection order owns it, so the owner is
+         * always connected before the blocks that borrow from it.
+         *
+         * A block without an id is its own device, exactly as everywhere else in the app, even
+         * if it happens to name the same device as another block.
+         *
+         * Must be called before connecting, and again for every fresh connection attempt, since
+         * it also resets the grouping after a device was dropped.
+         */
+        @JvmStatic
+        fun shareConnections(vararg list: Vector<out Bluetooth>) {
+            val owners = HashMap<String, Bluetooth>()
+            for (v in list) {
+                for (b in v) {
+                    b.owner = b
+                    b.sharing = mutableListOf(b)
+                }
+            }
+            for (v in list) {
+                for (b in v) {
+                    val id = b.idString
+                    if (id.isNullOrEmpty())
+                        continue
+                    val existing = owners[id]
+                    if (existing == null) {
+                        owners[id] = b
+                    } else {
+                        b.owner = existing
+                        b.sharing = existing.sharing
+                        existing.sharing.add(b)
+                    }
+                }
+            }
         }
 
         /** Collects already resolved devices by their idString so multiple inputs/outputs referring to the same device reuse it */
