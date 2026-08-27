@@ -8,7 +8,6 @@ import android.bluetooth.BluetoothGatt
 import android.bluetooth.BluetoothGattCallback
 import android.bluetooth.BluetoothGattCharacteristic
 import android.bluetooth.BluetoothGattDescriptor
-import android.bluetooth.BluetoothManager
 import android.bluetooth.BluetoothProfile
 import android.content.Context
 import android.content.pm.PackageManager
@@ -120,6 +119,16 @@ open class Bluetooth(
     @Transient
     private var connectionEvent: CompletableDeferred<Boolean>? = null
 
+    /** true while this object's own GATT client holds a connection (kept up to date by the callback) */
+    @Transient
+    @Volatile
+    private var gattConnected = false
+
+    /** true once the services of the current connection have been discovered */
+    @Transient
+    @Volatile
+    private var servicesDiscovered = false
+
     @Transient
     private var reconnectJob: Job? = null
 
@@ -147,14 +156,19 @@ open class Bluetooth(
     }
 
     /**
-     * Return true if the device is connected.
+     * Return true if this object holds a usable connection to the device, that is: its own GATT
+     * client is connected and the services of that connection have been discovered.
+     *
+     * This deliberately does not ask the BluetoothManager which devices are connected on the GATT
+     * profile, which is what it used to do. That list is system wide, so it answers "does anybody
+     * hold a link to this device" - a different question, and the wrong one for every caller here:
+     * another app's link gives this object no characteristics to read, and a link this object
+     * opened and then lost is not made usable by somebody else still holding one.
      */
     open fun isConnected(): Boolean {
         if (btAdapter == null || btAdapter?.isEnabled != true)
             return false
-        val device = btDevice ?: return false
-        return (context.getSystemService(Context.BLUETOOTH_SERVICE) as BluetoothManager)
-            .getConnectedDevices(BluetoothProfile.GATT).contains(device)
+        return btGatt != null && gattConnected && servicesDiscovered
     }
 
     /**
@@ -291,6 +305,7 @@ open class Bluetooth(
         if (!discovered.ok) {
             throw BluetoothException(context.resources.getString(R.string.bt_exception_services), this)
         }
+        servicesDiscovered = true
 
         //Read the battery level for the connected-device info if the device offers it (optional,
         // guarded - not every device has a battery service)
@@ -311,6 +326,8 @@ open class Bluetooth(
 
     private fun closeGattOnly() {
         connectionEvent?.complete(false)
+        gattConnected = false
+        servicesDiscovered = false
         btGatt?.close()
         btGatt = null
         queue?.clear()
@@ -529,14 +546,24 @@ open class Bluetooth(
     private val btLeGattCallback = object : BluetoothGattCallback() {
 
         override fun onConnectionStateChange(gatt: BluetoothGatt, status: Int, newState: Int) {
+            //A callback of a GATT client that has already been replaced must not touch the state
+            //of the current one. btGatt is still null while a fresh attempt is in flight (the
+            //callback can fire before connectGatt has returned), so that case has to pass.
+            val current = btGatt
+            if (current != null && current !== gatt)
+                return
+
             when (newState) {
                 BluetoothProfile.STATE_CONNECTED -> {
+                    gattConnected = status == BluetoothGatt.GATT_SUCCESS
                     connectedDeviceInformation.deviceId = gatt.device.address
                     connectedDeviceInformation.deviceName = gatt.device.name
                     connectionEvent?.complete(status == BluetoothGatt.GATT_SUCCESS)
                 }
                 else -> {
                     //STATE_DISCONNECTED and everything unexpected
+                    gattConnected = false
+                    servicesDiscovered = false
                     connectionEvent?.complete(false)
                     if (isRunning) {
                         handleDisconnect()
