@@ -43,10 +43,24 @@ rc=0
 
 # The output goes to the job log AND to a file, and the verdict is read from the file
 # afterwards: piping it into grep would swallow everything a reader needs when something fails.
+# The language sweep can be narrowed with the convention both platforms share (test-matrix row
+# translations-ui). Android has no environment inside the app process, so whichever of the two
+# variables is set here is forwarded as an instrumentation argument under the same name:
+#
+#     PHYPHOX_TEST_LANGUAGE_SHARD=1/2 tools/t1_instrumented.sh . translations
+#     PHYPHOX_TEST_LANGUAGES=de,fr    tools/t1_instrumented.sh . translations
+LANGUAGE_ARGS=""
+if [ -n "${PHYPHOX_TEST_LANGUAGE_SHARD:-}" ]; then
+    LANGUAGE_ARGS="$LANGUAGE_ARGS -e PHYPHOX_TEST_LANGUAGE_SHARD $PHYPHOX_TEST_LANGUAGE_SHARD"
+fi
+if [ -n "${PHYPHOX_TEST_LANGUAGES:-}" ]; then
+    LANGUAGE_ARGS="$LANGUAGE_ARGS -e PHYPHOX_TEST_LANGUAGES $PHYPHOX_TEST_LANGUAGES"
+fi
+
 run_suite() {
     log=$1
     shift
-    adb shell am instrument -w "$@" $RUNNER 2>&1 | tee "$log"
+    adb shell am instrument -w "$@" $LANGUAGE_ARGS $RUNNER 2>&1 | tee "$log"
     grep -q "^OK" "$log" || rc=1
 }
 

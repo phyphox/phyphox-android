@@ -85,6 +85,15 @@ jobs:
   experiments-e2e:
     runs-on: ubuntu-latest
     timeout-minutes: 90
+    strategy:
+      fail-fast: false
+      matrix:
+        #Two shards, because this became the longest job in the workflow once the language sweep
+        #moved out of view-and-chrome-suites: 13.2 minutes against 9.8 for the next one. Halving
+        #the sweep puts it under that, which is as far as sharding here can help - the chrome job
+        #is the floor. Round-robin inside the driver, so the two shards cost about the same.
+        shard: ["1/2", "2/2"]
+    name: experiments-e2e (${{ matrix.shard }})
     steps:
       - uses: actions/checkout@v5
         with:
@@ -117,12 +126,12 @@ jobs:
           # runtime permissions an unattended run cannot confirm itself (since 2026-08-25).
           script: |
             cd phyphox-android && ./gradlew installRegularDebug && cd ..
-            sh phyphox-android/tools/t1_ci_run.sh experiments python3 phyphox-docs/tools/t1_experiments.py --platform android --emulator --require-rows
+            sh phyphox-android/tools/t1_ci_run.sh experiments python3 phyphox-docs/tools/t1_experiments.py --platform android --emulator --require-rows --shard ${{ matrix.shard }}
       - name: Keep the per-experiment results
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: t1-experiments-results
+          name: t1-experiments-results-${{ strategy.job-index }}
           path: |
             t1-results.json
             logcat-experiments*.txt

@@ -1,6 +1,7 @@
 package de.rwth_aachen.phyphox;
 
 import static androidx.test.platform.app.InstrumentationRegistry.getInstrumentation;
+import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
 import android.app.Activity;
@@ -14,6 +15,7 @@ import android.widget.TextView;
 import androidx.appcompat.app.AppCompatDelegate;
 import androidx.core.os.LocaleListCompat;
 import androidx.test.ext.junit.runners.AndroidJUnit4;
+import androidx.test.platform.app.InstrumentationRegistry;
 import androidx.test.runner.lifecycle.ActivityLifecycleMonitorRegistry;
 import androidx.test.runner.lifecycle.Stage;
 import androidx.test.uiautomator.By;
@@ -26,6 +28,7 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Locale;
 
@@ -68,7 +71,7 @@ public class TranslationsUiTest {
     }
 
     //Android resource qualifiers into the language tags AppCompat wants.
-    private String tagOf(String qualifier) {
+    private static String tagOfQualifier(String qualifier) {
         if (qualifier.startsWith("b+"))
             return qualifier.substring(2).replace('+', '-');
         return qualifier.replace("-r", "-");
@@ -130,13 +133,137 @@ public class TranslationsUiTest {
         device().wait(Until.hasObject(By.pkg(context.getPackageName()).depth(0)), 10000);
     }
 
+    //Which languages this run covers, as language tags, sorted.
+    //
+    //The sweep is the longest thing in T1, so it can be split across jobs - by a convention both
+    //platforms share, or the shards would not be comparable (test-matrix row translations-ui):
+    //sort the build's language set, then either take an explicit subset or every n-th entry.
+    //Sorting is done on the language TAG rather than on Android's resource qualifier, because the
+    //tag is the form iOS can produce the same order from.
+    //
+    //Android has no environment to read - an instrumented test runs in the app's process, which
+    //does not inherit the shell's - so the two names arrive as instrumentation arguments:
+    //
+    //    adb shell am instrument -e PHYPHOX_TEST_LANGUAGE_SHARD 1/2 ...
+    //    adb shell am instrument -e PHYPHOX_TEST_LANGUAGES de,fr ...
+    //
+    //An actual environment variable is honoured too, for a runner that can set one.
+    static List<String> languagesUnderTest(String[] enabledQualifiers, String subsetSpec,
+                                           String shardSpec) {
+        List<String> all = new ArrayList<>();
+        for (String qualifier : enabledQualifiers)
+            all.add(tagOfQualifier(qualifier));
+        Collections.sort(all);
+
+        if (subsetSpec != null && !subsetSpec.trim().isEmpty()) {
+            List<String> wanted = new ArrayList<>();
+            for (String code : subsetSpec.split(",")) {
+                String tag = code.trim();
+                if (tag.isEmpty())
+                    continue;
+                //A typo must not quietly remove coverage, so an unknown code fails the run.
+                if (!all.contains(tag))
+                    throw new AssertionError("PHYPHOX_TEST_LANGUAGES names \"" + tag
+                            + "\", which this build does not enable. Enabled: " + all);
+                wanted.add(tag);
+            }
+            if (wanted.isEmpty())
+                throw new AssertionError("PHYPHOX_TEST_LANGUAGES is set but names no language");
+            return wanted;
+        }
+
+        if (shardSpec != null && !shardSpec.trim().isEmpty()) {
+            String[] parts = shardSpec.trim().split("/");
+            int index, count;
+            try {
+                if (parts.length != 2)
+                    throw new NumberFormatException();
+                index = Integer.parseInt(parts[0].trim());
+                count = Integer.parseInt(parts[1].trim());
+            } catch (NumberFormatException e) {
+                throw new AssertionError("PHYPHOX_TEST_LANGUAGE_SHARD takes i/n, e.g. 1/2, not \""
+                        + shardSpec + "\"");
+            }
+            if (count < 1 || index < 1 || index > count)
+                throw new AssertionError("PHYPHOX_TEST_LANGUAGE_SHARD " + shardSpec
+                        + ": i must be within 1..n");
+            List<String> shard = new ArrayList<>();
+            //Round-robin rather than slicing, so the shards cost about the same.
+            for (int i = index - 1; i < all.size(); i += count)
+                shard.add(all.get(i));
+            if (shard.isEmpty())
+                throw new AssertionError("PHYPHOX_TEST_LANGUAGE_SHARD " + shardSpec
+                        + " is empty - fewer languages (" + all.size() + ") than shards?");
+            return shard;
+        }
+
+        return all;
+    }
+
+    private static String argument(String name) {
+        String value = null;
+        try {
+            value = InstrumentationRegistry.getArguments().getString(name);
+        } catch (Exception e) {
+            //No instrumentation arguments available - fall through to the environment
+        }
+        return value != null ? value : System.getenv(name);
+    }
+
+    //The selection convention itself, which is what has to match iOS. Pure logic, so it costs
+    //nothing to run alongside the sweep, and it is the part a shard split gets wrong silently.
+    @Test
+    public void languageSelectionFollowsTheSharedConvention() {
+        String[] enabled = {"de", "b+zh+Hans", "fr", "pt-rBR", "el"};
+
+        //Sorted by language tag, which is the order both platforms can produce.
+        assertEquals("[de, el, fr, pt-BR, zh-Hans]",
+                languagesUnderTest(enabled, null, null).toString());
+
+        //Round-robin, so the shards cost about the same, and together they cover everything once.
+        List<String> first = languagesUnderTest(enabled, null, "1/2");
+        List<String> second = languagesUnderTest(enabled, null, "2/2");
+        assertEquals("[de, fr, zh-Hans]", first.toString());
+        assertEquals("[el, pt-BR]", second.toString());
+        List<String> union = new ArrayList<>(first);
+        union.addAll(second);
+        Collections.sort(union);
+        assertEquals(languagesUnderTest(enabled, null, null).toString(), union.toString());
+
+        //An explicit subset wins over a shard and keeps the order it was given.
+        assertEquals("[fr, de]", languagesUnderTest(enabled, "fr, de", "1/2").toString());
+
+        //A typo must fail rather than quietly shrink the coverage.
+        assertRefused(() -> languagesUnderTest(enabled, "de,xx", null), "xx");
+        assertRefused(() -> languagesUnderTest(enabled, "  ", "9"), "i/n");
+        assertRefused(() -> languagesUnderTest(enabled, null, "3/2"), "within 1..n");
+        //Round-robin means shard i is empty only once i is past the end of the list.
+        assertEquals("[de]", languagesUnderTest(enabled, null, "1/99").toString());
+        assertRefused(() -> languagesUnderTest(enabled, null, "99/99"), "empty");
+    }
+
+    private void assertRefused(Runnable selection, String expectedInMessage) {
+        try {
+            selection.run();
+        } catch (AssertionError e) {
+            assertTrue("refused for the wrong reason: " + e.getMessage(),
+                    e.getMessage().contains(expectedInMessage));
+            return;
+        }
+        throw new AssertionError("the selection was accepted although it names " + expectedInMessage);
+    }
+
     @Test
     public void everyEnabledLanguageRendersItsScreens() throws Exception {
         List<String> findings = new ArrayList<>();
         List<String> unrendered = new ArrayList<>();
 
-        for (String qualifier : BuildConfig.LOCALE_ARRAY) {
-            String language = tagOf(qualifier);
+        List<String> languages = languagesUnderTest(BuildConfig.LOCALE_ARRAY,
+                argument("PHYPHOX_TEST_LANGUAGES"), argument("PHYPHOX_TEST_LANGUAGE_SHARD"));
+        Log.i(TAG, "covering " + languages.size() + " of " + BuildConfig.LOCALE_ARRAY.length
+                + " enabled languages: " + String.join(",", languages));
+
+        for (String language : languages) {
             setLanguage(language);
 
             openCollection();
@@ -175,8 +302,7 @@ public class TranslationsUiTest {
             FixtureExperiment.close(FixtureExperiment.activity());
         }
 
-        Log.i(TAG, findings.size() + " truncated labels over "
-                + BuildConfig.LOCALE_ARRAY.length + " languages");
+        Log.i(TAG, findings.size() + " truncated labels over " + languages.size() + " languages");
         for (String finding : findings)
             Log.i(TAG, finding);
 
