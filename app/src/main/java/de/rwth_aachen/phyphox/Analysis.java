@@ -1965,7 +1965,12 @@ public class Analysis {
                 double maxValueRight = Double.NEGATIVE_INFINITY;
                 double lastSum = Double.NEGATIVE_INFINITY;
 
-                double step = 1;
+                //An int, not a double: this is the update of an int loop counter, and a double
+                //that is anything below 1 makes "i += step" a no-op, so the loop cannot end. The
+                //lab's Galaxy A3 hit exactly that - the local was read back as +0.0 there, with
+                //i frozen and the innermost loop spinning - and since the analysis holds the data
+                //lock for a whole pass, the experiment and the whole remote API stopped with it.
+                int step = 1;
                 if (!userSelectedRange)
                     step = 2; //Until we find the first negative value, we can go faster...
 
