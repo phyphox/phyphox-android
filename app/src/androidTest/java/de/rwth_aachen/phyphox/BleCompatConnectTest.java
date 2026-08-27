@@ -108,6 +108,17 @@ public class BleCompatConnectTest {
         //The scan needs a moment to find anything, and there is deliberately more than one board
         //advertising: taking the first entry would pass against the wrong device, so this waits
         //for the name the driver asked for and for nothing else.
+        //
+        //This dialog never goes idle while it scans - BluetoothScanDialog.scheduleListUpdate
+        //rebuilds the list up to every LIST_UPDATE_INTERVAL_MS for as long as results keep
+        //arriving, which in a room with BLE devices in it is continuously. "uiautomator dump"
+        //therefore fails on it outright with "could not get idle state" (3/3 on a Pixel 3,
+        //2026-08-27), and while UiDevice.wait works anyway - it goes by accessibility events and
+        //proceeds once its idle timeout expires - every lookup here pays that timeout first, and
+        //the entry can go stale between finding it and clicking it, which is what the retry
+        //below is for. The 300 ms coalescing is deliberate, so if this step ever turns flaky the
+        //remedy is Configurator.getInstance().setWaitForIdleTimeout(0) around it rather than
+        //slowing the app's list down.
         UiObject2 entry = device().wait(Until.findObject(By.text(name)), 45000);
         assertNotNull("the scan did not list a device called \"" + name + "\" within 45 s - is it "
                 + "powered and advertising?", entry);

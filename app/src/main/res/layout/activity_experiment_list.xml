@@ -73,6 +73,7 @@
     </de.rwth_aachen.phyphox.helper.ReportingScrollView>
 
     <View android:id="@+id/experimentListDimmer"
+        android:importantForAccessibility="no"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:visibility="invisible"
@@ -99,6 +100,7 @@
         />
 
     <TextView android:id="@+id/newExperimentQRLabel"
+        android:importantForAccessibility="no"
         android:text="@string/newExperimentQR"
         android:layout_toLeftOf="@id/newExperimentQR"
         android:layout_alignTop="@id/newExperimentQR"
@@ -129,6 +131,7 @@
         />
 
     <TextView android:id="@+id/newExperimentBluetoothLabel"
+        android:importantForAccessibility="no"
         android:text="@string/newExperimentBluetooth"
         android:layout_toLeftOf="@id/newExperimentBluetooth"
         android:layout_alignTop="@id/newExperimentBluetooth"
@@ -159,6 +162,7 @@
         />
 
     <TextView android:id="@+id/newExperimentSimpleLabel"
+        android:importantForAccessibility="no"
         android:text="@string/newExperimentSimple"
         android:layout_toLeftOf="@id/newExperimentSimple"
         android:layout_alignTop="@id/newExperimentSimple"

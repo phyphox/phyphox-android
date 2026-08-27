@@ -1002,6 +1002,15 @@ public class ExperimentListActivity extends AppCompatActivity {
         Animation labelIn = AnimationUtils.loadAnimation(getBaseContext(), R.anim.experiment_list_label_in);
         Animation fadeDark = AnimationUtils.loadAnimation(getBaseContext(), R.anim.experiment_list_fade_dark);
 
+        //The animations only move these views around, they do not bring them into existence: the
+        //layout declares them invisible and something has to undo that. They used to be drawn
+        //anyway, because a view with a running or filled-after animation is drawn and hit-tested
+        //regardless of its visibility, which made the menu look and feel right while it stayed
+        //absent from the accessibility tree - so TalkBack could not reach "add experiment from QR
+        //code", "for Bluetooth device" or "simple experiment" at all, and those are the only ways
+        //to get an experiment in that is not bundled with the app.
+        setNewExperimentMenuVisible(true);
+
         newExperimentButton.startAnimation(rotate45In);
         newExperimentSimple.startAnimation(fabIn);
         newExperimentSimpleLabel.startAnimation(labelIn);
@@ -1029,6 +1038,26 @@ public class ExperimentListActivity extends AppCompatActivity {
         Animation labelOut = AnimationUtils.loadAnimation(getBaseContext(), R.anim.experiment_list_label_out);
         Animation fadeTransparent = AnimationUtils.loadAnimation(getBaseContext(), R.anim.experiment_list_fade_transparent);
 
+        //Hiding them has to wait for the animation to finish, or it cuts the exit short. The same
+        //Animation object drives three views, so this arrives up to three times - setting the same
+        //visibility again is harmless. The check is not: the menu can be reopened while the exit
+        //is still running, and this must not then hide a menu that is on its way back in.
+        fabOut.setAnimationListener(new Animation.AnimationListener() {
+            @Override
+            public void onAnimationStart(Animation animation) {
+            }
+
+            @Override
+            public void onAnimationRepeat(Animation animation) {
+            }
+
+            @Override
+            public void onAnimationEnd(Animation animation) {
+                if (!newExperimentDialogOpen)
+                    setNewExperimentMenuVisible(false);
+            }
+        });
+
         newExperimentSimple.setClickable(false);
         newExperimentSimpleLabel.setClickable(false);
         newExperimentBluetooth.setClickable(false);
@@ -1046,6 +1075,20 @@ public class ExperimentListActivity extends AppCompatActivity {
         newExperimentQRLabel.startAnimation(labelOut);
         backgroundDimmer.startAnimation(fadeTransparent);
 
+    }
+
+    //Visible or invisible for real, rather than leaving it to the animation. INVISIBLE and not
+    //GONE: the sub-FABs are positioned relative to each other and to the main button, so removing
+    //them from the layout would move what is left.
+    private void setNewExperimentMenuVisible(boolean visible) {
+        int visibility = visible ? View.VISIBLE : View.INVISIBLE;
+        newExperimentSimple.setVisibility(visibility);
+        newExperimentSimpleLabel.setVisibility(visibility);
+        newExperimentBluetooth.setVisibility(visibility);
+        newExperimentBluetoothLabel.setVisibility(visibility);
+        newExperimentQR.setVisibility(visibility);
+        newExperimentQRLabel.setVisibility(visibility);
+        backgroundDimmer.setVisibility(visibility);
     }
 
     protected void scanQRCode() {

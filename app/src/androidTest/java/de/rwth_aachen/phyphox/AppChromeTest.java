@@ -1,16 +1,20 @@
 package de.rwth_aachen.phyphox;
 
 import static androidx.test.platform.app.InstrumentationRegistry.getInstrumentation;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assume.assumeTrue;
 
 import android.content.Intent;
+import android.view.View;
 
 import androidx.test.ext.junit.runners.AndroidJUnit4;
 import androidx.test.uiautomator.By;
 import androidx.test.uiautomator.UiDevice;
 import androidx.test.uiautomator.UiObject2;
+import androidx.test.runner.lifecycle.ActivityLifecycleMonitorRegistry;
+import androidx.test.runner.lifecycle.Stage;
 import androidx.test.uiautomator.Until;
 
 import org.junit.After;
@@ -26,6 +30,8 @@ import org.junit.runner.RunWith;
 //so Espresso's idle condition never holds on it.
 @RunWith(AndroidJUnit4.class)
 public class AppChromeTest {
+
+    private static final String PACKAGE = "de.rwth_aachen.phyphox";
 
     private UiDevice device() {
         return UiDevice.getInstance(getInstrumentation());
@@ -63,6 +69,62 @@ public class AppChromeTest {
                 device().wait(Until.hasObject(By.text("Raw Sensors")), 15000));
         assertTrue("the collection lists no accelerometer experiment",
                 device().wait(Until.hasObject(By.textContains("Acceleration")), 5000));
+    }
+
+    //The add-experiment menu used to be drawn without ever being made visible: the layout
+    //declares the sub-buttons invisible and only the fill-after animation put them on screen,
+    //which is enough to draw and to hit-test but not to enter the accessibility tree. So the menu
+    //worked under a finger and did not exist for TalkBack - and those three entries are the only
+    //ways to get an experiment into the app that is not bundled with it.
+    //
+    //Everything here goes through the accessibility tree, so it fails on exactly that bug. By
+    //resource id rather than by label, because the labels are translated and this suite also runs
+    //in other languages.
+    //The collection is not the Experiment activity, so its views come from the lifecycle monitor
+    //rather than from the fixture harness.
+    private View viewInTheCollection(int id) {
+        final View[] found = new View[1];
+        getInstrumentation().runOnMainSync(() -> {
+            for (android.app.Activity activity : ActivityLifecycleMonitorRegistry.getInstance()
+                    .getActivitiesInStage(Stage.RESUMED))
+                if (found[0] == null)
+                    found[0] = activity.findViewById(id);
+        });
+        return found[0];
+    }
+
+    @Test
+    public void theAddExperimentMenuIsExposedToAccessibility() throws Exception {
+        UiObject2 fab = device().wait(Until.findObject(
+                By.res(PACKAGE + ":id/newExperiment")), 15000);
+        assertNotNull("the collection did not come up with its new-experiment button", fab);
+        fab.click();
+
+        for (String id : new String[]{"newExperimentSimple", "newExperimentBluetooth",
+                "newExperimentQR"})
+            assertNotNull("the open add-experiment menu does not expose " + id + " to "
+                            + "accessibility - TalkBack cannot reach it and neither can any test",
+                    device().wait(Until.findObject(By.res(PACKAGE + ":id/" + id)), 5000));
+
+        //Each entry is a button carrying the text as its contentDescription plus a label next to
+        //it carrying the same text again, so only the button should be announced. This is asked
+        //of the views rather than of the tree on purpose: UiAutomator runs with
+        //FLAG_INCLUDE_NOT_IMPORTANT_VIEWS and therefore sees nodes a screen reader skips, so
+        //looking them up here would pass whatever the flag says. TalkBack does not set it.
+        for (int id : new int[]{R.id.newExperimentSimpleLabel, R.id.newExperimentBluetoothLabel,
+                R.id.newExperimentQRLabel}) {
+            View label = viewInTheCollection(id);
+            assertNotNull("the collection has no view " + id, label);
+            assertFalse("a label next to the button that already carries the same text is "
+                            + "important for accessibility - TalkBack announces the entry twice",
+                    label.isImportantForAccessibility());
+        }
+
+        //And it goes away again: the menu closes on back, and the entries must leave the tree
+        //once the exit animation has run, or they stay reachable behind the closed menu.
+        device().pressBack();
+        assertTrue("the add-experiment menu still exposes its entries after it was closed",
+                device().wait(Until.gone(By.res(PACKAGE + ":id/newExperimentBluetooth")), 5000));
     }
 
     @Test
