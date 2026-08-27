@@ -8,6 +8,7 @@ import static org.junit.Assume.assumeTrue;
 
 import android.content.Context;
 import android.content.Intent;
+import android.os.Build;
 
 import androidx.test.ext.junit.runners.AndroidJUnit4;
 import androidx.test.platform.app.InstrumentationRegistry;
@@ -31,24 +32,25 @@ import org.junit.runner.RunWith;
 //drift; this keeps them in one file and still exercises the real scan UI, which is part of what
 //the suite protects.
 //
-//So this test ends where the host takes over: the experiment the device offers is loaded, not
-//started, and serving the remote API. It asserts nothing about the data.
+//So this test ends where the host takes over: the experiment the device offers is loaded and
+//NOT started. It asserts nothing about the data.
 //
-//The device name comes from the driver, which flashes the library examples UNMODIFIED and knows
-//what they advertise as:
+//The class name is the driver's, not a choice - tools/lab/ble.py runs exactly
 //
-//    adb shell am instrument -e class de.rwth_aachen.phyphox.BleCompatTest \
-//        -e bleDevice phyphox-arduino ... 
+//    am instrument -e class de.rwth_aachen.phyphox.BleCompatConnectTest \
+//        -e bleDevice <name> ...
 //
-//Without that parameter there is no board to talk to and that test skips itself, which is what
-//happens in CI - the row needs hardware and runs in the lab. The seam check below needs none and
-//runs everywhere, because a suite that cannot reach the phone is worth catching before the board
-//is even involved.
+//and the driver flashes the library examples UNMODIFIED, so the name is whatever they advertise
+//as. Without that parameter there is no board to talk to and this skips itself, which is what
+//happens in CI - the row needs hardware and runs in the lab.
+//
+//Nothing here touches debug.phyphox.remote. The driver owns it (AndroidDevice.prepare sets it,
+//cleanup clears it) and goes on to talk to the phone after this test returns, so clearing it
+//here would pull the API out from under the host's assertions.
 @RunWith(AndroidJUnit4.class)
-public class BleCompatTest {
+public class BleCompatConnectTest {
 
     private static final String PACKAGE = "de.rwth_aachen.phyphox";
-    private static final int PORT = 8080;
 
     private UiDevice device() {
         return UiDevice.getInstance(getInstrumentation());
@@ -61,56 +63,23 @@ public class BleCompatTest {
     @Before
     public void quietFirstRunDialogs() {
         FixtureExperiment.suppressHints();
+        //The scan asks for these at runtime and autoConfirm deliberately does not answer system
+        //permission dialogs, so an ungranted phone stops on one with no board in sight. The
+        //driver grants the sensor permissions it knows about but not these, and granting them
+        //here keeps the test standalone either way.
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S)
+            grant("android.permission.BLUETOOTH_CONNECT", "android.permission.BLUETOOTH_SCAN");
+        grant("android.permission.ACCESS_FINE_LOCATION", "android.permission.ACCESS_COARSE_LOCATION");
     }
 
-    //The precondition the whole suite rests on, and the one half of it that needs no board: an
-    //experiment with a Bluetooth block serves the remote API when the switch is set, so the host
-    //can reach it. The switch is applied where every experiment finishes loading
-    //(Experiment.onExperimentLoaded), which is the same place a transferred one arrives at, so
-    //this covers the delivered case too as far as it can be covered without hardware.
-    @Test
-    public void aBluetoothExperimentServesTheRemoteApiWhenTheSwitchIsSet() throws Exception {
-        shell("setprop debug.phyphox.remote 1");
-        shell("setprop debug.phyphox.remotePort " + PORT);
-        try {
-            FixtureExperiment.launchAssetWithoutWaiting("bluetooth/Heart Rate.phyphox");
-            //It stops at "please pick a device" without one, which is exactly the state the host
-            //finds a transferred experiment in before it starts it - and the API has to answer
-            //there, not only once something is connected.
-            long deadline = System.currentTimeMillis() + 30000;
-            boolean answered = false;
-            while (!answered && System.currentTimeMillis() < deadline) {
-                answered = remoteApiAnswers();
-                if (!answered)
-                    Thread.sleep(500);
+    private void grant(String... permissions) {
+        for (String permission : permissions) {
+            try {
+                getInstrumentation().getUiAutomation().grantRuntimePermission(PACKAGE, permission);
+            } catch (Exception e) {
+                //Not declared on this API level, or already granted - either way not this test's
+                //problem; the scan below fails with a message if it actually mattered.
             }
-            assertTrue("the remote API did not come up for a Bluetooth experiment although "
-                    + "debug.phyphox.remote is set - the host cannot reach a device-delivered "
-                    + "experiment either", answered);
-        } finally {
-            shell("setprop debug.phyphox.remote '\"\"'");
-            shell("setprop debug.phyphox.remotePort '\"\"'");
-            FixtureExperiment.close(FixtureExperiment.activity());
-        }
-    }
-
-    private void shell(String command) throws Exception {
-        device().executeShellCommand(command);
-    }
-
-    private boolean remoteApiAnswers() {
-        try {
-            java.net.HttpURLConnection connection = (java.net.HttpURLConnection)
-                    new java.net.URL("http://127.0.0.1:" + PORT + "/config").openConnection();
-            connection.setConnectTimeout(2000);
-            connection.setReadTimeout(2000);
-            try (java.io.InputStream in = connection.getInputStream()) {
-                return in.read() > 0;
-            } finally {
-                connection.disconnect();
-            }
-        } catch (Exception e) {
-            return false;
         }
     }
 
