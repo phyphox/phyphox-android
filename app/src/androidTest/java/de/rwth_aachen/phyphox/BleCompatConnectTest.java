@@ -4,11 +4,13 @@ import static androidx.test.platform.app.InstrumentationRegistry.getInstrumentat
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 import static org.junit.Assume.assumeTrue;
 
 import android.content.Context;
 import android.content.Intent;
 import android.os.Build;
+import android.util.Log;
 
 import androidx.test.ext.junit.runners.AndroidJUnit4;
 import androidx.test.platform.app.InstrumentationRegistry;
@@ -44,6 +46,14 @@ import org.junit.runner.RunWith;
 //as. Without that parameter there is no board to talk to and this skips itself, which is what
 //happens in CI - the row needs hardware and runs in the lab.
 //
+//With "-e holdForHost true" the test does not return once it is done: it parks on
+//debug.phyphox.labRelease until the driver sets that to 1. Instrumentation runs inside the app's
+//process, so returning kills the app and everything this test just set up - measured on a Pixel 3
+//on 2026-08-27, the remote API answered for three seconds and went with the process. The driver
+//therefore starts the instrumentation in the background, measures while it is parked, and
+//releases it afterwards. Without the argument the test returns as it always did, so running it
+//by hand is unchanged.
+//
 //Nothing here touches debug.phyphox.remote. The driver owns it (AndroidDevice.prepare sets it,
 //cleanup clears it) and goes on to talk to the phone after this test returns, so clearing it
 //here would pull the API out from under the host's assertions.
@@ -51,6 +61,11 @@ import org.junit.runner.RunWith;
 public class BleCompatConnectTest {
 
     private static final String PACKAGE = "de.rwth_aachen.phyphox";
+    private static final String RELEASE_PROPERTY = "debug.phyphox.labRelease";
+    //Generous on purpose: it only has to outlast the host's measurement, and its real job is to
+    //stop a crashed host from wedging a phone for good.
+    private static final long HOLD_TIMEOUT_MS = 10 * 60 * 1000L;
+    private static final String TAG = "phyphoxBleCompat";
 
     private UiDevice device() {
         return UiDevice.getInstance(getInstrumentation());
@@ -89,6 +104,16 @@ public class BleCompatConnectTest {
         assumeTrue("no bleDevice given - this row needs a board and runs in the lab",
                 name != null && !name.trim().isEmpty());
         name = name.trim();
+        boolean holdForHost = "true".equalsIgnoreCase(argument("holdForHost"));
+
+        //Cleared here rather than trusting the driver to have done it, and cleared HERE rather
+        //than just before the wait: the remote API comes up the moment the experiment loads, so
+        //the host can legitimately release this test while the assertions below are still
+        //running. Writing the property at that point would erase a release that already
+        //happened and hold until the timeout. Before the app is even started, nothing can have
+        //released it yet.
+        if (holdForHost)
+            shell("setprop " + RELEASE_PROPERTY + " 0");
 
         //The collection, where the scan lives.
         Context app = getInstrumentation().getTargetContext();
@@ -152,6 +177,41 @@ public class BleCompatConnectTest {
         //measuring, because that is where the shared expectations live.
         assertFalse("the experiment must be left for the host to start, not started here",
                 experiment.measuring);
+
+        //And left ALIVE. Instrumentation is hosted in the app's own process, so the app dies
+        //when am instrument returns - taking the loaded experiment, the BLE connection and the
+        //remote server with it, about three seconds after they appeared. The host would then
+        //find nothing to talk to and report a seam that is not broken. So the test stays parked
+        //here until the host says it is finished, and only the host can say so.
+        if (holdForHost)
+            holdUntilTheHostIsDone();
+    }
+
+    //Blocks while the host drives the experiment over the remote API: returns once the driver
+    //sets the release property, and fails if it never does, so a host that died halfway is a
+    //failed run rather than a phone parked on an experiment nobody is watching.
+    private void holdUntilTheHostIsDone() throws Exception {
+        Log.i(TAG, "loaded and holding the app open for the host; release with: adb shell setprop "
+                + RELEASE_PROPERTY + " 1");
+        long deadline = System.currentTimeMillis() + HOLD_TIMEOUT_MS;
+        while (System.currentTimeMillis() < deadline) {
+            if ("1".equals(shell("getprop " + RELEASE_PROPERTY).trim())) {
+                Log.i(TAG, "released by the host");
+                return;
+            }
+            Thread.sleep(500);
+        }
+        fail("the host never released this test within " + (HOLD_TIMEOUT_MS / 1000) + " s - it "
+                + "is measuring against the app this test is holding open, so either it never got "
+                + "that far or it failed without setting " + RELEASE_PROPERTY);
+    }
+
+    private String argument(String name) {
+        return InstrumentationRegistry.getArguments().getString(name);
+    }
+
+    private String shell(String command) throws Exception {
+        return device().executeShellCommand(command);
     }
 
     //FixtureExperiment.awaitLoaded has a fixed deadline and throws; the BLE transfer needs its
