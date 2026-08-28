@@ -10,6 +10,7 @@ import android.bluetooth.BluetoothProfile
 import android.content.Context
 import android.net.Uri
 import android.os.Build
+import android.os.SystemClock
 import android.util.Log
 import de.rwth_aachen.phyphox.R
 import de.rwth_aachen.phyphox.helper.Helper
@@ -168,6 +169,7 @@ class BluetoothExperimentLoader(private val ctx: Context, private val callback: 
      */
     private suspend fun connect(device: BluetoothDevice) {
         connecting = true
+        val deadline = SystemClock.elapsedRealtime() + Bluetooth.CONNECT_TOTAL_BUDGET_MS
         try {
             for (attempt in 1..Bluetooth.CONNECT_ATTEMPTS) {
                 val connected = CompletableDeferred<Boolean>()
@@ -187,8 +189,11 @@ class BluetoothExperimentLoader(private val ctx: Context, private val callback: 
                         + " (status $lastConnectionStatus)")
                 gatt?.close()
                 gatt = null
-                if (attempt < Bluetooth.CONNECT_ATTEMPTS)
-                    delay(Bluetooth.CONNECT_RETRY_DELAY_MS)
+                //Bounded by the clock as well as the count: see CONNECT_TOTAL_BUDGET_MS.
+                if (attempt >= Bluetooth.CONNECT_ATTEMPTS ||
+                        SystemClock.elapsedRealtime() + Bluetooth.CONNECT_RETRY_DELAY_MS >= deadline)
+                    break
+                delay(Bluetooth.CONNECT_RETRY_DELAY_MS)
             }
         } finally {
             connecting = false

@@ -15,6 +15,7 @@ import android.os.Build
 import android.os.Handler
 import android.os.HandlerThread
 import android.os.Looper
+import android.os.SystemClock
 import android.util.Log
 import android.view.LayoutInflater
 import android.widget.TextView
@@ -329,6 +330,7 @@ open class Bluetooth(
         queue = BleCommandQueue(gattIo, bleScope) { onLinkDead() }
 
         var result = false
+        val connectDeadline = SystemClock.elapsedRealtime() + CONNECT_TOTAL_BUDGET_MS
         for (attempt in 1..CONNECT_ATTEMPTS) {
             val connected = CompletableDeferred<Boolean>()
             connectionEvent = connected
@@ -351,8 +353,10 @@ open class Bluetooth(
             Log.w(TAG, "connect attempt $attempt of $CONNECT_ATTEMPTS failed (status $lastConnectionStatus)")
             btGatt?.close()
             btGatt = null
-            if (attempt < CONNECT_ATTEMPTS)
-                runBlocking { delay(CONNECT_RETRY_DELAY_MS) }
+            if (attempt >= CONNECT_ATTEMPTS ||
+                    SystemClock.elapsedRealtime() + CONNECT_RETRY_DELAY_MS >= connectDeadline)
+                break
+            runBlocking { delay(CONNECT_RETRY_DELAY_MS) }
         }
         if (!result) {
             throw BluetoothException(context.resources.getString(R.string.bt_exception_connection), this)
@@ -991,11 +995,30 @@ open class Bluetooth(
          * also covers the board that has not finished releasing the previous connection yet:
          * the experiment connects immediately after the transfer let go of the same device,
          * and a peripheral that serves one central at a time needs that moment.
+         *
+         * Three was not enough. A refused attempt comes back in about 0.35 s, so the whole
+         * budget is spent in under three seconds, and the bench kept hitting the end of it:
+         * two connects in 34 needed all three attempts on 2026-08-28, which puts the next
+         * one along - the connect that would need a fourth - at about one in forty. That is
+         * the transfer flake the suite was still seeing. Each additional attempt costs under
+         * a second and only when the previous one failed, so the budget is set by
+         * CONNECT_TOTAL_BUDGET_MS rather than by counting.
          */
-        const val CONNECT_ATTEMPTS = 3
+        const val CONNECT_ATTEMPTS = 6
 
         /** pause before another connection attempt, to let the stack and the device settle */
         const val CONNECT_RETRY_DELAY_MS = 500L
+
+        /**
+         * ...but stop retrying once this much time has gone into it, however many attempts
+         * are left. The two failures cost very different amounts of time: a refused
+         * connection answers in about 0.35 s, while a device that is simply switched off
+         * gives no callback at all and burns the full CONNECT_TIMEOUT_MS. Counting attempts
+         * alone would make the cheap case barely slower and the expensive one a minute of
+         * staring at a progress dialog, so the retrying is bounded by the clock and the
+         * attempt count is only the ceiling.
+         */
+        const val CONNECT_TOTAL_BUDGET_MS = 25000L
         const val RSSI_INTERVAL_MS = 1000L
         const val TOAST_THROTTLE_MS = 5000L
         const val RECONNECT_INITIAL_BACKOFF_MS = 1000L
