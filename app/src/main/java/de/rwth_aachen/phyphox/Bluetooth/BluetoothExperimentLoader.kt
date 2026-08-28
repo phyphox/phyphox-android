@@ -16,6 +16,7 @@ import de.rwth_aachen.phyphox.helper.Helper
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.NonCancellable
 import kotlinx.coroutines.channels.Channel
@@ -91,6 +92,14 @@ class BluetoothExperimentLoader(private val ctx: Context, private val callback: 
     @Volatile
     private var disconnectExpected = false
 
+    /** true while connect() is trying: a disconnect callback then belongs to the attempt it is retrying, not to a transfer */
+    @Volatile
+    private var connecting = false
+
+    /** the status of the last connection state change, for the retry's log line */
+    @Volatile
+    private var lastConnectionStatus = 0
+
     fun loadExperimentFromBluetoothDevice(device: BluetoothDevice) {
         val previous = transferJob
         transferJob = Bluetooth.bleScope.launch {
@@ -144,19 +153,51 @@ class BluetoothExperimentLoader(private val ctx: Context, private val callback: 
         deliverResult()
     }
 
+    /**
+     * Open the connection, retrying a refused attempt.
+     *
+     * Android's direct connect fails with GATT_ERROR (133) often enough to matter: three of 22
+     * attempts in the lab on 2026-08-28, all on one phone, every one of them arriving as the
+     * very first callback with no connection ever established, and the same board connecting
+     * again a minute later. It is a property of the moment rather than of the device, so it is
+     * worth another attempt instead of an error dialog the user has to answer.
+     *
+     * Every attempt gets a fresh client and the refused one is closed: a BluetoothGatt that is
+     * dropped without close() keeps its registration in the stack, and running out of those is
+     * one of the things that produces a 133 in the first place.
+     */
+    private suspend fun connect(device: BluetoothDevice) {
+        connecting = true
+        try {
+            for (attempt in 1..Bluetooth.CONNECT_ATTEMPTS) {
+                val connected = CompletableDeferred<Boolean>()
+                connectionEvent = connected
+                gatt = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M)
+                    device.connectGatt(ctx, false, gattCallback, BluetoothDevice.TRANSPORT_LE)
+                else
+                    device.connectGatt(ctx, false, gattCallback)
+                val ok = gatt != null && withTimeoutOrNull(Bluetooth.CONNECT_TIMEOUT_MS) { connected.await() } == true
+                connectionEvent = null
+                if (ok) {
+                    Log.d(TAG, "connected to " + device.address
+                            + (if (attempt > 1) " on attempt $attempt" else ""))
+                    return
+                }
+                Log.w(TAG, "connect attempt $attempt of ${Bluetooth.CONNECT_ATTEMPTS} failed"
+                        + " (status $lastConnectionStatus)")
+                gatt?.close()
+                gatt = null
+                if (attempt < Bluetooth.CONNECT_ATTEMPTS)
+                    delay(Bluetooth.CONNECT_RETRY_DELAY_MS)
+            }
+        } finally {
+            connecting = false
+        }
+        throw TransferException(ctx.getString(R.string.bt_exception_connection))
+    }
+
     private suspend fun runTransfer(device: BluetoothDevice, channel: Channel<ByteArray>): ByteArray {
-        //Connect
-        val connected = CompletableDeferred<Boolean>()
-        connectionEvent = connected
-        gatt = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M)
-            device.connectGatt(ctx, false, gattCallback, BluetoothDevice.TRANSPORT_LE)
-        else
-            device.connectGatt(ctx, false, gattCallback)
-        val connectResult = gatt != null && withTimeoutOrNull(Bluetooth.CONNECT_TIMEOUT_MS) { connected.await() } == true
-        connectionEvent = null
-        if (!connectResult)
-            throw TransferException(ctx.getString(R.string.bt_exception_connection))
-        Log.d(TAG, "connected to " + device.address)
+        connect(device)
 
         val q = BleCommandQueue(BleGattIo { gatt }, Bluetooth.bleScope) {
             pendingError = ctx.getString(R.string.newExperimentBTReadErrorCorrupted) + " (device stopped responding)"
@@ -327,12 +368,19 @@ class BluetoothExperimentLoader(private val ctx: Context, private val callback: 
             // supervision timeout (8) or a peer initiated disconnect (19), and it is dropped
             // everywhere below this point, so it is logged here where it still exists.
             Log.d(TAG, "connection state $newState, status $status")
+            lastConnectionStatus = status
             when (newState) {
                 BluetoothProfile.STATE_CONNECTED -> {
                     connectionEvent?.complete(status == BluetoothGatt.GATT_SUCCESS)
                 }
                 else -> {
                     connectionEvent?.complete(false)
+                    //A refused connection attempt belongs to connect(), which retries it and
+                    // reports a connection error if it runs out of attempts. Cancelling the
+                    // transfer here instead told the user their experiment data was corrupted
+                    // when nothing had been transferred at all.
+                    if (connecting)
+                        return
                     //A disconnect during a running transfer is an error (the old implementation
                     // silently dismissed the progress dialog here) - unless we asked for it.
                     if (transferJob?.isActive == true && !finished && !disconnectExpected) {
