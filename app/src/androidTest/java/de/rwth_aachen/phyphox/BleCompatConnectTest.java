@@ -87,13 +87,19 @@ public class BleCompatConnectTest {
         grant("android.permission.ACCESS_FINE_LOCATION", "android.permission.ACCESS_COARSE_LOCATION");
     }
 
+    //Granted through the shell rather than UiAutomation.grantRuntimePermission, which only exists
+    //from API 28: below that it throws NoSuchMethodError, and that is an Error, so the catch here
+    //did not hold it and the whole test failed in @Before before the app was ever launched (seen
+    //on the Nexus 5X, API 27, and the Galaxy A3, API 26). "pm grant" works on every level this
+    //app supports, needs no version check, and actually grants on those phones rather than
+    //quietly doing nothing.
     private void grant(String... permissions) {
         for (String permission : permissions) {
             try {
-                getInstrumentation().getUiAutomation().grantRuntimePermission(PACKAGE, permission);
+                shell("pm grant " + PACKAGE + " " + permission);
             } catch (Exception e) {
-                //Not declared on this API level, or already granted - either way not this test's
-                //problem; the scan below fails with a message if it actually mattered.
+                //Not a permission this API level knows, or already granted - either way not this
+                //test's problem; the scan below fails with a message if it actually mattered.
             }
         }
     }
