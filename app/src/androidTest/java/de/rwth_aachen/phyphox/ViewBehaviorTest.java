@@ -112,7 +112,30 @@ public class ViewBehaviorTest {
 
     //The view of one element, found through the experiment itself rather than by matching text:
     //the fixtures name their elements, and that name is what the assertions talk about.
-    private <T extends View> T viewOf(Experiment activity, String label, Class<T> type) {
+    //
+    //Waits, because FixtureExperiment.awaitLoaded() returns once the experiment has PARSED and
+    //the views are built later, when the pager inflates its first page. Looking only once
+    //therefore raced the layout and failed as "No View for element ..." on a busy emulator -
+    //a t1 failure on 2026-08-28 that had nothing to do with the element it named. Every other
+    //helper here polls to a deadline; so does this one.
+    private <T extends View> T viewOf(Experiment activity, String label, Class<T> type)
+            throws InterruptedException {
+        long deadline = System.currentTimeMillis() + 5000;
+        while (true) {
+            T found = findViewOf(activity, label, type);
+            if (found != null)
+                return found;
+            if (System.currentTimeMillis() >= deadline)
+                break;
+            Thread.sleep(100);
+        }
+        //Name what IS on screen, so a label that never appears is told apart from one that was
+        //simply not there yet - the message alone could not distinguish them.
+        throw new AssertionError("No " + type.getSimpleName() + " for element \"" + label
+                + "\" after 5 s. Elements with a view: " + laidOutLabels(activity));
+    }
+
+    private <T extends View> T findViewOf(Experiment activity, String label, Class<T> type) {
         for (ExpView view : activity.experiment.experimentViews)
             for (ExpView.expViewElement element : view.elements)
                 if (label.equals(element.label) && element.rootView != null) {
@@ -120,7 +143,16 @@ public class ViewBehaviorTest {
                     if (found != null)
                         return found;
                 }
-        throw new AssertionError("No " + type.getSimpleName() + " for element \"" + label + "\"");
+        return null;
+    }
+
+    private String laidOutLabels(Experiment activity) {
+        StringBuilder labels = new StringBuilder();
+        for (ExpView view : activity.experiment.experimentViews)
+            for (ExpView.expViewElement element : view.elements)
+                if (element.rootView != null)
+                    labels.append(labels.length() == 0 ? "" : ", ").append(element.label);
+        return labels.length() == 0 ? "(none - no page has been laid out)" : labels.toString();
     }
 
     @SuppressWarnings("unchecked")
