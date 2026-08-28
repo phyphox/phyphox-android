@@ -54,8 +54,12 @@ class BluetoothExperimentLoader(private val ctx: Context, private val callback: 
         fun success(experimentUri: Uri, isZip: Boolean)
     }
 
-    /** aborts the transfer with an error message shown to the user */
-    private class TransferException(val msg: String) : Exception(msg)
+    /**
+     * Aborts the transfer with an error message shown to the user. [reason] is the short
+     * token the lab records (see Bluetooth.reportBleOutcome); the message is for the user
+     * and would not survive being parsed as key=value.
+     */
+    private class TransferException(val msg: String, val reason: String) : Exception(msg)
 
     private var gatt: BluetoothGatt? = null
     private var queue: BleCommandQueue? = null
@@ -101,6 +105,28 @@ class BluetoothExperimentLoader(private val ctx: Context, private val callback: 
     @Volatile
     private var lastConnectionStatus = 0
 
+    /**
+     * Set once the connection is up: from here on there is a transfer to report, whatever
+     * happens to it. Only a guard - the reported duration comes from [dataStartMs].
+     */
+    private var transferStartMs = 0L
+
+    /**
+     * When the device was actually asked for the data, i.e. after the subscription and the
+     * control write. That is what the reported ms measures, so it is the same quantity
+     * board_check.py reports for the same board and the two can be compared; timing from the
+     * connection instead would fold in service discovery and make the app look twice as slow
+     * as a central that is not phyphox.
+     */
+    private var dataStartMs = 0L
+
+    /**
+     * When the last byte arrived. The success path reports from deliver(), which runs after
+     * cleanup() has disconnected, so timing to there would fold the teardown into a figure
+     * that is supposed to say how long the DEVICE took.
+     */
+    private var transferDoneMs = 0L
+
     fun loadExperimentFromBluetoothDevice(device: BluetoothDevice) {
         val previous = transferJob
         transferJob = Bluetooth.bleScope.launch {
@@ -125,10 +151,12 @@ class BluetoothExperimentLoader(private val ctx: Context, private val callback: 
                 }
             } catch (e: TransferException) {
                 Log.e(TAG, "transfer failed: " + e.msg)
+                reportTransfer(false, e.reason)
                 withContext(NonCancellable) { cleanup() }
                 finish { callback.error(e.msg) }
             } catch (e: CancellationException) {
                 Log.w(TAG, "transfer cancelled" + (pendingError?.let { ": $it" } ?: " by the user"))
+                reportTransfer(false, if (pendingError != null) "link_lost" else "cancelled")
                 withContext(NonCancellable) { cleanup() }
                 val msg = pendingError
                 finish { if (msg != null) callback.error(msg) else callback.dismiss() }
@@ -143,6 +171,25 @@ class BluetoothExperimentLoader(private val ctx: Context, private val callback: 
      */
     fun cancel() {
         transferJob?.cancel()
+    }
+
+    /**
+     * The transfer's line for the lab, once per transfer that actually started. Android does
+     * not retry the transfer itself (only the connection under it), so attempts is 1 here -
+     * the field exists because iOS does retry a lost transfer and the report is shared.
+     * A connection that never came up reports itself as event=connect and is skipped here,
+     * so a single failure is never counted twice.
+     */
+    private fun reportTransfer(ok: Boolean, reason: String? = null, bytes: Int? = null) {
+        if (transferStartMs == 0L)
+            return
+        //Absent rather than wrong when the transfer never got as far as asking for data.
+        val end = if (transferDoneMs != 0L) transferDoneMs else SystemClock.elapsedRealtime()
+        val ms = if (dataStartMs != 0L) end - dataStartMs else null
+        transferStartMs = 0L
+        dataStartMs = 0L
+        transferDoneMs = 0L
+        Bluetooth.reportBleOutcome(TAG, "transfer", 1, ok, reason, bytes, ms)
     }
 
     private fun finish(deliverResult: () -> Unit) {
@@ -169,9 +216,11 @@ class BluetoothExperimentLoader(private val ctx: Context, private val callback: 
      */
     private suspend fun connect(device: BluetoothDevice) {
         connecting = true
+        var attemptsMade = 0
         val deadline = SystemClock.elapsedRealtime() + Bluetooth.CONNECT_TOTAL_BUDGET_MS
         try {
             for (attempt in 1..Bluetooth.CONNECT_ATTEMPTS) {
+                attemptsMade = attempt
                 val connected = CompletableDeferred<Boolean>()
                 connectionEvent = connected
                 gatt = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M)
@@ -183,6 +232,7 @@ class BluetoothExperimentLoader(private val ctx: Context, private val callback: 
                 if (ok) {
                     Log.d(TAG, "connected to " + device.address
                             + (if (attempt > 1) " on attempt $attempt" else ""))
+                    Bluetooth.reportBleOutcome(TAG, "connect", attempt, true)
                     return
                 }
                 Log.w(TAG, "connect attempt $attempt of ${Bluetooth.CONNECT_ATTEMPTS} failed"
@@ -198,11 +248,14 @@ class BluetoothExperimentLoader(private val ctx: Context, private val callback: 
         } finally {
             connecting = false
         }
-        throw TransferException(ctx.getString(R.string.bt_exception_connection))
+        Bluetooth.reportBleOutcome(TAG, "connect", attemptsMade, false,
+                reason = "gatt_$lastConnectionStatus")
+        throw TransferException(ctx.getString(R.string.bt_exception_connection), "connect")
     }
 
     private suspend fun runTransfer(device: BluetoothDevice, channel: Channel<ByteArray>): ByteArray {
         connect(device)
+        transferStartMs = SystemClock.elapsedRealtime()
 
         val q = BleCommandQueue(BleGattIo { gatt }, Bluetooth.bleScope) {
             pendingError = ctx.getString(R.string.newExperimentBTReadErrorCorrupted) + " (device stopped responding)"
@@ -212,11 +265,11 @@ class BluetoothExperimentLoader(private val ctx: Context, private val callback: 
 
         //Find the phyphox service and its characteristics
         if (!q.run(BleOp.DiscoverServices()).ok)
-            throw TransferException(notificationError("could not discover services"))
+            throw TransferException(notificationError("could not discover services"), "discovery")
         val service = gatt?.getService(Bluetooth.phyphoxServiceUUID)
-            ?: throw TransferException(notificationError("no phyphox service"))
+            ?: throw TransferException(notificationError("no phyphox service"), "no_service")
         val experimentCharacteristic = service.getCharacteristic(Bluetooth.phyphoxExperimentCharacteristicUUID)
-            ?: throw TransferException(notificationError("no experiment characteristic"))
+            ?: throw TransferException(notificationError("no experiment characteristic"), "no_characteristic")
         hasControlCharacteristic = service.getCharacteristic(Bluetooth.phyphoxExperimentControlCharacteristicUUID) != null
         Log.d(TAG, "phyphox service found, control characteristic: $hasControlCharacteristic")
 
@@ -224,38 +277,39 @@ class BluetoothExperimentLoader(private val ctx: Context, private val callback: 
         val useNotifications = (experimentCharacteristic.properties and BluetoothGattCharacteristic.PROPERTY_NOTIFY) != 0
         if (useNotifications) {
             if (gatt?.setCharacteristicNotification(experimentCharacteristic, true) != true)
-                throw TransferException(notificationError("set char notification failed"))
+                throw TransferException(notificationError("set char notification failed"), "notify")
             subscribedCharacteristic = experimentCharacteristic
             if (experimentCharacteristic.getDescriptor(BluetoothInput.CONFIG_DESCRIPTOR) == null)
-                throw TransferException(notificationError("descriptor failed"))
+                throw TransferException(notificationError("descriptor failed"), "notify_descriptor")
             if (!q.run(BleOp.WriteDescriptor(experimentCharacteristic.uuid, BluetoothInput.CONFIG_DESCRIPTOR, BluetoothGattDescriptor.ENABLE_NOTIFICATION_VALUE)).ok)
-                throw TransferException(notificationError("could not write descriptor"))
+                throw TransferException(notificationError("could not write descriptor"), "notify_write")
         }
 
         //If the control characteristic is present, the device expects us to initiate the transfer by writing 1
         if (hasControlCharacteristic) {
             if (!q.run(BleOp.Write(Bluetooth.phyphoxExperimentControlCharacteristicUUID, byteArrayOf(1))).ok)
-                throw TransferException(ctx.getString(R.string.newExperimentBTReadErrorCorrupted) + " (could not write)")
+                throw TransferException(ctx.getString(R.string.newExperimentBTReadErrorCorrupted) + " (could not write)", "control_write")
         }
 
         val receivePacket: suspend () -> ByteArray = if (useNotifications) {
             {
                 withTimeoutOrNull(DATA_TIMEOUT_MS) { channel.receive() }
-                    ?: throw TransferException(ctx.getString(R.string.newExperimentBTReadErrorCorrupted) + " (timeout waiting for data)")
+                    ?: throw TransferException(ctx.getString(R.string.newExperimentBTReadErrorCorrupted) + " (timeout waiting for data)", "timeout")
             }
         } else {
             {
                 val result = q.run(BleOp.Read(experimentCharacteristic.uuid))
                 if (!result.ok || result.value == null)
-                    throw TransferException(ctx.getString(R.string.newExperimentBTReadErrorCorrupted) + " (read failed)")
+                    throw TransferException(ctx.getString(R.string.newExperimentBTReadErrorCorrupted) + " (read failed)", "read")
                 result.value
             }
         }
 
         //Header: "phyphox" + 4 byte size + 4 byte CRC32 (big endian)
+        dataStartMs = SystemClock.elapsedRealtime()
         val header = receivePacket()
         if (header.size < 15 || !String(header, 0, 7).startsWith("phyphox"))
-            throw TransferException(ctx.getString(R.string.newExperimentBTReadErrorCorrupted) + " (invalid header)")
+            throw TransferException(ctx.getString(R.string.newExperimentBTReadErrorCorrupted) + " (invalid header)", "header")
         var size = 0
         for (i in 0 until 4)
             size = (size shl 8) or (header[7 + i].toInt() and 0xff)
@@ -263,7 +317,7 @@ class BluetoothExperimentLoader(private val ctx: Context, private val callback: 
         for (i in 0 until 4)
             crc = (crc shl 8) or (header[11 + i].toLong() and 0xff)
         if (size < 0 || size > 10_000_000)
-            throw TransferException(ctx.getString(R.string.newExperimentBTReadErrorCorrupted) + " (invalid size in header)")
+            throw TransferException(ctx.getString(R.string.newExperimentBTReadErrorCorrupted) + " (invalid size in header)", "header_size")
         expectedCrc = crc
         Log.d(TAG, "header announces $size bytes")
 
@@ -289,6 +343,7 @@ class BluetoothExperimentLoader(private val ctx: Context, private val callback: 
             index += length
             callback.updateProgress(index, size)
         }
+        transferDoneMs = SystemClock.elapsedRealtime()
         Log.d(TAG, "payload complete, $size bytes")
         return data
     }
@@ -301,6 +356,7 @@ class BluetoothExperimentLoader(private val ctx: Context, private val callback: 
      */
     private suspend fun deliver(data: ByteArray) = withContext(Dispatchers.IO) {
         if (data.isEmpty()) {
+            reportTransfer(false, "empty")
             finish { callback.dismiss() }
             return@withContext
         }
@@ -309,17 +365,20 @@ class BluetoothExperimentLoader(private val ctx: Context, private val callback: 
         crc32.update(data)
         if (crc32.value != expectedCrc) {
             Log.e(TAG, "CRC32 mismatch: got " + crc32.value + ", expected " + expectedCrc)
+            reportTransfer(false, "crc", data.size)
             finish { callback.error(ctx.getString(R.string.newExperimentBTReadErrorCorrupted) + " (CRC32)") }
             return@withContext
         }
 
         val tempPath = File(ctx.filesDir, "temp_bt")
         if (!tempPath.exists() && !tempPath.mkdirs()) {
+            reportTransfer(false, "tempdir", data.size)
             finish { callback.error("Could not create temporary directory to write bluetooth experiment file.") }
             return@withContext
         }
         tempPath.list()?.forEach { file ->
             if (!File(tempPath, file).delete()) {
+                reportTransfer(false, "tempdir_clear", data.size)
                 finish { callback.error("Could not clear temporary directory to extract bluetooth experiment file.") }
                 return@withContext
             }
@@ -333,10 +392,12 @@ class BluetoothExperimentLoader(private val ctx: Context, private val callback: 
                 out.write(if (isZip) Helper.inflatePartialZip(data) else data)
             }
         } catch (e: Exception) {
+            reportTransfer(false, "write", data.size)
             finish { callback.error("Could not write Bluetooth experiment content to " + (if (isZip) "zip" else "phyphox") + " file.") }
             return@withContext
         }
 
+        reportTransfer(true, bytes = data.size)
         Log.i(TAG, "experiment received, " + data.size + " bytes to " + file.name)
         finish { callback.success(Uri.fromFile(file), isZip) }
     }

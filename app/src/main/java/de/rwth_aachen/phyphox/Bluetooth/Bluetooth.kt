@@ -330,8 +330,10 @@ open class Bluetooth(
         queue = BleCommandQueue(gattIo, bleScope) { onLinkDead() }
 
         var result = false
+        var attemptsMade = 0
         val connectDeadline = SystemClock.elapsedRealtime() + CONNECT_TOTAL_BUDGET_MS
         for (attempt in 1..CONNECT_ATTEMPTS) {
+            attemptsMade = attempt
             val connected = CompletableDeferred<Boolean>()
             connectionEvent = connected
             btGatt = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M)
@@ -358,6 +360,8 @@ open class Bluetooth(
                 break
             runBlocking { delay(CONNECT_RETRY_DELAY_MS) }
         }
+        reportBleOutcome(TAG, "connect", attemptsMade, result,
+                reason = if (result) null else "gatt_$lastConnectionStatus")
         if (!result) {
             throw BluetoothException(context.resources.getString(R.string.bt_exception_connection), this)
         }
@@ -985,6 +989,39 @@ open class Bluetooth(
         private val BATTERY_LEVEL = UUID.fromString("00002a19-0000-1000-8000-00805f9b34fb")
 
         private const val TAG = "phyphoxBle"
+
+        /**
+         * One line per FINISHED connection or transfer, so the device lab can watch the
+         * retries instead of only the verdict.
+         *
+         * Retrying internally is right for the field - boards with the Arduino library's
+         * fixed high-rate transfer will be out there for years, and the app should cope
+         * rather than complain at the user - but it blinds the suite: a scenario passes the
+         * same way whether the app got through on the first attempt or on the last one it
+         * was allowed, so hardware that is slowly getting worse looks healthy right up to
+         * the run that finally exhausts the budget. The lab greps for the token and records
+         * the counts per scenario (phyphox-docs, tools/lab/ble.py: parse_retry_lines).
+         *
+         * Emitted once the operation is over rather than per attempt, because the driver
+         * clears logcat at the start of a scenario and a per-attempt line would be swallowed.
+         */
+        internal fun reportBleOutcome(tag: String, event: String, attempts: Int, ok: Boolean,
+                                      reason: String? = null, bytes: Int? = null,
+                                      ms: Long? = null) {
+            val line = StringBuilder(RETRY_TOKEN)
+            line.append(" event=").append(event)
+            //Every attempt, the successful one included, so 1 means it worked first time.
+            line.append(" attempts=").append(attempts)
+            line.append(" result=").append(if (ok) "ok" else "failed")
+            //Parsed as space separated key=value, so no value may contain a space.
+            reason?.let { line.append(" reason=").append(it.replace(' ', '_')) }
+            bytes?.let { line.append(" bytes=").append(it) }
+            ms?.let { line.append(" ms=").append(it) }
+            Log.i(tag, line.toString())
+        }
+
+        /** the literal the lab greps for; changing it silently blinds the report */
+        private const val RETRY_TOKEN = "phyphox-ble-retries"
 
         const val CONNECT_TIMEOUT_MS = 10000L
 
