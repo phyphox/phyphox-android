@@ -15,6 +15,7 @@ import android.os.Build
 import android.os.Handler
 import android.os.HandlerThread
 import android.os.Looper
+import android.util.Log
 import android.view.LayoutInflater
 import android.widget.TextView
 import android.widget.Toast
@@ -143,6 +144,11 @@ open class Bluetooth(
     /** completed by onConnectionStateChange while a connection attempt is awaited */
     @Transient
     private var connectionEvent: CompletableDeferred<Boolean>? = null
+
+    /** the GATT status of the last connection state change, for the retry's log line */
+    @Transient
+    @Volatile
+    private var lastConnectionStatus = 0
 
     /** true while the owning block's GATT client holds a connection (kept up to date by the callback) */
     @Transient
@@ -322,20 +328,33 @@ open class Bluetooth(
         queue?.shutdown()
         queue = BleCommandQueue(gattIo, bleScope) { onLinkDead() }
 
-        val connected = CompletableDeferred<Boolean>()
-        connectionEvent = connected
-        btGatt = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M)
-            btDevice?.connectGatt(context, false, btLeGattCallback, BluetoothDevice.TRANSPORT_LE)
-        else
-            btDevice?.connectGatt(context, false, btLeGattCallback)
+        var result = false
+        for (attempt in 1..CONNECT_ATTEMPTS) {
+            val connected = CompletableDeferred<Boolean>()
+            connectionEvent = connected
+            btGatt = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M)
+                btDevice?.connectGatt(context, false, btLeGattCallback, BluetoothDevice.TRANSPORT_LE)
+            else
+                btDevice?.connectGatt(context, false, btLeGattCallback)
 
-        val result = btGatt != null && runBlocking {
-            withTimeoutOrNull(CONNECT_TIMEOUT_MS) { connected.await() } == true
-        }
-        connectionEvent = null
-        if (!result) {
+            result = btGatt != null && runBlocking {
+                withTimeoutOrNull(CONNECT_TIMEOUT_MS) { connected.await() } == true
+            }
+            connectionEvent = null
+            if (result) {
+                if (attempt > 1)
+                    Log.d(TAG, "connected on attempt $attempt")
+                break
+            }
+            //A refused client keeps its registration in the stack unless it is closed, and
+            //running out of those is one of the things that produces a 133 in the first place.
+            Log.w(TAG, "connect attempt $attempt of $CONNECT_ATTEMPTS failed (status $lastConnectionStatus)")
             btGatt?.close()
             btGatt = null
+            if (attempt < CONNECT_ATTEMPTS)
+                runBlocking { delay(CONNECT_RETRY_DELAY_MS) }
+        }
+        if (!result) {
             throw BluetoothException(context.resources.getString(R.string.bt_exception_connection), this)
         }
 
@@ -618,6 +637,7 @@ open class Bluetooth(
     private val btLeGattCallback = object : BluetoothGattCallback() {
 
         override fun onConnectionStateChange(gatt: BluetoothGatt, status: Int, newState: Int) {
+            lastConnectionStatus = status
             //A callback of a GATT client that has already been replaced must not touch the state
             //of the current one. btGatt is still null while a fresh attempt is in flight (the
             //callback can fire before connectGatt has returned), so that case has to pass.
@@ -960,7 +980,22 @@ open class Bluetooth(
         private val BATTERY_UUID = UUID.fromString("0000180f-0000-1000-8000-00805f9b34fb")
         private val BATTERY_LEVEL = UUID.fromString("00002a19-0000-1000-8000-00805f9b34fb")
 
+        private const val TAG = "phyphoxBle"
+
         const val CONNECT_TIMEOUT_MS = 10000L
+
+        /**
+         * Attempts for a connection. Android's direct connect fails with GATT_ERROR (133)
+         * often enough to matter - measured in the lab on 2026-08-28 - and the same device
+         * connects a moment later, so a refused attempt is retried rather than reported. It
+         * also covers the board that has not finished releasing the previous connection yet:
+         * the experiment connects immediately after the transfer let go of the same device,
+         * and a peripheral that serves one central at a time needs that moment.
+         */
+        const val CONNECT_ATTEMPTS = 3
+
+        /** pause before another connection attempt, to let the stack and the device settle */
+        const val CONNECT_RETRY_DELAY_MS = 500L
         const val RSSI_INTERVAL_MS = 1000L
         const val TOAST_THROTTLE_MS = 5000L
         const val RECONNECT_INITIAL_BACKOFF_MS = 1000L
