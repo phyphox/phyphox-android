@@ -110,6 +110,21 @@ android {
         //The corpus conformance tests parse experiment files through the real loading path
         //under Robolectric, which needs the app's resources and assets
         unitTests.includeAndroidResources = true
+
+        //Print the assertion MESSAGE of a failing test, not just its class and line. Several
+        //of these tests measure something and put the measurement in the message - the data
+        //lock test says how many milliseconds the response took and asks for a bigger buffer
+        //if that was too few - and by default Gradle logs "java.lang.AssertionError at
+        //RemoteServerGetTest.java:183" and drops the number, which is the one thing needed to
+        //act on it. Cost a CI failure on 2026-08-28 that could not be sized afterwards.
+        unitTests.all {
+            testLogging {
+                exceptionFormat = 'full'
+                showExceptions = true
+                showCauses = true
+                showStackTraces = true
+            }
+        }
     }
 
     ndkVersion '28.0.13004108'
