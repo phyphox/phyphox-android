@@ -53,6 +53,7 @@ import java.util.Set;
 import java.util.Vector;
 
 import de.rwth_aachen.phyphox.helper.FileNameFormat;
+import de.rwth_aachen.phyphox.helper.DebugSwitches;
 import de.rwth_aachen.phyphox.helper.Helper;
 
 //RemoteServer implements a web interface to remote control the experiment and receive the data
@@ -405,10 +406,11 @@ public class RemoteServer {
     //well-formed request carrying a bad value (which each endpoint answers in its own way).
     private static class BadRequestException extends RuntimeException {}
 
-    //Wraps a context handler so that an unhandled exception becomes jlhttp's plain 500 error
-    //response. Without this, the exception would escape to jlhttp's connection handling, which
-    //builds a fresh response without the CORS header set in handleTransaction. A
-    //BadRequestException instead becomes a clean 400.
+    //Wraps a context handler so that an unhandled exception becomes a clean 500 carrying the
+    //API's JSON error object. Without this, the exception would escape to jlhttp's connection
+    //handling, which answers with an HTML error page and without the CORS header set in
+    //handleTransaction - and an error response is never empty in this API, whatever the status
+    //code. A BadRequestException instead becomes a clean 400.
     private HTTPServer.ContextHandler withErrorResponse(HTTPServer.ContextHandler handler) {
         return (request, response) -> {
             try {
@@ -416,12 +418,16 @@ public class RemoteServer {
             } catch (BadRequestException e) {
                 if (response.headersSent())
                     throw e;
-                return respondStatus(response, 400);
-            } catch (RuntimeException e) {
+                return respondError(response, 400, "Malformed request body.");
+            } catch (RuntimeException | StackOverflowError | AssertionError e) {
+                //Errors are caught alongside exceptions because they reach us the same way: a
+                //failure deep in a framework call should still be answered, not turned into a
+                //broken connection. Everything else (OutOfMemoryError and friends) is left
+                //alone - answering it is not this method's business.
                 Log.e("remoteServer", "Unhandled exception while serving " + request.getPath() + ".", e);
                 if (response.headersSent())
                     throw e; //Too late for an error response, let jlhttp abort the connection
-                return 500;
+                return respondError(response, 500, "Internal error while serving " + request.getPath() + ".");
             }
         };
     }
@@ -505,10 +511,16 @@ public class RemoteServer {
     //Returns false if no server socket could be opened, which usually means that another app
     //already uses the configured port.
     public synchronized boolean start() {
-        int configuredPort = Integer.parseInt(PreferenceManager.getDefaultSharedPreferences(context).getString("remoteAccessPort", String.valueOf(defaultPort)));
+        //An unattended run pins the port through a shell-only system property (see
+        //DebugSwitches), because a host script cannot see which port the ladder below settled
+        //on. A pinned port is used as it is: if it is taken, the run should fail loudly rather
+        //than serve somewhere the script does not look.
+        int debugPort = DebugSwitches.remotePort();
+        int configuredPort = debugPort > 0 ? debugPort
+                : Integer.parseInt(PreferenceManager.getDefaultSharedPreferences(context).getString("remoteAccessPort", String.valueOf(defaultPort)));
         LinkedList<Integer> ports = new LinkedList<>();
         ports.add(configuredPort);
-        if (configuredPort == defaultPort) {
+        if (debugPort == 0 && configuredPort == defaultPort) {
             for (int i = 1; i <= 100; i++)
                 ports.add(defaultPort + i);
         }
@@ -529,6 +541,7 @@ public class RemoteServer {
             host.addContext("/logo", withErrorResponse(this::handleLogo), "GET", "POST"); //The phyphox logo, also included in style.css
             host.addContext("/get", withErrorResponse(this::handleGet), "GET", "POST"); //A get command takes parameters which define, which buffers and how much of them is requested - the response is a JSON set with the data
             host.addContext("/control", withErrorResponse(this::handleControl), "GET", "POST"); //The control command starts and stops measurements
+            host.addContext("/set", withErrorResponse(this::handleSet), "GET", "POST"); //Bulk write of buffer values from a JSON body (GET is registered so it can be answered with a clean result:false instead of a 405)
             host.addContext("/export", withErrorResponse(this::handleExport), "GET", "POST"); //The export command requests a data file containing sets as requested by the parameters
             host.addContext("/config", withErrorResponse(this::handleConfig), "GET", "POST"); //The config command requests information on the currently active experiment configuration
             host.addContext("/meta", withErrorResponse(this::handleMeta), "GET", "POST"); //The meta command requests information on the device
@@ -586,9 +599,18 @@ public class RemoteServer {
         return respond(response, result ? "{\"result\": true}" : "{\"result\": false}");
     }
 
-    protected int respondStatus(Response response, int status) throws IOException {
-        //A plain status code with an empty body (i.e. 400 for a bad request, like iOS)
-        response.sendHeaders(status, 0, System.currentTimeMillis(), null, null, null);
+    protected int respondError(Response response, int status, String reason) throws IOException {
+        //An error response is never empty: whatever the status code, it carries a JSON error
+        //object like the ones /export and /res send (see error-response-content-type in
+        //phyphox-docs). The reason text is human-readable and not part of the contract.
+        byte[] bytes = ("{\"error\": " + JSONObject.quote(reason) + "}").getBytes();
+        InputStream in = new ByteArrayInputStream(bytes);
+        try {
+            response.sendHeaders(status, bytes.length, System.currentTimeMillis(), null, "application/json", null);
+            response.sendBody(in, -1, null);
+        } finally {
+            in.close();
+        }
         return 0; // response fully handled
     }
 
@@ -645,7 +667,12 @@ public class RemoteServer {
         Set<BufferRequest> buffers = new LinkedHashSet<>(); //This list will hold all requests
         List<String[]> params = requestParamsList(request);
         if (!params.isEmpty()) {
+            //First occurrence wins, so a buffer requested in both the body and the query is
+            //answered once, with the body's value (same convention as requestParams())
+            Set<String> seen = new LinkedHashSet<>();
             for (String[] param : params) {
+                if (!seen.add(param[0]))
+                    continue;
                 BufferRequest br = parseBufferRequest(param[0], param[1], forceFullUpdate);
                 buffers.add(br);
             }
@@ -654,53 +681,76 @@ public class RemoteServer {
         return buffers;
     }
 
-    protected void buildBuffer(BufferRequest buffer, DataBuffer db, DecimalFormat format, StringBuilder sb) {
-        //Get the threshold reference data buffer
-        DataBuffer db_reference = buffer.reference.isEmpty() ? db : experiment.getBuffer(buffer.reference);
+    //Everything an answer needs from one buffer, copied while the data lock is held so that the
+    //formatting - the slow half by far, a DecimalFormat call per value - can happen without it.
+    //Building the JSON under the lock made a big buffer on a slow phone hold up the analysis and
+    //every other reader for as long as the whole response took to write.
+    protected static class BufferSnapshot {
+        final BufferRequest request;
+        final String name;
+        final int size;
+        final double value;      //The last value, which is all a single-value request needs
+        final Double[] data;     //null for a single-value request: its array is never copied
+        final Double[] reference;
+        final int n;
 
+        BufferSnapshot(BufferRequest request, DataBuffer db, DataBuffer referenceBuffer) {
+            this.request = request;
+            this.name = db.name;
+            this.size = db.size;
+            this.value = db.value;
+            if (Double.isNaN(request.threshold)) {
+                this.data = null;
+                this.reference = null;
+                this.n = 0;
+            } else {
+                this.data = db.getArray();
+                int filled = db.getFilledSize();
+                if (referenceBuffer == db) {
+                    this.reference = this.data;
+                } else {
+                    this.reference = referenceBuffer.getArray();
+                    filled = Math.min(filled, referenceBuffer.getFilledSize());
+                }
+                this.n = filled;
+            }
+        }
+    }
+
+    protected void buildBuffer(BufferSnapshot buffer, DecimalFormat format, StringBuilder sb) {
         //Buffer name
         sb.append("\"");
-        sb.append(db.name);
+        sb.append(buffer.name);
 
         //Buffer size
         sb.append("\":{\"size\":");
-        sb.append(db.size);
+        sb.append(buffer.size);
 
         //Does the response contain a single value, the whole buffer or a part of it?
         sb.append(",\"updateMode\":\"");
-        if (Double.isNaN(buffer.threshold))
+        if (Double.isNaN(buffer.request.threshold))
             sb.append("single");
-        else if (Double.isInfinite(buffer.threshold))
+        else if (Double.isInfinite(buffer.request.threshold))
             sb.append("full");
         else
             sb.append("partial");
         sb.append("\", \"buffer\":[");
 
-        if (Double.isNaN(buffer.threshold)) //Single value. Get the last one directly from our buffer class
-            if (Double.isNaN(db.value) || Double.isInfinite(db.value))
+        if (Double.isNaN(buffer.request.threshold)) //Single value, taken from the buffer class
+            if (Double.isNaN(buffer.value) || Double.isInfinite(buffer.value))
                 sb.append("null");
             else
-                sb.append(format.format(db.value));
+                sb.append(format.format(buffer.value));
         else {
             //Get all the values...
             boolean firstValue = true; //Find first iteration, so the other ones can add a separator
-            Double[] data = db.getArray();
-            int n = db.getFilledSize();
-            Double[] dataRef;
-            if (db_reference == db)
-                dataRef = data;
-            else {
-                dataRef = db_reference.getArray();
-                n = Math.min(n, db_reference.getFilledSize());
-            }
-
 
             Double v;
-            for (int i = 0; i < n; i++) {
+            for (int i = 0; i < buffer.n; i++) {
                 //Simultaneously get the values from both iterators
-                v = data[i];
-                Double v_dep = dataRef[i];
-                if (v_dep <= buffer.threshold) //Skip this value if it is below the threshold or NaN
+                v = buffer.data[i];
+                Double v_dep = buffer.reference[i];
+                if (v_dep <= buffer.request.threshold) //Skip this value if it is below the threshold or NaN
                     continue;
 
                 //Add a separator if this is not the first value
@@ -732,7 +782,7 @@ public class RemoteServer {
         } catch (NumberFormatException e) {
             //A threshold that does not parse as a number: reject the bad request instead of
             //failing it with a server error (see get-invalid-threshold in phyphox-docs)
-            return respondStatus(response, 400);
+            return respondError(response, 400, "Invalid threshold.");
         }
 
         //A threshold referencing a buffer that does not exist is a bad request (unknown buffers
@@ -740,68 +790,71 @@ public class RemoteServer {
         //list still gets the session id and can notice the experiment change)
         for (BufferRequest buffer : buffers) {
             if (!buffer.reference.isEmpty() && experiment.getBuffer(buffer.name) != null && experiment.getBuffer(buffer.reference) == null)
-                return respondStatus(response, 400);
+                return respondError(response, 400, "Unknown reference buffer.");
         }
 
-        //We now know what the query request. Let's build our answer
-        StringBuilder sb;
-
-        //Lock the data, to get a consistent data block
+        //Lock the data only to copy it, so all the buffers in one answer still belong to the same
+        //moment, and let the formatting - which is the expensive part and needs nothing the
+        //analysis could change - run afterwards.
+        List<BufferSnapshot> snapshots = new ArrayList<>();
         experiment.dataLock.lock();
         try {
-            //First let's take a guess at how much memory we will need
-            int sizeEstimate = 0;
-            for (BufferRequest buffer : buffers) {
-                DataBuffer db = experiment.getBuffer(buffer.name);
-                if (db != null)
-                    sizeEstimate += 14 * db.size + 100;
-            }
-
-            //Create the string builder
-            sb = new StringBuilder(sizeEstimate);
-
-            boolean firstBuffer = true; //Helper to recognize the first iteration
-
-            //Set our decimal format (English to make sure we use decimal points, not comma
-            DecimalFormat format = (DecimalFormat) NumberFormat.getInstance(Locale.ENGLISH);
-            format.applyPattern("0.#######E0");
-
-            //Start building...
-            sb.append("{\"buffer\":{\n");
             for (BufferRequest buffer : buffers) {
                 DataBuffer db = experiment.getBuffer(buffer.name);
                 if (db == null)
                     continue;
-                if (firstBuffer)
-                    firstBuffer = false;
-                else
-                    sb.append(",\n"); //Separate the object with a comma, if this is not the first item
-
-                buildBuffer(buffer, db, format, sb);
+                DataBuffer reference = buffer.reference.isEmpty() ? db
+                        : experiment.getBuffer(buffer.reference);
+                snapshots.add(new BufferSnapshot(buffer, db, reference));
             }
-
-            //We also send the experiment status
-            sb.append("\n},\n\"status\":{\n");
-
-            //Session ID
-            sb.append("\"session\":\"");
-            sb.append(sessionID);
-
-            //Measuring?
-            sb.append("\", \"measuring\":");
-            sb.append(callActivity.measuring);
-
-            //Timed run?
-            sb.append(", \"timedRun\":");
-            sb.append(callActivity.timedRun);
-
-            //Countdown state
-            sb.append(", \"countDown\":");
-            sb.append(callActivity.millisUntilFinished);
-            sb.append("\n}\n}\n");
         } finally {
             experiment.dataLock.unlock();
         }
+
+        //First let's take a guess at how much memory we will need
+        int sizeEstimate = 0;
+        for (BufferSnapshot buffer : snapshots)
+            sizeEstimate += 14 * buffer.size + 100;
+
+        //Create the string builder
+        StringBuilder sb = new StringBuilder(sizeEstimate);
+
+        boolean firstBuffer = true; //Helper to recognize the first iteration
+
+        //Set our decimal format (English to make sure we use decimal points, not comma
+        DecimalFormat format = (DecimalFormat) NumberFormat.getInstance(Locale.ENGLISH);
+        format.applyPattern("0.#######E0");
+
+        //Start building...
+        sb.append("{\"buffer\":{\n");
+        for (BufferSnapshot buffer : snapshots) {
+            if (firstBuffer)
+                firstBuffer = false;
+            else
+                sb.append(",\n"); //Separate the object with a comma, if this is not the first item
+
+            buildBuffer(buffer, format, sb);
+        }
+
+        //We also send the experiment status
+        sb.append("\n},\n\"status\":{\n");
+
+        //Session ID
+        sb.append("\"session\":\"");
+        sb.append(sessionID);
+
+        //Measuring?
+        sb.append("\", \"measuring\":");
+        sb.append(callActivity.measuring);
+
+        //Timed run?
+        sb.append(", \"timedRun\":");
+        sb.append(callActivity.timedRun);
+
+        //Countdown state
+        sb.append(", \"countDown\":");
+        sb.append(callActivity.millisUntilFinished);
+        sb.append("\n}\n}\n");
 
         //Done. Build a string and return it as usual
         return respond(response, sb.toString());
@@ -817,8 +870,11 @@ public class RemoteServer {
         if (cmd != null) {
             switch (cmd) {
                 case "start": //Start the measurement
-                    callActivity.remoteStartMeasurement();
-                    return respond(response, true);
+                    //The only command whose result says more than "accepted": it reports whether
+                    //the measurement actually began, because an experiment can refuse to start
+                    //(a Bluetooth device that is not connected, for instance) and a client would
+                    //otherwise have to read status.measuring back to find out.
+                    return respond(response, callActivity.remoteStartMeasurement());
                 case "stop": //Stop the measurement
                     callActivity.remoteStopMeasurement();
                     return respond(response, true);
@@ -897,6 +953,108 @@ public class RemoteServer {
             }
         } else
             return respond(response, false);
+    }
+
+    //The /set endpoint writes values into one or more buffers in a single request - the bulk,
+    //array-valued counterpart of control?cmd=set, which can also write the non-finite values a
+    //buffer may legitimately hold. Unlike every other endpoint it takes only a JSON body (the
+    //payload is structured, so the flat parameter convention does not apply):
+    //  {"buffers": {"abc": [1, 2.5, null, "nan"]}, "mode": "replace"}
+    //Array entries are JSON numbers, null (which writes NaN, matching /get's representation of
+    //every non-finite value) or strings in the file format's number lexical space (parsed by
+    //PhyphoxFile.parseNumber, so "nan"/"Infinity"/"-infinity" work and "inf" does not). The
+    //request is atomic: everything is validated first, and on any error nothing is written.
+    //Specified in phyphox-docs/docs/remote-interface/openapi.yaml (API 1.1.0); this mirror must
+    //stay in step with iOS.
+    public int handleSet(Request request, Response response) throws IOException {
+        //A GET or a form-encoded body is a well-formed request that cannot carry the documented
+        //shape - rejected with result:false, while a body that is not parseable JSON at all is
+        //a 400 like everywhere else (BadRequestException via withErrorResponse).
+        if (!hasJsonBody(request))
+            return respondSetError(response, "A JSON body of the form {\"buffers\": {...}} is required.");
+
+        JSONObject json;
+        try {
+            json = new JSONObject(readBody(request));
+        } catch (JSONException e) {
+            throw new BadRequestException();
+        }
+
+        //Validate everything first: the mode, every buffer name and every entry...
+        boolean append = false;
+        if (json.has("mode")) {
+            Object mode = json.opt("mode");
+            if ("append".equals(mode))
+                append = true;
+            else if (!"replace".equals(mode)) //Anything but the two enum strings, including null
+                return respondSetError(response, "Unknown mode \"" + mode + "\".");
+        }
+
+        JSONObject buffersObj = json.optJSONObject("buffers");
+        if (buffersObj == null)
+            return respondSetError(response, "A \"buffers\" object is required.");
+
+        Map<DataBuffer, double[]> writes = new LinkedHashMap<>();
+        Iterator<String> names = buffersObj.keys();
+        while (names.hasNext()) {
+            String name = names.next();
+            DataBuffer db = experiment.getBuffer(name);
+            if (db == null)
+                return respondSetError(response, "Unknown buffer \"" + name + "\".");
+            JSONArray entries = buffersObj.optJSONArray(name);
+            if (entries == null)
+                return respondSetError(response, "The values for buffer \"" + name + "\" must be an array.");
+            double[] values = new double[entries.length()];
+            for (int i = 0; i < entries.length(); i++) {
+                Object entry = entries.opt(i);
+                if (entry == JSONObject.NULL) {
+                    values[i] = Double.NaN;
+                } else if (entry instanceof Number) {
+                    values[i] = ((Number) entry).doubleValue();
+                } else if (entry instanceof String) {
+                    try {
+                        values[i] = PhyphoxFile.parseNumber((String) entry);
+                    } catch (NumberFormatException e) {
+                        return respondSetError(response, "Invalid value \"" + entry + "\" for buffer \"" + name + "\".");
+                    }
+                } else {
+                    //Booleans, nested arrays/objects
+                    return respondSetError(response, "Invalid entry for buffer \"" + name + "\": must be a number, null or a number string.");
+                }
+            }
+            writes.put(db, values);
+        }
+
+        //...then write. An empty buffers object is a valid no-op and does not mark new data.
+        if (!writes.isEmpty()) {
+            callActivity.remoteInput = true;
+            experiment.newData = true;
+
+            //Defocus the input element in the API interface otherwise it might not be updated and will reenter the old value
+            callActivity.requestDefocus();
+
+            experiment.dataLock.lock();
+            try {
+                for (Map.Entry<DataBuffer, double[]> write : writes.entrySet()) {
+                    DataBuffer db = write.getKey();
+                    if (!append)
+                        db.clear(false); //Normal buffer semantics apply, so this cannot clear a written static buffer
+                    for (double v : write.getValue())
+                        db.append(v);
+                }
+            } finally {
+                experiment.dataLock.unlock();
+            }
+        }
+        return respond(response, true);
+    }
+
+    private int respondSetError(Response response, String error) throws IOException {
+        try {
+            return respond(response, new JSONObject().put("result", false).put("error", error).toString());
+        } catch (JSONException e) {
+            return respond(response, false); //Cannot happen for the string messages used here
+        }
     }
 
     //The export query has the form export?format=1&set1=On&set3=On
@@ -1055,7 +1213,7 @@ public class RemoteServer {
             }
 
             JSONObject sensorsJson = new JSONObject();
-            for (SensorInput.SensorName sensor : SensorInput.SensorName.values()) {
+            for (SensorInput.SensorName sensor : Metadata.sensorsWithMetadata()) {
                 JSONObject sensorJson = new JSONObject();
                 for (Metadata.SensorMetadata sensorMetadata : Metadata.SensorMetadata.values()) {
                     String identifier = sensorMetadata.toString();

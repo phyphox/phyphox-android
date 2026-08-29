@@ -46,6 +46,7 @@ import androidx.core.view.WindowInsetsCompat;
 import androidx.preference.PreferenceManager;
 
 import org.w3c.dom.Document;
+import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 
 import java.io.File;
@@ -55,6 +56,8 @@ import java.io.FilenameFilter;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Vector;
@@ -256,8 +259,18 @@ public abstract class Helper {
             XPath xpath = XPathFactory.newInstance().newXPath();
             NodeList nodes = (NodeList) xpath.evaluate(tag, doc, XPathConstants.NODESET);
 
-            for (int i = 0; i < nodes.getLength(); i++) {
-                nodes.item(i).setTextContent(newContent);
+            //Set the first match and drop any further ones: the tags handled here hold a single
+            //value (state-title), so several of them are leftovers of an old writer bug that
+            //appended instead of replaced. Renaming heals such a file - the duplicate would
+            //otherwise keep it unloadable on iOS.
+            List<Node> matches = new ArrayList<>();
+            for (int i = 0; i < nodes.getLength(); i++)
+                matches.add(nodes.item(i));
+            for (int i = 0; i < matches.size(); i++) {
+                if (i == 0)
+                    matches.get(i).setTextContent(newContent);
+                else
+                    matches.get(i).getParentNode().removeChild(matches.get(i));
             }
 
             Transformer t = TransformerFactory.newInstance().newTransformer();

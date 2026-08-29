@@ -1,0 +1,35 @@
+# T0 of the phyphox test strategy: JVM unit tests, including the conformance corpus from the
+# public phyphox-docs repository, which is checked out as a sibling of this repository - the
+# same layout the corpus lookup in app/src/test expects on a development machine. If that
+# checkout fails, the run fails: in CI the corpus is mandatory, the skip-with-notice path in
+# the tests exists for plain local clones without the sibling.
+name: tests
+on: [push, pull_request]
+
+# A new push supersedes the run of the one before it, so the queue does not fill with results
+# nobody is waiting for any more. Not on master: what master reports is the record of a released
+# commit, and that is worth keeping even when two land in a row.
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ github.ref != 'refs/heads/master' }}
+
+jobs:
+  t0:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          path: phyphox-android
+          submodules: recursive
+      - uses: actions/checkout@v5
+        with:
+          repository: phyphox/phyphox-docs
+          path: phyphox-docs
+      - uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: 21
+          cache: gradle
+      - name: Unit tests
+        run: cd phyphox-android && ./gradlew testRegularDebugUnitTest

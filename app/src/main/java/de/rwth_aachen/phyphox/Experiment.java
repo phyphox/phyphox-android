@@ -105,6 +105,8 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 import java.util.UUID;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
 
 import de.rwth_aachen.phyphox.Bluetooth.Bluetooth;
 import de.rwth_aachen.phyphox.Bluetooth.BluetoothInput;
@@ -118,6 +120,7 @@ import de.rwth_aachen.phyphox.helper.WindowInsetHelper;
 import de.rwth_aachen.phyphox.camera.CameraInput;
 import de.rwth_aachen.phyphox.camera.depth.DepthInput;
 import de.rwth_aachen.phyphox.helper.DecimalTextWatcher;
+import de.rwth_aachen.phyphox.helper.DebugSwitches;
 import de.rwth_aachen.phyphox.helper.Helper;
 import de.rwth_aachen.phyphox.NetworkConnection.NetworkConnection;
 
@@ -175,6 +178,10 @@ public class Experiment extends AppCompatActivity implements View.OnClickListene
     private boolean serverEnabled = false; //Is the remote server activated?
     boolean remoteIntentMeasuring = false; //Is the remote interface expecting that the measurement is running?
     boolean updateState = false; //This is set to true when a state changed is initialized remotely. The measurement state will then be set to remoteIntentMeasuring.
+    //Set by a remote cmd=start while it waits for the update loop to carry the start out
+    volatile CountDownLatch remoteStartVerdict = null;
+    volatile boolean remoteStartSucceeded = false;
+    static final long REMOTE_START_TIMEOUT_MS = 5000;
     public boolean remoteInput = false; //Has there been an data input (inputViews for now) from the remote server that should be processed?
     public boolean shouldDefocus = false; //Should the current view loose focus? (Neccessary to remotely edit an input view, which has focus on this device)
     private String sessionID = "";
@@ -512,6 +519,21 @@ public class Experiment extends AppCompatActivity implements View.OnClickListene
         if (experiment == null || !experiment.loaded)
             return;
 
+        //An unattended run cannot tap the notices below, and the network privacy notice gates
+        //the connection setup that follows them, so a driver can confirm them in advance through
+        //a shell-only system property (see DebugSwitches). Exactly three are bypassed, the same
+        //three as iOS's -phyphoxAutoConfirm and the ones the switch-bypassed-ui test row pins:
+        //the network privacy notice, the photosensitivity warning, and the offer to save a
+        //downloaded experiment locally, which counts as declined. The vendor sensor warning is
+        //deliberately not among them - it exists only on Android, so bypassing it would put a
+        //dialog outside that row's scope. The chain then continues with the network and
+        //bluetooth connections as if the user had dismissed each notice.
+        if (DebugSwitches.autoConfirm()) {
+            dataPolicyDismissed = true;
+            photosensitivityWarningDismissed = true;
+            saveLocallyDismissed = true;
+        }
+
         //Privacy policy
         if (!dataPolicyDismissed && experiment.networkConnections.size() > 0) {
             Set<String> sensors = new HashSet<>();
@@ -657,6 +679,16 @@ public class Experiment extends AppCompatActivity implements View.OnClickListene
             progress = null;
         }
         this.experiment = experiment; //Store the loaded experiment
+
+        //A link entry is not an experiment: it points at a web page and has no views at all.
+        //Tapping it in the collection opens the link, and a file arriving by URL, QR code or
+        //share has to do the same - it used to end up here as "no valid view found" (iOS opened
+        //the link from its URL path since 2026-08-25; the two must behave alike).
+        if (experiment.loaded && experiment.isLink) {
+            openLinkEntry();
+            return;
+        }
+
         if (experiment.loaded) { //Everything went fine, no errors
             if (experiment.gpsIn != null) {
                 experiment.gpsIn.prepare(res);
@@ -789,6 +821,12 @@ public class Experiment extends AppCompatActivity implements View.OnClickListene
                 experiment.flashlightOutput.initHardware(null);
             }
 
+
+            //An unattended run enables remote access through a shell-only system property instead
+            //of the menu toggle, which would need someone to confirm its dialog (see
+            //DebugSwitches).
+            if (DebugSwitches.remoteEnabled())
+                serverEnabled = true;
 
             //Start the remote server if activated
             startRemoteServer();
@@ -1170,7 +1208,7 @@ public class Experiment extends AppCompatActivity implements View.OnClickListene
         MenuItem calibratedMagnetometer = menu.findItem(R.id.action_calibrated_magnetometer);
         MenuItem forceGNSSItem = menu.findItem(R.id.action_force_gnss);
 
-        Iterator it = experiment.highlightedLinks.entrySet().iterator();
+        Iterator<PhyphoxExperiment.Link> it = experiment.getHighlightedLinks().iterator();
         for (int i = 1; i <= 5; i++) {
             MenuItem link;
             switch (i) {
@@ -1189,8 +1227,7 @@ public class Experiment extends AppCompatActivity implements View.OnClickListene
             }
             if (it.hasNext()) {
                 link.setVisible(true);
-                Map.Entry entry = (Map.Entry)it.next();
-                link.setTitle((String)entry.getKey());
+                link.setTitle(it.next().displayText);
             } else
                 link.setVisible(false);
         }
@@ -1534,8 +1571,7 @@ public class Experiment extends AppCompatActivity implements View.OnClickListene
             highlightLink = 4;
         }
         if (highlightLink >= 0) {
-            Map.Entry entry = (Map.Entry)experiment.highlightedLinks.entrySet().toArray()[highlightLink];
-            Uri uri = Uri.parse((String)entry.getValue());
+            Uri uri = Uri.parse(experiment.getHighlightedLinks().get(highlightLink).url);
             Intent intent = new Intent(Intent.ACTION_VIEW, uri);
             if (intent.resolveActivity(getPackageManager()) != null) {
                 startActivity(intent);
@@ -1623,14 +1659,22 @@ public class Experiment extends AppCompatActivity implements View.OnClickListene
 
             //If a state change has been requested (on another thread, i.e. remote server), do so
             if (updateState) {
+                boolean started;
                 if (remoteIntentMeasuring) {
-                    if (timedRun)
-                        startTimedMeasurement();
-                    else
-                        startMeasurement();
-                } else
+                    started = timedRun ? startTimedMeasurement() : startMeasurement();
+                } else {
                     stopMeasurement();
+                    started = false;
+                }
                 updateState = false;
+                //Release a remote cmd=start waiting for this. A stop that raced in front of it
+                //reports false, which is the honest answer: the experiment is not running.
+                CountDownLatch verdict = remoteStartVerdict;
+                if (verdict != null) {
+                    remoteStartSucceeded = started;
+                    remoteStartVerdict = null;
+                    verdict.countDown();
+                }
             }
 
             updateBackCallbackState();
@@ -1689,10 +1733,10 @@ public class Experiment extends AppCompatActivity implements View.OnClickListene
 
         ll.addView(description);
 
-        for (String label : experiment.links.keySet()) {
+        for (PhyphoxExperiment.Link expLink : experiment.links) {
             Button btn = new Button(builder.getContext());
-            btn.setText(label);
-            final String url = experiment.links.get(label);
+            btn.setText(expLink.displayText);
+            final String url = expLink.url;
             btn.setOnClickListener(new View.OnClickListener() {
                 public void onClick(View view) {
                     Uri uri = Uri.parse(url);
@@ -1720,8 +1764,9 @@ public class Experiment extends AppCompatActivity implements View.OnClickListene
         dialog.show();
     }
 
-    //Start a measurement
-    public void startMeasurement() {
+    //Start a measurement. Returns false if the experiment refused to start, which the remote
+    //interface has to report back (see remoteStartMeasurement).
+    public boolean startMeasurement() {
         //Disable play-button highlight
         beforeStart = false;
 
@@ -1742,7 +1787,7 @@ public class Experiment extends AppCompatActivity implements View.OnClickListene
                   }
                  };
                  Bluetooth.errorDialog.run();
-                 return;
+                 return false;
 	        }
         } catch (DepthInput.DepthInputException e) {
             stopMeasurement(); // stop experiment
@@ -1806,10 +1851,13 @@ public class Experiment extends AppCompatActivity implements View.OnClickListene
             }.start();
         }
         invalidateOptionsMenu();
+        return true;
     }
 
-    //Start a timed measurement
-    public void startTimedMeasurement() {
+    //Start a timed measurement. Returns false if it refused to start; true once the countdown is
+    //running, which is what the remote interface reports for a timed run (see the openapi spec:
+    //"begin measuring, or begin the countdown if timed run is on").
+    public boolean startTimedMeasurement() {
         //No more turning off during the measurement
         setKeepScreenOn(true);
 
@@ -1842,7 +1890,7 @@ public class Experiment extends AppCompatActivity implements View.OnClickListene
                     }
                 };
                 Bluetooth.errorDialog.run();
-                return;
+                return false;
             }
         }
 
@@ -1853,7 +1901,7 @@ public class Experiment extends AppCompatActivity implements View.OnClickListene
                     try {
                         audioOutput.init();
                     } catch (Exception e) {
-                        return;
+                        return false;
                     }
                 }
             } else
@@ -1901,6 +1949,7 @@ public class Experiment extends AppCompatActivity implements View.OnClickListene
             }
         }.start();
         invalidateOptionsMenu();
+        return true;
     }
 
     //Stop the measurement
@@ -1951,6 +2000,32 @@ public class Experiment extends AppCompatActivity implements View.OnClickListene
         experiment.newUserInput = true;
         if (remote != null && serverEnabled)
             remote.forceFullUpdate = true;
+    }
+
+    //Open the web page a link entry points at and leave - the same thing tapping the entry in
+    //the experiment list does (ExperimentItemAdapter), including its complaint about a URL that
+    //cannot be opened.
+    private void openLinkEntry() {
+        String url = experiment.links.isEmpty() ? null : experiment.links.get(0).url;
+        try {
+            Uri uri = Uri.parse(url);
+            if (uri.getScheme().equals("http") || uri.getScheme().equals("https")) {
+                Intent intent = new Intent(Intent.ACTION_VIEW, uri);
+                if (intent.resolveActivity(getPackageManager()) != null) {
+                    startActivity(intent);
+                    finish();
+                    return;
+                }
+            }
+        } catch (Exception ignored) {
+            //Falls through to the complaint below, like the experiment list does.
+        }
+        new AlertDialog.Builder(this)
+                .setTitle("Invalid URL")
+                .setMessage("This entry is just a link, but its URL is invalid.")
+                .setPositiveButton(R.string.ok, (dialog, id) -> finish())
+                .setOnCancelListener(dialog -> finish())
+                .show();
     }
 
     //Start the remote server (see remoteServer class)
@@ -2079,10 +2154,32 @@ public class Experiment extends AppCompatActivity implements View.OnClickListene
         updateState = true;
     }
 
-    //Called by remote server to start the measurement from other thread
-    public void remoteStartMeasurement() {
+    //Called by remote server to start the measurement from other thread.
+    //
+    //Unlike the other commands this one answers whether the measurement actually began, because
+    //that is what the remote interface promises for cmd=start: an experiment can refuse to start
+    //(most commonly with a Bluetooth device that is not connected yet) and a client has no other
+    //way to tell than a second request for status.measuring. The start itself has to happen on
+    //the main thread, so this hands the intent to the update loop and waits for it to report
+    //back. The loop runs every 400 ms while nothing is measured, and the remote server only
+    //answers while the activity is started (onStop stops it), so the wait below is short in
+    //practice; the timeout is a safety net for a start that blocks, not the expected case.
+    public boolean remoteStartMeasurement() {
+        CountDownLatch verdict = new CountDownLatch(1);
+        remoteStartVerdict = verdict;
         remoteIntentMeasuring = true;
         updateState = true;
+        try {
+            if (!verdict.await(REMOTE_START_TIMEOUT_MS, TimeUnit.MILLISECONDS)) {
+                remoteStartVerdict = null;
+                return measuring; //never processed - report what is actually the case
+            }
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            remoteStartVerdict = null;
+            return measuring;
+        }
+        return remoteStartSucceeded;
     }
 
     //Called by remote server request a defocus from other thread

@@ -1,6 +1,8 @@
 package de.rwth_aachen.phyphox.ExperimentList;
 
+import static de.rwth_aachen.phyphox.ExperimentList.model.Const.EXPERIMENT_ISASSET;
 import static de.rwth_aachen.phyphox.ExperimentList.model.Const.EXPERIMENT_ISTEMP;
+import static de.rwth_aachen.phyphox.ExperimentList.model.Const.EXPERIMENT_XML;
 import static de.rwth_aachen.phyphox.ExperimentList.model.Const.EXPERIMENT_PRESELECTED_BLUETOOTH_ADDRESS;
 import static de.rwth_aachen.phyphox.ExperimentList.model.Const.PREFS_NAME;
 import static de.rwth_aachen.phyphox.ExperimentList.model.Const.phyphoxCatHintRelease;
@@ -910,6 +912,30 @@ public class ExperimentListActivity extends AppCompatActivity {
         if (scheme == null)
             return;
         lastNetworkLoadIntent = null; //only a load from a network scheme (set below) may offer the local network permission
+
+        //phyphox://asset=<url-encoded path> opens an experiment bundled with the app (see
+        //transferring-experiments.md in phyphox-docs) - no server involved, so it is dispatched
+        //here, before the network branch below, as the same intent the experiment list itself
+        //uses to open a bundled experiment. The path is taken from the raw URI string: Uri's
+        //host/authority accessors normalize their case, which would corrupt the case-sensitive
+        //asset path. Any other phyphox:// URL keeps the https-rewrite behavior of
+        //PhyphoxFile.openXMLInputStream. Mirrored on iOS - the two must stay in step.
+        String dataString = intent.getDataString();
+        if (scheme.equals("phyphox") && dataString != null && dataString.startsWith("phyphox://asset=")) {
+            String path = Uri.decode(dataString.substring("phyphox://asset=".length()));
+            if (path.isEmpty() || path.startsWith("/") || path.contains("..")) {
+                showError("Invalid experiment asset path.");
+                return;
+            }
+            Intent assetIntent = new Intent(this, Experiment.class);
+            assetIntent.putExtra(EXPERIMENT_XML, path);
+            assetIntent.putExtra(EXPERIMENT_ISASSET, true);
+            assetIntent.setAction(Intent.ACTION_VIEW);
+            startActivity(assetIntent);
+            finishIfViewIntentDispatcher();
+            return;
+        }
+
         boolean isZip = false;
         if (scheme.equals(ContentResolver.SCHEME_FILE)) {
             if (scheme.equals(ContentResolver.SCHEME_FILE) && !intent.getData().getPath().startsWith(getFilesDir().getPath()) && ContextCompat.checkSelfPermission(this, Manifest.permission.READ_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED) {
@@ -976,6 +1002,15 @@ public class ExperimentListActivity extends AppCompatActivity {
         Animation labelIn = AnimationUtils.loadAnimation(getBaseContext(), R.anim.experiment_list_label_in);
         Animation fadeDark = AnimationUtils.loadAnimation(getBaseContext(), R.anim.experiment_list_fade_dark);
 
+        //The animations only move these views around, they do not bring them into existence: the
+        //layout declares them invisible and something has to undo that. They used to be drawn
+        //anyway, because a view with a running or filled-after animation is drawn and hit-tested
+        //regardless of its visibility, which made the menu look and feel right while it stayed
+        //absent from the accessibility tree - so TalkBack could not reach "add experiment from QR
+        //code", "for Bluetooth device" or "simple experiment" at all, and those are the only ways
+        //to get an experiment in that is not bundled with the app.
+        setNewExperimentMenuVisible(true);
+
         newExperimentButton.startAnimation(rotate45In);
         newExperimentSimple.startAnimation(fabIn);
         newExperimentSimpleLabel.startAnimation(labelIn);
@@ -1003,6 +1038,26 @@ public class ExperimentListActivity extends AppCompatActivity {
         Animation labelOut = AnimationUtils.loadAnimation(getBaseContext(), R.anim.experiment_list_label_out);
         Animation fadeTransparent = AnimationUtils.loadAnimation(getBaseContext(), R.anim.experiment_list_fade_transparent);
 
+        //Hiding them has to wait for the animation to finish, or it cuts the exit short. The same
+        //Animation object drives three views, so this arrives up to three times - setting the same
+        //visibility again is harmless. The check is not: the menu can be reopened while the exit
+        //is still running, and this must not then hide a menu that is on its way back in.
+        fabOut.setAnimationListener(new Animation.AnimationListener() {
+            @Override
+            public void onAnimationStart(Animation animation) {
+            }
+
+            @Override
+            public void onAnimationRepeat(Animation animation) {
+            }
+
+            @Override
+            public void onAnimationEnd(Animation animation) {
+                if (!newExperimentDialogOpen)
+                    setNewExperimentMenuVisible(false);
+            }
+        });
+
         newExperimentSimple.setClickable(false);
         newExperimentSimpleLabel.setClickable(false);
         newExperimentBluetooth.setClickable(false);
@@ -1020,6 +1075,20 @@ public class ExperimentListActivity extends AppCompatActivity {
         newExperimentQRLabel.startAnimation(labelOut);
         backgroundDimmer.startAnimation(fadeTransparent);
 
+    }
+
+    //Visible or invisible for real, rather than leaving it to the animation. INVISIBLE and not
+    //GONE: the sub-FABs are positioned relative to each other and to the main button, so removing
+    //them from the layout would move what is left.
+    private void setNewExperimentMenuVisible(boolean visible) {
+        int visibility = visible ? View.VISIBLE : View.INVISIBLE;
+        newExperimentSimple.setVisibility(visibility);
+        newExperimentSimpleLabel.setVisibility(visibility);
+        newExperimentBluetooth.setVisibility(visibility);
+        newExperimentBluetoothLabel.setVisibility(visibility);
+        newExperimentQR.setVisibility(visibility);
+        newExperimentQRLabel.setVisibility(visibility);
+        backgroundDimmer.setVisibility(visibility);
     }
 
     protected void scanQRCode() {

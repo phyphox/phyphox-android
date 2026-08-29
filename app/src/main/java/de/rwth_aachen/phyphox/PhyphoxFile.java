@@ -39,8 +39,10 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.lang.ref.WeakReference;
 import java.net.URL;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.UUID;
@@ -78,7 +80,39 @@ public abstract class PhyphoxFile {
 
     //translation maps any term for which a suitable translation is found to the current locale or, as fallback, to English
     private static Map<String, String> translation = new HashMap<>();
-    private static int languageRating = 0; //If we find a locale, it replaces previous translations as long as it has a higher rating than the previous one.
+    private static int languageRating = 0; //Rating of the best language seen so far, initialized from the root locale attribute. A translation block is only selected if it rates strictly better.
+
+    //A link element inside a translation block. Matched by label against the base links: a matched
+    //label replaces the base link in place, an unmatched label is an additional link appended after
+    //the base links, and a matched label with nothing but the label removes the base link
+    //(translation-link-matching in phyphox-docs). url and highlighted stay null when absent because
+    //an absent value inherits from the replaced base link.
+    private static class TranslatedLink {
+        String label;
+        String translation;
+        String url;
+        Boolean highlighted;
+
+        boolean removesBaseLink() {
+            return translation == null && url == null && highlighted == null;
+        }
+    }
+
+    //Content of a single translation block. Exactly one block is applied - the one whose locale
+    //best matches the user's locale, with the base strings of the file used where no block matches
+    //better. Blocks are never combined (translation-block-selection in phyphox-docs). All blocks
+    //are parsed into instances of this class first, then only the best-rated one is applied.
+    private static class TranslationBlock {
+        String locale; //Only used for error messages
+        String title = null;
+        String category = null;
+        String description = null;
+        Map<String, String> strings = new HashMap<>();
+        List<TranslatedLink> links = new ArrayList<>();
+    }
+
+    private static TranslationBlock selectedTranslationBlock = null; //The best-rated translation block seen so far
+    private static List<TranslationBlock> allTranslationBlocks = new ArrayList<>(); //All translation blocks, kept for validation independent of the user's locale
 
     //Simple helper to return either the translated term or the original one, if no translation could be found
     private static String translate(String input, Experiment parent) {
@@ -140,6 +174,8 @@ public abstract class PhyphoxFile {
     public static PhyphoxStream openXMLInputStream(Intent intent, Activity parent) {
         languageRating = 0;//If we find a locale, it replaces previous translations as long as it has a higher rating than the previous one.
         translation = new HashMap<>();
+        selectedTranslationBlock = null;
+        allTranslationBlocks = new ArrayList<>();
 
         PhyphoxStream phyphoxStream = new PhyphoxStream();
 
@@ -257,6 +293,30 @@ public abstract class PhyphoxFile {
     }
 
     //A xmlBlockParser loads all the xml data into the experiment within a specific xml block
+    //Lexical space of a number in the phyphox file format (see rules.yml,
+    //number-invalid-value): plain decimal notation plus the special values NaN and
+    //+-Infinity matched case-insensitively. Deliberately narrower than Java's own parsers,
+    //which also accept hexadecimal floats, type suffixes and surrounding whitespace that
+    //do not parse on other platforms.
+    private final static Pattern floatLexical = Pattern.compile("[+-]?([0-9]+(\\.[0-9]*)?|\\.[0-9]+)([eE][+-]?[0-9]+)?|[nN][aA][nN]|[+-]?[iI][nN][fF][iI][nN][iI][tT][yY]");
+
+    //Parse a number from the lexical space above, throwing NumberFormatException on
+    //anything outside it. Double.parseDouble only accepts the exact spellings "NaN",
+    //"Infinity", "+Infinity" and "-Infinity", so the special values are matched here.
+    //Static at this level because the same lexical space also applies to numbers arriving
+    //through the remote API (RemoteServer's /set endpoint).
+    public static double parseNumber(String str) throws NumberFormatException {
+        if (!floatLexical.matcher(str).matches())
+            throw new NumberFormatException(str);
+        if (str.equalsIgnoreCase("NaN"))
+            return Double.NaN;
+        if (str.equalsIgnoreCase("Infinity") || str.equalsIgnoreCase("+Infinity"))
+            return Double.POSITIVE_INFINITY;
+        if (str.equalsIgnoreCase("-Infinity"))
+            return Double.NEGATIVE_INFINITY;
+        return Double.parseDouble(str);
+    }
+
     //For each block type, this a class has to be derived, which overrides processStartTag and
     // processEndTag
     protected static class xmlBlockParser {
@@ -296,21 +356,35 @@ public abstract class PhyphoxFile {
             return translate(xpp.getAttributeValue(XmlPullParser.NO_NAMESPACE, identifier), parent);
         }
 
-        //Helper to receive an integer typed attribute, if invalid or not present, return default
-        protected int getIntAttribute(String identifier, int defaultValue) {
-            try {
-                return Integer.valueOf(xpp.getAttributeValue(XmlPullParser.NO_NAMESPACE, identifier));
-            } catch (Exception e) {
+        private final static Pattern intLexical = Pattern.compile("[+-]?[0-9]+");
+
+        //Helper to receive an integer typed attribute, if not present, return default
+        //A present value has to be sign and digits only, anything else is an error
+        //(see rules.yml, number-invalid-value)
+        protected int getIntAttribute(String identifier, int defaultValue) throws phyphoxFileException {
+            final String att = xpp.getAttributeValue(XmlPullParser.NO_NAMESPACE, identifier);
+            if (att == null)
                 return defaultValue;
+            if (!intLexical.matcher(att).matches())
+                throw new phyphoxFileException("Invalid value \"" + att + "\" for integer attribute \"" + identifier + "\".", xpp.getLineNumber());
+            try {
+                return Integer.parseInt(att);
+            } catch (NumberFormatException e) {
+                throw new phyphoxFileException("Invalid value \"" + att + "\" for integer attribute \"" + identifier + "\".", xpp.getLineNumber());
             }
         }
 
-        //Helper to receive a double typed attribute, if invalid or not present, return default
-        protected double getDoubleAttribute(String identifier, double defaultValue) {
-            try {
-                return Double.valueOf(xpp.getAttributeValue(XmlPullParser.NO_NAMESPACE, identifier));
-            } catch (Exception e) {
+        //Helper to receive a double typed attribute, if not present, return default
+        //A present value outside the format's lexical space is an error
+        //(see rules.yml, number-invalid-value)
+        protected double getDoubleAttribute(String identifier, double defaultValue) throws phyphoxFileException {
+            final String att = xpp.getAttributeValue(XmlPullParser.NO_NAMESPACE, identifier);
+            if (att == null)
                 return defaultValue;
+            try {
+                return parseNumber(att);
+            } catch (NumberFormatException e) {
+                throw new phyphoxFileException("Invalid value \"" + att + "\" for numeric attribute \"" + identifier + "\".", xpp.getLineNumber());
             }
         }
 
@@ -485,6 +559,19 @@ public abstract class PhyphoxFile {
                 case "input": {
                     String parameter = getStringAttribute("parameter");
 
+                    if (level == 1) {
+                        //Direct input. It takes no type attribute - its text is always the
+                        //name of the data container holding the waveform, so a type
+                        //attribute is ignored like on iOS.
+                        String bufferName = getText();
+                        DataBuffer buffer = experiment.getBuffer(bufferName);
+                        if (buffer == null) {
+                            throw new phyphoxFileException("Buffer \"" + bufferName + "\" not defined.", xpp.getLineNumber());
+                        }
+                        currentPlugin = audioOutput.new AudioOutputPluginDirect(new DataInput(buffer, false));
+                        break;
+                    }
+
                     DataInput input;
                     String type = getStringAttribute("type");
                     if (type == null)
@@ -508,10 +595,7 @@ public abstract class PhyphoxFile {
                     } else {
                         throw new phyphoxFileException("Unknown input type \""+type+"\".", xpp.getLineNumber());
                     }
-                    if (level == 1) {
-                        //Direct input
-                        currentPlugin = audioOutput.new AudioOutputPluginDirect(input);
-                    } else if (level == 2) {
+                    if (level == 2) {
                         //Parameter
                         if (currentPlugin != null) {
                             if (parameter == null)
@@ -780,7 +864,7 @@ public abstract class PhyphoxFile {
             if (additionalTags != null) {
                 at = new AdditionalTag();
                 for (int i = 0; i < xpp.getAttributeCount(); i++)
-                    at.attributes.put(xpp.getAttributeName(i).toLowerCase(), xpp.getAttributeValue(i));
+                    at.attributes.put(xpp.getAttributeName(i), xpp.getAttributeValue(i)); //Attribute names are matched exactly, as everywhere else in the format
                 at.name = tag.toLowerCase();
             }
 
@@ -914,7 +998,7 @@ public abstract class PhyphoxFile {
                         else {
                             inputList.set(targetIndex, new DataInput(buffer, keep));
                         }
-                    } else if (type.equals("empty")) {
+                    } else if (type.equalsIgnoreCase("empty")) { //Enumerated values are matched case-insensitively
                         //No input, Is this allowed?
                         if (inputMapping[mappingIndex].emptyAllowed) {
                             inputList.set(targetIndex, new DataInput());
@@ -1054,6 +1138,75 @@ public abstract class PhyphoxFile {
         }
     }
 
+    //Specialized ioBlockParser for the graph element: output tags use the usual slot logic of
+    //ioBlockParser, but input tags are collected in document order together with their axis and
+    //styling attributes, so that the graph element code can pair x/y/z inputs into datasets by
+    //their order of appearance (see "How the input tags form datasets" on the graph page of
+    //phyphox-docs, docs/file-format/views/graph.md). The axis attribute is required on every
+    //graph input.
+    private static class graphIoBlockParser extends ioBlockParser {
+
+        public static class GraphInput {
+            String axis;
+            DataInput input;
+            Map<String, String> attributes = new HashMap<>();
+        }
+
+        Vector<GraphInput> graphInputs;
+
+        graphIoBlockParser(XmlPullParser xpp, PhyphoxExperiment experiment, Experiment parent, Vector<GraphInput> graphInputs, Vector<DataOutput> outputList, ioMapping[] outputMapping) {
+            super(xpp, experiment, parent, null, outputList, null, outputMapping, "axis", null);
+            this.graphInputs = graphInputs;
+        }
+
+        @Override
+        protected void processStartTag(String tag) throws IOException, XmlPullParserException, phyphoxFileException {
+            if (!tag.equalsIgnoreCase("input")) {
+                super.processStartTag(tag);
+                return;
+            }
+
+            String axis = getStringAttribute("axis");
+            if (axis == null)
+                throw new phyphoxFileException("The axis attribute is required for every graph input.", xpp.getLineNumber());
+
+            GraphInput gi = new GraphInput();
+            //Enumerated names are matched case-insensitively
+            if (axis.equalsIgnoreCase("x"))
+                gi.axis = "x";
+            else if (axis.equalsIgnoreCase("y"))
+                gi.axis = "y";
+            else if (axis.equalsIgnoreCase("z"))
+                gi.axis = "z";
+            else
+                throw new phyphoxFileException("Could not find mapping for input \""+axis+"\".", xpp.getLineNumber());
+
+            for (int i = 0; i < xpp.getAttributeCount(); i++)
+                gi.attributes.put(xpp.getAttributeName(i), xpp.getAttributeValue(i)); //Attribute names are matched exactly, as everywhere else in the format
+
+            String type = getStringAttribute("type");
+            if (type == null)
+                type = "buffer";
+
+            boolean clearAfterRead = getBooleanAttribute("clear", true); //Deprecated
+            boolean keep = getBooleanAttribute("keep", !clearAfterRead); //New attribute keep = !clear
+
+            if (type.equalsIgnoreCase("buffer")) { //Enumerated values are matched case-insensitively
+                String bufferName = getText();
+                DataBuffer buffer = experiment.getBuffer(bufferName);
+                if (buffer == null)
+                    throw new phyphoxFileException("Buffer \""+bufferName+"\" not defined.", xpp.getLineNumber());
+                gi.input = new DataInput(buffer, keep);
+            } else if (type.equalsIgnoreCase("value") || type.equalsIgnoreCase("empty")) {
+                throw new phyphoxFileException("Value-type not allowed for input \""+gi.axis+"\".", xpp.getLineNumber());
+            } else {
+                throw new phyphoxFileException("Unknown input type \""+type+"\".", xpp.getLineNumber());
+            }
+
+            graphInputs.add(gi);
+        }
+    }
+
     //Blockparser for the root element
     private static class phyphoxBlockParser extends xmlBlockParser {
 
@@ -1082,12 +1235,23 @@ public abstract class PhyphoxFile {
                     experiment.description = getText().trim().replaceAll("(?m) +$", "").replaceAll("(?m)^ +", "");
                     break;
                 case "link": //Links to external sources like documentation (might be replaced by a later translation block)
+                    //The label is required and acts as the key a translated link is matched on; the
+                    //translation attribute and an empty URL are only meaningful inside a translation
+                    //block and are errors here (translation-link-matching in phyphox-docs)
                     boolean highlighted = getBooleanAttribute("highlight", false);
                     String label = getStringAttribute("label");
-                    String link = getText().trim().replaceAll("(?m) +$", "").replaceAll("(?m)^ +", "");
-                    experiment.links.put(label, link);
-                    if (highlighted)
-                        experiment.highlightedLinks.put(label, link);
+                    if (label == null)
+                        throw new phyphoxFileException("Missing label attribute for link.", xpp.getLineNumber());
+                    if (getStringAttribute("translation") != null)
+                        throw new phyphoxFileException("The translation attribute is not allowed on a link outside a translation block.", xpp.getLineNumber());
+                    for (PhyphoxExperiment.Link existing : experiment.links) {
+                        if (existing.label.equals(label))
+                            throw new phyphoxFileException("Duplicate link label \"" + label + "\".", xpp.getLineNumber());
+                    }
+                    String link = getText();
+                    if (link == null || link.isEmpty())
+                        throw new phyphoxFileException("Missing URL for link \"" + label + "\".", xpp.getLineNumber());
+                    experiment.links.add(new PhyphoxExperiment.Link(label, label, link, highlighted));
                     break;
                 case "category": //The experiment's category (might be replaced by a later translation block)
                     experiment.baseCategory = getText();
@@ -1153,6 +1317,74 @@ public abstract class PhyphoxFile {
                     throw new phyphoxFileException("Unknown tag "+tag, xpp.getLineNumber());
             }
         }
+
+        @Override
+        protected void done() throws phyphoxFileException {
+            //A link in a translation block that matches no base label is an addition, which needs
+            //a URL of its own. This is checked for every translation block, not just the applied
+            //one, so an invalid file fails to load regardless of the user's locale
+            //(translation-link-matching in phyphox-docs).
+            for (TranslationBlock block : allTranslationBlocks) {
+                for (TranslatedLink translatedLink : block.links) {
+                    if (translatedLink.url != null)
+                        continue;
+                    boolean matched = false;
+                    for (PhyphoxExperiment.Link baseLink : experiment.links) {
+                        if (baseLink.label.equals(translatedLink.label)) {
+                            matched = true;
+                            break;
+                        }
+                    }
+                    if (!matched)
+                        throw new phyphoxFileException("Link \"" + translatedLink.label + "\" in translation block \"" + block.locale + "\" matches no link and has no URL.");
+                }
+            }
+
+            //Apply the link elements of the selected translation block to the base links: a
+            //translated link matching a base label replaces it in its original position
+            //(inheriting URL and highlight where not given), a label-only link with no URL removes
+            //the base link, and an unmatched label is an additional link appended after the base
+            //links in declaration order. The displayed text is the translation attribute if
+            //present, otherwise the label as written - labels never pass through the
+            //string-translation mechanism.
+            if (selectedTranslationBlock != null) {
+                List<PhyphoxExperiment.Link> localized = new ArrayList<>();
+                for (PhyphoxExperiment.Link baseLink : experiment.links) {
+                    TranslatedLink translated = null;
+                    for (TranslatedLink translatedLink : selectedTranslationBlock.links) {
+                        if (translatedLink.label.equals(baseLink.label)) {
+                            translated = translatedLink;
+                            break;
+                        }
+                    }
+                    if (translated == null) {
+                        localized.add(baseLink);
+                    } else if (!translated.removesBaseLink()) {
+                        localized.add(new PhyphoxExperiment.Link(
+                                translated.label,
+                                translated.translation != null ? translated.translation : translated.label,
+                                translated.url != null ? translated.url : baseLink.url,
+                                translated.highlighted != null ? translated.highlighted : baseLink.highlighted));
+                    }
+                }
+                for (TranslatedLink translatedLink : selectedTranslationBlock.links) {
+                    boolean matched = false;
+                    for (PhyphoxExperiment.Link baseLink : experiment.links) {
+                        if (baseLink.label.equals(translatedLink.label)) {
+                            matched = true;
+                            break;
+                        }
+                    }
+                    if (!matched) //An unmatched label without a URL was rejected above
+                        localized.add(new PhyphoxExperiment.Link(
+                                translatedLink.label,
+                                translatedLink.translation != null ? translatedLink.translation : translatedLink.label,
+                                translatedLink.url,
+                                translatedLink.highlighted != null ? translatedLink.highlighted : false));
+                }
+                experiment.links = localized;
+            }
+        }
     }
 
     //Blockparser for the translations block
@@ -1168,48 +1400,96 @@ public abstract class PhyphoxFile {
                 case "translation": //A translation block holds all translation information for a single language
                     String thisLocale = getStringAttribute("locale");
                     int thisLaguageRating = Helper.getLanguageRating(parent.getResources(), thisLocale);
+                    //Every block is parsed so an invalid one fails to load regardless of the
+                    //user's locale, but only the best-rated one is applied (see done()). On equal
+                    //ratings the first block wins, and a block has to rate strictly better than
+                    //the root locale attribute to beat the base strings of the file
+                    //(translation-block-selection in phyphox-docs).
+                    TranslationBlock block = new TranslationBlock();
+                    block.locale = thisLocale;
+                    (new translationBlockParser(xpp, experiment, parent, block)).process();
+                    allTranslationBlocks.add(block);
                     if (thisLaguageRating > languageRating) { //Check if the language matches better than previous ones...
                         languageRating = thisLaguageRating;
-                        (new translationBlockParser(xpp, experiment, parent)).process(); //Jepp, use it!
-                    } else
-                        (new xmlBlockParser(xpp, experiment, parent)).process(); //Nope. Use the empty block parser to skip it
+                        selectedTranslationBlock = block;
+                    }
                     break;
                 default: //Unknown tag...
                     throw new phyphoxFileException("Unknown tag "+tag, xpp.getLineNumber());
             }
         }
 
+        @Override
+        protected void done() throws phyphoxFileException {
+            //Apply the selected block's title, category, description and strings. The links are
+            //applied when the root element is done, so base links defined after this block are
+            //still considered.
+            if (selectedTranslationBlock == null)
+                return;
+            if (selectedTranslationBlock.title != null)
+                experiment.title = selectedTranslationBlock.title;
+            if (selectedTranslationBlock.category != null)
+                experiment.category = selectedTranslationBlock.category;
+            if (selectedTranslationBlock.description != null)
+                experiment.description = selectedTranslationBlock.description;
+            translation = new HashMap<>(selectedTranslationBlock.strings);
+        }
+
     }
 
-    //Blockparser for a specific translation block
+    //Blockparser for a specific translation block. The content is not applied to the experiment
+    //directly but collected into a TranslationBlock, so that exactly one block - the best-rated
+    //one - can be applied after all blocks have been seen.
     private static class translationBlockParser extends xmlBlockParser {
 
-        translationBlockParser(XmlPullParser xpp, PhyphoxExperiment experiment, Experiment parent) {
+        private final TranslationBlock block;
+
+        translationBlockParser(XmlPullParser xpp, PhyphoxExperiment experiment, Experiment parent, TranslationBlock block) {
             super(xpp, experiment, parent);
+            this.block = block;
         }
 
         @Override
         protected void processStartTag(String tag) throws XmlPullParserException, phyphoxFileException, IOException {
             switch (tag.toLowerCase()) {
                 case "title": //A title in our language? Great, take it!
-                    experiment.title = getText();
+                    block.title = getText();
                     break;
                 case "category": //Category in the correct language
-                    experiment.category = getText();
+                    block.category = getText();
                     break;
                 case "description": //Description in the correct language
-                    experiment.description = getText().trim().replaceAll("(?m) +$", "").replaceAll("(?m)^ +", "");
+                    block.description = getText().trim().replaceAll("(?m) +$", "").replaceAll("(?m)^ +", "");
                     break;
                 case "link": //Links to external sources like documentation
-                    boolean highlighted = getBooleanAttribute("highlight", false);
-                    String label = getStringAttribute("label");
-                    String link = getText().trim().replaceAll("(?m) +$", "").replaceAll("(?m)^ +", "");
-                    experiment.links.put(label, link);
-                    if (highlighted)
-                        experiment.highlightedLinks.put(label, link);
+                    //Unlike a link at the root, the URL may be omitted (inherits from or removes
+                    //the matched base link) and highlight is kept tri-state so that an absent
+                    //attribute can inherit the base link's state (translation-link-matching in
+                    //phyphox-docs)
+                    TranslatedLink translatedLink = new TranslatedLink();
+                    translatedLink.label = getStringAttribute("label");
+                    if (translatedLink.label == null)
+                        throw new phyphoxFileException("Missing label attribute for link.", xpp.getLineNumber());
+                    for (TranslatedLink existing : block.links) {
+                        if (existing.label.equals(translatedLink.label))
+                            throw new phyphoxFileException("Duplicate link label \"" + translatedLink.label + "\" in translation block \"" + block.locale + "\".", xpp.getLineNumber());
+                    }
+                    translatedLink.translation = getStringAttribute("translation");
+                    String highlightAttribute = getStringAttribute("highlight");
+                    if (highlightAttribute == null)
+                        translatedLink.highlighted = null;
+                    else if (highlightAttribute.equalsIgnoreCase("true"))
+                        translatedLink.highlighted = true;
+                    else if (highlightAttribute.equalsIgnoreCase("false"))
+                        translatedLink.highlighted = false;
+                    else
+                        throw new phyphoxFileException("Invalid value \"" + highlightAttribute + "\" for boolean attribute \"highlight\".", xpp.getLineNumber());
+                    String url = getText();
+                    translatedLink.url = (url == null || url.isEmpty()) ? null : url;
+                    block.links.add(translatedLink);
                     break;
                 case "string": //Some other translation. In labels and names of view elements, the string defined here as the attribute "original" will be replaced by the text in this tag
-                    translation.put(getStringAttribute("original"), getText()); //Store it in our translation mapping
+                    block.strings.put(getStringAttribute("original"), getText()); //Store it in the block's translation mapping
                     break;
                 default: //Unknown tag
                     throw new phyphoxFileException("Unknown tag "+tag, xpp.getLineNumber());
@@ -1246,13 +1526,17 @@ public abstract class PhyphoxFile {
                     newBuffer.setStatic(isStatic);
 
                     if (strInit != null && !strInit.isEmpty()) {
-                        String strInitArray[] = strInit.split(",");
+                        //Split with a negative limit, so a trailing comma yields an empty
+                        //entry (an error, see rules.yml, number-invalid-value) instead of
+                        //being silently dropped. Note that entries may deliberately be NaN,
+                        //which is the documented way to put a gap marker into a buffer.
+                        String strInitArray[] = strInit.split(",", -1);
                         Double init[] = new Double[strInitArray.length];
                         for (int i = 0; i < init.length; i++) {
                             try {
-                                init[i] = Double.parseDouble(strInitArray[i].trim());
-                            } catch (Exception e) {
-                                init[i] = Double.NaN;
+                                init[i] = parseNumber(strInitArray[i].trim());
+                            } catch (NumberFormatException e) {
+                                throw new phyphoxFileException("Invalid value \"" + strInitArray[i].trim() + "\" in init attribute of data-container \"" + name + "\".", xpp.getLineNumber());
                             }
                         }
                         newBuffer.setInit(init);
@@ -1394,15 +1678,15 @@ public abstract class PhyphoxFile {
                         ExpView.valueElement.Mapping map = ve.new Mapping(translate(at.content, parent));
                         if (at.attributes.containsKey("min")) {
                             try {
-                                map.min = Double.valueOf(at.attributes.get("min"));
-                            } catch (Exception e) {
+                                map.min = parseNumber(at.attributes.get("min"));
+                            } catch (NumberFormatException e) {
                                 throw new phyphoxFileException("Could not parse min of map tag.", xpp.getLineNumber());
                             }
                         }
                         if (at.attributes.containsKey("max")) {
                             try {
-                                map.max = Double.valueOf(at.attributes.get("max"));
-                            } catch (Exception e) {
+                                map.max = parseNumber(at.attributes.get("max"));
+                            } catch (NumberFormatException e) {
                                 throw new phyphoxFileException("Could not parse max of map tag.", xpp.getLineNumber());
                             }
                         }
@@ -1536,14 +1820,7 @@ public abstract class PhyphoxFile {
 
                     boolean followX = getBooleanAttribute("followX", false);
 
-                    //Allowed input/output configuration
-                    Vector<ioBlockParser.AdditionalTag> ats = new Vector<>();
-                    ioBlockParser.ioMapping[] inputMapping = {
-                            new ioBlockParser.ioMapping() {{name = "y"; asRequired = false; minCount = 1; maxCount = 0; valueAllowed = false; repeatableOffset = 0;}},
-                            new ioBlockParser.ioMapping() {{name = "x"; asRequired = true; minCount = 0; maxCount = 0; valueAllowed = false; repeatableOffset = 1;}},
-                            new ioBlockParser.ioMapping() {{name = "z"; asRequired = true; minCount = 0; maxCount = 0; valueAllowed = false; repeatableOffset = 2;}}
-                    };
-
+                    //Allowed output configuration (inputs are collected in document order by the graphIoBlockParser)
                     ioBlockParser.ioMapping[] outputMapping = {
                             new ioBlockParser.ioMapping() {{ name = "x"; asRequired = true; minCount = 0; maxCount = 0; valueAllowed = false; repeatableOffset = 0;}},
                             new ioBlockParser.ioMapping() {{ name = "xcal"; asRequired = true; minCount = 0; maxCount = 0; valueAllowed = false; repeatableOffset = 1;}},
@@ -1553,26 +1830,97 @@ public abstract class PhyphoxFile {
                             new ioBlockParser.ioMapping() {{ name = "zcal"; asRequired = true; minCount = 0; maxCount = 0; valueAllowed = false; repeatableOffset = 5;}},
                     };
 
-                    (new ioBlockParser(xpp, experiment, parent, inputs, outputs, inputMapping, outputMapping, "axis", ats)).process(); //Load inputs and outputs
+                    Vector<graphIoBlockParser.GraphInput> graphInputs = new Vector<>();
+                    (new graphIoBlockParser(xpp, experiment, parent, graphInputs, outputs, outputMapping)).process(); //Load inputs and outputs
 
-                    Vector<String> inStrings = new Vector<>();
-                    for (int i = 0; i < inputs.size(); i++) {
-                        if (i % 3 == 2) {
-                            //This is a z entry. For efficiency reasons, we only handle x and y and encode z as an additional graph of different style
-                            if (inputs.get(i) != null) {
-                                inStrings.add(inputs.get(i).buffer.name);
-                                inStrings.add(null);
-                                ioBlockParser.AdditionalTag at = new ioBlockParser.AdditionalTag();
-                                at.name = ats.get(i).name;
-                                at.attributes.put("style", "mapZ");
-                                ats.add(i+1, at);
-                            }
-                        } else {
-                            if (inputs.get(i) != null)
-                                inStrings.add(inputs.get(i).buffer.name);
-                            else
-                                inStrings.add(null);
+                    int xCount = 0, yCount = 0;
+                    for (graphIoBlockParser.GraphInput gi : graphInputs) {
+                        if (gi.axis.equals("x"))
+                            xCount++;
+                        else if (gi.axis.equals("y"))
+                            yCount++;
+                    }
+                    if (yCount < 1)
+                        throw new phyphoxFileException("A minimum of 1 inputs was expected for y but 0 were found.", xpp.getLineNumber());
+
+                    //Pair x and y inputs into datasets following the decided model (see
+                    //graph-multiset-input-order and graph-multiset-omitted-x in phyphox-docs):
+                    //every y input is one dataset. With exactly as many x inputs as y inputs
+                    //(z inputs do not count), they are matched 1-on-1 in order of appearance
+                    //regardless of interleaving. Otherwise each y is plotted against the most
+                    //recent preceding x input, or against its element index if none preceded it,
+                    //and an x input that no y input uses - trailing, or shadowed - is an error.
+                    //Styling attributes on an x input apply to its matched dataset; a shared x
+                    //styles only the first dataset that uses it.
+                    graphIoBlockParser.GraphInput[] yForDataset = new graphIoBlockParser.GraphInput[yCount];
+                    graphIoBlockParser.GraphInput[] xForDataset = new graphIoBlockParser.GraphInput[yCount];
+                    graphIoBlockParser.GraphInput[] zForDataset = new graphIoBlockParser.GraphInput[yCount];
+                    boolean[] xStylesDataset = new boolean[yCount];
+                    {
+                        int yi = 0;
+                        for (graphIoBlockParser.GraphInput gi : graphInputs) {
+                            if (gi.axis.equals("y"))
+                                yForDataset[yi++] = gi;
                         }
+                    }
+                    if (xCount == yCount) {
+                        int xi = 0;
+                        for (graphIoBlockParser.GraphInput gi : graphInputs) {
+                            if (gi.axis.equals("x")) {
+                                xForDataset[xi] = gi;
+                                xStylesDataset[xi] = true;
+                                xi++;
+                            }
+                        }
+                    } else {
+                        graphIoBlockParser.GraphInput precedingX = null;
+                        boolean precedingXUsed = true;
+                        int yi = 0;
+                        for (graphIoBlockParser.GraphInput gi : graphInputs) {
+                            if (gi.axis.equals("x")) {
+                                if (!precedingXUsed)
+                                    throw new phyphoxFileException("Graph input \"" + precedingX.input.buffer.name + "\" on axis x is not used by any y input.", xpp.getLineNumber());
+                                precedingX = gi;
+                                precedingXUsed = false;
+                            } else if (gi.axis.equals("y")) {
+                                xForDataset[yi] = precedingX;
+                                xStylesDataset[yi] = !precedingXUsed;
+                                precedingXUsed = true;
+                                yi++;
+                            }
+                        }
+                        if (!precedingXUsed)
+                            throw new phyphoxFileException("Graph input \"" + precedingX.input.buffer.name + "\" on axis x is not used by any y input.", xpp.getLineNumber());
+                    }
+
+                    //z inputs attach to the dataset of the most recent preceding y input, or to the first dataset if none preceded
+                    {
+                        int ySeen = 0;
+                        for (graphIoBlockParser.GraphInput gi : graphInputs) {
+                            if (gi.axis.equals("y"))
+                                ySeen++;
+                            else if (gi.axis.equals("z"))
+                                zForDataset[Math.max(ySeen - 1, 0)] = gi;
+                        }
+                    }
+
+                    //Build the flat input list of the graph element: a pair of buffer names
+                    //(y, x or null) per dataset. For efficiency reasons z is not handled
+                    //separately but encoded as an additional graph of style mapZ following its
+                    //dataset.
+                    Vector<String> inStrings = new Vector<>();
+                    int[] curveOfDataset = new int[yCount];
+                    int[] curveOfZ = new int[yCount];
+                    for (int i = 0; i < yCount; i++) {
+                        curveOfDataset[i] = inStrings.size() / 2;
+                        inStrings.add(yForDataset[i].input.buffer.name);
+                        inStrings.add(xForDataset[i] != null ? xForDataset[i].input.buffer.name : null);
+                        if (zForDataset[i] != null) {
+                            curveOfZ[i] = inStrings.size() / 2;
+                            inStrings.add(zForDataset[i].input.buffer.name);
+                            inStrings.add(null);
+                        } else
+                            curveOfZ[i] = -1;
                     }
 
                     Vector<String> outStrings = new Vector<>();
@@ -1613,60 +1961,57 @@ public abstract class PhyphoxFile {
                     ge.setSuppressScientificNotation(suppressScientificNotation);
 
                     if (!globalColor) {
-                        for (int i = 0; i < Math.ceil(inputs.size() / 3); i++) {
+                        for (int i = 0; i < yCount; i++) {
                             switch (i % 6) {
-                                case 0: ge.setColor(new RGB(parent.getResources().getColor(R.color.phyphox_primary)), i, parent.getResources());
+                                case 0: ge.setColor(new RGB(parent.getResources().getColor(R.color.phyphox_primary)), curveOfDataset[i], parent.getResources());
                                     break;
-                                case 1: ge.setColor(new RGB(parent.getResources().getColor(R.color.phyphox_green)), i, parent.getResources());
+                                case 1: ge.setColor(new RGB(parent.getResources().getColor(R.color.phyphox_green)), curveOfDataset[i], parent.getResources());
                                     break;
-                                case 2: ge.setColor(new RGB(parent.getResources().getColor(R.color.phyphox_blue_60)), i, parent.getResources());
+                                case 2: ge.setColor(new RGB(parent.getResources().getColor(R.color.phyphox_blue_60)), curveOfDataset[i], parent.getResources());
                                     break;
-                                case 3: ge.setColor(new RGB(parent.getResources().getColor(R.color.phyphox_yellow)), i, parent.getResources());
+                                case 3: ge.setColor(new RGB(parent.getResources().getColor(R.color.phyphox_yellow)), curveOfDataset[i], parent.getResources());
                                     break;
-                                case 4: ge.setColor(new RGB(parent.getResources().getColor(R.color.phyphox_magenta)), i, parent.getResources());
+                                case 4: ge.setColor(new RGB(parent.getResources().getColor(R.color.phyphox_magenta)), curveOfDataset[i], parent.getResources());
                                     break;
-                                case 5: ge.setColor(new RGB(parent.getResources().getColor(R.color.phyphox_red)), i, parent.getResources());
+                                case 5: ge.setColor(new RGB(parent.getResources().getColor(R.color.phyphox_red)), curveOfDataset[i], parent.getResources());
                                     break;
                             }
                         }
                     }
-                    for (int i = 0; i < ats.size(); i++) {
-                        ioBlockParser.AdditionalTag at = ats.get(i);
-                        if (at == null)
-                            continue;
-                        if (!at.name.equals("input") && !at.name.equals("output") ) {
-                            throw new phyphoxFileException("Unknown tag "+at.name+" found by ioBlockParser.", xpp.getLineNumber());
-                        }
-                        if (at.attributes.containsKey("style")) {
-                            try {
-                                GraphView.Style style = GraphView.styleFromStr(at.attributes.get("style"));
-                                if (style == GraphView.Style.unknown)
-                                    throw new phyphoxFileException("Unknown value for style of input tag.", xpp.getLineNumber());
-                                ge.setStyle(style, i/3);
-                            } catch (Exception e) {
-                                throw new phyphoxFileException("Could not parse style of input tag.", xpp.getLineNumber());
+                    //Apply per-input styling attributes to each dataset. Applied in the order
+                    //x, y, z, so that attributes on the y input override those of its x input
+                    //and attributes on a z input override both.
+                    for (int i = 0; i < yCount; i++) {
+                        graphIoBlockParser.GraphInput[] styleSources = {xStylesDataset[i] ? xForDataset[i] : null, yForDataset[i], zForDataset[i]};
+                        for (graphIoBlockParser.GraphInput gi : styleSources) {
+                            if (gi == null)
+                                continue;
+                            if (gi.attributes.containsKey("style")) {
+                                try {
+                                    GraphView.Style style = GraphView.styleFromStr(gi.attributes.get("style"));
+                                    if (style == GraphView.Style.unknown)
+                                        throw new phyphoxFileException("Unknown value for style of input tag.", xpp.getLineNumber());
+                                    ge.setStyle(style, curveOfDataset[i]);
+                                } catch (Exception e) {
+                                    throw new phyphoxFileException("Could not parse style of input tag.", xpp.getLineNumber());
+                                }
+                            }
+                            if (gi.attributes.containsKey("color")) {
+                                RGB localColor = RGB.fromPhyphoxStringStrict(gi.attributes.get("color"), parent.getResources());
+                                if (localColor == null)
+                                    throw new phyphoxFileException("Could not parse color of input tag.", xpp.getLineNumber());
+                                ge.setColor(localColor, curveOfDataset[i], parent.getResources());
+                            }
+                            if (gi.attributes.containsKey("lineWidth")) {
+                                try {
+                                    ge.setLineWidth(parseNumber(gi.attributes.get("lineWidth")), curveOfDataset[i]);
+                                } catch (NumberFormatException e) {
+                                    throw new phyphoxFileException("Could not parse lineWidth of input tag.", xpp.getLineNumber());
+                                }
                             }
                         }
-                        if (at.attributes.containsKey("color")) {
-                            RGB localColor = RGB.fromPhyphoxStringStrict(at.attributes.get("color"), parent.getResources());
-                            if (localColor == null)
-                                throw new phyphoxFileException("Could not parse color of input tag.", xpp.getLineNumber());
-                            ge.setColor(localColor, i/3, parent.getResources());
-                        }
-                        if (at.attributes.containsKey("linewidth")) {
-                            try {
-                                ge.setLineWidth(Double.valueOf(at.attributes.get("linewidth")), i/3);
-                            } catch (Exception e) {
-                                throw new phyphoxFileException("Could not parse linewidth of input tag.", xpp.getLineNumber());
-                            }
-                        }
-                        if (at.attributes.containsKey("mapwidth")) {
-                            try {
-                                ge.setMapWidth(Integer.valueOf(at.attributes.get("mapwidth")), i/3);
-                            } catch (Exception e) {
-                                throw new phyphoxFileException("Could not parse mapWidth of input tag.", xpp.getLineNumber());
-                            }
-                        }
+                        if (curveOfZ[i] >= 0)
+                            ge.setStyle(GraphView.Style.mapZ, curveOfZ[i]);
                     }
 
                     newView.elements.add(ge);
@@ -1724,15 +2069,15 @@ public abstract class PhyphoxFile {
                             ExpView.buttonElement.ButtonMapping map = be.new ButtonMapping(translate(at.content, parent));
                             if (at.attributes.containsKey("min")) {
                                 try {
-                                    map.min = Double.valueOf(at.attributes.get("min"));
-                                } catch (Exception e) {
+                                    map.min = parseNumber(at.attributes.get("min"));
+                                } catch (NumberFormatException e) {
                                     throw new phyphoxFileException("Could not parse min of map tag.", xpp.getLineNumber());
                                 }
                             }
                             if (at.attributes.containsKey("max")) {
                                 try {
-                                    map.max = Double.valueOf(at.attributes.get("max"));
-                                } catch (Exception e) {
+                                    map.max = parseNumber(at.attributes.get("max"));
+                                } catch (NumberFormatException e) {
                                     throw new phyphoxFileException("Could not parse max of map tag.", xpp.getLineNumber());
                                 }
                             }
@@ -3103,6 +3448,10 @@ public abstract class PhyphoxFile {
                         default:        throw new phyphoxFileException("Unknown zMode " + zModeStr, xpp.getLineNumber());
                     }
 
+                    //A missing z input with zMode sum or average is a permanent configuration
+                    //error, not an intermediate state, so it rejects the file at load
+                    final boolean zRequired = zMode != Analysis.mapAM.ZMode.count;
+
                     ioBlockParser.ioMapping[] inputMapping = {
                             new ioBlockParser.ioMapping() {{name = "mapWidth"; asRequired = true; minCount = 1; maxCount = 1; valueAllowed = true; repeatableOffset = -1; }},
                             new ioBlockParser.ioMapping() {{name = "minX"; asRequired = true; minCount = 1; maxCount = 1; valueAllowed = true; repeatableOffset = -1; }},
@@ -3112,7 +3461,7 @@ public abstract class PhyphoxFile {
                             new ioBlockParser.ioMapping() {{name = "maxY"; asRequired = true; minCount = 1; maxCount = 1; valueAllowed = true; repeatableOffset = -1; }},
                             new ioBlockParser.ioMapping() {{name = "x"; asRequired = true; minCount = 1; maxCount = 1; valueAllowed = true; repeatableOffset = -1; }},
                             new ioBlockParser.ioMapping() {{name = "y"; asRequired = true; minCount = 1; maxCount = 1; valueAllowed = true; repeatableOffset = -1; }},
-                            new ioBlockParser.ioMapping() {{name = "z"; asRequired = true; minCount = 0; maxCount = 1; valueAllowed = true; repeatableOffset = -1; }}
+                            new ioBlockParser.ioMapping() {{name = "z"; asRequired = true; minCount = zRequired ? 1 : 0; maxCount = 1; valueAllowed = true; repeatableOffset = -1; }}
                     };
                     ioBlockParser.ioMapping[] outputMapping = {
                             new ioBlockParser.ioMapping() {{name = "x"; asRequired = true; minCount = 1; maxCount = 1; repeatableOffset = -1; }},
@@ -3147,7 +3496,9 @@ public abstract class PhyphoxFile {
                             new ioBlockParser.ioMapping() {{name = "y"; asRequired = true; minCount = 0; maxCount = 1; valueAllowed = false; repeatableOffset = -1; }}
                     };
                     ioBlockParser.ioMapping[] outputMapping = {
-                            new ioBlockParser.ioMapping() {{name = "x"; asRequired = true; minCount = 0; maxCount = 1; repeatableOffset = -1; }},
+                            //The x output is required: without it the module has nowhere to
+                            //write and used to crash at runtime instead of failing at load
+                            new ioBlockParser.ioMapping() {{name = "x"; asRequired = true; minCount = 1; maxCount = 1; repeatableOffset = -1; }},
                             new ioBlockParser.ioMapping() {{name = "y"; asRequired = true; minCount = 0; maxCount = 1; repeatableOffset = -1; }},
                     };
                     (new ioBlockParser(xpp, experiment, parent, inputs, outputs, inputMapping, outputMapping, "as")).process(); //Load inputs and outputs
@@ -3273,10 +3624,11 @@ public abstract class PhyphoxFile {
                             new ioBlockParser.ioMapping() {{name = "d"; asRequired = true; minCount = 1; maxCount = 1; valueAllowed = true; repeatableOffset = -1; }},
                             new ioBlockParser.ioMapping() {{name = "xi"; asRequired = true; minCount = 1; maxCount = 1; valueAllowed = true; repeatableOffset = -1; }}
                     };
+                    //Each output exists at most once - repeats were accepted but never written
                     ioBlockParser.ioMapping[] outputMapping = {
-                            new ioBlockParser.ioMapping() {{name = "yi0"; asRequired = false; minCount = 1; maxCount = 0; repeatableOffset = 0; }},
-                            new ioBlockParser.ioMapping() {{name = "yi1"; asRequired = true; minCount = 0; maxCount = 0; repeatableOffset = 0; }},
-                            new ioBlockParser.ioMapping() {{name = "yi2"; asRequired = true; minCount = 0; maxCount = 0; repeatableOffset = 0; }},
+                            new ioBlockParser.ioMapping() {{name = "yi0"; asRequired = false; minCount = 1; maxCount = 1; repeatableOffset = -1; }},
+                            new ioBlockParser.ioMapping() {{name = "yi1"; asRequired = true; minCount = 0; maxCount = 1; repeatableOffset = -1; }},
+                            new ioBlockParser.ioMapping() {{name = "yi2"; asRequired = true; minCount = 0; maxCount = 1; repeatableOffset = -1; }},
                     };
                     (new ioBlockParser(xpp, experiment, parent, inputs, outputs, inputMapping, outputMapping, "as")).process(); //Load inputs and outputs
 
@@ -3306,8 +3658,9 @@ public abstract class PhyphoxFile {
                             new ioBlockParser.ioMapping() {{name = "y"; asRequired = true; minCount = 1; maxCount = 1; valueAllowed = false; repeatableOffset = -1; }},
                             new ioBlockParser.ioMapping() {{name = "xi"; asRequired = true; minCount = 1; maxCount = 1; valueAllowed = true; repeatableOffset = -1; }}
                     };
+                    //The output exists at most once - repeats were accepted but never written
                     ioBlockParser.ioMapping[] outputMapping = {
-                            new ioBlockParser.ioMapping() {{name = "out"; asRequired = false; minCount = 1; maxCount = 0; repeatableOffset = 0; }},
+                            new ioBlockParser.ioMapping() {{name = "out"; asRequired = false; minCount = 1; maxCount = 1; repeatableOffset = -1; }},
                     };
                     (new ioBlockParser(xpp, experiment, parent, inputs, outputs, inputMapping, outputMapping, "as")).process(); //Load inputs and outputs
 
@@ -3613,6 +3966,114 @@ public abstract class PhyphoxFile {
 
     }
 
+    //Load a phyphoxExperiment from an already opened PhyphoxStream. Every experiment goes through
+    //this path, whichever way its stream was obtained. It is also the entry point used by the
+    //corpus conformance tests (app/src/test), which is why it is public.
+    public static PhyphoxExperiment loadExperiment(PhyphoxStream input, Experiment parent) {
+        //Reset the per-parse translation state. openXMLInputStream does this too, but callers
+        //that bring their own PhyphoxStream (like the corpus tests) do not go through it.
+        languageRating = 0;
+        translation = new HashMap<>();
+        selectedTranslationBlock = null;
+        allTranslationBlocks = new ArrayList<>();
+
+        //New experiment
+        PhyphoxExperiment experiment = new PhyphoxExperiment();
+
+        if (input.inputStream == null) { //If opening the stream failed, abort and relay the error message
+            experiment.message = input.errorMessage;
+            return experiment;
+        }
+
+        experiment.isLocal = input.isLocal; //The experiment needs to know if it is local
+        experiment.source = input.source;
+        experiment.crc32 = input.crc32;
+        experiment.resourceFolder = input.resourceFolder;
+        try {
+            //Setup the pull parser
+            BufferedReader reader = new BufferedReader(new InputStreamReader(input.inputStream));
+
+            XmlPullParser xpp = Xml.newPullParser();
+            xpp.setFeature(XmlPullParser.FEATURE_PROCESS_NAMESPACES, true);
+            xpp.setInput(reader);
+
+            //We can just race through all start tags until we reach the phyphox tag. Then let out phyphoxBlockParser take over.
+            int eventType = xpp.getEventType();
+            while (eventType != XmlPullParser.END_DOCUMENT) {
+                //Element names are matched case-insensitively, including the root element (see rules.yml, enum-case-insensitive)
+                if (eventType == XmlPullParser.START_TAG && xpp.getName().equalsIgnoreCase("phyphox")) {
+                    //Phyphox tag. This is what we need to read, but let's check the file version first.
+                    String fileVersion = xpp.getAttributeValue(XmlPullParser.NO_NAMESPACE, "version");
+                    if (fileVersion != null) {
+                        //A file version has been given. (If not, some user probably created the file manually. Let's allow this although it should not be encouraged.)
+                        //Parse the file version and the version of this class
+                        int split = fileVersion.indexOf('.'); //File version
+                        int phyphoxSplit = phyphoxFileVersion.indexOf('.'); //Class version
+                        try {
+                            //Version strings are supposed to be of the form "x.y" with x being the major version number and y being minor.
+
+                            //File versions
+                            experiment.versionMajor = Integer.valueOf(fileVersion.substring(0, split));
+                            experiment.versionMinor = Integer.valueOf(fileVersion.substring(split + 1));
+
+                            //Class versions
+                            int phyphoxMajor = Integer.valueOf(phyphoxFileVersion.substring(0, phyphoxSplit));
+                            int phyphoxMinor = Integer.valueOf(phyphoxFileVersion.substring(phyphoxSplit + 1));
+
+                            //This class needs to be newer than the file. Otherwise ask the user to update.
+                            if (experiment.versionMajor > phyphoxMajor || (experiment.versionMajor == phyphoxMajor && experiment.versionMinor > phyphoxMinor)) {
+                                experiment.message = "This experiment has been created for a more recent version of phyphox. Please update phyphox to load this experiment.";
+                                return experiment;
+                            }
+                        } catch (NumberFormatException e) {
+                            experiment.message = "Unable to interpret the file version of this experiment.";
+                            return experiment;
+                        }
+
+                        String globalLocale = xpp.getAttributeValue(XmlPullParser.NO_NAMESPACE, "locale");
+                        languageRating = Helper.getLanguageRating(parent.getResources(), globalLocale);
+                    }
+
+                    //isLink marks an entry that is not an experiment at all but a pointer to a
+                    //web page (the collection scanner reads it as well and opens the link when
+                    //the entry is tapped). Such a file has no views, so it has to be recognized
+                    //here too - otherwise a file arriving by URL, QR code or share ends in "No
+                    //valid view found" instead of opening its link. iOS does the same.
+                    String isLinkAttribute = xpp.getAttributeValue(XmlPullParser.NO_NAMESPACE, "isLink");
+                    experiment.isLink = isLinkAttribute != null && isLinkAttribute.equalsIgnoreCase("true");
+                    (new phyphoxBlockParser(xpp, experiment, parent)).process();
+                }
+                eventType = xpp.next();
+            }
+        } catch (XmlPullParserException e) { //Catch pullparser errors
+            experiment.message = "XML Error in line "+ e.getLineNumber() +": " + e.getMessage();
+            return experiment;
+        } catch (phyphoxFileException e) { //Catch our own errors
+            experiment.message = e.getMessage();
+            return experiment;
+        } catch (IOException e) { //Catch IO errors
+            experiment.message = "Unhandled IO error while loading this experiment: " + e.getMessage();
+            return experiment;
+        } catch (RuntimeException e) { //Those are a thing, too... For example, for some reason an undefined xml prefix throws a RuntimeException.
+            experiment.message = "Unhandled RuntimeException while loading this experiment: " + e.getMessage();
+            e.printStackTrace();
+            return experiment;
+
+        }
+
+        //Sanity check: If the experiment did not define any views, we cannot use it - unless it
+        //is a link entry, which never has views and is not run but opened (see isLink above).
+        if (experiment.experimentViews.size() == 0 && !experiment.isLink) {
+            experiment.message = "Bad experiment definition: No valid view found.";
+            return experiment;
+        }
+
+        //We are done without any problems that we know of.
+        experiment.loaded = true;
+        return experiment;
+
+    }
+
     //This AsyncTask will load a phyphoxExperiment from an intent and return it by passing it to
     //onExperimentLoaded of the activity given in the constructor.
     protected static class loadXMLAsyncTask extends AsyncTask<String, Void, PhyphoxExperiment> {
@@ -3626,94 +4087,9 @@ public abstract class PhyphoxFile {
 
         //Load the file from the intent
         protected PhyphoxExperiment doInBackground(String... params) {
-            //New experiment
-            PhyphoxExperiment experiment = new PhyphoxExperiment();
-
-            //Open the input stream (see above)
+            //Open the input stream (see above) and load the experiment from it
             PhyphoxStream input = openXMLInputStream(intent, parent.get());
-            if (input.inputStream == null) { //If this failed, abort and relay the error message
-                experiment.message = input.errorMessage;
-                return experiment;
-            }
-
-            experiment.isLocal = input.isLocal; //The experiment needs to know if it is local
-            experiment.source = input.source;
-            experiment.crc32 = input.crc32;
-            experiment.resourceFolder = input.resourceFolder;
-            try {
-                //Setup the pull parser
-                BufferedReader reader = new BufferedReader(new InputStreamReader(input.inputStream));
-
-                XmlPullParser xpp = Xml.newPullParser();
-                xpp.setFeature(XmlPullParser.FEATURE_PROCESS_NAMESPACES, true);
-                xpp.setInput(reader);
-
-                //We can just race through all start tags until we reach the phyphox tag. Then let out phyphoxBlockParser take over.
-                int eventType = xpp.getEventType();
-                while (eventType != XmlPullParser.END_DOCUMENT) {
-                    //Element names are matched case-insensitively, including the root element (see rules.yml, enum-case-insensitive)
-                    if (eventType == XmlPullParser.START_TAG && xpp.getName().equalsIgnoreCase("phyphox")) {
-                        //Phyphox tag. This is what we need to read, but let's check the file version first.
-                        String fileVersion = xpp.getAttributeValue(XmlPullParser.NO_NAMESPACE, "version");
-                        if (fileVersion != null) {
-                            //A file version has been given. (If not, some user probably created the file manually. Let's allow this although it should not be encouraged.)
-                            //Parse the file version and the version of this class
-                            int split = fileVersion.indexOf('.'); //File version
-                            int phyphoxSplit = phyphoxFileVersion.indexOf('.'); //Class version
-                            try {
-                                //Version strings are supposed to be of the form "x.y" with x being the major version number and y being minor.
-
-                                //File versions
-                                experiment.versionMajor = Integer.valueOf(fileVersion.substring(0, split));
-                                experiment.versionMinor = Integer.valueOf(fileVersion.substring(split + 1));
-
-                                //Class versions
-                                int phyphoxMajor = Integer.valueOf(phyphoxFileVersion.substring(0, phyphoxSplit));
-                                int phyphoxMinor = Integer.valueOf(phyphoxFileVersion.substring(phyphoxSplit + 1));
-
-                                //This class needs to be newer than the file. Otherwise ask the user to update.
-                                if (experiment.versionMajor > phyphoxMajor || (experiment.versionMajor == phyphoxMajor && experiment.versionMinor > phyphoxMinor)) {
-                                    experiment.message = "This experiment has been created for a more recent version of phyphox. Please update phyphox to load this experiment.";
-                                    return experiment;
-                                }
-                            } catch (NumberFormatException e) {
-                                experiment.message = "Unable to interpret the file version of this experiment.";
-                                return experiment;
-                            }
-
-                            String globalLocale = xpp.getAttributeValue(XmlPullParser.NO_NAMESPACE, "locale");
-                            languageRating = Helper.getLanguageRating(parent.get().getResources(), globalLocale);
-                        }
-                        (new phyphoxBlockParser(xpp, experiment, parent.get())).process();
-                    }
-                    eventType = xpp.next();
-                }
-            } catch (XmlPullParserException e) { //Catch pullparser errors
-                experiment.message = "XML Error in line "+ e.getLineNumber() +": " + e.getMessage();
-                return experiment;
-            } catch (phyphoxFileException e) { //Catch our own errors
-                experiment.message = e.getMessage();
-                return experiment;
-            } catch (IOException e) { //Catch IO errors
-                experiment.message = "Unhandled IO error while loading this experiment: " + e.getMessage();
-                return experiment;
-            } catch (RuntimeException e) { //Those are a thing, too... For example, for some reason an undefined xml prefix throws a RuntimeException.
-                experiment.message = "Unhandled RuntimeException while loading this experiment: " + e.getMessage();
-                e.printStackTrace();
-                return experiment;
-
-            }
-
-            //Sanity check: If the experiment did not define any views, we cannot use it
-            if (experiment.experimentViews.size() == 0) {
-                experiment.message = "Bad experiment definition: No valid view found.";
-                return experiment;
-            }
-
-            //We are done without any problems that we know of.
-            experiment.loaded = true;
-            return experiment;
-
+            return loadExperiment(input, parent.get());
         }
 
         @Override

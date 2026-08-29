@@ -8,7 +8,6 @@ import android.bluetooth.BluetoothGatt
 import android.bluetooth.BluetoothGattCallback
 import android.bluetooth.BluetoothGattCharacteristic
 import android.bluetooth.BluetoothGattDescriptor
-import android.bluetooth.BluetoothManager
 import android.bluetooth.BluetoothProfile
 import android.content.Context
 import android.content.pm.PackageManager
@@ -16,6 +15,8 @@ import android.os.Build
 import android.os.Handler
 import android.os.HandlerThread
 import android.os.Looper
+import android.os.SystemClock
+import android.util.Log
 import android.view.LayoutInflater
 import android.widget.TextView
 import android.widget.Toast
@@ -70,13 +71,34 @@ open class Bluetooth(
     @JvmField
     var requestMTU: Int = 0
 
+    /**
+     * The block that owns the GATT connection to this device. Blocks that name the same device
+     * with the same id share one connection, so every one of them but the first points at that
+     * first one and none of the state below is its own. Set by [shareConnections].
+     */
     @Transient
-    @JvmField
-    protected var btDevice: BluetoothDevice? = null
+    private var owner: Bluetooth = this
+
+    /** all blocks sharing this connection, this one first. Only maintained on the owner. */
+    @Transient
+    private var sharing: MutableList<Bluetooth> = mutableListOf(this)
+
+    /** true if this block owns its connection rather than borrowing another block's */
+    private val ownsConnection get() = owner === this
 
     @Transient
-    @JvmField
-    protected var btGatt: BluetoothGatt? = null
+    private var ownDevice: BluetoothDevice? = null
+
+    @Transient
+    private var ownGatt: BluetoothGatt? = null
+
+    protected var btDevice: BluetoothDevice?
+        get() = owner.ownDevice
+        set(value) { owner.ownDevice = value }
+
+    protected var btGatt: BluetoothGatt?
+        get() = owner.ownGatt
+        set(value) { owner.ownGatt = value }
 
     @Transient
     private var eventCharacteristic: BluetoothGattCharacteristic? = null
@@ -114,11 +136,38 @@ open class Bluetooth(
     protected var toast: Toast? = null
 
     @Transient
-    private var queue: BleCommandQueue? = null
+    private var ownQueue: BleCommandQueue? = null
+
+    private var queue: BleCommandQueue?
+        get() = owner.ownQueue
+        set(value) { owner.ownQueue = value }
 
     /** completed by onConnectionStateChange while a connection attempt is awaited */
     @Transient
     private var connectionEvent: CompletableDeferred<Boolean>? = null
+
+    /** the GATT status of the last connection state change, for the retry's log line */
+    @Transient
+    @Volatile
+    private var lastConnectionStatus = 0
+
+    /** true while the owning block's GATT client holds a connection (kept up to date by the callback) */
+    @Transient
+    @Volatile
+    private var ownGattConnected = false
+
+    /** true once the services of the current connection have been discovered */
+    @Transient
+    @Volatile
+    private var ownServicesDiscovered = false
+
+    private var gattConnected: Boolean
+        get() = owner.ownGattConnected
+        set(value) { owner.ownGattConnected = value }
+
+    private var servicesDiscovered: Boolean
+        get() = owner.ownServicesDiscovered
+        set(value) { owner.ownServicesDiscovered = value }
 
     @Transient
     private var reconnectJob: Job? = null
@@ -147,14 +196,19 @@ open class Bluetooth(
     }
 
     /**
-     * Return true if the device is connected.
+     * Return true if this object holds a usable connection to the device, that is: its own GATT
+     * client is connected and the services of that connection have been discovered.
+     *
+     * This deliberately does not ask the BluetoothManager which devices are connected on the GATT
+     * profile, which is what it used to do. That list is system wide, so it answers "does anybody
+     * hold a link to this device" - a different question, and the wrong one for every caller here:
+     * another app's link gives this object no characteristics to read, and a link this object
+     * opened and then lost is not made usable by somebody else still holding one.
      */
     open fun isConnected(): Boolean {
         if (btAdapter == null || btAdapter?.isEnabled != true)
             return false
-        val device = btDevice ?: return false
-        return (context.getSystemService(Context.BLUETOOTH_SERVICE) as BluetoothManager)
-            .getConnectedDevices(BluetoothProfile.GATT).contains(device)
+        return btGatt != null && gattConnected && servicesDiscovered
     }
 
     /**
@@ -165,14 +219,26 @@ open class Bluetooth(
     @Throws(BluetoothException::class)
     open fun connect(knownDevices: Map<String, BluetoothDevice>?) {
         var reusedDevice = false
-        if (btDevice == null) {
-            reusedDevice = findDevice(knownDevices)
-        }
-        if (btDevice == null)
-            return //user aborted the scan dialog
+        if (ownsConnection) {
+            if (btDevice == null) {
+                reusedDevice = findDevice(knownDevices)
+            }
+            if (btDevice == null)
+                return //user aborted the scan dialog
 
-        if (btGatt == null || !isConnected()) {
-            openConnection()
+            if (btGatt == null || !isConnected()) {
+                openConnection()
+            }
+        } else {
+            //Another block of this experiment already connected to this device (same id), so
+            //there is nothing to search for and nothing to open - only this block's own
+            //characteristics still have to be set up on that connection. The owner is connected
+            //first, because ownership follows the same order the blocks are connected in.
+            if (btDevice == null)
+                return //the owner's scan dialog was cancelled
+            if (!isConnected())
+                throw BluetoothException(context.resources.getString(R.string.bt_exception_no_connection), this)
+            reusedDevice = true
         }
 
         eventCharacteristic = try {
@@ -263,20 +329,40 @@ open class Bluetooth(
         queue?.shutdown()
         queue = BleCommandQueue(gattIo, bleScope) { onLinkDead() }
 
-        val connected = CompletableDeferred<Boolean>()
-        connectionEvent = connected
-        btGatt = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M)
-            btDevice?.connectGatt(context, false, btLeGattCallback, BluetoothDevice.TRANSPORT_LE)
-        else
-            btDevice?.connectGatt(context, false, btLeGattCallback)
+        var result = false
+        var attemptsMade = 0
+        val connectDeadline = SystemClock.elapsedRealtime() + CONNECT_TOTAL_BUDGET_MS
+        for (attempt in 1..CONNECT_ATTEMPTS) {
+            attemptsMade = attempt
+            val connected = CompletableDeferred<Boolean>()
+            connectionEvent = connected
+            btGatt = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M)
+                btDevice?.connectGatt(context, false, btLeGattCallback, BluetoothDevice.TRANSPORT_LE)
+            else
+                btDevice?.connectGatt(context, false, btLeGattCallback)
 
-        val result = btGatt != null && runBlocking {
-            withTimeoutOrNull(CONNECT_TIMEOUT_MS) { connected.await() } == true
-        }
-        connectionEvent = null
-        if (!result) {
+            result = btGatt != null && runBlocking {
+                withTimeoutOrNull(CONNECT_TIMEOUT_MS) { connected.await() } == true
+            }
+            connectionEvent = null
+            if (result) {
+                if (attempt > 1)
+                    Log.d(TAG, "connected on attempt $attempt")
+                break
+            }
+            //A refused client keeps its registration in the stack unless it is closed, and
+            //running out of those is one of the things that produces a 133 in the first place.
+            Log.w(TAG, "connect attempt $attempt of $CONNECT_ATTEMPTS failed (status $lastConnectionStatus)")
             btGatt?.close()
             btGatt = null
+            if (attempt >= CONNECT_ATTEMPTS ||
+                    SystemClock.elapsedRealtime() + CONNECT_RETRY_DELAY_MS >= connectDeadline)
+                break
+            runBlocking { delay(CONNECT_RETRY_DELAY_MS) }
+        }
+        reportBleOutcome(TAG, "connect", attemptsMade, result,
+                reason = if (result) null else "gatt_$lastConnectionStatus")
+        if (!result) {
             throw BluetoothException(context.resources.getString(R.string.bt_exception_connection), this)
         }
 
@@ -291,6 +377,7 @@ open class Bluetooth(
         if (!discovered.ok) {
             throw BluetoothException(context.resources.getString(R.string.bt_exception_services), this)
         }
+        servicesDiscovered = true
 
         //Read the battery level for the connected-device info if the device offers it (optional,
         // guarded - not every device has a battery service)
@@ -302,6 +389,11 @@ open class Bluetooth(
      * Close the connection to the GATT server of the device.
      */
     open fun closeConnection() {
+        mapping.clear()
+        saveTime.clear()
+        valuesSize = 0
+        if (!ownsConnection)
+            return //not ours to close - the owning block does that
         reconnectJob?.cancel()
         reconnectJob = null
         closeGattOnly()
@@ -311,6 +403,8 @@ open class Bluetooth(
 
     private fun closeGattOnly() {
         connectionEvent?.complete(false)
+        gattConnected = false
+        servicesDiscovered = false
         btGatt?.close()
         btGatt = null
         queue?.clear()
@@ -335,10 +429,14 @@ open class Bluetooth(
     open fun stop() {
         isRunning = false
         stopAcquisition()
-        reconnectJob?.cancel()
-        reconnectJob = null
         mainHandler.post { toast?.cancel() }
-        queue?.clear()
+        //The queue and the reconnect belong to the connection, which other blocks of this
+        //experiment may still be using, so they are only dropped once nobody is running.
+        if (sharing.none { it.isRunning }) {
+            owner.reconnectJob?.cancel()
+            owner.reconnectJob = null
+            queue?.clear()
+        }
     }
 
     /**
@@ -486,23 +584,31 @@ open class Bluetooth(
     private fun handleDisconnect() {
         queue?.clear()
         synchronized(this) {
-            if (!isRunning || reconnectJob?.isActive == true)
+            if (sharing.none { it.isRunning } || reconnectJob?.isActive == true)
                 return
-            forcedBreak = true
+            for (b in sharing)
+                b.forcedBreak = true
             reconnectJob = deviceScope.launch {
-                stopAcquisition()
+                for (b in sharing)
+                    b.pauseAcquisition()
                 displayErrorMessage(context.resources.getString(R.string.bt_exception_disconnected) + BluetoothException.getMessage(this@Bluetooth), false)
 
                 var backoff = RECONNECT_INITIAL_BACKOFF_MS
-                while (isActive && isRunning) {
+                while (isActive && sharing.any { it.isRunning }) {
                     delay(backoff)
                     try {
-                        connect(null) //reuses btDevice, reopens the GATT connection and reconfigures
-                        if (isRunning) {
-                            forcedBreak = false
-                            startAcquisition()
-                            mainHandler.post { toast?.cancel() }
+                        //Reopens the GATT connection and reconfigures the owner, then every
+                        //block borrowing this connection, which is where their characteristics
+                        //are looked up again on the freshly discovered services.
+                        for (b in sharing)
+                            b.connect(null)
+                        for (b in sharing) {
+                            if (b.isRunning) {
+                                b.forcedBreak = false
+                                b.resumeAcquisition()
+                            }
                         }
+                        mainHandler.post { toast?.cancel() }
                         return@launch
                     } catch (e: BluetoothException) {
                         displayErrorMessage(e.message, false)
@@ -512,6 +618,16 @@ open class Bluetooth(
             }
         }
     }
+
+    //Same-class access to the protected hooks above, so the owning block can drive the blocks
+    //that share its connection.
+    internal fun dispatchNotification(data: ByteArray, characteristic: BluetoothGattCharacteristic) =
+        retrieveData(data, characteristic)
+
+    internal fun pauseAcquisition() = stopAcquisition()
+
+    @Throws(BluetoothException::class)
+    internal fun resumeAcquisition() = startAcquisition()
 
     //
     // GATT plumbing
@@ -529,14 +645,25 @@ open class Bluetooth(
     private val btLeGattCallback = object : BluetoothGattCallback() {
 
         override fun onConnectionStateChange(gatt: BluetoothGatt, status: Int, newState: Int) {
+            lastConnectionStatus = status
+            //A callback of a GATT client that has already been replaced must not touch the state
+            //of the current one. btGatt is still null while a fresh attempt is in flight (the
+            //callback can fire before connectGatt has returned), so that case has to pass.
+            val current = btGatt
+            if (current != null && current !== gatt)
+                return
+
             when (newState) {
                 BluetoothProfile.STATE_CONNECTED -> {
+                    gattConnected = status == BluetoothGatt.GATT_SUCCESS
                     connectedDeviceInformation.deviceId = gatt.device.address
                     connectedDeviceInformation.deviceName = gatt.device.name
                     connectionEvent?.complete(status == BluetoothGatt.GATT_SUCCESS)
                 }
                 else -> {
                     //STATE_DISCONNECTED and everything unexpected
+                    gattConnected = false
+                    servicesDiscovered = false
                     connectionEvent?.complete(false)
                     if (isRunning) {
                         handleDisconnect()
@@ -562,7 +689,11 @@ open class Bluetooth(
             }
 
             val data = characteristic.value ?: return
-            retrieveData(data, characteristic)
+            //One connection can serve several blocks of the experiment (an input and an output
+            //block naming the same device), so the notification goes to each of them. A block
+            //that does not map this characteristic ignores it.
+            for (b in sharing)
+                b.dispatchNotification(data, characteristic)
         }
 
         @Suppress("DEPRECATION", "OVERRIDE_DEPRECATION")
@@ -813,6 +944,7 @@ open class Bluetooth(
         fun execute(vararg params: Vector<out Bluetooth>) {
             Thread {
                 var errorMessage: String? = null
+                shareConnections(*params)
                 outer@ for (v in params) {
                     for (b in v) {
                         try {
@@ -856,7 +988,74 @@ open class Bluetooth(
         private val BATTERY_UUID = UUID.fromString("0000180f-0000-1000-8000-00805f9b34fb")
         private val BATTERY_LEVEL = UUID.fromString("00002a19-0000-1000-8000-00805f9b34fb")
 
+        private const val TAG = "phyphoxBle"
+
+        /**
+         * One line per FINISHED connection or transfer, so the device lab can watch the
+         * retries instead of only the verdict.
+         *
+         * Retrying internally is right for the field - boards with the Arduino library's
+         * fixed high-rate transfer will be out there for years, and the app should cope
+         * rather than complain at the user - but it blinds the suite: a scenario passes the
+         * same way whether the app got through on the first attempt or on the last one it
+         * was allowed, so hardware that is slowly getting worse looks healthy right up to
+         * the run that finally exhausts the budget. The lab greps for the token and records
+         * the counts per scenario (phyphox-docs, tools/lab/ble.py: parse_retry_lines).
+         *
+         * Emitted once the operation is over rather than per attempt, because the driver
+         * clears logcat at the start of a scenario and a per-attempt line would be swallowed.
+         */
+        internal fun reportBleOutcome(tag: String, event: String, attempts: Int, ok: Boolean,
+                                      reason: String? = null, bytes: Int? = null,
+                                      ms: Long? = null) {
+            val line = StringBuilder(RETRY_TOKEN)
+            line.append(" event=").append(event)
+            //Every attempt, the successful one included, so 1 means it worked first time.
+            line.append(" attempts=").append(attempts)
+            line.append(" result=").append(if (ok) "ok" else "failed")
+            //Parsed as space separated key=value, so no value may contain a space.
+            reason?.let { line.append(" reason=").append(it.replace(' ', '_')) }
+            bytes?.let { line.append(" bytes=").append(it) }
+            ms?.let { line.append(" ms=").append(it) }
+            Log.i(tag, line.toString())
+        }
+
+        /** the literal the lab greps for; changing it silently blinds the report */
+        private const val RETRY_TOKEN = "phyphox-ble-retries"
+
         const val CONNECT_TIMEOUT_MS = 10000L
+
+        /**
+         * Attempts for a connection. Android's direct connect fails with GATT_ERROR (133)
+         * often enough to matter - measured in the lab on 2026-08-28 - and the same device
+         * connects a moment later, so a refused attempt is retried rather than reported. It
+         * also covers the board that has not finished releasing the previous connection yet:
+         * the experiment connects immediately after the transfer let go of the same device,
+         * and a peripheral that serves one central at a time needs that moment.
+         *
+         * Three was not enough. A refused attempt comes back in about 0.35 s, so the whole
+         * budget is spent in under three seconds, and the bench kept hitting the end of it:
+         * two connects in 34 needed all three attempts on 2026-08-28, which puts the next
+         * one along - the connect that would need a fourth - at about one in forty. That is
+         * the transfer flake the suite was still seeing. Each additional attempt costs under
+         * a second and only when the previous one failed, so the budget is set by
+         * CONNECT_TOTAL_BUDGET_MS rather than by counting.
+         */
+        const val CONNECT_ATTEMPTS = 6
+
+        /** pause before another connection attempt, to let the stack and the device settle */
+        const val CONNECT_RETRY_DELAY_MS = 500L
+
+        /**
+         * ...but stop retrying once this much time has gone into it, however many attempts
+         * are left. The two failures cost very different amounts of time: a refused
+         * connection answers in about 0.35 s, while a device that is simply switched off
+         * gives no callback at all and burns the full CONNECT_TIMEOUT_MS. Counting attempts
+         * alone would make the cheap case barely slower and the expensive one a minute of
+         * staring at a progress dialog, so the retrying is bounded by the clock and the
+         * attempt count is only the ceiling.
+         */
+        const val CONNECT_TOTAL_BUDGET_MS = 25000L
         const val RSSI_INTERVAL_MS = 1000L
         const val TOAST_THROTTLE_MS = 5000L
         const val RECONNECT_INITIAL_BACKOFF_MS = 1000L
@@ -907,6 +1106,46 @@ open class Bluetooth(
                 }
             }
             return result
+        }
+
+        /**
+         * Decide which block owns the connection to each device: blocks naming the same device
+         * with the same id describe ONE physical device (that is what the id is for - see the
+         * device count in Experiment.onExperimentLoaded and the per-device event characteristic
+         * in PhyphoxExperiment.startAllIO), so they get one GATT connection between them instead
+         * of one each. The first block of a group in connection order owns it, so the owner is
+         * always connected before the blocks that borrow from it.
+         *
+         * A block without an id is its own device, exactly as everywhere else in the app, even
+         * if it happens to name the same device as another block.
+         *
+         * Must be called before connecting, and again for every fresh connection attempt, since
+         * it also resets the grouping after a device was dropped.
+         */
+        @JvmStatic
+        fun shareConnections(vararg list: Vector<out Bluetooth>) {
+            val owners = HashMap<String, Bluetooth>()
+            for (v in list) {
+                for (b in v) {
+                    b.owner = b
+                    b.sharing = mutableListOf(b)
+                }
+            }
+            for (v in list) {
+                for (b in v) {
+                    val id = b.idString
+                    if (id.isNullOrEmpty())
+                        continue
+                    val existing = owners[id]
+                    if (existing == null) {
+                        owners[id] = b
+                    } else {
+                        b.owner = existing
+                        b.sharing = existing.sharing
+                        existing.sharing.add(b)
+                    }
+                }
+            }
         }
 
         /** Collects already resolved devices by their idString so multiple inputs/outputs referring to the same device reuse it */

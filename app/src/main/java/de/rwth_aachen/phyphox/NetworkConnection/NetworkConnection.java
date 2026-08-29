@@ -230,8 +230,9 @@ public class NetworkConnection implements NetworkService.RequestCallback, Networ
 
         AlertDialog.Builder builder = new AlertDialog.Builder(ctx);
         builder.setMessage(sb.toString())
-                .setTitle(R.string.networkPrivacyWarning)
-                .setPositiveButton(R.string.networkVisitPrivacyURL, new DialogInterface.OnClickListener() {
+                .setTitle(R.string.networkPrivacyWarning);
+        if (privacyURL != null) {
+            builder.setPositiveButton(R.string.networkVisitPrivacyURL, new DialogInterface.OnClickListener() {
                     public void onClick(DialogInterface dialog, int id) {
                         Uri uri = Uri.parse(privacyURL);
                         Intent intent = new Intent(Intent.ACTION_VIEW, uri);
@@ -239,8 +240,9 @@ public class NetworkConnection implements NetworkService.RequestCallback, Networ
                             ctx.startActivity(intent);
                         }
                     }
-                })
-                .setNegativeButton(R.string.ok, new DialogInterface.OnClickListener() {
+                });
+        }
+        builder.setNegativeButton(R.string.ok, new DialogInterface.OnClickListener() {
                     public void onClick(DialogInterface dialog, int id) {
                         delegate.dataPolicyInfoDismissed();
                     }

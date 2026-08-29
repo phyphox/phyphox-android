@@ -1,0 +1,240 @@
+package de.rwth_aachen.phyphox;
+
+import static androidx.test.platform.app.InstrumentationRegistry.getInstrumentation;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
+import static org.junit.Assume.assumeTrue;
+
+import android.content.Context;
+import android.content.Intent;
+import android.os.Build;
+import android.util.Log;
+
+import androidx.test.ext.junit.runners.AndroidJUnit4;
+import androidx.test.platform.app.InstrumentationRegistry;
+import androidx.test.uiautomator.By;
+import androidx.test.uiautomator.StaleObjectException;
+import androidx.test.uiautomator.UiDevice;
+import androidx.test.uiautomator.UiObject2;
+import androidx.test.uiautomator.Until;
+
+import org.junit.Before;
+import org.junit.Test;
+import org.junit.runner.RunWith;
+
+// phyphox-test: ble-compat-arduino
+// phyphox-test: ble-compat-micropython
+//The UI half of the BLE compatibility suite, and deliberately only that half: picking a device
+//out of a scan has no equivalent over the remote API, so it has to be driven here, while
+//everything that follows - the values, the rates, what the board actually emits - is asserted
+//from the host against the shared expectations (phyphox-docs/tools/lab/ble.py and
+//fixtures/ble/scenarios.yml). Duplicating those assertions in two languages would let them
+//drift; this keeps them in one file and still exercises the real scan UI, which is part of what
+//the suite protects.
+//
+//So this test ends where the host takes over: the experiment the device offers is loaded and
+//NOT started. It asserts nothing about the data.
+//
+//The class name is the driver's, not a choice - tools/lab/ble.py runs exactly
+//
+//    am instrument -e class de.rwth_aachen.phyphox.BleCompatConnectTest \
+//        -e bleDevice <name> ...
+//
+//and the driver flashes the library examples UNMODIFIED, so the name is whatever they advertise
+//as. Without that parameter there is no board to talk to and this skips itself, which is what
+//happens in CI - the row needs hardware and runs in the lab.
+//
+//With "-e holdForHost true" the test does not return once it is done: it parks on
+//debug.phyphox.labRelease until the driver sets that to 1. Instrumentation runs inside the app's
+//process, so returning kills the app and everything this test just set up - measured on a Pixel 3
+//on 2026-08-27, the remote API answered for three seconds and went with the process. The driver
+//therefore starts the instrumentation in the background, measures while it is parked, and
+//releases it afterwards. Without the argument the test returns as it always did, so running it
+//by hand is unchanged.
+//
+//Nothing here touches debug.phyphox.remote. The driver owns it (AndroidDevice.prepare sets it,
+//cleanup clears it) and goes on to talk to the phone after this test returns, so clearing it
+//here would pull the API out from under the host's assertions.
+@RunWith(AndroidJUnit4.class)
+public class BleCompatConnectTest {
+
+    private static final String PACKAGE = "de.rwth_aachen.phyphox";
+    private static final String RELEASE_PROPERTY = "debug.phyphox.labRelease";
+    //Generous on purpose: it only has to outlast the host's measurement, and its real job is to
+    //stop a crashed host from wedging a phone for good.
+    private static final long HOLD_TIMEOUT_MS = 10 * 60 * 1000L;
+    private static final String TAG = "phyphoxBleCompat";
+
+    private UiDevice device() {
+        return UiDevice.getInstance(getInstrumentation());
+    }
+
+    private UiObject2 waitForId(String id, long timeout) {
+        return device().wait(Until.findObject(By.res(PACKAGE + ":id/" + id)), timeout);
+    }
+
+    @Before
+    public void quietFirstRunDialogs() {
+        FixtureExperiment.suppressHints();
+        //The scan asks for these at runtime and autoConfirm deliberately does not answer system
+        //permission dialogs, so an ungranted phone stops on one with no board in sight. The
+        //driver grants the sensor permissions it knows about but not these, and granting them
+        //here keeps the test standalone either way.
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S)
+            grant("android.permission.BLUETOOTH_CONNECT", "android.permission.BLUETOOTH_SCAN");
+        grant("android.permission.ACCESS_FINE_LOCATION", "android.permission.ACCESS_COARSE_LOCATION");
+    }
+
+    //Granted through the shell rather than UiAutomation.grantRuntimePermission, which only exists
+    //from API 28: below that it throws NoSuchMethodError, and that is an Error, so the catch here
+    //did not hold it and the whole test failed in @Before before the app was ever launched (seen
+    //on the Nexus 5X, API 27, and the Galaxy A3, API 26). "pm grant" works on every level this
+    //app supports, needs no version check, and actually grants on those phones rather than
+    //quietly doing nothing.
+    private void grant(String... permissions) {
+        for (String permission : permissions) {
+            try {
+                shell("pm grant " + PACKAGE + " " + permission);
+            } catch (Exception e) {
+                //Not a permission this API level knows, or already granted - either way not this
+                //test's problem; the scan below fails with a message if it actually mattered.
+            }
+        }
+    }
+
+    @Test
+    public void theDeviceOffersItsExperimentAndItLoads() throws Exception {
+        String name = InstrumentationRegistry.getArguments().getString("bleDevice");
+        assumeTrue("no bleDevice given - this row needs a board and runs in the lab",
+                name != null && !name.trim().isEmpty());
+        name = name.trim();
+        boolean holdForHost = "true".equalsIgnoreCase(argument("holdForHost"));
+
+        //Cleared here rather than trusting the driver to have done it, and cleared HERE rather
+        //than just before the wait: the remote API comes up the moment the experiment loads, so
+        //the host can legitimately release this test while the assertions below are still
+        //running. Writing the property at that point would erase a release that already
+        //happened and hold until the timeout. Before the app is even started, nothing can have
+        //released it yet.
+        if (holdForHost)
+            shell("setprop " + RELEASE_PROPERTY + " 0");
+
+        //The collection, where the scan lives.
+        Context app = getInstrumentation().getTargetContext();
+        Intent intent = app.getPackageManager().getLaunchIntentForPackage(app.getPackageName());
+        intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
+        app.startActivity(intent);
+
+        //By resource id, not by label: the labels are translated and the run may be in any
+        //language, but the ids are the same in every build.
+        UiObject2 fab = waitForId("newExperiment", 20000);
+        assertNotNull("the collection did not come up with its new-experiment button", fab);
+        fab.click();
+        UiObject2 bluetooth = waitForId("newExperimentBluetooth", 10000);
+        assertNotNull("the new-experiment menu has no Bluetooth entry", bluetooth);
+        bluetooth.click();
+
+        //The scan needs a moment to find anything, and there is deliberately more than one board
+        //advertising: taking the first entry would pass against the wrong device, so this waits
+        //for the name the driver asked for and for nothing else.
+        //
+        //This dialog never goes idle while it scans - BluetoothScanDialog.scheduleListUpdate
+        //rebuilds the list up to every LIST_UPDATE_INTERVAL_MS for as long as results keep
+        //arriving, which in a room with BLE devices in it is continuously. "uiautomator dump"
+        //therefore fails on it outright with "could not get idle state" (3/3 on a Pixel 3,
+        //2026-08-27), and while UiDevice.wait works anyway - it goes by accessibility events and
+        //proceeds once its idle timeout expires - every lookup here pays that timeout first, and
+        //the entry can go stale between finding it and clicking it, which is what the retry
+        //below is for. The 300 ms coalescing is deliberate, so if this step ever turns flaky the
+        //remedy is Configurator.getInstance().setWaitForIdleTimeout(0) around it rather than
+        //slowing the app's list down.
+        UiObject2 entry = device().wait(Until.findObject(By.text(name)), 45000);
+        assertNotNull("the scan did not list a device called \"" + name + "\" within 45 s - is it "
+                + "powered and advertising?", entry);
+        try {
+            entry.click();
+        } catch (StaleObjectException e) {
+            //The scan list rebuilds as devices come and go; look the entry up once more.
+            entry = device().wait(Until.findObject(By.text(name)), 10000);
+            assertNotNull("\"" + name + "\" disappeared from the scan before it could be picked",
+                    entry);
+            entry.click();
+        }
+
+        //A device that both offers its own experiment and matches bundled ones asks which to use.
+        //A board running an unmodified library example offers only its own, and phyphox opens it
+        //without asking - so this dialog is optional, and only its "load from device" choice is
+        //the one under test.
+        UiObject2 loadFromDevice = device().wait(Until.findObject(
+                By.text(app.getString(R.string.newExperimentBluetoothLoadFromDevice))), 5000);
+        if (loadFromDevice != null)
+            loadFromDevice.click();
+
+        //The transfer runs over BLE and is slow on purpose - the experiment is chunked over a
+        //characteristic - so this is the one wait worth being generous about.
+        Experiment experiment = awaitLoaded(90000);
+        assertNotNull("the experiment the device offers did not load within 90 s", experiment);
+        assertTrue("the experiment arrived but did not parse: " + experiment.experiment.message,
+                experiment.experiment.loaded);
+
+        //Left loaded and not started: the host starts it over the remote API and does the
+        //measuring, because that is where the shared expectations live.
+        assertFalse("the experiment must be left for the host to start, not started here",
+                experiment.measuring);
+
+        //And left ALIVE. Instrumentation is hosted in the app's own process, so the app dies
+        //when am instrument returns - taking the loaded experiment, the BLE connection and the
+        //remote server with it, about three seconds after they appeared. The host would then
+        //find nothing to talk to and report a seam that is not broken. So the test stays parked
+        //here until the host says it is finished, and only the host can say so.
+        if (holdForHost)
+            holdUntilTheHostIsDone();
+    }
+
+    //Blocks while the host drives the experiment over the remote API: returns once the driver
+    //sets the release property, and fails if it never does, so a host that died halfway is a
+    //failed run rather than a phone parked on an experiment nobody is watching.
+    private void holdUntilTheHostIsDone() throws Exception {
+        Log.i(TAG, "loaded and holding the app open for the host; release with: adb shell setprop "
+                + RELEASE_PROPERTY + " 1");
+        long deadline = System.currentTimeMillis() + HOLD_TIMEOUT_MS;
+        while (System.currentTimeMillis() < deadline) {
+            if ("1".equals(shell("getprop " + RELEASE_PROPERTY).trim())) {
+                Log.i(TAG, "released by the host");
+                return;
+            }
+            Thread.sleep(500);
+        }
+        fail("the host never released this test within " + (HOLD_TIMEOUT_MS / 1000) + " s - it "
+                + "is measuring against the app this test is holding open, so either it never got "
+                + "that far or it failed without setting " + RELEASE_PROPERTY);
+    }
+
+    private String argument(String name) {
+        return InstrumentationRegistry.getArguments().getString(name);
+    }
+
+    private String shell(String command) throws Exception {
+        return device().executeShellCommand(command);
+    }
+
+    //FixtureExperiment.awaitLoaded has a fixed deadline and throws; the BLE transfer needs its
+    //own, and a null lets the assertion above say what actually went wrong.
+    private Experiment awaitLoaded(long millis) {
+        long deadline = System.currentTimeMillis() + millis;
+        while (System.currentTimeMillis() < deadline) {
+            Experiment activity = FixtureExperiment.activity();
+            if (activity != null && activity.experiment != null && activity.experiment.loaded)
+                return activity;
+            try {
+                Thread.sleep(250);
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+                break;
+            }
+        }
+        return null;
+    }
+}

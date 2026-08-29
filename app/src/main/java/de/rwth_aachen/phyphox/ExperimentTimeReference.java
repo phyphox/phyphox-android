@@ -164,6 +164,19 @@ public class ExperimentTimeReference implements Serializable {
         return timeMappings.get(i).systemTime;
     }
 
+    //The same lookup for callers that need a usable timestamp rather than a stored one: before
+    //the first start there is no mapping yet and the experiment time is exactly zero, so the
+    //current time is the only answer that keeps "experiment time plus offset" a real timestamp.
+    //This is what the timer module's offset1970 output promises (timer-offset1970-prestart,
+    //decided 2026-08-24; iOS falls back to Date() for the same reason). Callers that read a
+    //stored reference and take 0 as "nothing recorded yet" - the absolute time axis of a graph,
+    //the export file name - keep using getSystemTimeReferenceByIndex.
+    public synchronized long getSystemTimeReferenceByIndexOrNow(int i) {
+        if (timeMappings.isEmpty())
+            return System.currentTimeMillis();
+        return getSystemTimeReferenceByIndex(i);
+    }
+
     public synchronized boolean getPausedByIndex(int i) {
         if (i < 0 || i >= timeMappings.size())
             return true;

@@ -7,6 +7,7 @@ import android.hardware.camera2.CameraCharacteristics;
 import android.hardware.camera2.CameraDevice;
 import android.hardware.camera2.CameraManager;
 import android.hardware.camera2.CaptureRequest;
+import android.hardware.camera2.params.StreamConfigurationMap;
 import android.media.Image;
 import android.media.ImageReader;
 import android.os.Build;
@@ -67,16 +68,39 @@ public class DepthInput {
         }
     }
 
+    //Characteristics a camera does not have to report. camera2 guarantees them for a regular
+    //camera, but the scans below walk every camera the device lists and are also reached from
+    //the remote interface's /meta, where a NullPointerException took down the whole response -
+    //so a camera that does not answer is skipped instead.
+    private static int facingOf(CameraCharacteristics cam) {
+        Integer facing = cam.get(CameraCharacteristics.LENS_FACING);
+        return facing == null ? -1 : facing;
+    }
+
+    private static boolean hasDepthOutput(CameraCharacteristics cam) {
+        int[] caps = cam.get(CameraCharacteristics.REQUEST_AVAILABLE_CAPABILITIES);
+        if (caps == null)
+            return false;
+        for (int cap : caps)
+            if (cap == CameraCharacteristics.REQUEST_AVAILABLE_CAPABILITIES_DEPTH_OUTPUT)
+                return true;
+        return false;
+    }
+
+    private static Size[] depthSizes(CameraCharacteristics cam) {
+        StreamConfigurationMap configs = cam.get(CameraCharacteristics.SCALER_STREAM_CONFIGURATION_MAP);
+        return configs == null ? null : configs.getOutputSizes(ImageFormat.DEPTH16);
+    }
+
+    private static Size[] previewSizes(CameraCharacteristics cam) {
+        StreamConfigurationMap configs = cam.get(CameraCharacteristics.SCALER_STREAM_CONFIGURATION_MAP);
+        return configs == null ? null : configs.getOutputSizes(SurfaceTexture.class);
+    }
+
     public static boolean isAvailable() {
-        Map<String, CameraCharacteristics> cams = CameraHelper.getCameraList();
-        for (CameraCharacteristics cam : cams.values()) {
-            int[] caps = cam.get(CameraCharacteristics.REQUEST_AVAILABLE_CAPABILITIES);
-            for (int cap : caps) {
-                if (cap == CameraCharacteristics.REQUEST_AVAILABLE_CAPABILITIES_DEPTH_OUTPUT) {
-                    return true;
-                }
-            }
-        }
+        for (CameraCharacteristics cam : CameraHelper.getCameraList().values())
+            if (hasDepthOutput(cam))
+                return true;
         return false;
     }
 
@@ -107,18 +131,13 @@ public class DepthInput {
         int count = 0;
         Map<String, CameraCharacteristics> cams = CameraHelper.getCameraList();
         for (Map.Entry<String, CameraCharacteristics> cam : cams.entrySet()) {
-            int foundFacing = cam.getValue().get(CameraCharacteristics.LENS_FACING);
-            if (lensFacing >= 0 && lensFacing != foundFacing)
+            if (lensFacing >= 0 && lensFacing != facingOf(cam.getValue()))
                 continue;
-            int[] caps = cam.getValue().get(CameraCharacteristics.REQUEST_AVAILABLE_CAPABILITIES);
-            for (int cap : caps) {
-                if (cap == CameraCharacteristics.REQUEST_AVAILABLE_CAPABILITIES_DEPTH_OUTPUT) {
-                    Size[] sizes = cam.getValue().get(CameraCharacteristics.SCALER_STREAM_CONFIGURATION_MAP).getOutputSizes(ImageFormat.DEPTH16);
-                    if (sizes == null)
-                        continue;
-                    count++;
-                }
-            }
+            if (!hasDepthOutput(cam.getValue()))
+                continue;
+            if (depthSizes(cam.getValue()) == null)
+                continue;
+            count++;
         }
         return count;
     }
@@ -128,20 +147,16 @@ public class DepthInput {
         Size maxSize = new Size(0, 0);
         Map<String, CameraCharacteristics> cams = CameraHelper.getCameraList();
         for (Map.Entry<String, CameraCharacteristics> cam : cams.entrySet()) {
-            int foundFacing = cam.getValue().get(CameraCharacteristics.LENS_FACING);
-            if (lensFacing >= 0 && lensFacing != foundFacing)
+            if (lensFacing >= 0 && lensFacing != facingOf(cam.getValue()))
                 continue;
-            int[] caps = cam.getValue().get(CameraCharacteristics.REQUEST_AVAILABLE_CAPABILITIES);
-            for (int cap : caps) {
-                if (cap == CameraCharacteristics.REQUEST_AVAILABLE_CAPABILITIES_DEPTH_OUTPUT) {
-                    Size[] sizes = cam.getValue().get(CameraCharacteristics.SCALER_STREAM_CONFIGURATION_MAP).getOutputSizes(ImageFormat.DEPTH16);
-                    if (sizes == null)
-                        continue;
-                    for (Size size : sizes) {
-                        if (size.getWidth() * size.getHeight() > maxSize.getWidth() * maxSize.getHeight())
-                            maxSize = size;
-                    }
-                }
+            if (!hasDepthOutput(cam.getValue()))
+                continue;
+            Size[] sizes = depthSizes(cam.getValue());
+            if (sizes == null)
+                continue;
+            for (Size size : sizes) {
+                if (size.getWidth() * size.getHeight() > maxSize.getWidth() * maxSize.getHeight())
+                    maxSize = size;
             }
         }
         return maxSize;
@@ -152,23 +167,18 @@ public class DepthInput {
         float maxRate = 0.f;
         Map<String, CameraCharacteristics> cams = CameraHelper.getCameraList();
         for (Map.Entry<String, CameraCharacteristics> cam : cams.entrySet()) {
-            int foundFacing = cam.getValue().get(CameraCharacteristics.LENS_FACING);
-            if (lensFacing >= 0 && lensFacing != foundFacing)
+            if (lensFacing >= 0 && lensFacing != facingOf(cam.getValue()))
                 continue;
-            int[] caps = cam.getValue().get(CameraCharacteristics.REQUEST_AVAILABLE_CAPABILITIES);
-            for (int cap : caps) {
-                if (cap == CameraCharacteristics.REQUEST_AVAILABLE_CAPABILITIES_DEPTH_OUTPUT) {
-                    Size[] sizes = cam.getValue().get(CameraCharacteristics.SCALER_STREAM_CONFIGURATION_MAP).getOutputSizes(ImageFormat.DEPTH16);
-                    if (sizes == null)
-                        continue;
-                    Range<Integer>[] ranges = cam.getValue().get(CameraCharacteristics.CONTROL_AE_AVAILABLE_TARGET_FPS_RANGES);
-                    if (ranges == null)
-                        continue;
-                    for (Range<Integer> range : ranges) {
-                        if (range.getUpper() > maxRate)
-                            maxRate = range.getUpper();
-                    }
-                }
+            if (!hasDepthOutput(cam.getValue()))
+                continue;
+            if (depthSizes(cam.getValue()) == null)
+                continue;
+            Range<Integer>[] ranges = cam.getValue().get(CameraCharacteristics.CONTROL_AE_AVAILABLE_TARGET_FPS_RANGES);
+            if (ranges == null)
+                continue;
+            for (Range<Integer> range : ranges) {
+                if (range.getUpper() > maxRate)
+                    maxRate = range.getUpper();
             }
         }
         return maxRate;
@@ -177,26 +187,18 @@ public class DepthInput {
     @RequiresApi(api = Build.VERSION_CODES.M)
     public static String findCamera(int lensFacing) {
         String cameraId = null;
-        boolean foundBackfacing = false;
         Map<String, CameraCharacteristics> cams = CameraHelper.getCameraList();
         for (Map.Entry<String, CameraCharacteristics> cam : cams.entrySet()) {
-            int foundFacing = cam.getValue().get(CameraCharacteristics.LENS_FACING);
+            int foundFacing = facingOf(cam.getValue());
             if (lensFacing >= 0 && lensFacing != foundFacing)
                 continue;
-            int[] caps = cam.getValue().get(CameraCharacteristics.REQUEST_AVAILABLE_CAPABILITIES);
-            for (int cap : caps) {
-                if (cap == CameraCharacteristics.REQUEST_AVAILABLE_CAPABILITIES_DEPTH_OUTPUT) {
-                    Size[] sizes = cam.getValue().get(CameraCharacteristics.SCALER_STREAM_CONFIGURATION_MAP).getOutputSizes(ImageFormat.DEPTH16);
-                    if (sizes == null)
-                        continue;
-                    cameraId = cam.getKey();
-                    if (foundFacing == CameraCharacteristics.LENS_FACING_BACK)
-                        foundBackfacing = true;
-                    break;
-                }
-            }
-            if (foundBackfacing)
-                break;
+            if (!hasDepthOutput(cam.getValue()))
+                continue;
+            if (depthSizes(cam.getValue()) == null)
+                continue;
+            cameraId = cam.getKey();
+            if (foundFacing == CameraCharacteristics.LENS_FACING_BACK)
+                break; //A back facing camera is preferred, anything else only serves as a fallback
         }
         return cameraId;
     }
@@ -206,15 +208,14 @@ public class DepthInput {
         zoom = pickDefaultZoom();
         Map<String, CameraCharacteristics> cams = CameraHelper.getCameraList();
         for (Map.Entry<String, CameraCharacteristics> cam : cams.entrySet()) {
-            int foundFacing = cam.getValue().get(CameraCharacteristics.LENS_FACING);
-            if (lensFacing >= 0 && lensFacing != foundFacing)
+            if (lensFacing >= 0 && lensFacing != facingOf(cam.getValue()))
                 continue;
-            Size[] sizes = cam.getValue().get(CameraCharacteristics.SCALER_STREAM_CONFIGURATION_MAP).getOutputSizes(SurfaceTexture.class);
+            Size[] sizes = previewSizes(cam.getValue());
             if (sizes == null || sizes.length == 0)
                 continue;
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
                 Range<Float> range = cam.getValue().get(CameraCharacteristics.CONTROL_ZOOM_RATIO_RANGE);
-                if (range.getLower() > zoom || range.getUpper() < zoom) {
+                if (range != null && (range.getLower() > zoom || range.getUpper() < zoom)) {
                     continue;
                 }
             }
@@ -231,7 +232,10 @@ public class DepthInput {
             previewH = 0;
             return;
         }
-        Size[] sizes = CameraHelper.getCameraList().get(previewCameraId).get(CameraCharacteristics.SCALER_STREAM_CONFIGURATION_MAP).getOutputSizes(SurfaceTexture.class);
+        CameraCharacteristics previewChars = CameraHelper.getCameraList().get(previewCameraId);
+        if (previewChars == null)
+            return;
+        Size[] sizes = previewSizes(previewChars);
         if (sizes == null)
             return;
 
@@ -288,7 +292,11 @@ public class DepthInput {
             Log.e("depthInput", "setCamera: Camera not found in CameraList.");
             return;
         }
-        Size[] sizes = chars.get(CameraCharacteristics.SCALER_STREAM_CONFIGURATION_MAP).getOutputSizes(ImageFormat.DEPTH16);
+        Size[] sizes = depthSizes(chars);
+        if (sizes == null) {
+            Log.e("depthInput", "setCamera: Camera does not report any depth resolution.");
+            return;
+        }
         w = 0;
         h = 0;
         for (Size size : sizes) {
@@ -299,7 +307,7 @@ public class DepthInput {
         }
         this.cameraId = cameraId;
 
-        previewCameraId = findPreviewCamera(chars.get(CameraCharacteristics.LENS_FACING));
+        previewCameraId = findPreviewCamera(facingOf(chars));
     }
 
     public String getCurrentCameraId() {
@@ -324,6 +332,8 @@ public class DepthInput {
         if (chars == null)
             return 1.0f;
         Range<Float> range = chars.get(CameraCharacteristics.CONTROL_ZOOM_RATIO_RANGE);
+        if (range == null)
+            return 1.0f;
         if (range.getLower() > 1.0f || range.getUpper() < 1.0) {
             return range.getLower();
         }

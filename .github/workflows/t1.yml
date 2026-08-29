@@ -1,0 +1,268 @@
+# T1 of the phyphox test strategy: the suites that need a running app. They drive an emulator
+# from the host over adb and the remote API, so every job below is one command a developer can
+# run locally against an emulator or a device first - the workflow only arranges the emulator,
+# the sibling phyphox-docs checkout and the app install around it.
+#
+# Not on every push and never on a schedule: an emulator run costs minutes of CI time, and a
+# nightly cron would report failures nobody asked for. Development and release branches, plus
+# manual dispatch, are enough - T0 (test.yml) covers every push.
+#
+# The app serves the remote API for these runs through the shell-only debug.phyphox.* properties
+# (see DebugSwitches in the app sources); the drivers set and clear them themselves.
+#
+# API 36, one below the app's targetSdk 37: there are no emulator images for 37 yet. When they
+# arrive, the remote server also needs ACCESS_LOCAL_NETWORK, which an unattended run has to grant
+# with "adb shell pm grant" - the interactive request in the menu path cannot answer itself.
+name: t1
+on:
+  push:
+    branches: [development, 'release/**']
+  workflow_dispatch:
+
+# Same as test.yml, and it matters more here: five jobs, each with an emulator, are minutes of CI
+# time that a superseded push has no use for.
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ github.ref != 'refs/heads/master' }}
+
+env:
+  API_LEVEL: 36
+  EMULATOR_ARCH: x86_64
+  EMULATOR_TARGET: google_apis
+
+jobs:
+  remote-contract:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          path: phyphox-android
+          submodules: recursive
+      - uses: actions/checkout@v5
+        with:
+          repository: phyphox/phyphox-docs
+          path: phyphox-docs
+      - uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: 21
+          cache: gradle
+      - name: Enable KVM
+        run: |
+          echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
+          sudo udevadm control --reload-rules
+          sudo udevadm trigger --name-match=kvm
+      - name: Install the contract test's dependencies
+        run: pip install pyyaml 'jsonschema>=4.18'
+      # phyphox-test: remote-contract-t1
+      - name: Remote interface contract test
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: ${{ env.API_LEVEL }}
+          arch: ${{ env.EMULATOR_ARCH }}
+          target: ${{ env.EMULATOR_TARGET }}
+          ram-size: 4096M
+          script: |
+            cd phyphox-android && ./gradlew installRegularDebug && cd ..
+            adb shell setprop debug.phyphox.remote 1
+            adb shell setprop debug.phyphox.remotePort 8080
+            adb shell am start -a android.intent.action.VIEW -d "phyphox://asset=accelerometer.phyphox"
+            adb forward tcp:8080 tcp:8080
+            # Wait for the experiment to be up and serving before probing it.
+            for i in $(seq 1 30); do curl -sf http://127.0.0.1:8080/config > /dev/null && break; sleep 1; done
+            sh phyphox-android/tools/t1_ci_run.sh remote-contract python3 phyphox-docs/tools/contract_test.py --android http://127.0.0.1:8080 --allow-control
+            adb shell setprop debug.phyphox.remote '""' || true
+
+      - name: Keep the device log
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: t1-remote-contract-logs
+          path: logcat-remote-contract*.txt
+          if-no-files-found: ignore
+
+  experiments-e2e:
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    strategy:
+      fail-fast: false
+      matrix:
+        #Two shards, because this became the longest job in the workflow once the language sweep
+        #moved out of view-and-chrome-suites: 13.2 minutes against 9.8 for the next one. Halving
+        #the sweep puts it under that, which is as far as sharding here can help - the chrome job
+        #is the floor. Round-robin inside the driver, so the two shards cost about the same.
+        shard: ["1/2", "2/2"]
+    name: experiments-e2e (${{ matrix.shard }})
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          path: phyphox-android
+          submodules: recursive
+      - uses: actions/checkout@v5
+        with:
+          repository: phyphox/phyphox-docs
+          path: phyphox-docs
+      - uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: 21
+          cache: gradle
+      - name: Enable KVM
+        run: |
+          echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
+          sudo udevadm control --reload-rules
+          sudo udevadm trigger --name-match=kvm
+      # phyphox-test: experiments-e2e-t1
+      - name: Shipped experiments end to end
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: ${{ env.API_LEVEL }}
+          arch: ${{ env.EMULATOR_ARCH }}
+          target: ${{ env.EMULATOR_TARGET }}
+          ram-size: 4096M
+          # Every line of this script runs in its own shell, so the exit code the log wrapper
+          # has to preserve lives in a script file rather than inline. The driver grants the
+          # runtime permissions an unattended run cannot confirm itself (since 2026-08-25).
+          script: |
+            cd phyphox-android && ./gradlew installRegularDebug && cd ..
+            sh phyphox-android/tools/t1_ci_run.sh experiments python3 phyphox-docs/tools/t1_experiments.py --platform android --emulator --require-rows --shard ${{ matrix.shard }}
+      - name: Keep the per-experiment results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: t1-experiments-results-${{ strategy.job-index }}
+          path: |
+            t1-results.json
+            logcat-experiments*.txt
+          if-no-files-found: ignore
+
+  view-and-chrome-suites:
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    strategy:
+      fail-fast: false
+      matrix:
+        #Two device profiles, because the layouts differ across the sw600dp boundary and the
+        #graph goldens are recorded per device class. The tablet run is not a copy of the phone
+        #run: it is where a tablet-only layout regression shows up.
+        #
+        #And two suite selections, because the language sweep was 222 of the 492 seconds this job
+        #spent instrumenting: it restarts the app once per enabled language, which nothing else
+        #does, and that made this the longest job in the workflow. It needs both profiles like
+        #everything else here - what it looks for is text that does not fit, and what fits
+        #depends on the screen.
+        #Spelled out rather than crossed, so what runs is what is written here.
+        include:
+          - suite: chrome
+            profile: pixel_6
+            device: phone
+          - suite: chrome
+            profile: 10.1in WXGA (Tablet)
+            device: tablet
+          - suite: translations
+            profile: pixel_6
+            device: phone
+          - suite: translations
+            profile: 10.1in WXGA (Tablet)
+            device: tablet
+    name: view-and-chrome-suites (${{ matrix.suite }}, ${{ matrix.device }})
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          path: phyphox-android
+          submodules: recursive
+      - uses: actions/checkout@v5
+        with:
+          repository: phyphox/phyphox-docs
+          path: phyphox-docs
+      - uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: 21
+          cache: gradle
+      - name: Enable KVM
+        run: |
+          echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
+          sudo udevadm control --reload-rules
+          sudo udevadm trigger --name-match=kvm
+      # The chrome selection:
+      # phyphox-test: graph-snapshots
+      # phyphox-test: view-behavior
+      # phyphox-test: app-chrome
+      # phyphox-test: lifecycle
+      # phyphox-test: accessibility-smoke
+      # phyphox-test: switch-bypassed-ui
+      # phyphox-test: save-to-collection
+      # and the translations selection:
+      # phyphox-test: translations-ui
+      - name: ${{ matrix.suite }} suites
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: ${{ env.API_LEVEL }}
+          arch: ${{ env.EMULATOR_ARCH }}
+          target: ${{ env.EMULATOR_TARGET }}
+          profile: ${{ matrix.profile }}
+          ram-size: 4096M
+          script: |
+            sh phyphox-android/tools/t1_instrumented.sh phyphox-android ${{ matrix.suite }}
+      - name: Keep the device log and the captured screens
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: t1-instrumented-logs-${{ matrix.suite }}-${{ matrix.device }}
+          path: |
+            logcat-instrumented*.txt
+            instrumented-*.txt
+          if-no-files-found: ignore
+
+  network-fixtures:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          path: phyphox-android
+          submodules: recursive
+      - uses: actions/checkout@v5
+        with:
+          repository: phyphox/phyphox-docs
+          path: phyphox-docs
+      - uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: 21
+          cache: gradle
+      - name: Enable KVM
+        run: |
+          echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
+          sudo udevadm control --reload-rules
+          sudo udevadm trigger --name-match=kvm
+      - name: Install mosquitto
+        # The driver starts its own broker with the fixture's configuration, so the packaged
+        # service must not sit on port 1883.
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y mosquitto
+          sudo systemctl disable --now mosquitto || true
+      # phyphox-test: network-http
+      # phyphox-test: network-mqtt
+      - name: Network fixtures
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: ${{ env.API_LEVEL }}
+          arch: ${{ env.EMULATOR_ARCH }}
+          target: ${{ env.EMULATOR_TARGET }}
+          ram-size: 4096M
+          script: |
+            cd phyphox-android && ./gradlew installRegularDebug && cd ..
+            sh phyphox-android/tools/t1_ci_run.sh network-fixtures python3 phyphox-android/tools/t1_network_fixtures.py --docs phyphox-docs --out network-fixtures.json
+      - name: Keep the per-fixture results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: t1-network-fixture-results
+          path: |
+            network-fixtures.json
+            logcat-network-fixtures*.txt
+          if-no-files-found: ignore

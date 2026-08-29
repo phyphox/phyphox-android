@@ -291,6 +291,27 @@ public class ExpView implements Serializable{
         }
 
         //This is called when the analysis process is finished and the element is allowed to write to the buffers
+        //An input element's default belongs in its buffer, not only on its face: an element
+        //showing a value the buffer does not contain leaves every analysis reading that buffer
+        //with NaN. So an EMPTY buffer is seeded with what the element displays - at load, after
+        //a clear, and at the start of any analysis cycle, since handleInputViews calls the write
+        //hook every pass - and never over a value somebody set, because a buffer holding one is
+        //not empty.
+        //
+        //Deliberately independent of the element's widget: handleInputViews runs for every view,
+        //but a view the pager has not reached has no views built, and seeding only for the
+        //element on screen is the bug iOS was fixed for. Empty means empty rather than NaN, so a
+        //buffer an analysis filled with NaN is left alone.
+        protected boolean seedIfEmpty(PhyphoxExperiment experiment, String name, double value) {
+            if (name == null)
+                return false;
+            DataBuffer buffer = experiment.getBuffer(name);
+            if (buffer == null || buffer.getFilledSize() != 0)
+                return false;
+            buffer.append(value);
+            return true;
+        }
+
         protected boolean onMayWriteToBuffers(PhyphoxExperiment experiment) {
             return false;
         }
@@ -3150,8 +3171,10 @@ public class ExpView implements Serializable{
 
         @Override
         protected boolean onMayWriteToBuffers(PhyphoxExperiment experiment) {
+            boolean seeded = inputs.size() > 0
+                    && seedIfEmpty(experiment, inputs.get(0), defaultValue);
             if(!triggered || switchView == null){
-                return false;
+                return seeded;
             }
             triggered = false;
             experiment.getBuffer(inputs.get(0)).clear(false);
@@ -3160,10 +3183,14 @@ public class ExpView implements Serializable{
             return  true;
         }
 
-        @Override
-        protected void clear() {
-            triggered = true;
-        }
+        //No clear() here on purpose. It used to set triggered, which wrote the switch's own
+        //position back into the buffer the moment the data was cleared - so a toggle the user
+        //had flipped stayed flipped through the trash. Clearing is how a user deliberately
+        //returns an experiment to its starting state (maintainer, 2026-08-29), and a setting
+        //meant to SURVIVE it is what clearGroup is for; if clearing kept whatever the controls
+        //showed, that attribute would answer a question nobody asked. So the emptied buffer is
+        //seeded with the default like any other, and onMayReadFromBuffers moves the switch to
+        //match - the control follows the data, which is what iOS does.
 
         @Override
         protected String createViewHTML() {
@@ -3365,8 +3392,10 @@ public class ExpView implements Serializable{
 
         @Override
         protected boolean onMayWriteToBuffers(PhyphoxExperiment experiment) {
+            boolean seeded = inputs.size() > 0
+                    && seedIfEmpty(experiment, inputs.get(0), defaultValue);
             if (!triggered || autoCompleteTextView == null)
-                return false;
+                return seeded;
             triggered = false;
             experiment.getBuffer(inputs.get(0)).clear(false);
             experiment.getBuffer(inputs.get(0)).append(getValue());
@@ -3557,6 +3586,11 @@ public class ExpView implements Serializable{
                 View rangeSliderView = inflater.inflate(R.layout.range_slider, null);
                 rangeSlider = rangeSliderView.findViewById(R.id.sliderView);
                 rangeSlider.setLabelBehavior(LabelFormatter.LABEL_GONE);
+                //The label bubble is gone, but the formatter is also what an accessibility
+                //service reads out ("Range start, ..."). Without it TalkBack announces the
+                //internal step index - "4" for a slider showing 20 - because the slider works in
+                //step units below (see the note there).
+                rangeSlider.setLabelFormatter(value -> numberFormatter(getSteppedValue(value)));
                 rangeSlider.setLayoutParams(getTableRowParams(0.9f));
                 if(stepSize != 0.0) {
                     //Note: Android's requirements for the step size to perfectly fit into the given range seems rather restrictive and is quite prone to errors given the limited floating point precision and values converted from user strings. So, if we need steps, we make our own and can make sure that the behavior matches our iOS implementation.
@@ -3592,6 +3626,9 @@ public class ExpView implements Serializable{
                     slider.setValueTo((float)maxValue);
                 }
                 slider.setLabelBehavior(LabelFormatter.LABEL_GONE);
+                //Same as for the range slider above: this formatter is what a screen reader
+                //announces, so it has to undo the step conversion.
+                slider.setLabelFormatter(value -> numberFormatter(getSteppedValue(value)));
                 slider.setValue((float)defaultValue);
                 slider.setLayoutParams(getTableRowParams(0.9f));
                 slider.addOnChangeListener((slider, value, fromUser) -> {
@@ -3643,10 +3680,42 @@ public class ExpView implements Serializable{
             return Math.min(Math.max(steppedVal, minValue), maxValue);
         }
 
+        //The value the slider SHOWS for a configured one: onto the step grid and inside the
+        //range, which is what onMayReadFromBuffers does to position the handle and what
+        //getSteppedValue undoes when the handle is read back. Seeding the raw attribute instead
+        //would put a value in the buffer that the slider never displays.
+        private double displayedValueFor(double configured) {
+            if (stepSize == 0.0)
+                return Math.min(Math.max(configured, minValue), maxValue);
+            return getSteppedValue(Math.round(configured / stepSize) - Math.floor(minValue / stepSize));
+        }
+
+        //What the slider shows is what its buffers hold. The handle has to be somewhere, and a
+        //slider displaying a value its buffer does not contain leaves every analysis reading
+        //that buffer with NaN - so an empty buffer is seeded with what is on screen: default for
+        //a plain slider, minValue and maxValue for the two handles of a range one.
+        //
+        //Seeded whenever the buffer is EMPTY - at load, after a clear, and at the start of any
+        //analysis cycle - and never over a value somebody set, because a buffer holding one is
+        //not empty. handleInputViews runs this for every view rather than the visible one, and
+        //it reads the configured attributes rather than the widget, so it does not need the
+        //slider to have been laid out.
+        private boolean seedEmptyBuffers(PhyphoxExperiment experiment) {
+            if (inputs.size() == 0)
+                return false;
+            boolean seeded = seedIfEmpty(experiment, inputs.get(0),
+                    displayedValueFor(type == SliderType.Range ? minValue : defaultValue));
+            if (type == SliderType.Range && inputs.size() > 1)
+                seeded |= seedIfEmpty(experiment, inputs.get(1), displayedValueFor(maxValue));
+            return seeded;
+        }
+
         @Override
         protected boolean onMayWriteToBuffers(PhyphoxExperiment experiment) {
+            boolean seeded = seedEmptyBuffers(experiment);
+
             if(!triggered)
-                return false;
+                return seeded;
             triggered = false;
 
             DataBuffer mainBuffer = null;

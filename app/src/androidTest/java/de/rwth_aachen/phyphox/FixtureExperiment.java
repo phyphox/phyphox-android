@@ -1,0 +1,178 @@
+package de.rwth_aachen.phyphox;
+
+import static androidx.test.platform.app.InstrumentationRegistry.getInstrumentation;
+
+import android.app.Activity;
+import android.content.Context;
+import android.content.Intent;
+
+import androidx.test.runner.lifecycle.ActivityLifecycleMonitorRegistry;
+import androidx.test.runner.lifecycle.Stage;
+
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
+
+import de.rwth_aachen.phyphox.ExperimentList.model.Const;
+
+//Opens one of phyphox-docs' view fixtures (fixtures/views/, built into this test APK's assets by
+//app/build.gradle) in the real Experiment activity. The file is copied into the app's private
+//directory and opened with the intent the experiment list itself uses, so the fixture arrives
+//through the normal loading path - no server, no storage permission, no picker.
+//
+//The fixtures render deterministically: all data comes from container init values, no sensors,
+//no analysis, and they are never started.
+final class FixtureExperiment {
+
+    private FixtureExperiment() {
+    }
+
+    //True when the phyphox-docs checkout was present at build time; the suites skip themselves
+    //otherwise, the way the corpus tests do.
+    static boolean available(String fixture) {
+        try (InputStream ignored = getInstrumentation().getContext().getAssets().open(fixture)) {
+            return true;
+        } catch (IOException e) {
+            return false;
+        }
+    }
+
+    //The theme is a phyphox setting, applied the way the collection applies it. Set it before
+    //launching: AppCompat resolves the night mode when the activity is created.
+    static void applyThemeSetting(String setting) {
+        Context app = getInstrumentation().getTargetContext();
+        androidx.preference.PreferenceManager.getDefaultSharedPreferences(app)
+                .edit()
+                .putString(app.getString(R.string.setting_dark_mode_key), setting)
+                .commit();
+        getInstrumentation().runOnMainSync(() ->
+                de.rwth_aachen.phyphox.SettingsActivity.SettingsFragment.setApplicationTheme(setting));
+    }
+
+    //The one-off hints ("Touch the triangle to start the experiment.") float over the screen and
+    //would land in every golden and in the way of every tap. The app stops showing them once
+    //they have been dismissed a few times, so the suites start from that state.
+    static void suppressHints() {
+        getInstrumentation().getTargetContext()
+                .getSharedPreferences(de.rwth_aachen.phyphox.ExperimentList.model.Const.PREFS_NAME, 0)
+                .edit()
+                .putInt("menuHintDismissCount", 3)
+                .putInt("startHintDismissCount", 3)
+                //The collection greets a fresh install with a warning dialog about not damaging
+                //the phone; it has its own "do not show again", which is what this sets.
+                .putBoolean("skipWarning", true)
+                .commit();
+    }
+
+    //Starts the fixture and returns the running activity once its experiment is loaded.
+    //
+    //Deliberately not ActivityScenario: everything it does waits for the main looper to go idle,
+    //and a running experiment redraws its views every 40 ms for as long as it is open, so the
+    //looper never does and the test hangs where it launches. Starting the activity and watching
+    //the lifecycle monitor waits for nothing but the app itself. Espresso interactions are
+    //unaffected - it ignores messages scheduled further than a few milliseconds ahead.
+    static Experiment launch(String fixture) throws IOException {
+        Context app = getInstrumentation().getTargetContext();
+        suppressHints();
+        copyToPrivateDir(fixture, app);
+
+        Intent intent = new Intent(app, Experiment.class);
+        intent.setAction(Intent.ACTION_VIEW);
+        intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
+        intent.putExtra(Const.EXPERIMENT_XML, fixture);
+        intent.putExtra(Const.EXPERIMENT_ISASSET, false);
+        app.startActivity(intent);
+        return awaitLoaded();
+    }
+
+    //The host as the device reaches it: the emulator's alias for the machine running the tests,
+    //where the suites serve a fixture over http to exercise the "opened from elsewhere" path.
+    static String hostFromDevice() {
+        return "10.0.2.2:8115";
+    }
+
+    //One of the experiments shipped with the app, opened the way a deep link opens it.
+    static Experiment launchAsset(String asset) {
+        launchAssetWithoutWaiting(asset);
+        return awaitLoaded();
+    }
+
+    //The same, for the cases that expect something other than a loaded experiment - a permission
+    //dialog, for instance.
+    static void launchAssetWithoutWaiting(String asset) {
+        Context app = getInstrumentation().getTargetContext();
+        suppressHints();
+        Intent intent = new Intent(app, Experiment.class);
+        intent.setAction(Intent.ACTION_VIEW);
+        intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
+        intent.putExtra(Const.EXPERIMENT_XML, asset);
+        intent.putExtra(Const.EXPERIMENT_ISASSET, true);
+        app.startActivity(intent);
+    }
+
+    //Brings the app back to the front without recreating anything - the way tapping its icon
+    //does. Launching the fixture again instead would start a fresh experiment, which is a
+    //different thing entirely.
+    static void bringToForeground() {
+        Context app = getInstrumentation().getTargetContext();
+        Intent intent = app.getPackageManager().getLaunchIntentForPackage(app.getPackageName());
+        if (intent == null)
+            throw new AssertionError("the app has no launcher intent");
+        intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_RESET_TASK_IF_NEEDED);
+        app.startActivity(intent);
+    }
+
+    //Closes the experiment again, so the next fixture starts from the collection.
+    static void close(Experiment activity) {
+        if (activity != null)
+            getInstrumentation().runOnMainSync(activity::finish);
+    }
+
+    private static void copyToPrivateDir(String fixture, Context app) throws IOException {
+        try (InputStream in = getInstrumentation().getContext().getAssets().open(fixture);
+             OutputStream out = new FileOutputStream(new File(app.getFilesDir(), fixture))) {
+            byte[] buffer = new byte[8192];
+            int n;
+            while ((n = in.read(buffer)) != -1)
+                out.write(buffer, 0, n);
+        }
+    }
+
+    //The running experiment activity, without going through ActivityScenario.onActivity.
+    //
+    //A running experiment redraws its views every 40 ms for as long as it is open, so the main
+    //looper is never idle - and everything built on waitForIdleSync (onActivity among them)
+    //waits for exactly that and never returns. runOnMainSync only waits for its own runnable, so
+    //it works on a screen that keeps itself busy. Espresso is fine either way: it ignores
+    //messages scheduled further than a few milliseconds into the future.
+    static Experiment activity() {
+        final Experiment[] holder = new Experiment[1];
+        getInstrumentation().runOnMainSync(() -> {
+            for (Activity activity : ActivityLifecycleMonitorRegistry.getInstance()
+                    .getActivitiesInStage(Stage.RESUMED)) {
+                if (activity instanceof Experiment)
+                    holder[0] = (Experiment) activity;
+            }
+        });
+        return holder[0];
+    }
+
+    //Waits until the experiment has finished loading, which happens on a background task.
+    static Experiment awaitLoaded() {
+        final long deadline = System.currentTimeMillis() + 30000;
+        while (System.currentTimeMillis() < deadline) {
+            Experiment activity = activity();
+            if (activity != null && activity.experiment != null && activity.experiment.loaded)
+                return activity;
+            try {
+                Thread.sleep(100);
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+                break;
+            }
+        }
+        throw new AssertionError("The fixture did not finish loading");
+    }
+}

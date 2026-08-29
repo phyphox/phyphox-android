@@ -46,7 +46,7 @@ public class FormulaParser {
                 if (single) {
                     return thisIn[thisIn.length-1];
                 } else {
-                    if (i > thisIn.length)
+                    if (i >= thisIn.length)
                         throw new FormulaException("Input too short.");
                     return thisIn[i];
                 }
@@ -77,139 +77,147 @@ public class FormulaParser {
         }
     }
 
-    static class AddFunction extends Function {
+    //Marker classes for the arity check at load: a Function1 takes exactly one operand, a
+    //Function2 exactly two
+    static class Function1 extends Function {
+    }
+
+    static class Function2 extends Function {
+    }
+
+    static class AddFunction extends Function2 {
         protected Double apply (Double in1, Double in2) {
             return in1+in2;
         }
     }
 
-    static class MultiplyFunction extends Function {
+    static class MultiplyFunction extends Function2 {
         protected Double apply (Double in1, Double in2) {
             return in1*in2;
         }
     }
 
-    static class SubtractFunction extends Function {
+    static class SubtractFunction extends Function2 {
         protected Double apply (Double in1, Double in2) {
             return in1-in2;
         }
     }
 
-    static class DivideFunction extends Function {
+    static class DivideFunction extends Function2 {
         protected Double apply (Double in1, Double in2) {
             return in1/in2;
         }
     }
 
-    static class ModuloFunction extends Function {
+    static class ModuloFunction extends Function2 {
         protected Double apply (Double in1, Double in2) {
             return in1%in2;
         }
     }
 
-    static class PowerFunction extends Function {
+    static class PowerFunction extends Function2 {
         protected Double apply (Double in1, Double in2) {
             return Math.pow(in1, in2);
         }
     }
 
-    static class MinusFunction extends Function {
+    static class MinusFunction extends Function1 {
         protected Double apply (Double in1, Double in2) {
             return -in1;
         }
     }
 
-    static class SqrtFunction extends Function {
+    static class SqrtFunction extends Function1 {
         protected Double apply (Double in1, Double in2) {
             return Math.sqrt(in1);
         }
     }
 
-    static class SinFunction extends Function {
+    static class SinFunction extends Function1 {
         protected Double apply (Double in1, Double in2) {
             return Math.sin(in1);
         }
     }
 
-    static class CosFunction extends Function {
+    static class CosFunction extends Function1 {
         protected Double apply (Double in1, Double in2) {
             return Math.cos(in1);
         }
     }
 
-    static class TanFunction extends Function {
+    static class TanFunction extends Function1 {
         protected Double apply (Double in1, Double in2) {
             return Math.tan(in1);
         }
     }
 
-    static class AsinFunction extends Function {
+    static class AsinFunction extends Function1 {
         protected Double apply (Double in1, Double in2) {
             return Math.asin(in1);
         }
     }
 
-    static class AcosFunction extends Function {
+    static class AcosFunction extends Function1 {
         protected Double apply (Double in1, Double in2) {
             return Math.acos(in1);
         }
     }
 
-    static class AtanFunction extends Function {
+    static class AtanFunction extends Function1 {
         protected Double apply (Double in1, Double in2) {
             return Math.atan(in1);
         }
     }
 
-    static class Atan2Function extends Function {
+    static class Atan2Function extends Function2 {
         protected Double apply (Double in1, Double in2) {
             return Math.atan2(in1, in2);
         }
     }
 
-    static class SinhFunction extends Function {
+    static class SinhFunction extends Function1 {
         protected Double apply (Double in1, Double in2) {
             return Math.sinh(in1);
         }
     }
 
-    static class CoshFunction extends Function {
+    static class CoshFunction extends Function1 {
         protected Double apply (Double in1, Double in2) {
             return Math.cosh(in1);
         }
     }
 
-    static class TanhFunction extends Function {
+    static class TanhFunction extends Function1 {
         protected Double apply (Double in1, Double in2) {
             return Math.tanh(in1);
         }
     }
 
-    static class ExpFunction extends Function {
+    static class ExpFunction extends Function1 {
         protected Double apply (Double in1, Double in2) {
             return Math.exp(in1);
         }
     }
 
-    static class LogFunction extends Function {
+    static class LogFunction extends Function1 {
         protected Double apply (Double in1, Double in2) {
             return Math.log(in1);
         }
     }
 
-    static class AbsFunction extends Function {
+    static class AbsFunction extends Function1 {
         protected Double apply (Double in1, Double in2) {
             return Math.abs(in1);
         }
     }
 
-    static class SignFunction extends Function {
+    static class SignFunction extends Function1 {
         protected Double apply (Double in1, Double in2) {
             return Math.signum(in1);
         }
     }
 
-    static class HeavisideFunction extends Function {
+    static class HeavisideFunction extends Function1 {
         protected Double apply (Double in1, Double in2) {
             if (in1.isNaN())
                 return Double.NaN;
@@ -217,31 +225,32 @@ public class FormulaParser {
         }
     }
 
-    static class RoundFunction extends Function {
+    static class RoundFunction extends Function1 {
         protected Double apply (Double in1, Double in2) {
-            return (double)Math.round(in1);
+            //C rounding: ties round half away from zero, NaN stays NaN
+            return Analysis.roundHalfAwayFromZero(in1);
         }
     }
 
-    static class CeilFunction extends Function {
+    static class CeilFunction extends Function1 {
         protected Double apply (Double in1, Double in2) {
             return Math.ceil(in1);
         }
     }
 
-    static class FloorFunction extends Function {
+    static class FloorFunction extends Function1 {
         protected Double apply (Double in1, Double in2) {
             return Math.floor(in1);
         }
     }
 
-    static class MinFunction extends Function {
+    static class MinFunction extends Function2 {
         protected Double apply (Double in1, Double in2) {
             return Math.min(in1, in2);
         }
     }
 
-    static class MaxFunction extends Function {
+    static class MaxFunction extends Function2 {
         protected Double apply (Double in1, Double in2) {
             return Math.max(in1, in2);
         }
@@ -295,10 +304,6 @@ public class FormulaParser {
             }
         }
 
-        if (formula.charAt(start) == '-') {
-            return new Source(new FormulaNode(new MinusFunction(), parse(formula, start+1, end), null));
-        }
-
         int start1 = start;
         int start2 = start;
         int end1 = end;
@@ -323,7 +328,7 @@ public class FormulaParser {
             if (brackets == 0) {
                 switch (formula.charAt(i)) {
                     case '+':
-                        if (previousPriority >= 1 && (i == start || !cmd.equals("e"))) {
+                        if (previousPriority >= 1 && (i == start || formula.charAt(i-1) != 'e')) {
                             previousPriority = 1;
                             operator = new AddFunction();
                             start1 = start;
@@ -333,6 +338,10 @@ public class FormulaParser {
                         }
                         break;
                     case '-':
+                        //A minus at the start of the term or after an operator is a unary
+                        //minus, handled below - only the rest is a binary subtraction
+                        if (i == start)
+                            break;
                         if (previousPriority >= 1 && formula.charAt(i-1) != 'e' && formula.charAt(i-1) != '+' && formula.charAt(i-1) != '*' && formula.charAt(i-1) != '-' && formula.charAt(i-1) != '/' && formula.charAt(i-1) != '%' && formula.charAt(i-1) != '^') {
                             previousPriority = 1;
                             operator = new SubtractFunction();
@@ -373,7 +382,9 @@ public class FormulaParser {
                         }
                         break;
                     case '^':
-                        if (previousPriority >= 3) {
+                        //Strictly greater: the FIRST ^ splits, making ^ right-associative
+                        //(2^3^2 = 2^(3^2) = 512)
+                        if (previousPriority > 3) {
                             previousPriority = 3;
                             operator = new PowerFunction();
                             start1 = start;
@@ -476,9 +487,31 @@ public class FormulaParser {
         if (brackets != 0)
             throw new FormulaException("Brackets do not match!");
 
-        if (operator != null)
-            return new Source(new FormulaNode(operator, parse(formula, start1, end1), parse(formula, start2, end2)));
-        else {
+        //A leading minus is a unary minus binding tighter than + - * / % but looser than ^
+        //and function calls: it applies to the immediately following operand only, so
+        //-2+3 = 1 and -2^2 = -(2^2) = -4
+        if (formula.charAt(start) == '-' && (operator == null || previousPriority >= 3)) {
+            Source operand = parse(formula, start+1, end);
+            if (operand == null)
+                throw new FormulaException("Missing operand for unary minus.");
+            return new Source(new FormulaNode(new MinusFunction(), operand, null));
+        }
+
+        if (operator != null) {
+            Source in1 = parse(formula, start1, end1);
+            Source in2 = parse(formula, start2, end2);
+            //Structurally broken formulas - wrong arity, dangling operands - are a permanent
+            //failure state and reject the file at load instead of producing an empty output
+            //at runtime
+            if (operator instanceof Function2) {
+                if (in1 == null || in2 == null)
+                    throw new FormulaException("Missing operand in: " + formula.substring(start, end));
+            } else {
+                if (in1 == null || in2 != null)
+                    throw new FormulaException("Wrong number of arguments in: " + formula.substring(start, end));
+            }
+            return new Source(new FormulaNode(operator, in1, in2));
+        } else {
             try {
                 Double v = Double.valueOf(formula.substring(start, end));
                 return new Source(v);
@@ -491,6 +524,10 @@ public class FormulaParser {
     FormulaParser(String formula) throws FormulaException {
         String strippedFormula = formula.replaceAll("\\s+","").toLowerCase();
         base = parse(strippedFormula, 0, strippedFormula.length());
+        //An empty formula is a permanent failure state and rejects the file at load, like any
+        //other structurally broken formula
+        if (base == null)
+            throw new FormulaException("Empty formula.");
     }
 
     public void execute(Vector<Double[]> in, DataOutput out) {

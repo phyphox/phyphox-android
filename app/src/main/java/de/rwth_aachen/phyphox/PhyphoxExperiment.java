@@ -18,6 +18,7 @@ import androidx.collection.ArraySet;
 import org.w3c.dom.Attr;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
+import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 
 import java.io.ByteArrayInputStream;
@@ -32,7 +33,6 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
@@ -66,6 +66,7 @@ public class PhyphoxExperiment implements Serializable, ExperimentTimeReference.
 
     boolean loaded = false; //Set to true if this instance holds a successfully loaded experiment
     boolean isLocal; //Set to true if this experiment was loaded from a local file. (if false, the experiment can be added to the library)
+    public boolean isLink = false; //Set to true if this file is not an experiment but an entry pointing at a web page. Such a file has no views and is never run: opening it opens its first link (see Experiment.openLinkEntry).
     byte[] source = null; //This holds the original source file
     Set<String> resources = new ArraySet<>();
     String resourceFolder = null;
@@ -78,8 +79,36 @@ public class PhyphoxExperiment implements Serializable, ExperimentTimeReference.
     String baseCategory = ""; //The category of this experiment without translations
     String icon = ""; //The icon. This is either a base64-encoded drawable (typically png) or (if its length is 3 or less characters) it is a short form which should be used in a simple generated logo (like "gyr" for gyroscope). (The experiment list will use the first three characters of the title if this is completely empty)
     String description = "There is no description available for this experiment."; //A long text, explaining details about the experiment
-    public Map<String, String> links = new LinkedHashMap<>(); //This contains links to external documentation or similar stuff
-    public Map<String, String> highlightedLinks = new LinkedHashMap<>(); //This contains highlighted (= showing up in the menu) links to external documentation or similar stuff
+    //A link to external documentation or similar stuff. The label identifies the link (it is the
+    //key a translated link is matched on), displayText is what is actually shown to the user (the
+    //translation attribute of the applied translation block or the label itself) and highlighted
+    //links additionally show up in the experiment's menu.
+    //(See translation-link-matching in phyphox-docs for the semantics implemented here.)
+    public static class Link implements Serializable {
+        public final String label;
+        public final String displayText;
+        public final String url;
+        public final boolean highlighted;
+
+        public Link(String label, String displayText, String url, boolean highlighted) {
+            this.label = label;
+            this.displayText = displayText;
+            this.url = url;
+            this.highlighted = highlighted;
+        }
+    }
+
+    public List<Link> links = new ArrayList<>(); //This contains links to external documentation or similar stuff, with the selected translation block already applied
+
+    //The subset of links that should show up in the experiment's menu, in declaration order
+    public List<Link> getHighlightedLinks() {
+        List<Link> highlighted = new ArrayList<>();
+        for (Link link : links) {
+            if (link.highlighted)
+                highlighted.add(link);
+        }
+        return highlighted;
+    }
     public Vector<ExpView> experimentViews = new Vector<>(); //Instances of the experiment views (see expView.java) that define the views for this experiment
     public ExperimentTimeReference experimentTimeReference; //This class holds the time of the first sensor event as a reference to adjust the sensor time stamp for all sensors to start at a common zero
     public Vector<SensorInput> inputSensors = new Vector<>(); //Instances of sensorInputs (see sensorInput.java) which are used in this experiment
@@ -91,11 +120,21 @@ public class PhyphoxExperiment implements Serializable, ExperimentTimeReference.
     public final Vector<DataBuffer> dataBuffers = new Vector<>(); //Instances of dataBuffers (see dataBuffer.java) that are used to store sensor data, analysis results etc.
     public final Map<String, Integer> dataMap = new HashMap<>(); //This maps key names (string) defined in the experiment-file to the index of a dataBuffer
     public Vector<Analysis.AnalysisModule> analysis = new Vector<>(); //Instances of analysisModules (see analysis.java) that define all the mathematical processes in this experiment
-    public Lock dataLock = new ReentrantLock();
+    //Fair on purpose. Everything that reads buffer data takes this lock - the remote server's
+    //get and export handlers, the exporter, the state writer - while the analysis and the sensor
+    //callbacks take it over and over, several times per pass with no gap in between. A non-fair
+    //lock lets a thread that re-acquires immediately barge past a waiter, so on a device slow
+    //enough that the analysis never leaves a gap, a reader is starved indefinitely: the lab saw
+    //every export of doppler fail on a Galaxy A3 while a 167-byte /get went unanswered for
+    //minutes and /config, the one endpoint that touches no buffer, replied instantly. FIFO costs
+    //a park/unpark per contended acquisition, which is nothing next to the few hundred
+    //acquisitions a second this sees.
+    public Lock dataLock = new ReentrantLock(true);
 
     double analysisSleep = 0.; //Pause between analysis cycles. At 0 analysis is done as fast as possible.
     DataBuffer analysisDynamicSleep = null;
     double lastAnalysis = 0.0; //This variable holds the system time of the moment the last analysis process finished. This is necessary for experiments, which do analysis after given intervals
+    boolean analysisRan = false; //Whether an analysis pass has run since the experiment was opened or (re)started. The first run is exempt from the requireFill gate (spec/analysis.yml, decided 2026-08-24), and this cannot be read off lastAnalysis: that holds the experiment time, which is exactly zero as long as the experiment has never been started.
     double analysisTime; //This variable holds the experiment time of the moment the current analysis process started.
     double analysisLinearTime; //Same with the current system time
     boolean analysisOnUserInput = false; //Do the data analysis only if there is fresh input from the user.
@@ -299,7 +338,7 @@ public class PhyphoxExperiment implements Serializable, ExperimentTimeReference.
         } else
             cycle = 0;
 
-        if (requireFill != null && lastAnalysis != 0) {
+        if (requireFill != null && analysisRan) {
             int threshold = requireFillThreshold;
             if (requireFillDynamic != null && requireFillDynamic.getFilledSize() > 0)
                 threshold = (int)requireFillDynamic.value;
@@ -364,6 +403,7 @@ public class PhyphoxExperiment implements Serializable, ExperimentTimeReference.
         recordingUsed = true;
         newData = true; //We have fresh data to present.
         lastAnalysis = experimentTimeReference.getExperimentTime(); //Remember when we were done this time
+        analysisRan = true; //A run that was gated above does not get here, so this marks a pass that actually happened
     }
 
     //called by the main loop after everything is processed. Here we have to send all the analysis results to the appropriate views
@@ -413,6 +453,13 @@ public class PhyphoxExperiment implements Serializable, ExperimentTimeReference.
             experimentTimeReference.registerEvent(ExperimentTimeReference.TimeMappingEvent.PAUSE);
         event = experimentTimeReference.getLastMapping();
         lastAnalysis = 0.0;
+        //analysisRan is deliberately NOT reset here. Stopping does not exempt anything: the ruled
+        //semantics exempt the first run after opening or after STARTING, and startAllIO does that
+        //reset. Disarming the gate at stop instead armed it for the paused passes that follow a
+        //stop (handleInputViews runs one whenever there is user input while not measuring) - and
+        //those run with the analysis inputs already consumed, so every module with a non-append
+        //output overwrote its results with nothing. The recorded data was gone and the export
+        //that followed held only headers.
 
         //Recording
         if (audioRecord != null && audioRecord.getState() == AudioRecord.STATE_INITIALIZED)
@@ -483,6 +530,7 @@ public class PhyphoxExperiment implements Serializable, ExperimentTimeReference.
         }
 
         newUserInput = true; //Set this to true to execute analysis at least ones with default values.
+        analysisRan = false; //The first run after starting is exempt from the requireFill gate as well - the passes that ran while the experiment was merely open must not arm it, or an input that only delivers data once the analysis has run (audio recording) would wait for a run that waits for its data.
 
         for (SensorInput sensor : inputSensors)
             sensor.start();
@@ -609,7 +657,9 @@ public class PhyphoxExperiment implements Serializable, ExperimentTimeReference.
 
     }
 
-    private String writeStateFile(String customTitle, OutputStream os) {
+    //Package-private rather than private so StateFileWriterTest can drive it directly - the
+    //async wrapper above would only add an executor and a callback to the test.
+    String writeStateFile(String customTitle, OutputStream os) {
 
         if (source == null)
             return "Source is null.";
@@ -635,10 +685,21 @@ public class PhyphoxExperiment implements Serializable, ExperimentTimeReference.
 
         root.normalize();
 
+        //Drop the metadata of a previous save before appending fresh elements below. Collect
+        //first and remove afterwards: getChildNodes() is a live NodeList, so removing item i
+        //shifts the next sibling into index i and the loop would skip it. The elements below
+        //are appended back-to-back, so that skip left a stale element behind on every re-save
+        //(a saved state carries exactly one state-title - the writer replaces, never
+        //accumulates; a duplicate makes the file unloadable on iOS).
         NodeList children = root.getChildNodes();
-        for (int i = 0; i < children.getLength(); i++)
-            if (children.item(i).getNodeName().equals("state-title") || children.item(i).getNodeName().equals("color") || children.item(i).getNodeName().equals("events") )
-                root.removeChild(children.item(i));
+        List<Node> obsolete = new ArrayList<>();
+        for (int i = 0; i < children.getLength(); i++) {
+            String name = children.item(i).getNodeName();
+            if (name.equals("state-title") || name.equals("color") || name.equals("events"))
+                obsolete.add(children.item(i));
+        }
+        for (Node node : obsolete)
+            root.removeChild(node);
 
         Element customTitleEl = doc.createElement("state-title");
         customTitleEl.setTextContent(customTitle);
@@ -681,9 +742,20 @@ public class PhyphoxExperiment implements Serializable, ExperimentTimeReference.
 
             Attr attr = doc.createAttribute("init");
 
+            //Under the data lock like every other reader of a buffer: this runs on its own
+            //thread while the analysis keeps writing, and copying a list that grows underneath
+            //throws (see DataExport.collectData).
+            Double[] values;
+            dataLock.lock();
+            try {
+                values = buffer.getArray();
+            } finally {
+                dataLock.unlock();
+            }
+
             StringBuilder sb = new StringBuilder();
             boolean first = true;
-            for (double v : buffer.getArray()) {
+            for (double v : values) {
                 if (first)
                     first = false;
                 else

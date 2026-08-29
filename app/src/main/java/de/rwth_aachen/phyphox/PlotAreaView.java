@@ -1278,11 +1278,20 @@ class PlotRenderer extends Thread implements TextureView.SurfaceTextureListener 
 
     private void doUpdateGrid() {
         nGridLines = 0;
-        if (graphSetup.xTics == null || graphSetup.yTics == null)
+
+        //The tic arrays are replaced wholesale by the UI thread whenever the graph's range
+        //changes (GraphSetup.setTics), while this runs on the renderer thread. Reading a field
+        //more than once therefore mixes two generations: sizing the buffer from one array and
+        //filling it from a longer one overflows it, and the exception takes the whole app down
+        //from the renderer thread (BufferOverflowException, caught in the T1 sweep). One
+        //snapshot per pass - the arrays themselves are never modified after they are published.
+        GraphView.Tic[] xTics = graphSetup.xTics;
+        GraphView.Tic[] yTics = graphSetup.yTics;
+        if (xTics == null || yTics == null)
             return;
 
-        FloatBuffer gridData = ByteBuffer.allocateDirect((graphSetup.xTics.length + graphSetup.yTics.length) * 2 * 2 * 4).order(ByteOrder.nativeOrder()).asFloatBuffer();
-        for (GraphView.Tic tic : graphSetup.xTics) {
+        FloatBuffer gridData = ByteBuffer.allocateDirect((xTics.length + yTics.length) * 2 * 2 * 4).order(ByteOrder.nativeOrder()).asFloatBuffer();
+        for (GraphView.Tic tic : xTics) {
             double x = tic.value;
             gridData.put((float)(graphSetup.logX ? Math.log(x) : x));
             gridData.put((float)(graphSetup.logY ? Math.log(graphSetup.minY): graphSetup.minY));
@@ -1290,7 +1299,7 @@ class PlotRenderer extends Thread implements TextureView.SurfaceTextureListener 
             gridData.put((float)(graphSetup.logY ? Math.log(graphSetup.maxY): graphSetup.maxY));
             nGridLines++;
         }
-        for (GraphView.Tic tic : graphSetup.yTics) {
+        for (GraphView.Tic tic : yTics) {
             double y = tic.value;
             gridData.put((float)(graphSetup.logX ? Math.log(graphSetup.minX): graphSetup.minX));
             gridData.put((float)(graphSetup.logY ? Math.log(y) : y));
@@ -1304,12 +1313,13 @@ class PlotRenderer extends Thread implements TextureView.SurfaceTextureListener 
         GLES20.glBindBuffer(GLES20.GL_ARRAY_BUFFER, 0);
 
         nZGridLines = 0;
-        if (graphSetup.zTics == null)
+        GraphView.Tic[] zTics = graphSetup.zTics;
+        if (zTics == null)
             return;
 
         if(showColorScaleForColorMapChart){
-            FloatBuffer zGridData = ByteBuffer.allocateDirect((graphSetup.zTics.length) * 2 * 2 * 4).order(ByteOrder.nativeOrder()).asFloatBuffer();
-            for (GraphView.Tic tic : graphSetup.zTics) {
+            FloatBuffer zGridData = ByteBuffer.allocateDirect((zTics.length) * 2 * 2 * 4).order(ByteOrder.nativeOrder()).asFloatBuffer();
+            for (GraphView.Tic tic : zTics) {
                 double z = tic.value;
                 zGridData.put((float)(graphSetup.logZ ? Math.log(z) : z));
                 zGridData.put((float)(0.));

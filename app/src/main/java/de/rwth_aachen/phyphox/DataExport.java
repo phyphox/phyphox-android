@@ -89,6 +89,17 @@ public class DataExport implements Serializable {
             this.sources.add(new SourceMapping(name, source));
         }
 
+        //How many rows this set exports: as many as its longest column holds, with the shorter
+        //ones padded out (ruled 2026-08-25, export-set-row-count in phyphox-docs). Sizing by the
+        //first column instead truncated every longer column, and dropped the whole set whenever
+        //the first container happened to be empty while the others held data.
+        int rowCount() {
+            int rows = 0;
+            for (Double[] column : data)
+                rows = Math.max(rows, column.length);
+            return rows;
+        }
+
         //Retrieve all data from the dataBuffers
         public void getData() {
             data = new Double[sources.size()][];
@@ -181,7 +192,8 @@ public class DataExport implements Serializable {
                             zstream.write(header.getBytes()); //Write the header to the zip-file
 
                         //Then add all the data
-                        for (int i = 0; i < set.data[0].length; i++) { //For each row of data... The first column determines the number of rows
+                        int rows = set.rowCount();
+                        for (int i = 0; i < rows; i++) { //For each row of data - as many as the longest column holds
                             //Construct the data row
                             StringBuilder data = new StringBuilder();
                             for (int j = 0; j < set.data.length; j++) { //For each column within this row
@@ -217,7 +229,7 @@ public class DataExport implements Serializable {
                             data.append("\"").append(identifier).append("\"").append(separator);
                             data.append("\"").append(new Metadata(identifier, ctx).get("")).append("\"").append("\n");
                         }
-                        for (SensorInput.SensorName sensor : SensorInput.SensorName.values()) {
+                        for (SensorInput.SensorName sensor : Metadata.sensorsWithMetadata()) {
                             for (Metadata.SensorMetadata sensorMetadata : Metadata.SensorMetadata.values()) {
                                 String identifier = sensorMetadata.toString();
                                 data.append("\"").append(sensor.name()).append(" ").append(identifier).append("\"").append(separator);
@@ -313,7 +325,8 @@ public class DataExport implements Serializable {
                         xlsx.endRow();
 
                         //Create all the data rows
-                        for (int i = 0; i < set.data[0].length; i++) { //For each row of data (number of rows determined by first entry in dataset)
+                        int rows = set.rowCount();
+                        for (int i = 0; i < rows; i++) { //For each row of data - as many as the longest column holds
                             xlsx.startRow();
                             for (int j = 0; j < set.data.length; j++) { //For each column
                                 if (i < set.data[j].length) //Is there data for this cell?
@@ -342,7 +355,7 @@ public class DataExport implements Serializable {
                             xlsx.stringCell(new Metadata(identifier, ctx).get(""), false);
                             xlsx.endRow();
                         }
-                        for (SensorInput.SensorName sensor : SensorInput.SensorName.values()) {
+                        for (SensorInput.SensorName sensor : Metadata.sensorsWithMetadata()) {
                             for (Metadata.SensorMetadata sensorMetadata : Metadata.SensorMetadata.values()) {
                                 String identifier = sensorMetadata.toString();
 
@@ -420,13 +433,28 @@ public class DataExport implements Serializable {
         this.exportSets.add(set);
     }
 
+    //Take the snapshot every export starts from. The buffers are written by the analysis and
+    //sensor threads while this runs, so it happens under the experiment's data lock: without it
+    //a buffer can grow between the moment its size is read and the moment it is copied, and
+    //LinkedList.toArray walks off the end of the array it just sized (seen as a 500 on /export
+    //of a running experiment, ArrayIndexOutOfBoundsException from DataBuffer.getArray). Locking
+    //once around all sets also makes the sets consistent with each other, which is what a
+    //snapshot is supposed to be.
+    private void collectData() {
+        experiment.dataLock.lock();
+        try {
+            for (int i = 0; i < exportSets.size(); i++) {
+                exportSets.get(i).getData();
+            }
+        } finally {
+            experiment.dataLock.unlock();
+        }
+    }
+
     //Export the data (this will show dialogs to the user)
     public void export(Activity c, boolean minimalistic) {
 
-        //Retrieve all the data
-        for (int i = 0; i < exportSets.size(); i++) {
-            exportSets.get(i).getData();
-        }
+        collectData();
 
         final String fileName = FileNameFormat.formatFilename(c, experiment.title, experiment.experimentTimeReference);
         showFormatDialog(exportSets, c, minimalistic, fileName);
@@ -504,9 +532,7 @@ public class DataExport implements Serializable {
     //The user will select the exportSets and file format in the browser and will download the
     //   resulting file there as well.
     protected File exportDirect(ExportFormat format, File cacheDir, boolean minimalistic, final String fileName, Context ctx) {
-        for (int i = 0; i < exportSets.size(); i++) {
-            exportSets.get(i).getData();
-        }
+        collectData();
 
         format.setFilenameBase(fileName);
 

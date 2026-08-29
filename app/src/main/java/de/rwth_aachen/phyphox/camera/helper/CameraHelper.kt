@@ -45,9 +45,20 @@ object CameraHelper {
         }
     }
 
+    //Never null: every caller walks the result directly, and an empty list is the honest answer
+    //both for a device without cameras and for one whose cameras have not been enumerated yet.
     @JvmStatic
-    fun getCameraList(): Map<String, CameraCharacteristics>? {
-        return cameraList
+    fun getCameraList(): Map<String, CameraCharacteristics> {
+        return cameraList ?: emptyMap()
+    }
+
+    //Enumerate the cameras unless that has already happened. The experiment list does it when
+    //it loads, but code that can be reached without it - the remote interface's /meta, for
+    //example - would otherwise report a device without any cameras.
+    @JvmStatic
+    fun ensureCameraList(cm: CameraManager) {
+        if (cameraList == null)
+            updateCameraList(cm)
     }
 
     fun facingConstToString(c: Int): String {
@@ -97,18 +108,20 @@ object CameraHelper {
     @JvmStatic
     fun getCamera2FormattedCaps(full: Boolean): String {
         val json = JSONArray()
-        for ((key1, value) in cameraList!!) {
+        //A camera does not have to report every characteristic. camera2 guarantees the ones
+        //below for a regular camera, but this report covers whatever the device lists, and it
+        //is served over the remote interface - where a missing value must not take down the
+        //whole response.
+        for ((key1, value) in getCameraList()) {
             val jsonCam = JSONObject()
             try {
                 jsonCam.put("id", key1)
-                jsonCam.put(
-                    "facing",
-                    facingConstToString(value.get(CameraCharacteristics.LENS_FACING)!!)
-                )
-                jsonCam.put(
-                    "hardwareLevel",
-                    hardwareLevelConstToString(value.get(CameraCharacteristics.INFO_SUPPORTED_HARDWARE_LEVEL)!!)
-                )
+                value.get(CameraCharacteristics.LENS_FACING)?.let {
+                    jsonCam.put("facing", facingConstToString(it))
+                }
+                value.get(CameraCharacteristics.INFO_SUPPORTED_HARDWARE_LEVEL)?.let {
+                    jsonCam.put("hardwareLevel", hardwareLevelConstToString(it))
+                }
                 val caps = value.get(CameraCharacteristics.REQUEST_AVAILABLE_CAPABILITIES)
                 val jsonCaps = JSONArray()
                 if (caps != null) {
@@ -134,8 +147,8 @@ object CameraHelper {
                     jsonCam.put("captureResultKeys", jsonCapRequestKeys)
                     val jsonFpsRanges = JSONArray()
                     val fpsRanges =
-                        value.get(CameraCharacteristics.CONTROL_AE_AVAILABLE_TARGET_FPS_RANGES)!!
-                    for (fpsRange in fpsRanges) {
+                        value.get(CameraCharacteristics.CONTROL_AE_AVAILABLE_TARGET_FPS_RANGES)
+                    for (fpsRange in fpsRanges ?: emptyArray()) {
                         val jsonFpsRange = JSONObject()
                         jsonFpsRange.put("min", fpsRange.lower)
                         jsonFpsRange.put("max", fpsRange.upper)
@@ -152,12 +165,12 @@ object CameraHelper {
                     jsonCam.put("physicalCamIds", jsonPhysicalCamIds)
                     val jsonStreamConfigs = JSONArray()
                     val configMap = value.get(CameraCharacteristics.SCALER_STREAM_CONFIGURATION_MAP)
-                    val formats = configMap!!.outputFormats
+                    val formats = configMap?.outputFormats ?: IntArray(0)
                     for (format in formats) {
                         val jsonFormat = JSONObject()
                         jsonFormat.put("format", format)
                         val jsonSizes = JSONArray()
-                        val sizes = configMap.getOutputSizes(format)
+                        val sizes = configMap?.getOutputSizes(format) ?: emptyArray()
                         for (size in sizes) {
                             val jsonSize = JSONObject()
                             jsonSize.put("w", size.width)
@@ -166,14 +179,14 @@ object CameraHelper {
                         }
                         jsonFormat.put("outputSizes", jsonSizes)
                         val jsonHighspeed = JSONArray()
-                        val highSpeedVideoSizes = configMap.highSpeedVideoSizes
+                        val highSpeedVideoSizes = configMap?.highSpeedVideoSizes ?: emptyArray()
                         for (size in highSpeedVideoSizes) {
                             val jsonSize = JSONObject()
                             jsonSize.put("w", size.width)
                             jsonSize.put("h", size.height)
                             val jsonHighSpeedVideoFpsRanges = JSONArray()
                             val highSpeedVideoFpsRange =
-                                configMap.getHighSpeedVideoFpsRangesFor(size)
+                                configMap?.getHighSpeedVideoFpsRangesFor(size) ?: emptyArray()
                             for (fpsRange in highSpeedVideoFpsRange) {
                                 val jsonFpsRange = JSONObject()
                                 jsonFpsRange.put("min", fpsRange.lower)

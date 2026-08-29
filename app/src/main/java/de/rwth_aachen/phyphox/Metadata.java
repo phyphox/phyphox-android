@@ -6,10 +6,13 @@ import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
 import android.hardware.SensorManager;
 import android.hardware.camera2.CameraCharacteristics;
+import android.hardware.camera2.CameraManager;
 import android.os.Build;
 import android.util.Size;
 
 import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
+import java.util.List;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.UUID;
@@ -37,6 +40,20 @@ public class Metadata {
 
     String resultBuffer;
 
+    //The sensors that have per-sensor metadata. Custom sensors are selected by nameFilter, so
+    //per-sensor metadata for "custom" is ambiguous and not part of the identifier vocabulary -
+    //the constructor below rejects it. Everything that walks the sensors to collect metadata
+    //walks this list instead of SensorName.values(), because asking for an identifier outside
+    //the vocabulary throws: over the remote interface that used to cost the whole /meta
+    //response, in the exporter a corrupt xlsx with an unterminated row.
+    public static List<SensorInput.SensorName> sensorsWithMetadata() {
+        List<SensorInput.SensorName> result = new ArrayList<>();
+        for (SensorInput.SensorName sensor : SensorInput.SensorName.values())
+            if (sensor != SensorInput.SensorName.custom)
+                result.add(sensor);
+        return result;
+    }
+
     //Identifiers are matched case-insensitively (see rules.yml, enum-case-insensitive), unknown
     //identifiers are still rejected with an IllegalArgumentException.
     public Metadata(String identifier, Context ctx) throws IllegalArgumentException {
@@ -48,7 +65,7 @@ public class Metadata {
             }
         }
         String lowerIdentifier = identifier.toLowerCase();
-        for (SensorInput.SensorName sensor : SensorInput.SensorName.values()) {
+        for (SensorInput.SensorName sensor : sensorsWithMetadata()) {
             if (lowerIdentifier.startsWith(sensor.name().toLowerCase())) {
                 String suffix = identifier.substring(sensor.name().length());
                 for (SensorMetadata candidate : SensorMetadata.values()) {
@@ -65,7 +82,30 @@ public class Metadata {
         throw new IllegalArgumentException("Unknown metadata identifier: " + identifier);
     }
 
+    //The camera and depth values below read the camera list CameraHelper caches. The experiment
+    //list fills it when it loads, but nothing guarantees that a caller came that way - the
+    //remote interface's /meta does not - and an unenumerated list would report a device without
+    //any cameras.
+    private static boolean readsCameraList(DeviceMetadata metadata) {
+        switch (metadata) {
+            case depthFrontSensor:
+            case depthFrontResolution:
+            case depthFrontRate:
+            case depthBackSensor:
+            case depthBackResolution:
+            case depthBackRate:
+            case camera2api:
+            case camera2apiFull:
+                return true;
+            default:
+                return false;
+        }
+    }
+
     public String getBuffered(Context ctx) {
+        if (readsCameraList(metadata))
+            CameraHelper.ensureCameraList((CameraManager) ctx.getSystemService(Context.CAMERA_SERVICE));
+
         switch (metadata) {
             case uniqueID:
                 final String settingName = "NetworkMetadataUUID";
