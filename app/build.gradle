@@ -8,9 +8,9 @@ android {
         targetSdkVersion 37
         compileSdk 37
 
-        versionName "1.2.1-beta4"
+        versionName "1.2.1"
         //  format  WXXYYZZ, where WW is major, XX is minor, YY is patch, and ZZ is build
-        versionCode 1020104 //1.02.01-04
+        versionCode 1020105 //1.02.01-05
 
         def locales = ['en', 'cs', 'de', 'el', 'es', 'fr', 'gu', 'hi', 'it', 'ja', 'ka', 'ko', 'nl', 'pl', 'pt', 'ru', 'sr', 'b+sr+Latn', 'ta', 'tr', 'vi', 'zh-rCN', 'zh-rTW']
         buildConfigField "String[]", "LOCALE_ARRAY", "new String[]{\""+locales.join("\",\"")+"\"}"
