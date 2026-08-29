@@ -281,6 +281,7 @@ THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND 
     <string name="bt_exception_disabled">Bluetooth is disabled. Please enable bluetooth and try again.</string>
     <string name="bt_exception_connection">Bluetooth connection could not be opened.</string>
     <string name="bt_exception_notfound">Bluetooth device not found.</string>
+    <string name="bt_scan_failed">The Bluetooth scan could not be started. Switching Bluetooth off and on again usually clears this. Android reported error code:</string>
     <string name="bt_exception_services">Services could not be discovered.</string>
     <string name="bt_exception_device">Error for the device with</string>
     <string name="bt_exception_device_address">address</string>

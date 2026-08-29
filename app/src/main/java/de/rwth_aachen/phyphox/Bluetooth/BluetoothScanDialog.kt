@@ -69,6 +69,21 @@ class BluetoothScanDialog(
         val selectable get() = supported || phyphoxService
     }
 
+    /**
+     * Set before the lock is notified. Object.wait() only hears a notify that arrives while it
+     * is waiting, and a scan can fail before the waiting thread has got that far - startScan
+     * answers on another thread and a refused registration comes back at once - so the notify
+     * was lost and the thread waited for good. That left stopScan below unreached, which leaks
+     * the scan registration for the life of the process, and the next scan then fails to
+     * register too: one failure and the app can never scan again until it is restarted.
+     */
+    private var finished = false
+
+    /** the error code of a scan that never started, so the caller can say so instead of nothing */
+    @Volatile
+    var scanFailureCode: Int? = null
+        private set
+
     private var dialog: AlertDialog? = null
     private var title: TextView? = null
     private var listAdapter: DeviceListAdapter? = null
@@ -119,6 +134,7 @@ class BluetoothScanDialog(
             dialog = builder.create().also { d ->
                 d.setOnDismissListener {
                     synchronized(lock) {
+                        finished = true
                         lock.notify()
                     }
                 }
@@ -168,10 +184,14 @@ class BluetoothScanDialog(
         }
 
         synchronized(lock) {
-            try {
-                lock.wait()
-            } catch (e: InterruptedException) {
-                //return what we have
+            //Guarded: a notify that arrived before this point has already set the flag, and a
+            //bare wait() would have slept through it.
+            while (!finished) {
+                try {
+                    lock.wait()
+                } catch (e: InterruptedException) {
+                    break //return what we have
+                }
             }
         }
 
@@ -195,7 +215,13 @@ class BluetoothScanDialog(
         }
 
         override fun onScanFailed(errorCode: Int) {
+            //The scan never started, so there is nothing to find and nothing to wait for. Told
+            //to the caller rather than only to the log: dismissing the dialog on its own leaves
+            //the user looking at the screen they started from, with no idea that anything went
+            //wrong. SCAN_FAILED_APPLICATION_REGISTRATION_FAILED (2) is the one seen in the
+            //field, and it is what a leaked registration from an earlier scan produces.
             Log.e("BluetoothScanDialog", "BLE scan failed with error code $errorCode.")
+            scanFailureCode = errorCode
             parentActivity.runOnUiThread { dialog?.dismiss() }
         }
     }

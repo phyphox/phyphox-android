@@ -42,8 +42,16 @@ class BluetoothScanner(
             } else {
                 val scanDialog = BluetoothScanDialog(false, parent, parent, BluetoothAdapter.getDefaultAdapter())
                 val result = scanDialog.getBluetoothDevice(null, null, bluetoothDeviceNameList, bluetoothDeviceUUIDList, null)
+                val failure = scanDialog.scanFailureCode
                 if (result != null)
                     mainHandler.post { listener.onBluetoothDeviceFound(result) }
+                else if (failure != null) {
+                    //A scan that never started used to end here in silence: the dialog closed
+                    //itself and the user was left on the screen they came from, with the reason
+                    //only in the log.
+                    val msg = res.getString(R.string.bt_scan_failed) + " " + failure
+                    mainHandler.post { listener.onBluetoothScanError(msg, true, false) }
+                }
             }
         }.start()
     }
