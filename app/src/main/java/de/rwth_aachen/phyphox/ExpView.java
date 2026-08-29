@@ -3183,10 +3183,14 @@ public class ExpView implements Serializable{
             return  true;
         }
 
-        @Override
-        protected void clear() {
-            triggered = true;
-        }
+        //No clear() here on purpose. It used to set triggered, which wrote the switch's own
+        //position back into the buffer the moment the data was cleared - so a toggle the user
+        //had flipped stayed flipped through the trash. Clearing is how a user deliberately
+        //returns an experiment to its starting state (maintainer, 2026-08-29), and a setting
+        //meant to SURVIVE it is what clearGroup is for; if clearing kept whatever the controls
+        //showed, that attribute would answer a question nobody asked. So the emptied buffer is
+        //seeded with the default like any other, and onMayReadFromBuffers moves the switch to
+        //match - the control follows the data, which is what iOS does.
 
         @Override
         protected String createViewHTML() {
