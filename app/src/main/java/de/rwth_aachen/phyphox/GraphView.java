@@ -1418,6 +1418,17 @@ public class GraphView extends View {
             graphH -= graphT;
         }
 
+        //This view sits on top of the GL surface of the plot area, which only guarantees its
+        //content within the plot bounds and the z scale bar. So we have to fill the margins
+        //around them ourselves instead of relying on what the surface below happens to show.
+        int labelColor = paint.getColor();
+        paint.setColor(res.getColor(Helper.isDarkTheme(res) ? R.color.phyphox_black_60 : R.color.phyphox_white_100));
+        canvas.drawRect(0, 0, graphL, h, paint);
+        canvas.drawRect(graphL, h-graphB, w, h, paint);
+        if (zScale)
+            canvas.drawRect(graphL, zScaleH, w, graphT, paint);
+        paint.setColor(labelColor);
+
         //Report axis ranges to graph
         graphSetup.setDataBounds((float)workingMinX, (float)workingMaxX, (float)workingMinY, (float)workingMaxY, (float)workingMinZ, (float)workingMaxZ);
         graphSetup.setPlotBounds(graphL, graphT, graphW, graphH);
