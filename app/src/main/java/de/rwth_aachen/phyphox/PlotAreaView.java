@@ -1075,6 +1075,11 @@ class PlotRenderer extends Thread implements TextureView.SurfaceTextureListener 
 
         GLES20.glUseProgram(0);
 
+        //Do not leave the scissor test enabled across eglSwapBuffers: a compositor that copies
+        //the buffer with GL state in effect (the emulator's gfxstream does) would crop the
+        //presented frame to the last scissor rectangle.
+        GLES20.glDisable(GLES20.GL_SCISSOR_TEST);
+
     }
 
     private void doUpdateBuffers() {
