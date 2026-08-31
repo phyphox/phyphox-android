@@ -752,7 +752,11 @@ public class Experiment extends AppCompatActivity implements View.OnClickListene
             });
 
 
-            int startView = 0;
+            //Usually the first view. The store screenshot system can name another one through a
+            //shell-only system property (see DebugSwitches) because one of its scenes shows the
+            //second view; a restored instance state below still wins, so a rotation reopens the
+            //view the user was on.
+            int startView = DebugSwitches.startView();
 
             //If we have a savedInstanceState, it would be a good time to interpret it...
             if (savedInstanceState != null) {
@@ -781,6 +785,8 @@ public class Experiment extends AppCompatActivity implements View.OnClickListene
             }
 
             setupTabLayout();
+            if (startView >= tabLayout.getTabCount()) //An index this experiment does not have
+                startView = 0;
             tabLayout.getTabAt(startView).select();
 
             //Everything is ready. Let's start the "main loop"

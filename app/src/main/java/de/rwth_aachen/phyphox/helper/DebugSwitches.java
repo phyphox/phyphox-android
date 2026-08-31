@@ -29,6 +29,23 @@ import java.util.Locale;
 //                             Android-only vendor sensor warning is not bypassed. It skips no
 //                             user choice and no system permission dialog, which the app cannot
 //                             dismiss anyway. iOS: -phyphoxAutoConfirm.
+//  debug.phyphox.assumeSensors reports every sensor as present while building the experiment
+//                             collection, so no entry is greyed out as unavailable. This one is
+//                             for the store screenshot system, not for the lab driver: the
+//                             emulators it captures on have almost no sensors, which would turn
+//                             the collection screenshot into a wall of half-faded entries. It
+//                             only affects how the list is rendered - an experiment that is
+//                             started anyway still finds no sensor and records nothing, which is
+//                             fine for a generated copy that carries its data as init values.
+//                             iOS: -phyphoxAssumeSensors.
+//  debug.phyphox.view         the view (tab) index the experiment opens on, counting from 0 in
+//                             the order the views appear in the file. Absent, not a number or
+//                             out of range means the first view, i.e. current behaviour. Also
+//                             for the screenshot system: one scene wants the second view, and
+//                             tapping a tab at coordinates that differ per form factor is what
+//                             made the old screenshot tests unmaintainable. A restored instance
+//                             state still wins - it reopens the view the user was on.
+//                             iOS: -phyphoxView.
 //
 //Android needs no counterpart of iOS's -phyphoxUrl: "adb shell am start" opens a URL without the
 //system asking for confirmation.
@@ -55,12 +72,19 @@ import java.util.Locale;
 //
 //The values are read through getprop rather than the hidden SystemProperties class, which is not
 //part of the SDK and is blocked for apps on recent Android versions. They are read fresh every
-//time, because the driver may set a property while the app is already running.
+//time, because the driver may set a property while the app is already running. The exception is
+//assumeSensors, which is asked once per experiment while the collection is built and would spawn
+//a getprop process for each of the sixty-odd entries, so it is read once per app process. The
+//screenshot host sets it before it starts the app, so that costs it nothing.
 public class DebugSwitches {
 
     private static final String REMOTE = "debug.phyphox.remote";
     private static final String REMOTE_PORT = "debug.phyphox.remotePort";
     private static final String AUTO_CONFIRM = "debug.phyphox.autoConfirm";
+    private static final String ASSUME_SENSORS = "debug.phyphox.assumeSensors";
+    private static final String VIEW = "debug.phyphox.view";
+
+    private static Boolean assumeSensors = null;
 
     public static boolean remoteEnabled() {
         return isSet(REMOTE);
@@ -68,6 +92,28 @@ public class DebugSwitches {
 
     public static boolean autoConfirm() {
         return isSet(AUTO_CONFIRM);
+    }
+
+    //Whether every sensor should be treated as available. Cached for the lifetime of the process,
+    //see the note above.
+    public static boolean assumeSensors() {
+        if (assumeSensors == null)
+            assumeSensors = isSet(ASSUME_SENSORS);
+        return assumeSensors;
+    }
+
+    //The view (tab) index an experiment should open on, or 0 if the property is absent or does
+    //not name a non-negative index. The caller still has to check it against the number of views
+    //the experiment actually has.
+    public static int startView() {
+        try {
+            int view = Integer.parseInt(get(VIEW));
+            if (view > 0)
+                return view;
+        } catch (NumberFormatException e) {
+            //Not a number. Treat it like an unset property.
+        }
+        return 0;
     }
 
     //The port remote access should be served on, or 0 if the property is absent or does not name

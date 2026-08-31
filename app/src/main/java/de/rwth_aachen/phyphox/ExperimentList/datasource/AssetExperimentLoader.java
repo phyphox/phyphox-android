@@ -33,6 +33,7 @@ import java.util.Vector;
 import de.rwth_aachen.phyphox.ExperimentList.model.ExperimentListEnvironment;
 import de.rwth_aachen.phyphox.ExperimentList.model.ExperimentLoadInfoData;
 import de.rwth_aachen.phyphox.ExperimentList.model.ExperimentShortInfo;
+import de.rwth_aachen.phyphox.helper.DebugSwitches;
 import de.rwth_aachen.phyphox.helper.baseColorDrawable.BaseColorDrawable;
 import de.rwth_aachen.phyphox.helper.baseColorDrawable.BitmapIcon;
 import de.rwth_aachen.phyphox.Bluetooth.Bluetooth;
@@ -471,6 +472,12 @@ public class AssetExperimentLoader {
             shortInfo.isAsset = data.isAsset;
             shortInfo.isLink = isLink ? link : null;
             shortInfo.categoryName = category;
+
+            //The store screenshots are captured on emulators, which have almost none of the
+            //sensors the collection tests for, so every second entry would be greyed out. This
+            //shell-only switch (see DebugSwitches) reports them all as present instead.
+            if (DebugSwitches.assumeSensors())
+                shortInfo.unavailableSensor = -1;
 
         } catch (XmlPullParserException e) { //XML Pull Parser is unhappy... Abort and notify user.
             return invalidExperiment(data.experimentXML, "Error loading " + data.experimentXML + " (XML Exception)", data.isTemp, data.isAsset, environment);
