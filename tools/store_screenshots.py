@@ -398,6 +398,12 @@ def _labelled_exact(d, tmp, label):
         f"in English, or the settings were rearranged.")
 
 
+def play_locales(row):
+    """The Play listing locales one app language feeds. Usually one."""
+    a = row["android"]
+    return a if isinstance(a, list) else [a]
+
+
 def view_index(composer, scene):
     """Which view the app should open on. Resolved from the scene's view LABEL
     against the shipped file, so an inserted view is an error rather than a
@@ -509,9 +515,16 @@ def main():
             set_theme(d, light)
             for row in rows:
                 set_language(d, row["app"])
-                target = os.path.join(args.out, row["android"], "images",
-                                      FORM_FACTORS[args.form_factor][0])
-                os.makedirs(target, exist_ok=True)
+                # `android` may name several listings for one app language:
+                # Portuguese is one language here and two listings on the store,
+                # knowingly given the same translation, so it gets the same
+                # screenshots. Captured once, written to each.
+                targets = [os.path.join(args.out, name, "images",
+                                        FORM_FACTORS[args.form_factor][0])
+                           for name in play_locales(row)]
+                for t in targets:
+                    os.makedirs(t, exist_ok=True)
+                target = targets[0]
                 for sid in group:
                     scene = scenes[sid]
                     n = order.index(sid) + 1        # the store's display order
@@ -528,9 +541,12 @@ def main():
                     time.sleep(scene.get("settle", 16))
                     shot = os.path.join(target, f"{n:02d}-{sid}.png")
                     d.screencap(shot)
-                    total += 1
-                    print(f"  {row['android']:6s} {'light' if light else 'dark ':5s} "
-                          f"{n:02d}-{sid}")
+                    for extra in targets[1:]:
+                        shutil.copyfile(shot, os.path.join(extra,
+                                                           os.path.basename(shot)))
+                    total += len(targets)
+                    print(f"  {'/'.join(play_locales(row)):11s} "
+                          f"{'light' if light else 'dark ':5s} {n:02d}-{sid}")
         print(f"{total} screenshot(s) into {args.out}")
     finally:
         # leave the app as a user would find it
