@@ -54,6 +54,9 @@ SDK = os.environ.get("ANDROID_SDK_ROOT") or os.path.expanduser("~/Android/Sdk")
 ADB = os.path.join(SDK, "platform-tools", "adb")
 EMULATOR = os.path.join(SDK, "emulator", "emulator")
 PACKAGE = "de.rwth_aachen.phyphox"
+# what --build leaves in the release output; also what a later run without
+# --build picks up, so the two agree on one name
+SIGNED_APK = "screenshots-signed.apk"
 PORT = 8099
 
 # Where each form factor's images belong in the fastlane tree, and the screen
@@ -170,7 +173,7 @@ def build_apk():
     if not unsigned:
         raise RuntimeError(f"gradle produced no APK in {out}")
     apk = unsigned[0]
-    signed = os.path.join(out, "screenshots-signed.apk")
+    signed = os.path.join(out, SIGNED_APK)
     shutil.copyfile(apk, signed)
     tools = sorted(os.listdir(os.path.join(SDK, "build-tools")))
     apksigner = os.path.join(SDK, "build-tools", tools[-1], "apksigner")
@@ -180,6 +183,25 @@ def build_apk():
        signed)
     print(f"  signed {os.path.basename(signed)} with the debug keystore")
     return signed
+
+
+def last_built_apk():
+    """The APK to use when neither --apk nor --build was given.
+
+    Prefers what --build leaves behind, because that is what a previous run of
+    this script produced: the release build type has no signingConfig, so
+    Gradle's own output is `app-regular-release-unsigned.apk` and will not
+    install. Looking for `app-regular-release.apk` - which nothing here ever
+    produces - was the first version of this, and it meant a re-run without
+    --build failed unless --apk was passed by hand.
+    """
+    out = os.path.join(REPO, "app", "build", "outputs", "apk", "regular",
+                       "release")
+    for name in (SIGNED_APK, "app-regular-release.apk"):
+        candidate = os.path.join(out, name)
+        if os.path.exists(candidate):
+            return candidate
+    return None
 
 
 def has_seams(apk):
@@ -451,11 +473,10 @@ def main():
             f.write(blob)
     httpd = serve(build)
 
-    apk = args.apk or (build_apk() if args.build else os.path.join(
-        REPO, "app", "build", "outputs", "apk", "regular", "release",
-        "app-regular-release.apk"))
-    if not os.path.exists(apk):
-        raise SystemExit(f"no APK at {apk} - pass --apk or --build")
+    apk = args.apk or (build_apk() if args.build else last_built_apk())
+    if not apk or not os.path.exists(apk):
+        raise SystemExit("no installable APK in the release output - pass "
+                         "--apk, or --build to make one")
     if not has_seams(apk):
         raise SystemExit(
             f"{os.path.basename(apk)} has no debug.phyphox.view: it predates "
