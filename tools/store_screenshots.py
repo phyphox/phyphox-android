@@ -143,6 +143,61 @@ def boot(avd, timeout=300):
     raise RuntimeError(f"{avd} booted no further than the splash screen")
 
 
+def build_apk():
+    """Assemble regularRelease from the current checkout and sign it.
+
+    The release build type has no signingConfig, so Gradle leaves it unsigned
+    and Android will not install it. It is signed here with the local debug
+    keystore, which is enough: **nothing in a screenshot depends on which key
+    signed the APK.** What matters is that this is the release build type -
+    what users get - and that it contains the automation seams.
+
+    The consequence of a debug key is only that the signature differs from a
+    store install, so the first install has to replace it; prepare() already
+    uninstalls when that happens.
+
+    There is deliberately no --ref: the scenes are composed from the experiment
+    collection in THIS working tree, so building some other commit's APK while
+    composing this tree's experiments would photograph two versions at once.
+    Check the tree out where you want it and build from there.
+    """
+    print("  building regularRelease")
+    sh(os.path.join(REPO, "gradlew"), "-p", REPO, "assembleRegularRelease")
+    out = os.path.join(REPO, "app", "build", "outputs", "apk", "regular",
+                       "release")
+    unsigned = [os.path.join(out, f) for f in os.listdir(out)
+                if f.endswith(".apk")]
+    if not unsigned:
+        raise RuntimeError(f"gradle produced no APK in {out}")
+    apk = unsigned[0]
+    signed = os.path.join(out, "screenshots-signed.apk")
+    shutil.copyfile(apk, signed)
+    tools = sorted(os.listdir(os.path.join(SDK, "build-tools")))
+    apksigner = os.path.join(SDK, "build-tools", tools[-1], "apksigner")
+    ks = os.path.expanduser("~/.android/debug.keystore")
+    sh(apksigner, "sign", "--ks", ks, "--ks-pass", "pass:android",
+       "--key-pass", "pass:android", "--ks-key-alias", "androiddebugkey",
+       signed)
+    print(f"  signed {os.path.basename(signed)} with the debug keystore")
+    return signed
+
+
+def has_seams(apk):
+    """Whether this build carries debug.phyphox.view.
+
+    Cheap guard against the failure that would otherwise be discovered only by
+    looking at the audio-spectrum plate afterwards and noticing it is on the
+    wrong tab.
+    """
+    import zipfile
+    with zipfile.ZipFile(apk) as z:
+        for name in z.namelist():
+            if name.startswith("classes") and name.endswith(".dex"):
+                if b"debug.phyphox.view" in z.read(name):
+                    return True
+    return False
+
+
 def _serials():
     out = sh(ADB, "devices")
     return [l.split()[0] for l in out.splitlines()[1:]
@@ -174,7 +229,8 @@ def prepare(d, apk):
     d.shell("am", "force-stop", PACKAGE)
     d.shell("am", "start", "-n", f"{PACKAGE}/.ExperimentList.ExperimentListActivity")
     time.sleep(9)
-    dump = os.path.join(os.path.dirname(apk), "_ui.xml")
+    dump = os.path.join(DOCS, "build", "_ui.xml")
+    os.makedirs(os.path.dirname(dump), exist_ok=True)
     d.dump_ui(dump)
     with open(dump, encoding="utf-8", errors="replace") as f:
         tree = f.read()
@@ -343,9 +399,11 @@ def main():
     ap.add_argument("--avd", help="boot this AVD; omit to use --serial")
     ap.add_argument("--serial", help="an already running device")
     ap.add_argument("--form-factor", required=True, choices=sorted(FORM_FACTORS))
-    ap.add_argument("--apk", default=os.path.join(
-        REPO, "app", "build", "outputs", "apk", "regular", "release",
-        "app-regular-release.apk"))
+    ap.add_argument("--apk", help="the APK to photograph; default: whatever "
+                                  "--build produced, else the release output")
+    ap.add_argument("--build", action="store_true",
+                    help="assemble regularRelease from the CURRENT checkout "
+                         "and sign it for local use")
     ap.add_argument("--languages", help="comma separated app language tags "
                                         "(default: all of them)")
     ap.add_argument("--scenes", help="comma separated scene ids (default: all)")
@@ -395,6 +453,17 @@ def main():
             f.write(blob)
     httpd = serve(build)
 
+    apk = args.apk or (build_apk() if args.build else os.path.join(
+        REPO, "app", "build", "outputs", "apk", "regular", "release",
+        "app-regular-release.apk"))
+    if not os.path.exists(apk):
+        raise SystemExit(f"no APK at {apk} - pass --apk or --build")
+    if not has_seams(apk):
+        raise SystemExit(
+            f"{os.path.basename(apk)} has no debug.phyphox.view: it predates "
+            f"the automation seams, so the audio-spectrum scene cannot reach "
+            f"its History tab. Build from a checkout that includes them.")
+
     d = boot(args.avd) if args.avd else Device(args.serial)
     want = FORM_FACTORS[args.form_factor][1]
     if d.size() != want:
@@ -403,7 +472,7 @@ def main():
                          f"Play rejects a longer side more than twice the "
                          f"shorter, so the AVD profile matters")
     try:
-        prepare(d, args.apk)
+        prepare(d, apk)
 
         # Grouped by THEME, not by language. One scene is shot in light mode
         # and the rest in dark; walking the settings once per language would be
