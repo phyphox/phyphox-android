@@ -10,3 +10,6 @@ build/
 # Build output that lands outside app/build: the release lane writes the signed
 # APK and its baseline profiles to app/regular/.
 /app/regular/
+
+# Python bytecode caches; one was committed by accident once.
+__pycache__/

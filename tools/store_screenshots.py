@@ -413,9 +413,7 @@ def main():
 
     sys.path.insert(0, os.path.join(DOCS, "tools", "screenshots"))
     import compose as composer
-    import fix_emulator_graphs as fixer
     import yaml
-    from PIL import Image
 
     scenes = composer.load_scenes()
     with open(os.path.join(DOCS, "screenshots", "locales.yml")) as f:
@@ -509,14 +507,6 @@ def main():
                     time.sleep(scene.get("settle", 16))
                     shot = os.path.join(target, f"{n:02d}-{sid}.png")
                     d.screencap(shot)
-                    dump = os.path.join(build, "_ui.xml")
-                    d.dump_ui(dump)
-                    with open(dump, encoding="utf-8", errors="replace") as f:
-                        frames = fixer.graph_frames(f.read())
-                    if frames:
-                        im = Image.open(shot).convert("RGB")
-                        im, _ = fixer.repair(im, frames)
-                        im.save(shot)
                     total += 1
                     print(f"  {row['android']:6s} {'light' if light else 'dark ':5s} "
                           f"{n:02d}-{sid}")
