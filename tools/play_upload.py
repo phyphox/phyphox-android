@@ -14,6 +14,11 @@ tree out of git and needs nothing uploaded.
 edit, uploads into it, asks Play to validate it, and then deletes the edit -
 which is as close to a rehearsal as the API offers.
 
+**`--commit` does submit for review**, and cannot avoid it: Play answers
+`changesNotSentForReview` with "Changes are sent for review automatically. The
+query parameter must not be set." Managed publishing is what keeps the reviewed
+result away from users until somebody releases it.
+
 Why not `supply`: it would add a Ruby toolchain, and its client does not expose
 a quota project, which user credentials need for this API. The edits API is a
 handful of REST calls and the auth already works, so this uses neither fastlane
@@ -260,6 +265,14 @@ def upload_text(tok, edit, locales_wanted):
 
 
 def main():
+    # 138 images take minutes to push into an edit; with stdout redirected to a
+    # log, block buffering would show nothing at all until the end - and nothing
+    # whatsoever if the run is interrupted.
+    try:
+        sys.stdout.reconfigure(line_buffering=True)
+    except AttributeError:
+        pass
+
     ap = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     ap.add_argument("--screenshots", default=DEFAULT_SHOTS)
     ap.add_argument("--text", action="store_true",
@@ -271,7 +284,8 @@ def main():
     ap.add_argument("--languages", help="comma separated Play locales; default: "
                                         "every one that has both images and a listing")
     ap.add_argument("--commit", action="store_true",
-                    help="publish. Without this the edit is validated and thrown away.")
+                    help="apply the edit, which for this app also sends it for "
+                         "review. Without this it is validated and thrown away.")
     args = ap.parse_args()
 
     tok = token()
@@ -314,8 +328,17 @@ def main():
                 print(f"  {locale:6s} {kind:22s} {len(paths)} image(s)")
 
         if args.commit:
+            # A plain commit, because Play refuses the alternative for this app:
+            # "Changes are sent for review automatically. The query parameter
+            # changesNotSentForReview must not be set." So there is no way to
+            # apply an edit here without submitting it for review, and the
+            # maintainer decided on 2026-09-01 to accept that. Managed
+            # publishing is what still keeps the result away from users until
+            # someone releases it.
             call("POST", f"{API}/applications/{PACKAGE}/edits/{edit}:commit", tok)
-            print(f"committed: {total} image(s) are live")
+            print(f"committed: {total} image(s) and the listing text are on the "
+                  f"store and IN REVIEW. Managed publishing holds them until "
+                  f"you release them in the Play Console.")
             edit = None
         else:
             call("POST", f"{API}/applications/{PACKAGE}/edits/{edit}:validate", tok)
