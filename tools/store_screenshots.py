@@ -89,11 +89,32 @@ class Device:
     def shell(self, *args, **kw):
         return self.adb("shell", *args, **kw)
 
-    def screencap(self, path):
-        r = subprocess.run([ADB, "-s", self.serial, "exec-out", "screencap", "-p"],
-                           capture_output=True)
-        with open(path, "wb") as f:
-            f.write(r.stdout)
+    def screencap(self, path, tries=3):
+        """Capture, and refuse to write anything that is not a whole PNG.
+
+        `adb exec-out` returns what it managed to transfer. If the emulator dies
+        or the connection hiccups mid-capture, that is a truncated file, and
+        writing it silently produces a screenshot that only fails much later -
+        when something tries to open it, or worse, when the store does. So the
+        bytes are checked for the PNG signature and a terminating IEND chunk
+        before they reach the disk.
+        """
+        for attempt in range(tries):
+            r = subprocess.run(
+                [ADB, "-s", self.serial, "exec-out", "screencap", "-p"],
+                capture_output=True)
+            data = r.stdout
+            if data[:8] == b"\x89PNG\r\n\x1a\n" and data[-8:-4] == b"IEND":
+                with open(path, "wb") as f:
+                    f.write(data)
+                return
+            if attempt + 1 < tries:
+                print(f"    incomplete capture ({len(data)} bytes), retrying")
+                time.sleep(3)
+        raise RuntimeError(
+            f"could not capture {os.path.basename(path)}: adb returned "
+            f"{len(data)} bytes that are not a complete PNG. The device is "
+            f"probably gone - check `adb devices`.")
 
     def dump_ui(self, path):
         """The accessibility tree. Used to find controls by resource id rather
@@ -127,16 +148,25 @@ def boot(avd, timeout=300):
         [EMULATOR, "-avd", avd, "-no-window", "-no-audio", "-gpu", "host",
          "-no-snapshot"],
         stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, env=env)
+    # Take the new device only if it IS the AVD we started. Another session on
+    # this machine boots its own emulators, and "whatever serial appeared while
+    # we were waiting" is a race that would hand us someone else's device -
+    # which on a shared machine is not hypothetical.
     deadline = time.time() + timeout
     serial = None
-    while time.time() < deadline:
-        new = set(_serials()) - before
-        if new:
-            serial = sorted(new)[0]
-            break
-        time.sleep(2)
+    while time.time() < deadline and not serial:
+        for candidate in sorted(set(_serials()) - before):
+            name = sh(ADB, "-s", candidate, "emu", "avd", "name",
+                      check=False).splitlines()
+            if name and name[0].strip() == avd:
+                serial = candidate
+                break
+        if not serial:
+            time.sleep(2)
     if not serial:
-        raise RuntimeError(f"{avd} did not appear on adb within {timeout} s")
+        raise RuntimeError(
+            f"{avd} did not appear on adb within {timeout} s (devices seen: "
+            f"{', '.join(sorted(set(_serials()) - before)) or 'none new'})")
     d = Device(serial)
     while time.time() < deadline:
         if d.shell("getprop", "sys.boot_completed", check=False).strip() == "1":
@@ -303,6 +333,33 @@ def prepare(d, apk):
     d.shell("am", "force-stop", PACKAGE)
 
     demo_mode(d)
+    return installed_stamp(d)
+
+
+def installed_stamp(d):
+    """When the package was last installed, as the device reports it.
+
+    Checked again during the run, because another session sharing this machine
+    can install over us: `gradlew installRegularDebug` without ANDROID_SERIAL
+    pinned goes to *every* attached device, and a debug build signed with the
+    same debug keystore replaces ours without a signature prompt. That happened
+    on 2026-09-01 and was caught by the other session saying so, not by anything
+    here.
+    """
+    for line in d.shell("dumpsys", "package", PACKAGE, check=False).splitlines():
+        if "lastUpdateTime=" in line:
+            return line.strip()
+    return None
+
+
+def check_still_ours(d, stamp):
+    now = installed_stamp(d)
+    if stamp and now and now != stamp:
+        raise RuntimeError(
+            f"the app was reinstalled while this run was capturing "
+            f"({stamp} -> {now}). Another session on this machine probably "
+            f"installed over it, so the plates from here on would show a "
+            f"different build. Pin ANDROID_SERIAL on the other side and re-run.")
 
 
 def demo_mode(d, on=True):
@@ -497,7 +554,7 @@ def main():
                          f"Play rejects a longer side more than twice the "
                          f"shorter, so the AVD profile matters")
     try:
-        prepare(d, apk)
+        stamp = prepare(d, apk)
 
         # Grouped by THEME, not by language. One scene is shot in light mode
         # and the rest in dark; walking the settings once per language would be
@@ -514,6 +571,7 @@ def main():
                 continue
             set_theme(d, light)
             for row in rows:
+                check_still_ours(d, stamp)
                 set_language(d, row["app"])
                 # `android` may name several listings for one app language:
                 # Portuguese is one language here and two listings on the store,
