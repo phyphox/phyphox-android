@@ -32,7 +32,7 @@
 \nDominik Dorsel
 \nJonas Gessner
 \nCamilla Lummerzheim</string>
-    <string name="creditsLibs">Το web-interface της απομακρυσμένης πρόσβασης χρησιμοποιεί τον Java Lightweight HTTP Server (jlhttp) διαθέσιμο με βάση την GNU General Public Licence v2 και σχεδιάζει τα διαγράμματα με τη βιβλιοθήκη JavaScript \"Chart.js\" (http://chartjs.org), διαθέσιμη υπό την άδεια του ΜΙΤ. Για το μετασχηματισμό fourier χρησιμοποιούμε την βιβλιοθήκη FFTW (http://fftw.org), Copyright © 2003, 2007-11 Matteo Frigo, Copyright © 2003, 2007-11 Massachusetts Institute of Technology που είναι διαθέσιμη υπό την άδεια GNU General Public Licence (version 2 or later). Τα δεδομένα υψομέτρου του GPS μετατρέπονται από το ελλειψοειδές WGS84 στο γεωειδές EGM84 χρησιμοποιώντας δεδομένα EGM84 (30\' ανάλυσης) και μια τροποποιημένη συνάρτηση από το GographicLib (https://geographiclib.sourceforge.io/, MIT/X11 licence).</string>
+    <string name="creditsLibs">Το web-interface της απομακρυσμένης πρόσβασης χρησιμοποιεί τον Java Lightweight HTTP Server (jlhttp) υπό την GNU General Public Licence v2 και σχεδιάζει διαγράμματα με τη βιβλιοθήκη JavaScript \"Chart.js\" (http://chartjs.org), διαθέσιμη υπό την άδεια του ΜΙΤ. Για το μετασχηματισμό fourier χρησιμοποιούμε την βιβλιοθήκη FFTW (http://fftw.org), Copyright © 2003, 2007-11 Matteo Frigo, Copyright © 2003, 2007-11 Massachusetts Institute of Technology που είναι διαθέσιμη υπό την άδεια GNU General Public Licence (version 2 or later). Τα δεδομένα υψομέτρου του GPS μετατρέπονται από το ελλειψοειδές WGS84 στο γεωειδές EGM84 χρησιμοποιώντας δεδομένα EGM84 (30\' ανάλυσης) και μια τροποποιημένη συνάρτηση από το GographicLib (https://geographiclib.sourceforge.io/, MIT/X11 licence).</string>
     <string name="sensorLinearAcceleration">Γραμμική επιτάχυνση</string>
     <string name="sensorLight">Φως</string>
     <string name="sensorGyroscope">Γυροσκόπιο</string>
@@ -174,7 +174,7 @@
     <string name="open_bluetooth_assets">Τα επόμενα πειράματα για τη συσκευή σας είναι διαθέσιμα από το phyphox. Μπορείτε είτε απλά να τα ανοίξετε και να τα χρησιμοποιήσετε είτε να τα προσθέσετε όλα στη συλλογή σας ώστε να έχετε εύκολη πρόσβαση σ\' αυτά από το κυρίως μενού.</string>
     <string name="start_hint">Πατήστε το τρίγωνο για να ξεκινήσετε το πείραμα.</string>
     <string name="bluetooth">Bluetooth χαμηλής ενέργειας</string>
-    <string name="bt_android_version">Το Bluetooth χαμηλής ενέργειας δεν υποστηρίζεται στην συσκευή αυτή</string>
+    <string name="bt_android_version">Το Bluetooth χαμηλής ενέργειας δεν υποστηρίζεται στην συσκευή αυτή.</string>
     <string name="bt_pick_device">Παρακαλώ επιλέξτε συσκευή.</string>
     <string name="bt_scanning_generic">Ανίχνευση για συσκευές Bluetooth…</string>
     <string name="bt_scanning_specific1">Ανίχνευση για συσκευές Βluetooth με</string>
