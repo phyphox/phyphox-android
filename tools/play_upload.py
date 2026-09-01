@@ -350,9 +350,12 @@ def main():
             # publishing is what still keeps the result away from users until
             # someone releases it.
             call("POST", f"{API}/applications/{PACKAGE}/edits/{edit}:commit", tok)
-            print(f"committed: {total} image(s) and the listing text are on the "
-                  f"store and IN REVIEW. Managed publishing holds them until "
-                  f"you release them in the Play Console.")
+            what = f"{total} image(s)"
+            if args.text:
+                what += " and the listing text"
+            print(f"committed: {what} on the store and IN REVIEW. Managed "
+                  f"publishing holds them until you release them in the "
+                  f"Play Console.")
             edit = None
         else:
             call("POST", f"{API}/applications/{PACKAGE}/edits/{edit}:validate", tok)
