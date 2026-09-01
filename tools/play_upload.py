@@ -35,6 +35,7 @@ import argparse
 import json
 import mimetypes
 import os
+import re
 import subprocess
 import sys
 import urllib.error
@@ -120,6 +121,27 @@ def _formatter():
 # Play's own limits. Exceeding one is rejected at commit, so it is worth saying
 # which string and by how much rather than reading it out of an API error.
 LIMITS = {"title": 30, "shortDescription": 80, "fullDescription": 4000}
+
+
+def trim_attribution(short):
+    """Drop the trailing bracketed attribution when the line will not fit.
+
+    Every locale's short description ends with a parenthesised "by RWTH Aachen
+    University" in some wording, and nine of them run past Play's 80 characters
+    because of it. The university is the account holder the store already shows,
+    so the bracket is redundant and can go without asking each translator
+    (maintainer, 2026-09-01).
+
+    Only when it is needed, and only from the end: a listing that already fits
+    keeps its attribution, and a bracket anywhere but the end is left alone
+    because it would be part of the sentence rather than a credit.
+    """
+    # CJK locales write the credit in full-width brackets, so those count too -
+    # none of them is over the limit today, but the rule should not quietly
+    # stop applying to a language because of how it punctuates.
+    trimmed = re.sub(r"\s*[(\[（【〔][^()\[\]（）【】〔〕]*[)\]）】〕]\s*$",
+                     "", short).rstrip()
+    return trimmed or short
 
 
 def too_long(text):
@@ -211,6 +233,13 @@ def upload_text(tok, edit, locales_wanted):
         if not text:
             problems.append(f"{locale}: no store text for {po!r}")
             continue
+        if any(k == "shortDescription" for k, _n, _l in too_long(text)):
+            short = trim_attribution(text["shortDescription"])
+            if len(short) <= LIMITS["shortDescription"]:
+                print(f"  {locale:6s} short description trimmed to fit: "
+                      f"{len(text['shortDescription'])} -> {len(short)} "
+                      f"characters (attribution dropped)")
+                text["shortDescription"] = short
         over = too_long(text)
         if over:
             problems.append("; ".join(
