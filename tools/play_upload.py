@@ -275,6 +275,9 @@ def main():
 
     ap = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     ap.add_argument("--screenshots", default=DEFAULT_SHOTS)
+    ap.add_argument("--image-types", help="comma separated, from "
+                                          + ",".join(sorted(IMAGE_TYPES))
+                                          + "; default: all that are present")
     ap.add_argument("--text", action="store_true",
                     help="also upload the listing text, read from "
                          "phyphox-translation's store PO files")
@@ -290,6 +293,17 @@ def main():
 
     tok = token()
     sets = local_sets(args.screenshots)
+    if args.image_types:
+        keep = set(args.image_types.split(","))
+        unknown = keep - set(IMAGE_TYPES)
+        if unknown:
+            sys.exit(f"unknown image type(s): {', '.join(sorted(unknown))}")
+        # Narrowing matters, not just for speed: uploading a type replaces every
+        # image of it, so re-sending images that are already on the store churns
+        # a listing that may be mid-review for no gain.
+        sets = {loc: {k: v for k, v in kinds.items() if k in keep}
+                for loc, kinds in sets.items()}
+        sets = {loc: kinds for loc, kinds in sets.items() if kinds}
     edit = call("POST", f"{API}/applications/{PACKAGE}/edits", tok, body={})["id"]
     print(f"edit {edit}")
     try:
