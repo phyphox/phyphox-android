@@ -9,6 +9,7 @@ tree out of git and needs nothing uploaded.
 
     tools/play_upload.py                       # validate, change nothing
     tools/play_upload.py --commit              # actually publish the listing
+    tools/play_upload.py --release-notes       # the release notes, to paste into a release
 
 **Nothing is published without --commit.** Without it the script creates an
 edit, uploads into it, asks Play to validate it, and then deletes the edit -
@@ -34,6 +35,16 @@ https://www.googleapis.com/auth/cloud-platform
 
 That is deliberately a login rather than a stored key (plan §8.1), so revoking
 it is `gcloud auth application-default revoke`.
+
+RELEASE NOTES ARE NOT PART OF THE LISTING
+-----------------------------------------
+`--release-notes` is a separate mode and does not touch the listing at all. On
+Play a release is created in the console when a bundle is rolled out, which is
+a different act from updating the store entry - and the edits API cannot attach
+notes to a release this project does not create through it. So that mode reads
+the release notes out of the F-Droid changelogs (asking for them if this version
+has none yet, see tools/changelog.py) and prints the `<locale>` block the
+console's release-notes field takes. Copying it in is the manual step.
 """
 
 import argparse
@@ -154,18 +165,27 @@ def too_long(text):
             if k in text and len(text[k]) > LIMITS[k]]
 
 
-def token():
+def token(required=True):
+    """An access token, or - with required=False - None if there are none.
+
+    --release-notes is useful on a machine that has never been logged in, so
+    that mode asks for a token and carries on without one rather than stopping.
+    """
     try:
         out = subprocess.run(
             ["gcloud", "auth", "application-default", "print-access-token"],
             capture_output=True, text=True, check=True).stdout.strip()
     except (subprocess.CalledProcessError, FileNotFoundError):
+        if not required:
+            return None
         sys.exit("no Application Default Credentials - run:\n"
                  "  gcloud auth application-default login "
                  "--client-id-file=~/.config/phyphox-store/client.json \\\n"
                  "      --scopes=https://www.googleapis.com/auth/androidpublisher,"
                  "https://www.googleapis.com/auth/cloud-platform")
     if not out:
+        if not required:
+            return None
         sys.exit("gcloud returned no access token")
     return out
 
@@ -264,6 +284,84 @@ def upload_text(tok, edit, locales_wanted):
               f"full {len(text['fullDescription'])}")
 
 
+def play_locales():
+    """Every Play listing locale this project has text for, from locales.yml.
+
+    In file order, deduplicated: Serbian is two app languages and one Play
+    listing, and Portuguese is one app language and two listings.
+    """
+    import yaml
+    docs = os.path.normpath(os.path.join(REPO, "..", "phyphox-docs"))
+    with open(os.path.join(docs, "screenshots", "locales.yml")) as f:
+        rows = yaml.safe_load(f)["locales"]
+    out = []
+    for row in rows:
+        a = row["android"]
+        for name in (a if isinstance(a, list) else [a]):
+            if name not in out:
+                out.append(name)
+    return out
+
+
+def on_store_locales():
+    """The languages the listing actually has, or None without credentials.
+
+    Play refuses a release-notes block naming a language the listing does not
+    have, and three of the locales in locales.yml have no listing yet. Asking
+    the store is one throwaway edit; a machine that has never been logged in
+    still gets the full block and a warning, because copying the notes into the
+    console is not something to have to be at this desk for.
+    """
+    tok = token(required=False)
+    if not tok:
+        return None
+    edit = call("POST", f"{API}/applications/{PACKAGE}/edits", tok, body={})["id"]
+    try:
+        return listing_languages(tok, edit)
+    finally:
+        call("DELETE", f"{API}/applications/{PACKAGE}/edits/{edit}", tok)
+
+
+def release_notes(version_code=None):
+    """Print the release-notes block for the Play Console. Uploads nothing."""
+    import changelog
+
+    name, code = changelog.android_version(REPO)
+    if version_code is not None:
+        code = version_code
+    notes = changelog.ensure(code, name, REPO)
+
+    locales = play_locales()
+    on_store = on_store_locales()
+    if on_store is None:
+        print("\n  (not logged in, so the block below lists every locale in "
+              "locales.yml. Play\n   rejects one whose listing does not exist "
+              "yet - gu, ko-KR and ta-IN as of\n   2026-09-01 - so drop those "
+              "lines if the console complains.)")
+    else:
+        unlisted = [l for l in locales if l not in on_store]
+        if unlisted:
+            print(f"\n  leaving out {', '.join(unlisted)}: no listing on the "
+                  f"store, and Play refuses\n  release notes for a language the "
+                  f"listing does not have")
+        locales = [l for l in locales if l in on_store]
+
+    odd = changelog.suspicious(notes)
+    if odd:
+        print("\n  !! the notes contain " + ", ".join(odd) + ". The console "
+              "splits this block by\n     its tags and it is not documented "
+              "whether it also unescapes entities, so\n     check how those "
+              "characters come out in the release before rolling out.")
+
+    german = [l for l in locales if l.split("-")[0] == "de"]
+    print(f"\nrelease notes for {len(locales)} language(s): German for "
+          f"{', '.join(german) or 'none'}, English for the rest.")
+    print("Paste this into the release's notes field in the Play Console "
+          "(Release > Production >\nEdit release > Release notes, "
+          "\"Copy from XML\"):\n")
+    print(changelog.play_xml(notes, locales))
+
+
 def main():
     # 138 images take minutes to push into an edit; with stdout redirected to a
     # log, block buffering would show nothing at all until the end - and nothing
@@ -289,7 +387,29 @@ def main():
     ap.add_argument("--commit", action="store_true",
                     help="apply the edit, which for this app also sends it for "
                          "review. Without this it is validated and thrown away.")
+    ap.add_argument("--release-notes", action="store_true",
+                    help="print the release notes for the current version as a "
+                         "block to paste into a Play Console release, asking "
+                         "for them if this version has none yet. Touches "
+                         "neither the listing nor a release.")
+    ap.add_argument("--version-code", type=int,
+                    help="with --release-notes: the versionCode to write the "
+                         "notes under, when it is not the one in build.gradle")
     args = ap.parse_args()
+
+    if args.release_notes:
+        # A mode of its own, not something to combine: it prints text to paste
+        # into a release and never opens an edit, so --commit would silently
+        # publish nothing at all.
+        clash = [f for f, on in (("--commit", args.commit), ("--text", args.text))
+                 if on]
+        if clash:
+            sys.exit(f"--release-notes does not go with {', '.join(clash)}: it "
+                     f"prints the notes for a\nrelease and touches the listing "
+                     f"not at all. Run it on its own.")
+        sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+        release_notes(args.version_code)
+        return
 
     tok = token()
     sets = local_sets(args.screenshots)
