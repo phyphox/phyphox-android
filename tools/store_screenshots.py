@@ -49,7 +49,13 @@ HERE = os.path.dirname(os.path.abspath(__file__))
 REPO = os.path.dirname(HERE)
 DOCS = os.path.normpath(os.path.join(REPO, "..", "phyphox-docs"))
 COLLECTION = os.path.join(REPO, "app", "src", "main", "assets", "experiments")
-METADATA = os.path.join(REPO, "fastlane", "metadata", "android")
+# The capture output. NOT the fastlane tree: these directories are named the
+# way PLAY spells a locale (en-US, de-DE), and F-Droid's metadata tree uses its
+# own shorter names (en, de), so writing straight into it would scatter
+# directories F-Droid does not read beside the ones it does. Only the English
+# phone plates belong in the repository, and tools/store_release.py copies
+# those across - which is also what tools/play_upload.py reads by default.
+SHOTS = os.path.normpath(os.path.join(REPO, "..", "screenshots", "android"))
 SDK = os.environ.get("ANDROID_SDK_ROOT") or os.path.expanduser("~/Android/Sdk")
 ADB = os.path.join(SDK, "platform-tools", "adb")
 EMULATOR = os.path.join(SDK, "emulator", "emulator")
@@ -492,7 +498,7 @@ def main():
     ap.add_argument("--languages", help="comma separated app language tags "
                                         "(default: all of them)")
     ap.add_argument("--scenes", help="comma separated scene ids (default: all)")
-    ap.add_argument("--out", default=METADATA)
+    ap.add_argument("--out", default=SHOTS)
     ap.add_argument("--keep-emulator", action="store_true")
     args = ap.parse_args()
 
