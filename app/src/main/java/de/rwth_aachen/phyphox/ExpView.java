@@ -959,7 +959,12 @@ public class ExpView implements Serializable{
         private Double max = Double.POSITIVE_INFINITY;
         private boolean focused = false; //Is the element currently focused? (Updates should be blocked while the element has focus and the user is working on its content)
 
-        private boolean triggered = true;
+        //Starts false: triggered means "the user worked this control, so its position belongs in
+        //the buffer". Starting it true made the widget's own default count as a user action, and
+        //the first write pass then cleared whatever a container's init had put there. The spec
+        //says a default fills an EMPTY buffer and never overwrites one, so seeding is left to
+        //seedIfEmpty() above and the control follows the data until somebody touches it.
+        private boolean triggered = false;
         private boolean editable = true;
 
         public String label;
@@ -1216,6 +1221,18 @@ public class ExpView implements Serializable{
                     "</div>";
         }
 
+        //The restrictions getValue() applies to what the user typed, on their own so they can
+        //also be applied to a default that never went through the edit box.
+        protected double restricted(double v) {
+            if (!signed && v < 0.0)
+                v = Math.abs(v);
+            if (v < min)
+                v = min;
+            if (v > max)
+                v = max;
+            return v;
+        }
+
         //Get the value from the edit box (Note, that we have to divide by the factor to achieve a
         //use that is consistent with that of the valueElement
         protected double getValue() {
@@ -1258,8 +1275,13 @@ public class ExpView implements Serializable{
         //If triggered, write the data to the output buffers
         //Always return zero as the analysis process does not receive the values directly
         protected boolean onMayWriteToBuffers(PhyphoxExperiment experiment) {
+            //Seeded through the same restrictions the value would pass if it had been typed: the
+            //old path reached the buffer via setValue() writing the default into the box and
+            //getValue() reading it back out, which clamped it on the way.
+            boolean seeded = inputs.size() > 0
+                    && seedIfEmpty(experiment, inputs.get(0), restricted(defaultValue));
             if (!triggered)
-                return false;
+                return seeded;
             triggered = false;
             experiment.getBuffer(inputs.get(0)).clear(false);
             experiment.getBuffer(inputs.get(0)).append(getValue());
@@ -3090,7 +3112,9 @@ public class ExpView implements Serializable{
 
         double defaultValue;
 
-        private boolean triggered = true;
+        //See seedIfEmpty() above: a default fills an EMPTY buffer and never overwrites one, so
+        //this starts false - the widget's own default is not a user action.
+        private boolean triggered = false;
 
         SwitchMaterial switchView;
 
@@ -3138,13 +3162,26 @@ public class ExpView implements Serializable{
             row.addView(labelView);
             row.addView(switchViewRow);
 
+            //Built from the BUFFER, falling back to the default only while it is empty. The view
+            //is recreated more than once during a load (the pager resumes the fragment), and a
+            //switch rebuilt at defaultValue used to hand the next write pass a position nobody
+            //had chosen - which is how a container's init, or a value the user had just set,
+            //disappeared behind the element's own default.
             boolean isSwitchedOn = this.defaultValue != 0.0;
+            if (experiment != null && inputs.size() > 0) {
+                DataBuffer buffer = experiment.getBuffer(inputs.get(0));
+                if (buffer != null && buffer.getFilledSize() > 0)
+                    isSwitchedOn = buffer.value != 0.0;
+            }
             switchView.setChecked(isSwitchedOn);
 
             switchView.setOnCheckedChangeListener((compoundButton, b) -> {
                 compoundButton.setChecked(b);
                 triggered = true;
             });
+
+            //A freshly built widget is not a user action, whatever the old one reported.
+            triggered = false;
 
             rootView = row;
             rootView.setFocusableInTouchMode(true);
@@ -3164,7 +3201,14 @@ public class ExpView implements Serializable{
             if (switchView == null)
                 return;
 
-            boolean checked = (int) experiment.getBuffer(inputs.get(0)).value != 0;
+            //An EMPTY buffer is not a zero: reading it as one used to pull the switch to "off"
+            //before the write pass had seeded the default, and that position was then written
+            //back. Empty means there is nothing to follow yet.
+            DataBuffer buffer = experiment.getBuffer(inputs.get(0));
+            if (buffer == null || buffer.getFilledSize() == 0)
+                return;
+
+            boolean checked = (int) buffer.value != 0;
             if (checked != switchView.isChecked() && !triggered)
                 switchView.setChecked(checked);
         }
@@ -3241,7 +3285,9 @@ public class ExpView implements Serializable{
 
         MaterialAutoCompleteTextView autoCompleteTextView;
 
-        private boolean triggered = true;
+        //See seedIfEmpty() above: a default fills an EMPTY buffer and never overwrites one, so
+        //this starts false - the widget's own default is not a user action.
+        private boolean triggered = false;
         private int currentIndex = 0;
 
         protected class Mapping {
@@ -3341,7 +3387,19 @@ public class ExpView implements Serializable{
                 autoCompleteTextView.setText(options[0]);
             }
 
-            setFromValue(defaultValue);
+            //From the BUFFER where it has one, like the toggle: createView runs again when the
+            //pager resumes the fragment, and rebuilding at defaultValue would show a selection
+            //the buffer does not hold.
+            double initial = defaultValue;
+            if (experiment != null && inputs.size() > 0) {
+                DataBuffer buffer = experiment.getBuffer(inputs.get(0));
+                if (buffer != null && buffer.getFilledSize() > 0)
+                    initial = buffer.value;
+            }
+            setFromValue(initial);
+
+            //A freshly built widget is not a user action, whatever the old one reported.
+            triggered = false;
 
             autoCompleteTextView.setOnItemClickListener((adapterView, view, position, id) -> {
                 triggered = true;
@@ -3383,8 +3441,12 @@ public class ExpView implements Serializable{
             super.onMayReadFromBuffers(experiment);
             if (!needsUpdate || triggered || autoCompleteTextView == null)
                 return;
+            //Same rule as the toggle: an empty buffer is nothing to follow, not a zero.
+            DataBuffer buffer = experiment.getBuffer(inputs.get(0));
+            if (buffer == null || buffer.getFilledSize() == 0)
+                return;
             needsUpdate = false;
-            double x = experiment.getBuffer(inputs.get(0)).value;
+            double x = buffer.value;
 
 
             setFromValue(x);

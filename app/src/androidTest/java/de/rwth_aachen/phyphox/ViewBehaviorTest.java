@@ -12,6 +12,8 @@ import android.view.ViewGroup;
 import android.widget.AutoCompleteTextView;
 import android.widget.EditText;
 
+import androidx.viewpager.widget.ViewPager;
+
 import androidx.test.ext.junit.runners.AndroidJUnit4;
 import androidx.test.uiautomator.By;
 import androidx.test.uiautomator.UiDevice;
@@ -234,6 +236,64 @@ public class ViewBehaviorTest {
     }
 
     // --------------------------------------------------------------- the tests
+
+    //A control's own default must never overwrite a value the container already holds. The spec
+    //states it in the remark on the default attribute of edit, toggle, dropdown and slider: a
+    //default fills an EMPTY buffer, and never one that is not. Both halves are asserted here,
+    //because fixing the first by simply not seeding would break the second.
+    //
+    //This is a regression guard with history: toggle and dropdown built their widget from the
+    //default and treated that as a user action, so the first write pass after the view was built
+    //wrote the widget's position over the init - and the view is built more than once during a
+    //load, which is what made the earlier one-line attempts at this look like they worked.
+    //Moves the pager to a page and waits for the swap to settle, so the views of the page left
+    //behind are torn down and those of the page returned to are built again.
+    private void page(Experiment activity, int index) throws Exception {
+        //No waitForIdleSync() here. A loaded experiment updates its views on a timer, so the main
+        //looper never goes idle and that call simply hangs - the same trap FixtureExperiment
+        //documents for launching. Posting the swap and waiting a beat is enough; every assertion
+        //after this polls to its own deadline anyway.
+        activity.runOnUiThread(() ->
+                ((ViewPager) activity.findViewById(R.id.view_pager)).setCurrentItem(index, false));
+        Thread.sleep(1500);
+    }
+
+    @Test
+    public void containerInitBeatsAControlsDefault() throws Exception {
+        assumeTrue(FixtureExperiment.available("init-vs-default.phyphox"));
+        Experiment activity = FixtureExperiment.launch("init-vs-default.phyphox");
+        try {
+            //Nothing is touched: these are the values a freshly loaded experiment starts with.
+            assertBuffer("toggle_init", 1);
+            assertBuffer("dropdown_init", 2);
+            assertBuffer("edit_init", 42);
+            assertBuffer("slider_init", 4);
+
+            //...and where the container is empty, the default is what fills it.
+            assertBuffer("toggle_default", 1);
+            assertBuffer("dropdown_default", 1);
+            assertBuffer("edit_default", 7);
+            assertBuffer("slider_default", 3);
+
+            //Again after the views have been rebuilt. This is the half that actually caught the
+            //bug: a single load builds each page once, but paging away and back builds it again,
+            //and a widget rebuilt at its own default used to hand that position to the next write
+            //pass. Nothing here touches a control, so every buffer must be unchanged.
+            page(activity, 1);
+            page(activity, 0);
+
+            assertBuffer("toggle_init", 1);
+            assertBuffer("dropdown_init", 2);
+            assertBuffer("edit_init", 42);
+            assertBuffer("slider_init", 4);
+            assertBuffer("toggle_default", 1);
+            assertBuffer("dropdown_default", 1);
+            assertBuffer("edit_default", 7);
+            assertBuffer("slider_default", 3);
+        } finally {
+            FixtureExperiment.close(activity);
+        }
+    }
 
     @Test
     public void editsWriteWhatTheyAccept() throws Exception {
