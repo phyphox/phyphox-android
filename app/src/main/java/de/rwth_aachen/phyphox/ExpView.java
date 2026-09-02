@@ -139,7 +139,10 @@ public class ExpView implements Serializable{
         DataBuffer visibilityBuffer = null;
         //Constructor takes the label, any buffer name that should be used an a reference to the resources
         protected expViewElement(String label, String visibility,  String valueOutput, Vector<String> inputs, Resources res) {
-            this.label = label;
+            //An element without a label attribute (a button that only has a dynamicLabel) gets
+            //the empty string, as on iOS - the remote interface writes every label into its view
+            //list, and a null there took the whole index page down.
+            this.label = label == null ? "" : label;
             this.visibility = visibility;
             this.labelSize = res.getDimension(R.dimen.label_font);
             this.valueOutput = valueOutput;
@@ -155,7 +158,7 @@ public class ExpView implements Serializable{
 
         // Same as the above Constructor, only change is that it accepts output vector
         protected expViewElement(String label, String visibility ,Vector<String> valueOutputs, Vector<String> inputs, Resources res) {
-            this.label = label;
+            this.label = label == null ? "" : label; //See above
             this.visibility = visibility;
             this.labelSize = res.getDimension(R.dimen.label_font);
             this.outputs = valueOutputs;
@@ -300,16 +303,34 @@ public class ExpView implements Serializable{
         //
         //Deliberately independent of the element's widget: handleInputViews runs for every view,
         //but a view the pager has not reached has no views built, and seeding only for the
-        //element on screen is the bug iOS was fixed for. Empty means empty rather than NaN, so a
-        //buffer an analysis filled with NaN is left alone.
-        protected boolean seedIfEmpty(PhyphoxExperiment experiment, String name, double value) {
+        //element on screen is the bug iOS was fixed for.
+        //
+        //A NaN at the end of the buffer is replaced by the default as well (maintainer,
+        //2026-09-02): an input control cannot show NaN and the user could never enter it, so
+        //the buffer would hold something the control does not, and the element would show a
+        //value nothing reads. The default is applied as it was written - a default is
+        //deliberate, so it is not clamped to the element's range (iOS does not either). A saved
+        //state needs no exception: a NaN in it would have been replaced in the run that saved it.
+        //
+        //Returns whether the element counts this pass as user input. Seeding an EMPTY buffer
+        //does, as it did before; replacing a NaN does not, because that NaN came from an
+        //analysis write, and an analysis write must not read as user input on any view - an
+        //analysis with onUserInput would otherwise re-run on its own output every cycle.
+        protected boolean applyDefault(PhyphoxExperiment experiment, String name, double value) {
             if (name == null)
                 return false;
             DataBuffer buffer = experiment.getBuffer(name);
-            if (buffer == null || buffer.getFilledSize() != 0)
+            if (buffer == null)
                 return false;
-            buffer.append(value);
-            return true;
+            if (buffer.getFilledSize() == 0) {
+                buffer.append(value);
+                return true;
+            }
+            if (Double.isNaN(buffer.value)) {
+                buffer.clear(false);
+                buffer.append(value);
+            }
+            return false;
         }
 
         protected boolean onMayWriteToBuffers(PhyphoxExperiment experiment) {
@@ -963,7 +984,7 @@ public class ExpView implements Serializable{
         //the buffer". Starting it true made the widget's own default count as a user action, and
         //the first write pass then cleared whatever a container's init had put there. The spec
         //says a default fills an EMPTY buffer and never overwrites one, so seeding is left to
-        //seedIfEmpty() above and the control follows the data until somebody touches it.
+        //applyDefault() above and the control follows the data until somebody touches it.
         private boolean triggered = false;
         private boolean editable = true;
 
@@ -1221,18 +1242,6 @@ public class ExpView implements Serializable{
                     "</div>";
         }
 
-        //The restrictions getValue() applies to what the user typed, on their own so they can
-        //also be applied to a default that never went through the edit box.
-        protected double restricted(double v) {
-            if (!signed && v < 0.0)
-                v = Math.abs(v);
-            if (v < min)
-                v = min;
-            if (v > max)
-                v = max;
-            return v;
-        }
-
         //Get the value from the edit box (Note, that we have to divide by the factor to achieve a
         //use that is consistent with that of the valueElement
         protected double getValue() {
@@ -1257,10 +1266,13 @@ public class ExpView implements Serializable{
 
         void setValue(double v) {
             if (!focused) {
-                if (Double.isNaN(v)) { //If the buffer holds NaN, resort to the default value (probably the user has not entered anything yet)
+                //A NaN in the buffer is SHOWN as the default; the buffer itself gets the default
+                //from applyDefault() on the next write pass, like every other input element.
+                //This used to arm a write here, which made the replacement count as user input
+                //and clamped the default through the edit box on its way to the buffer.
+                if (Double.isNaN(v))
                     currentValue = defaultValue;
-                    triggered = true;
-                } else
+                else
                     currentValue = v;
                 if (et != null) {
                     if (decimal)
@@ -1275,11 +1287,8 @@ public class ExpView implements Serializable{
         //If triggered, write the data to the output buffers
         //Always return zero as the analysis process does not receive the values directly
         protected boolean onMayWriteToBuffers(PhyphoxExperiment experiment) {
-            //Seeded through the same restrictions the value would pass if it had been typed: the
-            //old path reached the buffer via setValue() writing the default into the box and
-            //getValue() reading it back out, which clamped it on the way.
             boolean seeded = inputs.size() > 0
-                    && seedIfEmpty(experiment, inputs.get(0), restricted(defaultValue));
+                    && applyDefault(experiment, inputs.get(0), defaultValue);
             if (!triggered)
                 return seeded;
             triggered = false;
@@ -3112,9 +3121,10 @@ public class ExpView implements Serializable{
 
         double defaultValue;
 
-        //See seedIfEmpty() above: a default fills an EMPTY buffer and never overwrites one, so
+        //See applyDefault() above: a default fills an EMPTY buffer and never overwrites one, so
         //this starts false - the widget's own default is not a user action.
         private boolean triggered = false;
+        private boolean followingBuffer = false;
 
         SwitchMaterial switchView;
 
@@ -3170,14 +3180,18 @@ public class ExpView implements Serializable{
             boolean isSwitchedOn = this.defaultValue != 0.0;
             if (experiment != null && inputs.size() > 0) {
                 DataBuffer buffer = experiment.getBuffer(inputs.get(0));
-                if (buffer != null && buffer.getFilledSize() > 0)
+                if (buffer != null && buffer.getFilledSize() > 0 && !Double.isNaN(buffer.value))
                     isSwitchedOn = buffer.value != 0.0;
             }
             switchView.setChecked(isSwitchedOn);
 
+            //setChecked() fires this listener too, so onMayReadFromBuffers raises followingBuffer
+            //while it moves the switch: a write from the analysis or the remote interface must
+            //not come back out of here as user input (the remote write is already counted as
+            //one by the activity, once, for every view alike).
             switchView.setOnCheckedChangeListener((compoundButton, b) -> {
-                compoundButton.setChecked(b);
-                triggered = true;
+                if (!followingBuffer)
+                    triggered = true;
             });
 
             //A freshly built widget is not a user action, whatever the old one reported.
@@ -3208,15 +3222,20 @@ public class ExpView implements Serializable{
             if (buffer == null || buffer.getFilledSize() == 0)
                 return;
 
-            boolean checked = (int) buffer.value != 0;
-            if (checked != switchView.isChecked() && !triggered)
+            //A switch cannot show NaN; the default stands in until applyDefault() has put it
+            //into the buffer on the next write pass.
+            boolean checked = Double.isNaN(buffer.value) ? defaultValue != 0.0 : (int) buffer.value != 0;
+            if (checked != switchView.isChecked() && !triggered) {
+                followingBuffer = true;
                 switchView.setChecked(checked);
+                followingBuffer = false;
+            }
         }
 
         @Override
         protected boolean onMayWriteToBuffers(PhyphoxExperiment experiment) {
             boolean seeded = inputs.size() > 0
-                    && seedIfEmpty(experiment, inputs.get(0), defaultValue);
+                    && applyDefault(experiment, inputs.get(0), defaultValue);
             if(!triggered || switchView == null){
                 return seeded;
             }
@@ -3285,7 +3304,7 @@ public class ExpView implements Serializable{
 
         MaterialAutoCompleteTextView autoCompleteTextView;
 
-        //See seedIfEmpty() above: a default fills an EMPTY buffer and never overwrites one, so
+        //See applyDefault() above: a default fills an EMPTY buffer and never overwrites one, so
         //this starts false - the widget's own default is not a user action.
         private boolean triggered = false;
         private int currentIndex = 0;
@@ -3393,7 +3412,7 @@ public class ExpView implements Serializable{
             double initial = defaultValue;
             if (experiment != null && inputs.size() > 0) {
                 DataBuffer buffer = experiment.getBuffer(inputs.get(0));
-                if (buffer != null && buffer.getFilledSize() > 0)
+                if (buffer != null && buffer.getFilledSize() > 0 && !Double.isNaN(buffer.value))
                     initial = buffer.value;
             }
             setFromValue(initial);
@@ -3446,8 +3465,9 @@ public class ExpView implements Serializable{
             if (buffer == null || buffer.getFilledSize() == 0)
                 return;
             needsUpdate = false;
-            double x = buffer.value;
-
+            //A menu cannot show NaN; the default stands in until applyDefault() has put it into
+            //the buffer on the next write pass.
+            double x = Double.isNaN(buffer.value) ? defaultValue : buffer.value;
 
             setFromValue(x);
         }
@@ -3455,7 +3475,7 @@ public class ExpView implements Serializable{
         @Override
         protected boolean onMayWriteToBuffers(PhyphoxExperiment experiment) {
             boolean seeded = inputs.size() > 0
-                    && seedIfEmpty(experiment, inputs.get(0), defaultValue);
+                    && applyDefault(experiment, inputs.get(0), defaultValue);
             if (!triggered || autoCompleteTextView == null)
                 return seeded;
             triggered = false;
@@ -3765,10 +3785,10 @@ public class ExpView implements Serializable{
         private boolean seedEmptyBuffers(PhyphoxExperiment experiment) {
             if (inputs.size() == 0)
                 return false;
-            boolean seeded = seedIfEmpty(experiment, inputs.get(0),
+            boolean seeded = applyDefault(experiment, inputs.get(0),
                     displayedValueFor(type == SliderType.Range ? minValue : defaultValue));
             if (type == SliderType.Range && inputs.size() > 1)
-                seeded |= seedIfEmpty(experiment, inputs.get(1), displayedValueFor(maxValue));
+                seeded |= applyDefault(experiment, inputs.get(1), displayedValueFor(maxValue));
             return seeded;
         }
 
@@ -3814,6 +3834,12 @@ public class ExpView implements Serializable{
         protected void onMayReadFromBuffers(PhyphoxExperiment experiment) {
             super.onMayReadFromBuffers(experiment);
             if (!needsUpdate || triggered)
+                return;
+            //Nothing to position while the widget does not exist - the read pass runs for every
+            //view, including pages the pager has not built yet, and needsUpdate starts true. The
+            //exception this used to throw was caught in updateViews, but it ended that pass for
+            //every element after this one. needsUpdate stays set; createView sets it anyway.
+            if (type == SliderType.Range ? rangeSlider == null : slider == null)
                 return;
             needsUpdate = false;
             if (inputs.size() == 0)

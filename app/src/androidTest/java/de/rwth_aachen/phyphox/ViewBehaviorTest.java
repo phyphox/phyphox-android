@@ -29,6 +29,7 @@ import org.junit.runner.RunWith;
 
 import java.io.ByteArrayOutputStream;
 import java.io.InputStream;
+import java.net.ConnectException;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.util.Arrays;
@@ -93,15 +94,26 @@ public class ViewBehaviorTest {
     }
 
     //A user input reaches its buffer through the main loop, not synchronously with the tap.
+    //
+    //A refused connection counts as "not yet" until the deadline: FixtureExperiment.launch()
+    //returns as soon as the activity has taken the loaded experiment, and the remote server is
+    //started at the END of that same main-thread pass, after the views are built. A test that
+    //reads a buffer straight after launching - without a tap in between to pass the time -
+    //can land in that window. containerInitBeatsAControlsDefault did, on t1 on 2026-09-02.
     private double[] awaitBuffer(String name, double expected) throws Exception {
         long deadline = System.currentTimeMillis() + 5000;
-        double[] values = buffer(name);
-        while (System.currentTimeMillis() < deadline
-                && !(values.length > 0 && Math.abs(values[values.length - 1] - expected) < 1e-6)) {
+        while (true) {
+            try {
+                double[] values = buffer(name);
+                if (values.length > 0 && Math.abs(values[values.length - 1] - expected) < 1e-6
+                        || System.currentTimeMillis() >= deadline)
+                    return values;
+            } catch (ConnectException e) {
+                if (System.currentTimeMillis() >= deadline)
+                    throw e;
+            }
             Thread.sleep(100);
-            values = buffer(name);
         }
-        return values;
     }
 
     private void assertBuffer(String name, double expected) throws Exception {
@@ -237,17 +249,13 @@ public class ViewBehaviorTest {
 
     // --------------------------------------------------------------- the tests
 
-    //A control's own default must never overwrite a value the container already holds. The spec
-    //states it in the remark on the default attribute of edit, toggle, dropdown and slider: a
-    //default fills an EMPTY buffer, and never one that is not. Both halves are asserted here,
-    //because fixing the first by simply not seeding would break the second.
-    //
-    //This is a regression guard with history: toggle and dropdown built their widget from the
-    //default and treated that as a user action, so the first write pass after the view was built
-    //wrote the widget's position over the init - and the view is built more than once during a
-    //load, which is what made the earlier one-line attempts at this look like they worked.
-    //Moves the pager to a page and waits for the swap to settle, so the views of the page left
-    //behind are torn down and those of the page returned to are built again.
+    //Moves the pager to a page and waits for the swap to settle. On a two-page experiment this
+    //rebuilds nothing - the pager keeps both pages alive and only flips the visible hint, which
+    //forces a read pass over every element - so the assertions after it check that a forced read
+    //pass leaves the buffers alone. The widgets ARE built more than once, but at load: each page
+    //is built by its fragment's resume and once more by the activity's setup, milliseconds apart
+    //(traced 2026-09-02), and that second build is where a widget rebuilt at its own default used
+    //to hand that position to the next write pass.
     private void page(Experiment activity, int index) throws Exception {
         //No waitForIdleSync() here. A loaded experiment updates its views on a timer, so the main
         //looper never goes idle and that call simply hangs - the same trap FixtureExperiment
@@ -258,6 +266,16 @@ public class ViewBehaviorTest {
         Thread.sleep(1500);
     }
 
+    //A control's own default must never overwrite a value the container already holds. The spec
+    //states it in the remark on the default attribute of edit, toggle, dropdown and slider: a
+    //default fills an EMPTY buffer, and never one that is not. Both halves are asserted here,
+    //because fixing the first by simply not seeding would break the second.
+    //
+    //This is a regression guard with history: toggle and dropdown built their widget from the
+    //default and treated that as a user action, so the first write pass after the view was built
+    //wrote the widget's position over the init - and every page is built twice during a load
+    //(see page() above), which is what made the earlier one-line attempts at this look like they
+    //worked.
     @Test
     public void containerInitBeatsAControlsDefault() throws Exception {
         assumeTrue(FixtureExperiment.available("init-vs-default.phyphox"));
@@ -275,10 +293,11 @@ public class ViewBehaviorTest {
             assertBuffer("edit_default", 7);
             assertBuffer("slider_default", 3);
 
-            //Again after the views have been rebuilt. This is the half that actually caught the
-            //bug: a single load builds each page once, but paging away and back builds it again,
-            //and a widget rebuilt at its own default used to hand that position to the next write
-            //pass. Nothing here touches a control, so every buffer must be unchanged.
+            //Again after paging away and back. That rebuilds no widget on a two-page experiment
+            //(see page()), but it forces a read pass over every element on each swap, and a read
+            //pass must not turn into a write: the toggle's read hook used to fire the switch's
+            //own change listener. Nothing here touches a control, so every buffer must be
+            //unchanged.
             page(activity, 1);
             page(activity, 0);
 
@@ -290,6 +309,27 @@ public class ViewBehaviorTest {
             assertBuffer("dropdown_default", 1);
             assertBuffer("edit_default", 7);
             assertBuffer("slider_default", 3);
+        } finally {
+            FixtureExperiment.close(activity);
+        }
+    }
+
+    //A NaN in an input element's buffer is replaced by the element's default, because a control
+    //cannot show NaN and the user could never enter it (maintainer, 2026-09-02). The fixture
+    //plants the NaN through the containers' init; an analysis writing one gets the same
+    //treatment. The default is written as it stands - a default is deliberate, so the edit's
+    //range does not clamp it - and, as replacing a NaN is not user input, the run stays
+    //untouched: the experiment must still be stopped afterwards.
+    @Test
+    public void aNanIsReplacedByTheDefault() throws Exception {
+        assumeTrue(FixtureExperiment.available("nan-vs-default.phyphox"));
+        Experiment activity = FixtureExperiment.launch("nan-vs-default.phyphox");
+        try {
+            assertBuffer("toggle_nan", 1);
+            assertBuffer("dropdown_nan", 2);
+            assertBuffer("edit_nan", 12);
+            assertBuffer("slider_nan", 3);
+            assertTrue("replacing a NaN started the experiment", !activity.measuring);
         } finally {
             FixtureExperiment.close(activity);
         }
