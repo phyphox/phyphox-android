@@ -1146,9 +1146,7 @@ public class Experiment extends AppCompatActivity implements View.OnClickListene
         Animation anim = AnimationUtils.loadAnimation(this, R.anim.play_highlight);
         anim.setRepeatCount(Animation.INFINITE);
         anim.setRepeatMode(Animation.REVERSE);
-        if (!BuildConfig.FLAVOR.equals("screenshot")) {
-            hintAnimation.startAnimation(anim); //Do not animate while taking screenshots
-        }
+        hintAnimation.startAnimation(anim);
 
         hintAnimation.setContentDescription(res.getString(R.string.start));
 
