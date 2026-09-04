@@ -17,6 +17,8 @@ Unterstützte Sensoren
 • Näherungssensor
 • Mikrofon
 • GPS
+• Kamera
+• LiDAR/ToF
 *manche Sensoren sind nicht auf jedem Gerät verfügbar.
 
 Export Formate
@@ -25,18 +27,4 @@ Export Formate
 • Excel
 (wenn du weitere Formate benötigst, lass es uns wissen)
 
-
 Diese App wurde am 2. Physikalischen Institut A der RWTH Aachen University entwickelt.
-
---
-
-Erklärung der angeforderten Zugriffsrechte
-
-Wenn du Android 6.0 oder neuer verwendest, wird nach manchen Berechtigungen nur bei Bedarf gefragt.
-
-Internet: Dies erlaubt Zugriff auf das Netzwerk, welcher benötigt wird, wenn ein Experiment aus einer Internet-Quelle geladen werden soll und für den Fernzugriff. Beides passiert nur auf Wunsch des Users und es werden keine anderen Daten übertragen.
-Bluetooth: Wird für den Zugriff auf externe Sensoren genutzt.
-Read external storage: Dies kann nötig sein, wenn ein externes Experiment auf dem Gerät geöffnet werden soll.
-Record audio: Nötig um das Mikrofon im Experiment zu verwenden.
-Location: Benötigt für den Zugriff auf GPS-Daten für entsprechende ortsabhängige Experimente.
-Kamera: Scan von QR-Codes um externe Experimentkonfigurationen zu laden.
