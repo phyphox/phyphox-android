@@ -376,17 +376,23 @@ public class NetworkConnection implements NetworkService.RequestCallback, Networ
             case success:
                 byte[][] data = service.getResults();
                 if (data != null) {
-                    try {
-                        conversion.prepare(data);
-                        dataReady = true;
-                    } catch (NetworkConversion.ConversionException e) {
-                        displayErrorMessage(e.getMessage());
+                    //Parked for the analysis thread, which copies it into the buffers in
+                    //pushDataToBuffers. A response that arrives before the parked one is
+                    //consumed overwrites it - that is intended and identical on iOS - but it
+                    //must not overwrite it halfway through being consumed, hence the lock.
+                    synchronized (this) {
+                        try {
+                            conversion.prepare(data);
+                            dataReady = true;
+                        } catch (NetworkConversion.ConversionException e) {
+                            displayErrorMessage(e.getMessage());
+                        }
                     }
                 }
         }
     }
 
-    public void pushDataToBuffers() {
+    public synchronized void pushDataToBuffers() {
         if (!dataReady)
             return;
 
