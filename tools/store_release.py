@@ -32,9 +32,10 @@ WHAT IT DOES, AND WHY IN THIS ORDER
 4.  The mechanical check over every plate (verify.py). It catches broken and
     blank captures, not ugly ones - those still need eyes, and this says so.
 
-5.  The six English phone plates are copied into the metadata tree, which is
-    the F-Droid half of the release. Nothing else is: Play and the App Store
-    upload over their APIs and never look at git, so the other locales' images
+5.  The F-Droid half of the release: the listing text for every language that
+    has a directory in the metadata tree, prepared exactly as Play gets it,
+    and the six English phone plates. No other images: Play and the App Store
+    upload over their APIs and never look at git, so the other locales' plates
     would be binary weight for nothing, and F-Droid falls back to English.
 
 6.  A rehearsal against Play: the listing text and all the images go into an
@@ -211,7 +212,12 @@ def verify():
 
 
 def copy_fdroid():
-    """The English phone plates into the metadata tree, for F-Droid."""
+    """The listing text and the English phone plates into the metadata tree."""
+    # The text: play_upload.py's own writer, so F-Droid and Play get one
+    # prepared text - same formatting, same trimmed short description.
+    import play_upload
+    play_upload.fdroid_text()
+
     src = os.path.join(SHOTS, FDROID_LOCALE, "images", FDROID_KIND)
     dst = os.path.join(METADATA, FDROID_DIR, "images", FDROID_KIND)
     if not os.path.isdir(src):
@@ -283,7 +289,7 @@ def main():
     step(4, "Checking every plate")
     verify()
 
-    step(5, "F-Droid: the English phone plates into the metadata tree")
+    step(5, "F-Droid: the listing text and the English phone plates")
     copy_fdroid()
 
     step(6, "Rehearsal - into a Play edit, validated, thrown away")
@@ -323,10 +329,10 @@ def main():
     if published:
         print("- The listing is on Play and IN REVIEW. Release it in the "
               "Play Console when you\n  want it live.")
-    print("- Still waiting for you in git: the release notes under "
-          "fastlane/metadata/android/\n  <lang>/changelogs/ and the English "
-          "plates under en/images/. F-Droid reads those\n  out of the "
-          "repository, so they are not published until you commit and push.")
+    print("- Still waiting for you in git: under fastlane/metadata/android/, "
+          "the release notes\n  (<lang>/changelogs/), the listing text and the "
+          "English plates (en/images/).\n  F-Droid reads those out of the "
+          "repository, so they are not published until you\n  commit and push.")
     print("- The block above goes into the release's notes field in the Play "
           "Console when you\n  roll out the bundle. That is a separate act "
           "from this.")

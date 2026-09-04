@@ -7,6 +7,15 @@ capture script writes every locale and form factor into the working root's
 committed to this repository, and that is for F-Droid, which reads the metadata
 tree out of git and needs nothing uploaded.
 
+F-Droid gets the listing TEXT the same way, and `--text` writes it: the title,
+short and full description land in `fastlane/metadata/android/<lang>/` for every
+language that has a directory there, prepared exactly as they are sent to Play -
+same formatting, same trimmed short description - so the two never say different
+things. That is a local write into a tracked tree; git shows what changed, and
+committing it is the maintainer's call. (Until 2026-09-04 nothing wrote those
+files: they were generated once by hand with phyphox-translation's
+updateMetadata.py and had drifted from the translations since.)
+
     tools/play_upload.py                       # validate, change nothing
     tools/play_upload.py --commit              # actually publish the listing
     tools/play_upload.py --release-notes       # the release notes, to paste into a release
@@ -232,51 +241,142 @@ def local_sets(root):
     return out
 
 
-def upload_text(tok, edit, locales_wanted):
-    """Push title, short and full description from the PO files.
-
-    Every string is measured against Play's limits BEFORE anything is sent. An
-    over-long one is refused by name and by how much, because the alternative -
-    letting the commit fail, or silently truncating - either wastes a run or
-    mangles somebody's translation. Shortening it is the translator's job, in
-    Weblate; nothing here edits phyphox-translation.
-    """
+def locale_rows():
     import yaml
     docs = os.path.normpath(os.path.join(REPO, "..", "phyphox-docs"))
     with open(os.path.join(docs, "screenshots", "locales.yml")) as f:
-        rows = yaml.safe_load(f)["locales"]
+        return yaml.safe_load(f)["locales"]
+
+
+def prepare_text(po_locale, label):
+    """The listing text for one language, as it goes to BOTH stores.
+
+    Returns (text, None) or (None, why). Every string is measured against the
+    limits here, before anything is sent or written: an over-long one is
+    refused by name and by how much, because the alternative - letting the
+    commit fail, or silently truncating - either wastes a run or mangles
+    somebody's translation. Shortening it is the translator's job, in Weblate;
+    nothing here edits phyphox-translation.
+
+    The limits are Play's, and F-Droid's are the same numbers: its lint flags a
+    summary over 80 characters and a description over 4000. So one prepared
+    text serves both, trimmed attribution included.
+    """
+    text = store_text(po_locale) if po_locale else None
+    if not text:
+        return None, f"{label}: no store text for {po_locale!r}"
+    if any(k == "shortDescription" for k, _n, _l in too_long(text)):
+        short = trim_attribution(text["shortDescription"])
+        if len(short) <= LIMITS["shortDescription"]:
+            print(f"  {label:6s} short description trimmed to fit: "
+                  f"{len(text['shortDescription'])} -> {len(short)} "
+                  f"characters (attribution dropped)")
+            text["shortDescription"] = short
+    over = too_long(text)
+    if over:
+        return None, "; ".join(
+            f"{label}: {k} is {n} characters, the stores allow {lim}"
+            for k, n, lim in over)
+    return text, None
+
+
+def refuse(problems, doing):
+    raise SystemExit(
+        f"refusing to {doing}:\n  " + "\n  ".join(problems)
+        + "\nShorten these in Weblate - truncating a translation here "
+          "would be worse than not using it.")
+
+
+# App language -> the directory F-Droid reads, where the two are not spelled
+# the same. F-Droid takes the app's own tags for the rest (`de`, `ja`, `pt`).
+# Serbian: the app has both scripts, F-Droid one directory; Cyrillic is what is
+# there today, and `serbian_screenshots` in locales.yml makes the same choice.
+FDROID_DIRS = {"zh-Hans": "zh-CN", "zh-Hant": "zh-TW", "sr-Latn": "sr"}
+FDROID_FILES = (("title.txt", "title"),
+                ("short_description.txt", "shortDescription"),
+                ("full_description.txt", "fullDescription"))
+
+
+def fdroid_text():
+    """Write the listing text into fastlane/metadata/android, for F-Droid.
+
+    Only into directories that already exist there. A language that has a
+    translation but no directory is reported, not created: adding a language
+    to F-Droid is a decision (the maintainer's), and it is the same decision
+    updateMetadata.py in phyphox-translation left to a person - it skips those
+    too. Files are written without a trailing newline, as that script wrote
+    them, so an unchanged text is an unchanged file in git.
+
+    Returns the files it changed, repository-relative.
+    """
+    root = os.path.join(REPO, "fastlane", "metadata", "android")
+    wanted = {}
+    for row in locale_rows():
+        app = row["app"]
+        wanted.setdefault(FDROID_DIRS.get(app, app), app.replace("-", "_"))
+
+    changed, unchanged, missing, problems = [], [], [], []
+    for d, po in sorted(wanted.items()):
+        target = os.path.join(root, d)
+        # en-US is a symlink to en; writing through it would write en twice
+        if not os.path.isdir(target) or os.path.islink(target):
+            missing.append(d)
+            continue
+        text, why = prepare_text(po, d)
+        if why:
+            problems.append(why)
+            continue
+        for fn, key in FDROID_FILES:
+            path = os.path.join(target, fn)
+            old = None
+            if os.path.isfile(path):
+                with open(path, encoding="utf-8") as f:
+                    old = f.read()
+            if old == text[key]:
+                unchanged.append(f"{d}/{fn}")
+                continue
+            with open(path, "w", encoding="utf-8") as f:
+                f.write(text[key])
+            changed.append(f"{d}/{fn}")
+    if problems:
+        refuse(problems, "write the F-Droid text")
+    rel = os.path.relpath(root, REPO)
+    if changed:
+        print(f"  F-Droid: {len(changed)} file(s) changed in {rel}/ "
+              f"({len(unchanged)} unchanged):")
+        for c in changed:
+            print(f"    {c}")
+    else:
+        print(f"  F-Droid: {rel}/ already matches the translations "
+              f"({len(unchanged)} files)")
+    if missing:
+        print(f"  F-Droid: no directory for {', '.join(missing)} - each has a "
+              f"translation and gets\n    English on F-Droid until one is "
+              f"created under {rel}/ (a decision, so not\n    done here)")
+    return changed
+
+
+def upload_text(tok, edit, locales_wanted):
+    """Push title, short and full description from the PO files.
+
+    See prepare_text for the checks; anything over a limit stops the run
+    before the first PUT.
+    """
     po_for = {}
-    for row in rows:
+    for row in locale_rows():
         a = row["android"]
         for name in (a if isinstance(a, list) else [a]):
             po_for.setdefault(name, row["app"].replace("-", "_"))
 
     texts, problems = {}, []
     for locale in locales_wanted:
-        po = po_for.get(locale)
-        text = store_text(po) if po else None
-        if not text:
-            problems.append(f"{locale}: no store text for {po!r}")
-            continue
-        if any(k == "shortDescription" for k, _n, _l in too_long(text)):
-            short = trim_attribution(text["shortDescription"])
-            if len(short) <= LIMITS["shortDescription"]:
-                print(f"  {locale:6s} short description trimmed to fit: "
-                      f"{len(text['shortDescription'])} -> {len(short)} "
-                      f"characters (attribution dropped)")
-                text["shortDescription"] = short
-        over = too_long(text)
-        if over:
-            problems.append("; ".join(
-                f"{locale}: {k} is {n} characters, Play allows {lim}"
-                for k, n, lim in over))
-            continue
-        texts[locale] = text
+        text, why = prepare_text(po_for.get(locale), locale)
+        if why:
+            problems.append(why)
+        else:
+            texts[locale] = text
     if problems:
-        raise SystemExit(
-            "refusing to upload text:\n  " + "\n  ".join(problems)
-            + "\nShorten these in Weblate - truncating a translation here "
-              "would be worse than not uploading it.")
+        refuse(problems, "upload text")
     for locale, text in sorted(texts.items()):
         call("PUT", f"{API}/applications/{PACKAGE}/edits/{edit}/listings/{locale}",
              tok, body={"language": locale, **text})
@@ -378,7 +478,9 @@ def main():
                                           + "; default: all that are present")
     ap.add_argument("--text", action="store_true",
                     help="also upload the listing text, read from "
-                         "phyphox-translation's store PO files")
+                         "phyphox-translation's store PO files - and write "
+                         "the same text into fastlane/metadata/android for "
+                         "F-Droid")
     ap.add_argument("--create-listings", action="store_true",
                     help="with --text, also create listings for locales the "
                          "store does not have yet")
@@ -444,6 +546,10 @@ def main():
             wanted = [l for l in wanted if l in on_store]
 
         if args.text:
+            # F-Droid first: it is local, it is what the diff will show, and
+            # it is the same prepared text - so a limit that stops the run
+            # stops it before anything is in the edit.
+            fdroid_text()
             upload_text(tok, edit, wanted)
 
         total = 0
@@ -476,6 +582,9 @@ def main():
             print(f"committed: {what} on the store and IN REVIEW. Managed "
                   f"publishing holds them until you release them in the "
                   f"Play Console.")
+            if args.text:
+                print("F-Droid has the same text once fastlane/metadata/android "
+                      "is committed and pushed.")
             edit = None
         else:
             call("POST", f"{API}/applications/{PACKAGE}/edits/{edit}:validate", tok)
