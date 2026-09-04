@@ -1,0 +1,11 @@
+Neues Spektroskopie-Experiment
+Neues Stroboskop-Experiment
+Überarbeiteter Tongenerator mit bis zu drei Kanälen, Wellenformen und Panning
+Altes Excel-Format „xls“ durch „xlsx“ ersetzt – ohne Limit von 65.535 Zeilen
+Neue Sprachen: Gujarati, Koreanisch und Tamil
+Daten beim Löschen auswählen
+Einstellung für Standard-Dateinamen
+Graphen und Kameravorschau verschieben Bedienelemente im Querformat Vollbild nach rechts
+Verbesserte Eingabefelder
+
+Vollständiges Changelog: https://phyphpox.org/changelog
