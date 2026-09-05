@@ -424,4 +424,11 @@
     <string name="common_unit_short_nano_meter">nm</string>
     <string name="common_unit_short_micro_meter">μm</string>
     <string name="common_quantity_short_wavelength">λ</string>
+    <string name="which_spectrum_orientation">您的设备针对频谱的方向是什么？</string>
+    <string name="spectrum_orientation">方向</string>
+    <string name="localNetworkLoadMessage">无法从此地址加载实验。如果它是由本地网络上的设备提供的，则 phyphox 需要获得访问本地网络的权限。请授予权限并再试一次？</string>
+    <string name="localNetworkExperimentMessage">本实验需要连接到本地网络上的设备。phyphox 需要获得访问本地网络的权限才能访问该设备。</string>
+    <string name="localNetworkDeniedHint">如果没有本地网络权限，连接到本地网络上的设备将会失败。</string>
+    <string name="remoteServerPortInUseTitle">无法启用远程访问</string>
+    <string name="remoteServerPortInUse">由于该端口已被设备上的其他应用占用，因此无法启用远程访问。请停止正在使用该端口的应用，或在 Phyphox 设置中设置其他端口。</string>
 </resources>
