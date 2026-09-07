@@ -334,6 +334,31 @@ public abstract class PhyphoxFile {
                 return null;
         }
 
+        //Element text as a number, same lexical space as the attributes (rules.yml, number-invalid-value)
+        protected double getNumberText() throws XmlPullParserException, IOException, phyphoxFileException {
+            try {
+                return parseNumber(getText());
+            } catch (NumberFormatException e) {
+                throw new phyphoxFileException("Invalid number format.", xpp.getLineNumber());
+            }
+        }
+
+        //The input element of an output block: a buffer name, or with type="value" a constant
+        protected DataInput getInputElement() throws XmlPullParserException, IOException, phyphoxFileException {
+            String type = getStringAttribute("type");
+            if (type == null || type.equalsIgnoreCase("buffer")) {
+                String bufferName = getText();
+                DataBuffer buffer = experiment.getBuffer(bufferName);
+                if (buffer == null)
+                    throw new phyphoxFileException("Buffer \"" + bufferName + "\" not defined.", xpp.getLineNumber());
+                return new DataInput(buffer, false);
+            } else if (type.equalsIgnoreCase("value")) {
+                return new DataInput(getNumberText());
+            } else {
+                throw new phyphoxFileException("Unknown input type \"" + type + "\".", xpp.getLineNumber());
+            }
+        }
+
         //Helper to receive a string typed attribute
         protected String getStringAttribute(String identifier) {
             return xpp.getAttributeValue(XmlPullParser.NO_NAMESPACE, identifier);
@@ -471,30 +496,7 @@ public abstract class PhyphoxFile {
             switch (tag.toLowerCase()) {
                 case "input": {
                     String parameter = getStringAttribute("parameter");
-
-                    DataInput input;
-                    String type = getStringAttribute("type");
-                    if (type == null)
-                        type = "buffer";
-
-                    if (type.equalsIgnoreCase("buffer")) {
-                        String bufferName = getText();
-                        DataBuffer buffer = experiment.getBuffer(bufferName);
-                        if (buffer == null) {
-                            throw new phyphoxFileException("Buffer \"" + bufferName + "\" not defined.", xpp.getLineNumber());
-                        }
-                        input = new DataInput(buffer, false);
-                    } else if(type.equalsIgnoreCase("value")){
-                        double value;
-                        try {
-                            value = Double.valueOf(getText());
-                        } catch (NumberFormatException e) {
-                            throw new phyphoxFileException("Invalid number format.", xpp.getLineNumber());
-                        }
-                        input = new DataInput(value);
-                    } else {
-                        throw new phyphoxFileException("Unknown input type \""+type+"\".", xpp.getLineNumber());
-                    }
+                    DataInput input = getInputElement();
                     //Enumerated values are matched case-insensitively (see rules.yml, enum-case-insensitive)
                     switch (parameter == null ? "" : parameter.toLowerCase()){
                         case "intensity": {
@@ -549,29 +551,7 @@ public abstract class PhyphoxFile {
                         break;
                     }
 
-                    DataInput input;
-                    String type = getStringAttribute("type");
-                    if (type == null)
-                        type = "buffer";
-
-                    if (type.equalsIgnoreCase("buffer")) {
-                        String bufferName = getText();
-                        DataBuffer buffer = experiment.getBuffer(bufferName);
-                        if (buffer == null) {
-                            throw new phyphoxFileException("Buffer \"" + bufferName + "\" not defined.", xpp.getLineNumber());
-                        }
-                        input = new DataInput(buffer, false);
-                    } else if (type.equalsIgnoreCase("value")) {
-                        double value;
-                        try {
-                            value = Double.valueOf(getText());
-                        } catch (NumberFormatException e) {
-                            throw new phyphoxFileException("Invalid number format.", xpp.getLineNumber());
-                        }
-                        input = new DataInput(value);
-                    } else {
-                        throw new phyphoxFileException("Unknown input type \""+type+"\".", xpp.getLineNumber());
-                    }
+                    DataInput input = getInputElement();
                     if (level == 2) {
                         //Parameter
                         if (currentPlugin != null) {
@@ -949,13 +929,7 @@ public abstract class PhyphoxFile {
                     if (type.equalsIgnoreCase("value")) {
                         //Just a value, Is this allowed?
                         if (inputMapping[mappingIndex].valueAllowed) {
-                            double value;
-                            try {
-                                value = Double.valueOf(getText());
-                            } catch (NumberFormatException e) {
-                                throw new phyphoxFileException("Invalid number format.", xpp.getLineNumber());
-                            }
-                            inputList.set(targetIndex, new DataInput(value));
+                            inputList.set(targetIndex, new DataInput(getNumberText()));
                         } else {
                             throw new phyphoxFileException("Value-type not allowed for input \""+inputMapping[mappingIndex].name+"\".", xpp.getLineNumber());
                         }

@@ -64,7 +64,6 @@ import com.google.android.material.switchmaterial.SwitchMaterial;
 import com.google.android.material.textfield.MaterialAutoCompleteTextView;
 import com.google.android.material.textfield.TextInputLayout;
 
-import java.io.File;
 import java.io.InputStream;
 import java.io.Serializable;
 import java.math.BigDecimal;
@@ -362,6 +361,17 @@ public class ExpView implements Serializable{
             if (rootView != null) {
                 rootView.setVisibility(VISIBLE);
             }
+        }
+
+        //The input buffer's current value, or def if it has none or holds NaN, which no input control can show.
+        //createView runs again when the pager resumes the fragment, so a control starts from the buffer.
+        protected double bufferValueOrDefault(PhyphoxExperiment experiment, double def) {
+            if (experiment == null || inputs.size() == 0)
+                return def;
+            DataBuffer buffer = experiment.getBuffer(inputs.get(0));
+            if (buffer == null || buffer.getFilledSize() == 0 || Double.isNaN(buffer.value))
+                return def;
+            return buffer.value;
         }
 
         //Leave exclusive mode on the user's request; elements may intercept this to ask first (see graphElement)
@@ -2828,24 +2838,14 @@ public class ExpView implements Serializable{
         protected void createView(LinearLayout ll, Context c, Resources res, ExpViewFragment parent, PhyphoxExperiment experiment){
             super.createView(ll, c, res, parent, experiment);
 
-            boolean srcIsSafe = Helper.isSafeResourceName(src); //src comes from the experiment file: refuse path traversal
-            if (srcIsSafe && experiment.resourceFolder != null && !experiment.resourceFolder.startsWith("ASSET")) {
-                File srcFile = new File(experiment.resourceFolder, src);
-                Bitmap bmp = BitmapFactory.decodeFile(srcFile.getAbsolutePath());
+            try (InputStream is = Helper.openResource(c, experiment.resourceFolder, src)) {
+                Bitmap bmp = is == null ? null : BitmapFactory.decodeStream(is);
                 if (bmp != null)
                     drawable = new BitmapDrawable(bmp);
-            }
-            //External experiments may also reuse the images bundled in the assets
-            if (srcIsSafe && drawable == null) {
-                String assetPath = "experiments/res/" + src;
-                try {
-                    InputStream is = res.getAssets().open(assetPath);
-                    Bitmap bmp = BitmapFactory.decodeStream(is);
-                    if (bmp != null)
-                        drawable = new BitmapDrawable(bmp);
-                } catch (Exception e) {
-                    Log.e("imageView", "Failed to open image from asset: " + assetPath);
-                }
+                else
+                    Log.e("imageView", "Failed to open image: " + src);
+            } catch (Exception e) {
+                Log.e("imageView", "Failed to open image: " + src);
             }
             if (drawable != null) {
                 applyFilter(Helper.isDarkTheme(res) ? darkFilter : lightFilter);
@@ -3125,14 +3125,7 @@ public class ExpView implements Serializable{
             row.addView(labelView);
             row.addView(switchViewRow);
 
-            //Position from the buffer where it has one: the view is recreated when the pager resumes the fragment
-            boolean isSwitchedOn = this.defaultValue != 0.0;
-            if (experiment != null && inputs.size() > 0) {
-                DataBuffer buffer = experiment.getBuffer(inputs.get(0));
-                if (buffer != null && buffer.getFilledSize() > 0 && !Double.isNaN(buffer.value))
-                    isSwitchedOn = buffer.value != 0.0;
-            }
-            switchView.setChecked(isSwitchedOn);
+            switchView.setChecked(bufferValueOrDefault(experiment, defaultValue) != 0.0);
 
             //setChecked() fires this too; followingBuffer keeps a buffer-driven move from counting as user input
             switchView.setOnCheckedChangeListener((compoundButton, b) -> {
@@ -3338,14 +3331,7 @@ public class ExpView implements Serializable{
                 autoCompleteTextView.setText(options[0]);
             }
 
-            //Selection from the buffer where it has one: createView runs again when the pager resumes the fragment
-            double initial = defaultValue;
-            if (experiment != null && inputs.size() > 0) {
-                DataBuffer buffer = experiment.getBuffer(inputs.get(0));
-                if (buffer != null && buffer.getFilledSize() > 0 && !Double.isNaN(buffer.value))
-                    initial = buffer.value;
-            }
-            setFromValue(initial);
+            setFromValue(bufferValueOrDefault(experiment, defaultValue));
 
             triggered = false; //a freshly built widget is not a user action
 

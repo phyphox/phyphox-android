@@ -1,5 +1,6 @@
 package de.rwth_aachen.phyphox;
 
+import de.rwth_aachen.phyphox.helper.Helper;
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.content.BroadcastReceiver;
@@ -7,7 +8,6 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.hardware.camera2.CameraManager;
-import android.os.BatteryManager;
 import android.widget.Toast;
 
 import androidx.camera.core.CameraControl;
@@ -24,8 +24,8 @@ public class FlashlightOutput {
     private final Context context;
     private BroadcastReceiver batteryReceiver;
     private boolean receiverRegistered = false;
-    private static final int OVERHEAT_THRESHOLD = 450;
-    private static final int COOLDOWN_THRESHOLD = 400;
+    private static final double OVERHEAT_THRESHOLD = 45.0; //battery temperature in degrees Celsius
+    private static final double COOLDOWN_THRESHOLD = 40.0;
 
     public FlashlightOutput(Context context,CameraManager cameraManager) {
         this.context = context;
@@ -38,8 +38,8 @@ public class FlashlightOutput {
 
             @Override
             public void onReceive(Context context, Intent intent) {
-                int temp = intent.getIntExtra(BatteryManager.EXTRA_TEMPERATURE, 0);
-                if (flashLightManager != null) {
+                double temp = Helper.batteryTemperature(intent);
+                if (flashLightManager != null && !Double.isNaN(temp)) {
                     if (temp >= OVERHEAT_THRESHOLD && !flashLightManager.isOverheated()) {
                         flashLightManager.setOverheated(true);
                         stop();

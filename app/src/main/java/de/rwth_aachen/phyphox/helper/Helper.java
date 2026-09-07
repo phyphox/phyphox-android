@@ -150,6 +150,28 @@ public abstract class Helper {
         return score;
     }
 
+    //Opens a resource named by a view element or a network block: the folder delivered with the experiment first,
+    //then the images bundled in the assets, which external experiments may reuse. Null if unsafe or absent.
+    public static InputStream openResource(Context context, String resourceFolder, String src) {
+        if (!isSafeResourceName(src))
+            return null;
+        if (resourceFolder != null && !resourceFolder.startsWith("ASSET")) {
+            File file = new File(resourceFolder, src);
+            if (file.isFile()) {
+                try {
+                    return new FileInputStream(file);
+                } catch (IOException e) {
+                    return null;
+                }
+            }
+        }
+        try {
+            return context.getAssets().open("experiments/res/" + src);
+        } catch (IOException e) {
+            return null;
+        }
+    }
+
     //Resource names come from the untrusted experiment file and reach the /res endpoint: refuse path traversal (as iOS Experiment.resolveResource)
     public static boolean isSafeResourceName(String src) {
         if (src == null || src.isEmpty())
@@ -195,27 +217,57 @@ public abstract class Helper {
                 .show();
     }
 
+    public static class HostPort {
+        public final String host;
+        public final int port;
+        HostPort(String host, int port) {
+            this.host = host;
+            this.port = port;
+        }
+    }
+
+    //Host and port of "[scheme://]host[:port][/path]". IPv6 literals may be bracketed; a bare one (several
+    //colons, no brackets) is taken as host without port. An absent or unparseable port is the default.
+    public static HostPort splitHostPort(String address, int defaultPort) {
+        String hostPort = address;
+        int schemeIdx = hostPort.indexOf("://");
+        if (schemeIdx >= 0)
+            hostPort = hostPort.substring(schemeIdx + 3);
+        int slash = hostPort.indexOf('/');
+        if (slash >= 0)
+            hostPort = hostPort.substring(0, slash);
+        String host = hostPort;
+        String portString = null;
+        if (hostPort.startsWith("[")) {
+            int end = hostPort.indexOf(']');
+            if (end > 0) {
+                host = hostPort.substring(1, end);
+                if (hostPort.startsWith(":", end + 1))
+                    portString = hostPort.substring(end + 2);
+            }
+        } else {
+            int colon = hostPort.indexOf(':');
+            if (colon >= 0 && hostPort.indexOf(':', colon + 1) < 0) {
+                host = hostPort.substring(0, colon);
+                portString = hostPort.substring(colon + 1);
+            }
+        }
+        int port = defaultPort;
+        if (portString != null) {
+            try {
+                port = Integer.parseInt(portString);
+            } catch (NumberFormatException e) {
+                port = defaultPort;
+            }
+        }
+        return new HostPort(host, port);
+    }
+
     //Heuristic without DNS (must not block): hostnames that merely resolve to a LAN address are caught after a failed attempt
     public static boolean isLikelyLocalNetworkAddress(String address) {
         if (address == null || address.isEmpty())
             return false;
-        String host = address;
-        int schemeIdx = host.indexOf("://");
-        if (schemeIdx >= 0)
-            host = host.substring(schemeIdx + 3);
-        int slash = host.indexOf('/');
-        if (slash >= 0)
-            host = host.substring(0, slash);
-        if (host.startsWith("[")) { //bracketed IPv6 literal
-            int end = host.indexOf(']');
-            if (end > 0)
-                host = host.substring(1, end);
-        } else {
-            int colon = host.indexOf(':');
-            if (colon >= 0 && host.indexOf(':', colon + 1) < 0) //single colon: host:port (multiple colons: bare IPv6)
-                host = host.substring(0, colon);
-        }
-        host = host.toLowerCase();
+        String host = splitHostPort(address, 0).host.toLowerCase();
 
         if (host.equals("localhost") || host.endsWith(".local"))
             return true;
@@ -710,14 +762,14 @@ public abstract class Helper {
     //Battery temperature in degrees Celsius, NaN if unavailable
     public static double getBatteryTemperature(Context context) {
         if (context == null) return Double.NaN;
-
         Intent batteryStatus = context.registerReceiver(null, new IntentFilter(Intent.ACTION_BATTERY_CHANGED));
-        if (batteryStatus == null) return Double.NaN;
+        return batteryStatus == null ? Double.NaN : batteryTemperature(batteryStatus);
+    }
 
-        int temperature = batteryStatus.getIntExtra(BatteryManager.EXTRA_TEMPERATURE, Integer.MIN_VALUE); //in tenths of a degree Celsius
-        if (temperature == Integer.MIN_VALUE) return Double.NaN;
-
-        return temperature * 0.1;
+    //Degrees Celsius from an ACTION_BATTERY_CHANGED intent, NaN if it carries none
+    public static double batteryTemperature(Intent batteryStatus) {
+        int temperature = batteryStatus.getIntExtra(BatteryManager.EXTRA_TEMPERATURE, Integer.MIN_VALUE); //tenths of a degree
+        return temperature == Integer.MIN_VALUE ? Double.NaN : temperature * 0.1;
     }
 
     public static int getWifiReceptionStrength(Context context){

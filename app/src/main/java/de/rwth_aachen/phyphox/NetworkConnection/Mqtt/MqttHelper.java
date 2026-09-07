@@ -7,8 +7,6 @@ import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
-import java.io.File;
-import java.io.FileInputStream;
 import java.io.InputStream;
 import java.security.KeyStore;
 import java.security.cert.Certificate;
@@ -26,6 +24,7 @@ import javax.net.ssl.TrustManagerFactory;
 import de.rwth_aachen.phyphox.ExperimentTimeReference;
 import de.rwth_aachen.phyphox.NetworkConnection.NetworkConnection;
 import de.rwth_aachen.phyphox.NetworkConnection.NetworkService;
+import de.rwth_aachen.phyphox.helper.Helper;
 
 
 public class MqttHelper {
@@ -39,20 +38,9 @@ public class MqttHelper {
         if (certificateFileName == null || certificateFileName.isEmpty())
             return (SSLSocketFactory) SSLSocketFactory.getDefault(); // system trust store
 
-        // resolved like an image resource: experiment resource folder, then bundled res assets
-        InputStream input = null;
-        if (resourceFolder != null && !resourceFolder.startsWith("ASSET")) {
-            File certFile = new File(resourceFolder, certificateFileName);
-            if (certFile.isFile())
-                input = new FileInputStream(certFile);
-        }
-        if (input == null) {
-            try {
-                input = context.getAssets().open("experiments/res/" + certificateFileName);
-            } catch (Exception e) {
-                throw new Exception("Certificate \"" + certificateFileName + "\" not found.");
-            }
-        }
+        InputStream input = Helper.openResource(context, resourceFolder, certificateFileName);
+        if (input == null)
+            throw new Exception("Certificate \"" + certificateFileName + "\" not found.");
 
         try {
             CertificateFactory cf = CertificateFactory.getInstance("X.509");

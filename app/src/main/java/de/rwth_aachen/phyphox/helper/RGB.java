@@ -157,8 +157,17 @@ public class RGB implements Serializable {
         return max/255.0;
     }
 
+    //sRGB EOTF (0..1), the same curve as the luminance output of the camera input (LuminanceAnalyzer)
+    public static double linearize(double x) {
+        if (x < 0.04045)
+            return x / 12.92;
+        else
+            return Math.pow((x + 0.055) / 1.055, 2.4);
+    }
+
+    //Relative luminance (Rec. 709 weights)
     public double luminance() {
-        return 0.2126f*(float)Math.pow((r()/255.0+0.055f)/1.055f, 2.4f) + 0.7152f*(float)Math.pow((g()/255.0+0.055f)/1.055f, 2.4f) + 0.0722f*(float)Math.pow((b()/255.0+0.055f)/1.055f, 2.4f);
+        return 0.2126 * linearize(r() / 255.0) + 0.7152 * linearize(g() / 255.0) + 0.0722 * linearize(b() / 255.0);
     }
 
     public RGB adjustedColorForLightTheme(Resources res) {

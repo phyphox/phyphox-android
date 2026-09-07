@@ -14,6 +14,7 @@ import java.util.Iterator;
 import java.util.Vector;
 
 import de.rwth_aachen.phyphox.helper.Helper;
+import de.rwth_aachen.phyphox.helper.RGB;
 
 // The analysis class is used to to do math operations on dataBuffers
 
@@ -194,6 +195,13 @@ public class Analysis {
         protected boolean executed = false; //This takes track if the module has been executed at all. Used for static modules.
 
         protected boolean useArray = false;
+
+        //Last element of input i (a single-value parameter), or def if the input is absent or empty; useArray modules only
+        protected double lastInputValue(int i, double def) {
+            if (i >= inputArrays.size() || inputArrays.get(i) == null || inputArraySizes.get(i) == 0)
+                return def;
+            return inputArrays.get(i)[inputArraySizes.get(i) - 1];
+        }
         protected boolean clearInModule = false;
 
         public static class CycleRange {
@@ -2845,14 +2853,6 @@ public class Analysis {
             useArray = true;
         }
 
-        private static double linearize(double x) {
-            //sRGB EOTF, same as the luminance output of the camera input
-            if (x < 0.04045)
-                return x / 12.92;
-            else
-                return Math.pow((x + 0.055) / 1.055, 2.4);
-        }
-
         @Override
         protected void update() {
             //Outputs: 0 = width, 1 = height, 2 = r, 3 = g, 4 = b, 5 = a, 6 = luma, 7 = luminance
@@ -2924,7 +2924,7 @@ public class Analysis {
                 if (luma != null)
                     luma[i] = 0.2126 * rv + 0.7152 * gv + 0.0722 * bv; //Rec. 709 weights on gamma-encoded values, same as the luma output of the camera input
                 if (luminance != null)
-                    luminance[i] = 0.2126 * linearize(rv) + 0.7152 * linearize(gv) + 0.0722 * linearize(bv);
+                    luminance[i] = 0.2126 * RGB.linearize(rv) + 0.7152 * RGB.linearize(gv) + 0.0722 * RGB.linearize(bv);
             }
 
             if (r != null)
@@ -2959,15 +2959,9 @@ public class Analysis {
             if (data == null || x == null)
                 return;
 
-            double order = Double.NaN;
-            if (inputArrays.get(2) != null && inputArraySizes.get(2) > 0)
-                order = inputArrays.get(2)[inputArraySizes.get(2)-1];
-            double cutoff = Double.NaN;
-            if (inputArrays.get(3) != null && inputArraySizes.get(3) > 0)
-                cutoff = inputArrays.get(3)[inputArraySizes.get(3)-1];
-            double cutoffLow = 0.;
-            if (inputArrays.size() > 4 && inputArrays.get(4) != null && inputArraySizes.get(4) > 0)
-                cutoffLow = inputArrays.get(4)[inputArraySizes.get(4)-1];
+            double order = lastInputValue(2, Double.NaN);
+            double cutoff = lastInputValue(3, Double.NaN);
+            double cutoffLow = lastInputValue(4, 0.);
 
             if (Double.isNaN(order) || Double.isNaN(cutoff))
                 return;

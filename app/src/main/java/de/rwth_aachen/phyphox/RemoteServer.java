@@ -459,17 +459,25 @@ public class RemoteServer {
         InputStream in = request.getBody();
         if (in == null)
             throw new BadRequestException();
+        return new String(readAll(in, 2097152), "UTF-8"); //2 MB, matching jlhttp's own form-body limit
+    }
+
+    private static byte[] readAll(InputStream in) throws IOException {
+        return readAll(in, Integer.MAX_VALUE);
+    }
+
+    private static byte[] readAll(InputStream in, int limit) throws IOException {
         ByteArrayOutputStream os = new ByteArrayOutputStream();
         byte[] buffer = new byte[4096];
         int total = 0;
         int n;
         while ((n = in.read(buffer)) != -1) {
             total += n;
-            if (total > 2097152) //2 MB, matching jlhttp's own form-body limit
+            if (total > limit)
                 throw new BadRequestException();
             os.write(buffer, 0, n);
         }
-        return os.toString("UTF-8");
+        return os.toByteArray();
     }
 
     //This starts the http server and registers the handlers for several requests
@@ -1180,34 +1188,17 @@ public class RemoteServer {
     public int handleRes(Request request, Response response) throws IOException {
         //Get the parameters
         String src = requestParams(request).get("src");
-        if (src == null || src.isEmpty() || !experiment.resources.contains(src) || !Helper.isSafeResourceName(src))
+        if (src == null || !experiment.resources.contains(src))
             return respond(response, "{\"error\": \"Unknown file.\"}");
-
-        if (experiment.resourceFolder != null && !experiment.resourceFolder.startsWith("ASSET")) {
-            File file = new File(experiment.resourceFolder, src);
-            if (file.isFile()) {
-                try {
-                    return respond(response, null, file);
-                } catch (Exception e) {
-                    return respond(response, "{\"error\": \"Unknown file.\"}");
-                }
-            }
-        }
-
-        //Fall back to the images bundled with phyphox, like the image view element
-        try {
-            InputStream is = context.getAssets().open("experiments/res/" + src);
-            ByteArrayOutputStream os = new ByteArrayOutputStream();
-            byte[] buffer = new byte[4096];
-            int n;
-            while ((n = is.read(buffer)) != -1)
-                os.write(buffer, 0, n);
-            is.close();
-            byte[] data = os.toByteArray();
-            return respond(response, null, new ByteArrayInputStream(data), data.length);
+        byte[] data;
+        try (InputStream is = Helper.openResource(context, experiment.resourceFolder, src)) {
+            if (is == null)
+                return respond(response, "{\"error\": \"Unknown file.\"}");
+            data = readAll(is);
         } catch (Exception e) {
             return respond(response, "{\"error\": \"Unknown file.\"}");
         }
+        return respond(response, null, new ByteArrayInputStream(data), data.length);
     }
 
 }

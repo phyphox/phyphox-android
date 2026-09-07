@@ -239,17 +239,12 @@ public class AudioOutput {
         }
     }
 
-    public class AudioOutputPluginTone extends AudioOutputPlugin {
-        private DataInput pan = new DataInput(0f);
-        private DataInput amplitude = new DataInput(1.0f);
-        private DataInput duration = new DataInput(1.0f);
-        private DataInput frequency = new DataInput(440f);
-        private double phase = 0.f;
-        private AudioOutput.Waveform waveform;
-
-        AudioOutputPluginTone(AudioOutput.Waveform waveform){
-            this.waveform = waveform;
-        }
+    //Shared by the generated signals: the pan, amplitude and duration parameters and the stereo gains
+    public abstract class AudioOutputPluginGenerated extends AudioOutputPlugin {
+        protected DataInput pan = new DataInput(0f);
+        protected DataInput amplitude = new DataInput(1.0f);
+        protected DataInput duration = new DataInput(1.0f);
+        protected float panLeft = 1.0f, panRight = 1.0f; //set by prepare()
 
         @Override
         public boolean setParameter(String parameter, DataInput input) {
@@ -261,8 +256,6 @@ public class AudioOutput {
                     return true;
                 case "duration": duration = input;
                     return true;
-                case "frequency": frequency = input;
-                    return true;
             }
             return false;
         }
@@ -272,31 +265,50 @@ public class AudioOutput {
             return (float)amplitude.getValue();
         }
 
-        public void generate(float[] buffer, int samples, int rate, int index, boolean loop) {
-            float p = (float)pan.getValue();
-            float d = (float)duration.getValue();
-            float a = (float)amplitude.getValue();
-            float f = (float)frequency.getValue();
+        protected static float finiteOrZero(double v) {
+            return Float.isFinite((float)v) ? (float)v : 0.0f;
+        }
 
-            if (!Float.isFinite(p))
-                p = 0.0f;
-            if (!Float.isFinite(d))
-                d = 0.0f;
-            if (!Float.isFinite(a))
-                a = 0.0f;
-            if (!Float.isFinite(f))
-                f = 0.0f;
-
-            float pl = p > 0 ? (float)(1.0 - p) : 1.0f;
-            float pr = p < 0 ? (float)(1.0 + p) : 1.0f;
-
+        //Sets the stereo gains from pan and returns how many of the samples fall within the duration
+        protected int prepare(int samples, int rate, int index, boolean loop) {
+            float p = finiteOrZero(pan.getValue());
+            float d = finiteOrZero(duration.getValue());
+            panLeft = p > 0 ? (float)(1.0 - p) : 1.0f;
+            panRight = p < 0 ? (float)(1.0 + p) : 1.0f;
             int end = samples;
             if (!loop) {
                 int durationEnd = (int)(d * rate) - index;
                 if (durationEnd < end)
                     end = durationEnd;
             }
+            return end;
+        }
+    }
 
+    public class AudioOutputPluginTone extends AudioOutputPluginGenerated {
+        private DataInput frequency = new DataInput(440f);
+        private double phase = 0.f;
+        private AudioOutput.Waveform waveform;
+
+        AudioOutputPluginTone(AudioOutput.Waveform waveform){
+            this.waveform = waveform;
+        }
+
+        @Override
+        public boolean setParameter(String parameter, DataInput input) {
+            if (super.setParameter(parameter, input))
+                return true;
+            if (parameter.equalsIgnoreCase("frequency")) {
+                frequency = input;
+                return true;
+            }
+            return false;
+        }
+
+        public void generate(float[] buffer, int samples, int rate, int index, boolean loop) {
+            int end = prepare(samples, rate, index, loop);
+            float a = finiteOrZero(amplitude.getValue());
+            float f = finiteOrZero(frequency.getValue());
             double phaseStep = (double)f / (double)rate;
 
             if (!Double.isFinite(phase))
@@ -310,8 +322,8 @@ public class AudioOutput {
                     v = (2*lookupAddress > sineLookupSize ? a : -a);
                 else if (waveform == Waveform.SAWTOOTH)
                     v = a * (2 * (float)lookupAddress / (float)sineLookupSize - 1.0f);
-                buffer[2*i] += pl * v;
-                buffer[2*i+1] += pr * v;
+                buffer[2*i] += panLeft * v;
+                buffer[2*i+1] += panRight * v;
                 phase += phaseStep;
             }
             while (phase > 100000.f)
@@ -319,56 +331,15 @@ public class AudioOutput {
         }
     }
 
-    public class AudioOutputPluginNoise extends AudioOutputPlugin {
-        private DataInput pan = new DataInput(0f);
-        private DataInput amplitude = new DataInput(1.0f);
-        private DataInput duration = new DataInput(1.0f);
-
-        @Override
-        public boolean setParameter(String parameter, DataInput input) {
-            //Enumerated values are matched case-insensitively (see rules.yml, enum-case-insensitive)
-            switch (parameter.toLowerCase()) {
-                case "pan": pan = input;
-                    return true;
-                case "amplitude": amplitude = input;
-                    return true;
-                case "duration": duration = input;
-                    return true;
-            }
-            return false;
-        }
-
-        @Override
-        public float getAmplitude() {
-            return (float)amplitude.getValue();
-        }
+    public class AudioOutputPluginNoise extends AudioOutputPluginGenerated {
 
         public void generate(float[] buffer, int samples, int rate, int index, boolean loop) {
-            float p = (float)pan.getValue();
-            float d = (float)duration.getValue();
-            float a = (float)amplitude.getValue();
-
-            if (!Float.isFinite(p))
-                p = 0.0f;
-            if (!Float.isFinite(d))
-                d = 0.0f;
-            if (!Float.isFinite(a))
-                a = 0.0f;
-
-            float pl = p > 0 ? (float)(1.0 - p) : 1.0f;
-            float pr = p < 0 ? (float)(1.0 + p) : 1.0f;
-
-            int end = samples;
-            if (!loop) {
-                int durationEnd = (int)(d * rate) - index;
-                if (durationEnd < end)
-                    end = durationEnd;
-            }
-
+            int end = prepare(samples, rate, index, loop);
+            float a = finiteOrZero(amplitude.getValue());
             for (int i = 0; i < end; i++) {
                 float v = (float) (a * (2.0f * Math.random() - 1.0f));
-                buffer[2*i] += pl * v;
-                buffer[2*i+1] += pr * v;
+                buffer[2*i] += panLeft * v;
+                buffer[2*i+1] += panRight * v;
             }
         }
     }

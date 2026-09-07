@@ -11,6 +11,7 @@ import java.util.List;
 import javax.net.ssl.SSLSocketFactory;
 
 import de.rwth_aachen.phyphox.NetworkConnection.NetworkService;
+import de.rwth_aachen.phyphox.helper.Helper;
 
 /**
  * Base class for the MQTT network services, driving {@link MqttClient}. Subclasses only choose the
@@ -51,26 +52,8 @@ public abstract class MqttService extends NetworkService.Service {
         else
             this.address = "tcp://" + address;
 
-        String hostPort = address;
-        int schemeIdx = hostPort.indexOf("://");
-        if (schemeIdx >= 0)
-            hostPort = hostPort.substring(schemeIdx + 3);
-        String host;
-        int port;
-        int colon = hostPort.lastIndexOf(':');
-        if (colon >= 0) {
-            host = hostPort.substring(0, colon);
-            try {
-                port = Integer.parseInt(hostPort.substring(colon + 1));
-            } catch (NumberFormatException e) {
-                port = tls ? 8883 : 1883;
-            }
-        } else {
-            host = hostPort;
-            port = tls ? 8883 : 1883;
-        }
-
-        client = new MqttClient(host, port, clientID, username, password, true, 60, sslSocketFactory,
+        Helper.HostPort hostPort = Helper.splitHostPort(address, tls ? 8883 : 1883);
+        client = new MqttClient(hostPort.host, hostPort.port, clientID, username, password, true, 60, sslSocketFactory,
                 tls && certificateFileName == null, receiveTopic, new MqttClient.Listener() {
             @Override
             public void onMessage(String topic, byte[] payload) {
