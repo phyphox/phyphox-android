@@ -32,37 +32,10 @@ import java.util.Map;
 import de.rwth_aachen.phyphox.SettingsActivity.SettingsFragment;
 
 // phyphox-test: graph-snapshots
-//Golden images of the OpenGL-rendered graphs, over phyphox-docs' three graph fixtures. This is
-//the emulator half of the view suites (the non-graph elements are rendered by view-snapshots in
-//the JVM): a graph draws through a TextureView that a Robolectric canvas never sees.
-//
-//A graph element is captured whole - the axes, labels and frame come from the view hierarchy,
-//the curve itself from the texture, composited into one image. TextureView.getBitmap() is the
-//capture path rather than PixelCopy, which reads a SurfaceView or a window; a TextureView hands
-//over its content directly.
-//
-//Goldens ship as test assets (app/src/androidTest/goldens), so the comparison happens on the
-//device, and they are keyed by device class - a run on the tablet profile compares against
-//tablet goldens. Recording writes the images to the app's external files directory instead:
-//
-//    adb shell am instrument -w -e phyphox.goldens record \
-//        -e class de.rwth_aachen.phyphox.GraphSnapshotTest \
-//        de.rwth_aachen.phyphox.test/androidx.test.runner.AndroidJUnitRunner
-//    adb pull /sdcard/Android/data/de.rwth_aachen.phyphox/files/goldens/graphs \
-//        app/src/androidTest/goldens/graphs
-//
-//Recorded once per device profile: the T1 job runs the suites on a phone and on a tablet, and
-//the goldens of both live side by side (light-phone.png next to light-tablet.png).
-//
-//A golden is pixels, so it belongs to the exact profile it was recorded on - "tablet" is not a
-//size. Record on the profiles the workflow names, or the sizes will not match:
-//
-//    pixel_6                 1080x2400 at 420dpi
-//    10.1in WXGA (Tablet)    1280x800 at 160dpi
-//
-//A mismatch that reports two different sizes means the recording device was not one of them.
-//
-//and the images are reviewed like any other change before they become the reference.
+//Golden images of the OpenGL graphs (a TextureView never reaches a Robolectric canvas, so these run on
+//the emulator). Goldens live in app/src/androidTest/goldens keyed by device class; to re-record, run with
+//"-e phyphox.goldens record" on the T1 profiles (pixel_6 1080x2400@420dpi, 10.1in WXGA 1280x800@160dpi)
+//and pull files/goldens/graphs from the app's external files directory.
 @RunWith(AndroidJUnit4.class)
 public class GraphSnapshotTest {
 
@@ -72,13 +45,10 @@ public class GraphSnapshotTest {
             "graphs-special.phyphox",
     };
 
-    //A graph needs a moment after the screen appears: the renderer thread draws the first frame
-    //once its surface exists.
+    //the renderer thread draws the first frame once its surface exists
     private static final long SETTLE_MILLIS = 3000;
 
-    //Phone or tablet, the way the layouts decide it: a smallest width of 600dp is where the
-    //tablet resources take over. The goldens are per device class, so the same suite run on a
-    //tablet profile compares against tablet goldens instead of failing on the phone's.
+    //Where the tablet resources take over (smallest width 600dp); goldens are per device class.
     private String deviceClass() {
         return getInstrumentation().getTargetContext().getResources().getConfiguration()
                 .smallestScreenWidthDp >= 600 ? "tablet" : "phone";
@@ -149,14 +119,8 @@ public class GraphSnapshotTest {
         return findings;
     }
 
-    //The element as it is on screen: scroll it into view, take a screenshot of the device and
-    //cut the element out of it.
-    //
-    //Drawing the view hierarchy into a canvas instead does not work here: a TextureView's content
-    //is composed by the display pipeline, not by View.draw, so that route yields the axes and an
-    //empty hole where the curve is - and compositing the texture back in by hand puts it at the
-    //wrong scale as soon as the surface size differs from the view size. A screenshot has both
-    //halves already assembled, exactly as the user sees them.
+    //Screenshot and cut out, not View.draw: a TextureView's content is composed by the display
+    //pipeline, so drawing the hierarchy yields the axes and a hole where the curve is.
     private Bitmap capture(View rootView) throws Exception {
         getInstrumentation().runOnMainSync(() ->
                 rootView.requestRectangleOnScreen(
@@ -177,8 +141,7 @@ public class GraphSnapshotTest {
         if (screen == null)
             return null;
 
-        //An element taller than the screen is cut at the screen edge rather than skipped: the
-        //golden then covers what is visible of it, which is what a reader can review anyway.
+        //taller than the screen: cut at the edge rather than skipped
         int left = Math.max(0, Math.min(location[0], screen.getWidth() - 1));
         int top = Math.max(0, Math.min(location[1], screen.getHeight() - 1));
         int width = Math.min(size[0], screen.getWidth() - left);
@@ -202,7 +165,7 @@ public class GraphSnapshotTest {
         return null;
     }
 
-    //Compares against the golden shipped as a test asset, or records it. Returns null on a match.
+    //Returns null on a match; records instead when asked.
     private String compare(Bitmap actual, String path) throws IOException {
         if (recording()) {
             write(actual, path);
@@ -223,11 +186,7 @@ public class GraphSnapshotTest {
                     + "golden's " + expected.getWidth() + "x" + expected.getHeight();
         }
 
-        //The GL renderer dithers: comparing two captures of the same unchanged graph turns up a
-        //few thousand pixels whose channels differ by up to 5. A pixel therefore only counts as
-        //different when a channel moves by more than this, and a handful of such pixels is still
-        //not a finding - a line that moved or a style that changed repaints a large share of the
-        //image.
+        //The GL renderer dithers: identical graphs differ by up to 5 per channel in a few thousand pixels.
         final int channelTolerance = 8;
         final double allowedShare = 0.005;
 

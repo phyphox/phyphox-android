@@ -33,7 +33,6 @@ public abstract class OpenGLHelper {
         }
     }
 
-    // This is a little tool to output a representation of the current drawing target to the logs.
     static void logCurrentOutput() {
         int [] viewport = new int[4];
         GLES20.glGetIntegerv(GLES20.GL_VIEWPORT, viewport, 0);

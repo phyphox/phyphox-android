@@ -56,7 +56,6 @@ class FlashLightManager(private var cameraManager: CameraManager?, private var c
                 turnOfFlashLight()
             }
         }
-    // Get the maximum strength level supported by the device
     private val maxIntensityLevel: Int by lazy {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU && cameraId != null) {
             val chars = cameraManager?.getCameraCharacteristics(cameraId)
@@ -88,14 +87,12 @@ class FlashLightManager(private var cameraManager: CameraManager?, private var c
                     } else if (useSetTorchMode) {
                         cameraManager?.setTorchMode(id, true)
                     } else {
-                        // Legacy Way (API 21/22)
                         handleLegacyFlash(true)
                     }
                 } else {
                     if (useSetTorchMode) {
                         cameraManager?.setTorchMode(id, false)
                     } else {
-                        // Legacy Way (API 21/22)
                         handleLegacyFlash(false)
                     }
                 }
@@ -104,10 +101,7 @@ class FlashLightManager(private var cameraManager: CameraManager?, private var c
         } catch (e: Exception) { e.printStackTrace() }
     }
 
-    // Before API 23, there was no setTorchMode method,
-    // for older api, we actually have to "open" camera hardware and toggle the flash parameter manually.
-    // this contains to setupPreviewTexture, so later the app can only allow to work it from Marshmallow.
-    // this function is here, just for the reference.
+    // Before API 23 there was no setTorchMode; the camera has to be opened and its flash parameter toggled
     private fun handleLegacyFlash(isEnabled: Boolean) {
         try {
             if (isEnabled) {
@@ -128,8 +122,7 @@ class FlashLightManager(private var cameraManager: CameraManager?, private var c
         } catch (e: Exception) { e.printStackTrace() }
     }
 
-    //Waits until the given System.nanoTime() deadline: delay() for the millisecond part, then
-    //park the sub-millisecond remainder on the strobe thread.
+    // delay() only has millisecond granularity, so the sub-millisecond remainder is parked on the strobe thread
     private suspend fun delayUntil(targetNanos: Long) {
         while (true) {
             val remaining = targetNanos - System.nanoTime()
@@ -146,11 +139,7 @@ class FlashLightManager(private var cameraManager: CameraManager?, private var c
     fun startStrobeLoop(){
         if( activeStrobeJob?.isActive == true) return
 
-        //The strobe gets its own high-priority thread for as long as it runs: at default
-        //priority the scheduler may defer wakeups long enough to distort the strobe timing, and
-        //delay() only has millisecond granularity, so sub-millisecond remainders are parked on
-        //this thread (see delayUntil). The dispatcher is closed when the loop ends, so the
-        //thread only exists while the experiment is running.
+        // Own high-priority thread while the strobe runs: at default priority deferred wakeups distort the timing
         val strobeDispatcher = Executors.newSingleThreadExecutor { r ->
             Thread({
                 android.os.Process.setThreadPriority(android.os.Process.THREAD_PRIORITY_URGENT_DISPLAY)
@@ -161,8 +150,7 @@ class FlashLightManager(private var cameraManager: CameraManager?, private var c
         activeStrobeJob = scope.launch(strobeDispatcher) {
             try {
                 flashState.collectLatest { state ->
-                    //Off and constantly on are steady states, including the dutycycle extremes,
-                    //so the hardware is not toggled for them
+                    // Steady states (including the dutycycle extremes) do not toggle the hardware
                     if (!(state.intensity > 0.0) || !(state.dutycycle > 0.0)) {
                         performToggle(false)
                         return@collectLatest
@@ -171,8 +159,7 @@ class FlashLightManager(private var cameraManager: CameraManager?, private var c
                         return@collectLatest
                     }
 
-                    //If neither of the both above applied, we are strobing. Align the schedule
-                    //with the phase of the previous one if the interval changed.
+                    // Strobing: keep the phase of the previous schedule if the interval changed
                     var currentCycle = if (currentStrobeCycleInterval > 0)
                         (1.0 - (nextStrobeCycle - System.nanoTime()).toDouble()/currentStrobeCycleInterval.toDouble())
                     else 1.0
@@ -190,8 +177,7 @@ class FlashLightManager(private var cameraManager: CameraManager?, private var c
                     while (isActive) {
                         var now = System.nanoTime()
 
-                        //If the loop fell behind by one or more whole cycles (scheduling under
-                        //load or a slow torch call), skip the missed cycles but keep the phase
+                        // Skip whole missed cycles but keep the phase
                         if (now - nextStrobeCycle >= state.interval) {
                             val missedCycles = (now - nextStrobeCycle) / state.interval
                             nextStrobeCycle += missedCycles * state.interval
@@ -200,8 +186,7 @@ class FlashLightManager(private var cameraManager: CameraManager?, private var c
                         if (now < nextStrobeCycle)
                             delayUntil(nextStrobeCycle)
 
-                        //Turn on as long as any part of the on phase remains: waking late
-                        //shortens the flash instead of dropping it entirely
+                        // Waking late shortens the flash instead of dropping it
                         val dutyEnd = nextStrobeCycle + (state.interval * state.dutycycle).roundToLong()
                         now = System.nanoTime()
                         if (now < dutyEnd) {
@@ -234,7 +219,6 @@ class FlashLightManager(private var cameraManager: CameraManager?, private var c
     }
 
     fun release() {
-        // Call when whole object is being destroyed
         strobeJob.cancel()
         scope.cancel()
     }

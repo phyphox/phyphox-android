@@ -14,16 +14,9 @@ import java.nio.charset.StandardCharsets;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 
-//An export of a RUNNING experiment reads buffers that the analysis and sensor threads keep
-//writing. Copying a list while it grows throws - a 500 on /export, seen in the T1 sweep on
-//audio_autocorrelation (ArrayIndexOutOfBoundsException out of LinkedList.toArray). The snapshot
-//is taken under the experiment's data lock now, and this exercises exactly that overlap.
-//
-//The buffers are bounded, so the writer both appends and drops values - the mutation that
-//actually breaks a copy - without growing the heap for as long as the test runs.
-//
-//A race test can only fail for a real reason: with the lock in place there is nothing to hit, so
-//a green run is honest, and a broken snapshot shows up within a few hundred iterations.
+//Exporting a running experiment copies buffers the analysis keeps writing; the snapshot must be
+//taken under the data lock. The buffers are bounded so the writer appends and drops values
+//without growing the heap.
 @RunWith(RobolectricTestRunner.class)
 @Config(sdk = 35)
 public class ExportUnderWritesTest {
@@ -55,7 +48,7 @@ public class ExportUnderWritesTest {
         AtomicBoolean writing = new AtomicBoolean(true);
         AtomicReference<Throwable> failure = new AtomicReference<>();
 
-        //The writer holds the lock exactly as the analysis does when it appends.
+        //the writer holds the lock exactly as the analysis does
         Thread writer = new Thread(() -> {
             double value = 0;
             while (writing.get()) {

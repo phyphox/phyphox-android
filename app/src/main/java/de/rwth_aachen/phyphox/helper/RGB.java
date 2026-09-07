@@ -21,9 +21,7 @@ public class RGB implements Serializable {
         return new RGB(0xffffff & ((r << 16) | (g << 8) | b));
     }
 
-    //Strict parser used by the experiment file parser: returns null unless the string is a named
-    //phyphox color or a six-digit hex RGB value, optionally prefixed with '#'. Anything else is an
-    //error to be reported by the caller. Color names fold case like enumerated values.
+    //Null unless a named phyphox color (case-insensitive) or a six-digit hex value with optional '#'; the caller reports the error
     public static RGB fromPhyphoxStringStrict(String colorStr, Resources res) {
         if (colorStr == null)
             return null;
@@ -46,15 +44,13 @@ public class RGB implements Serializable {
             case "weakwhite": return new RGB(res.getColor(R.color.phyphox_white_60));
         }
 
-        //Not a constant, so it has to be a six-digit hex value...
         String hex = colorStr.startsWith("#") ? colorStr.substring(1) : colorStr;
         if (hex.length() == 6 && hex.matches("[0-9a-fA-F]+"))
             return new RGB(Integer.parseInt(hex, 16));
         return null;
     }
 
-    //Lenient variant for callers that must not fail on a bad value, like the experiment list
-    //scanner: an unparseable color falls back to the given default.
+    //Lenient variant: an unparseable color falls back to the default
     public static RGB fromPhyphoxString(String colorStr, Resources res, RGB fallback) {
         RGB color = fromPhyphoxStringStrict(colorStr, res);
         return color == null ? fallback : color;

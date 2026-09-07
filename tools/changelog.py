@@ -1,29 +1,12 @@
 #!/usr/bin/env python3
 """The release notes for one version, written once and read by every store.
 
-**F-Droid is the reference.** Its changelogs are plain files in this
-repository - `fastlane/metadata/android/<lang>/changelogs/<versionCode>.txt` -
-so they are the only copy of the release notes that is version controlled,
-reviewable in a diff and readable without credentials. Play and the App Store
-both get their text from here rather than each keeping their own.
-
-That also gives the release step its state: **if there is no changelog file for
-the current versionCode, no release notes have been written for this version
-yet.** Both upload scripts check that, ask for the two texts when they are
-missing, and write them where F-Droid already looks.
-
-Only English and German are written by hand. Everywhere else carries the
-English text (maintainer, 2026-09-02): the release notes are a handful of
-sentences that change with every release, and putting them through a
-translation round would hold up the release for weeks. This is deliberately
-NOT the same arrangement as the store description, which is translated in
-Weblate and lives in phyphox-translation - that text changes once a year.
-
-The iOS uploader imports this module across the working root, the same way both
-uploaders import phyphox-translation's `updateMetadata.py`: one definition of
-where the notes live and how they are asked for, rather than a second copy that
-drifts. It is therefore imported by path, and must keep working when
-`__file__` is the only thing that says where phyphox-android is.
+F-Droid's `fastlane/metadata/android/<lang>/changelogs/<versionCode>.txt` is the
+single version-controlled copy; Play and the App Store take their text from it,
+and a missing file means the notes have not been written yet. Only English and
+German are written by hand; every other locale gets the English text. The iOS
+uploader imports this module by path across the working root, so it must work
+with `__file__` alone.
 """
 
 import os
@@ -33,15 +16,10 @@ import sys
 REPO = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 FDROID = os.path.join(REPO, "fastlane", "metadata", "android")
 
-# The two written by hand, in the order they are asked for. These are F-Droid's
-# directory names, which are neither Play's nor the App Store's - see
-# phyphox-docs/screenshots/locales.yml for that mapping.
+# F-Droid's directory names; phyphox-docs/screenshots/locales.yml maps them to the stores'
 LANGUAGES = [("en", "English"), ("de", "German")]
 
-# Play cuts release notes at 500 characters and rejects a longer one; F-Droid
-# truncates its own display at the same length. The App Store allows 4000, so
-# the tighter of the two is the one worth enforcing at entry.
-LIMIT = 500
+LIMIT = 500  # Play's limit; F-Droid truncates its display there too
 
 
 def android_version(repo=REPO):
@@ -57,15 +35,7 @@ def android_version(repo=REPO):
 
 
 def code_for(version_name, repo=REPO):
-    """The versionCode the changelog files are named after, for a marketing version.
-
-    The iOS side knows its own `MARKETING_VERSION` and nothing about Android's
-    versionCode, but the changelogs are named by the latter because that is what
-    F-Droid requires. The two platforms ship the same marketing version, so the
-    Android build file is what resolves one into the other - and if the two have
-    drifted apart, that is exactly the moment to say so rather than to write the
-    notes of one release into the file of another.
-    """
+    """The versionCode the changelog files are named after, for a marketing version."""
     name, code = android_version(repo)
     if name != version_name:
         raise SystemExit(
@@ -109,9 +79,7 @@ def _ask(lang, label, version_name, code, repo):
             try:
                 line = input()
             except EOFError:
-                # Ctrl-D ends the text like "." does - but on an empty one it
-                # means "nothing to say", and there is no release without
-                # release notes. Asking again would spin on a closed stdin.
+                # Ctrl-D ends the text like "."; on an empty text it aborts rather than spin on a closed stdin
                 eof = True
                 break
             if line.strip() == ".":
@@ -132,12 +100,7 @@ def _ask(lang, label, version_name, code, repo):
 
 
 def ensure(code, version_name, repo=REPO, interactive=None):
-    """The release notes for one version, asking for whatever is not there yet.
-
-    Returns {lang: text} for every language in LANGUAGES. Anything it had to
-    ask for is written to the F-Droid tree before it returns, so the answer is
-    on disk and in the next diff even if the upload afterwards fails.
-    """
+    """{lang: text} for every language in LANGUAGES, asking for and writing whatever is missing."""
     notes = read(code, repo)
     missing = [(l, label) for l, label in LANGUAGES if l not in notes]
     if not missing:
@@ -186,8 +149,7 @@ def ensure(code, version_name, repo=REPO, interactive=None):
 def _summarise(notes, version_name, code):
     print(f"\nrelease notes for {version_name} (versionCode {code}): "
           + ", ".join(f"{l} {len(notes[l])} chars" for l, _ in LANGUAGES))
-    # A file written by hand can be any length; only what this module asked for
-    # was measured as it was typed.
+    # A file written by hand was never measured
     over = [l for l, _ in LANGUAGES if len(notes[l]) > LIMIT]
     if over:
         print(f"  !! {' and '.join(over)} over {LIMIT} characters - Play "
@@ -202,25 +164,12 @@ def text_for(locale, notes):
 
 
 def play_xml(notes, locales):
-    """Play's multi-language release-notes block, ready to paste into the console.
-
-    Play has no API path this project uses for release notes - a release is
-    created in the console when the bundle is rolled out, which is a separate
-    act from updating the listing - so this is text to copy, not something to
-    upload. The console's field takes exactly this: one `<locale>` element per
-    language, in Play's own locale spelling.
-    """
+    """Play's release-notes block to paste into the console: one `<locale>` element per language."""
     return "\n".join(f"<{loc}>\n{text_for(loc, notes)}\n</{loc}>"
                      for loc in locales)
 
 
 def suspicious(notes):
-    """Characters that a `<locale>`-tagged block cannot be trusted to carry.
-
-    The console's field is parsed by its tags, and whether it also unescapes
-    entities is not documented anywhere this project could check. So neither
-    escaping nor not escaping is safe to do quietly: it says which text contains
-    one and leaves the decision in the console, where the result is visible.
-    """
+    """Characters whose handling in the console's `<locale>` field is undocumented; reported, not escaped."""
     return sorted({f"{lang}: {c!r}" for lang, text in notes.items()
                    for c in "<>&" if c in text})

@@ -29,8 +29,7 @@ public class AssetDeepLinkTest {
 
     @Before
     public void createActivity() {
-        //Attached but not created: onCreate would build the whole experiment list, which the
-        //intent dispatch under test does not need.
+        //Attached but not created: onCreate would build the whole experiment list.
         listActivity = Robolectric.buildActivity(ExperimentListActivity.class).get();
         if (listActivity.getBaseContext() == null)
             Shadows.shadowOf(listActivity).callAttach(new Intent());
@@ -89,8 +88,7 @@ public class AssetDeepLinkTest {
 
     @Test
     public void unknownAssetFailsWithTheNormalLoadError() {
-        //Validation only guards the path shape - an unknown file dispatches and then fails in
-        //the normal loading path with the app's usual could-not-load message
+        //Validation only guards the path shape; an unknown file fails in the normal loading path.
         Intent started = deepLink("phyphox://asset=doesnotexist.phyphox");
 
         Experiment activity = CorpusTestEnvironment.fullyEquippedActivity();

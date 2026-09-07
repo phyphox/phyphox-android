@@ -23,11 +23,8 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 
 // phyphox-test: app-chrome
-//The screens around the experiment: the collection, the experiment menu and its dialogs, the
-//settings, what rotation does to a running screen, and the permission flow with both answers.
-//
-//Driven with UiAutomator, like the other suites here: an open experiment redraws continuously,
-//so Espresso's idle condition never holds on it.
+//The screens around the experiment: collection, experiment menu and dialogs, settings, rotation,
+//permission flow. UiAutomator, not Espresso: an open experiment redraws continuously and never idles.
 @RunWith(AndroidJUnit4.class)
 public class AppChromeTest {
 
@@ -71,17 +68,8 @@ public class AppChromeTest {
                 device().wait(Until.hasObject(By.textContains("Acceleration")), 5000));
     }
 
-    //The add-experiment menu used to be drawn without ever being made visible: the layout
-    //declares the sub-buttons invisible and only the fill-after animation put them on screen,
-    //which is enough to draw and to hit-test but not to enter the accessibility tree. So the menu
-    //worked under a finger and did not exist for TalkBack - and those three entries are the only
-    //ways to get an experiment into the app that is not bundled with it.
-    //
-    //Everything here goes through the accessibility tree, so it fails on exactly that bug. By
-    //resource id rather than by label, because the labels are translated and this suite also runs
-    //in other languages.
-    //The collection is not the Experiment activity, so its views come from the lifecycle monitor
-    //rather than from the fixture harness.
+    //Through the accessibility tree: the add-experiment menu once drew its entries without making them
+    //visible, so it worked under a finger but not for TalkBack. By resource id, labels are translated.
     private View viewInTheCollection(int id) {
         final View[] found = new View[1];
         getInstrumentation().runOnMainSync(() -> {
@@ -106,11 +94,8 @@ public class AppChromeTest {
                             + "accessibility - TalkBack cannot reach it and neither can any test",
                     device().wait(Until.findObject(By.res(PACKAGE + ":id/" + id)), 5000));
 
-        //Each entry is a button carrying the text as its contentDescription plus a label next to
-        //it carrying the same text again, so only the button should be announced. This is asked
-        //of the views rather than of the tree on purpose: UiAutomator runs with
-        //FLAG_INCLUDE_NOT_IMPORTANT_VIEWS and therefore sees nodes a screen reader skips, so
-        //looking them up here would pass whatever the flag says. TalkBack does not set it.
+        //Only the button carries the contentDescription, not the label next to it. Asked of the views:
+        //UiAutomator runs with FLAG_INCLUDE_NOT_IMPORTANT_VIEWS and sees nodes a screen reader skips.
         for (int id : new int[]{R.id.newExperimentSimpleLabel, R.id.newExperimentBluetoothLabel,
                 R.id.newExperimentQRLabel}) {
             View label = viewInTheCollection(id);
@@ -120,8 +105,7 @@ public class AppChromeTest {
                     label.isImportantForAccessibility());
         }
 
-        //And it goes away again: the menu closes on back, and the entries must leave the tree
-        //once the exit animation has run, or they stay reachable behind the closed menu.
+        //The entries must leave the tree once the exit animation has run
         device().pressBack();
         assertTrue("the add-experiment menu still exposes its entries after it was closed",
                 device().wait(Until.gone(By.res(PACKAGE + ":id/newExperimentBluetooth")), 5000));

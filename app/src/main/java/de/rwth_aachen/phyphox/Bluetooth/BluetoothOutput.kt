@@ -7,10 +7,7 @@ import de.rwth_aachen.phyphox.DataInput
 import java.util.UUID
 import java.util.Vector
 
-/**
- * A Bluetooth Low Energy device that receives buffer data from the experiment after each
- * analysis cycle (or when triggered by a button with a triggerId).
- */
+/** A BLE device that receives buffer data after each analysis cycle or on a button trigger. */
 class BluetoothOutput(
     idString: String?,
     deviceName: String?,
@@ -19,7 +16,6 @@ class BluetoothOutput(
     autoConnect: Boolean,
     activity: Activity,
     context: Context,
-    /** data buffers the sent values are read from (indexed by Characteristic.index) */
     @JvmField
     val data: Vector<DataInput>,
     characteristics: Vector<CharacteristicData>
@@ -31,11 +27,7 @@ class BluetoothOutput(
         requestedTriggers.add(triggerId)
     }
 
-    /**
-     * Assemble and write the data of each mapped characteristic. Writes are queued with
-     * coalescing: if the previous value for a characteristic has not been transmitted yet (slow
-     * connection), it is replaced by the new one, so the device always receives the newest data.
-     */
+    // Queued writes coalesce: an untransmitted value is replaced by the newer one
     fun sendData() {
         if (forcedBreak)
             return
@@ -69,10 +61,6 @@ class BluetoothOutput(
         requestedTriggers.clear()
     }
 
-    /**
-     * Convert data using the specified conversion function. Returns an empty byte array in case
-     * of an exception.
-     */
     private fun convertData(data: DataBuffer?, conversionFunction: ConversionsOutput.OutputConversion?): ByteArray {
         return try {
             conversionFunction?.convert(data) ?: ByteArray(0)

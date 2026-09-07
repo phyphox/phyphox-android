@@ -43,15 +43,8 @@ import java.util.Vector
 import kotlin.math.min
 
 /**
- * The Bluetooth class encapsulates a generic Bluetooth Low Energy connection and deals with
- * connecting a device, operating on its characteristics, error reporting and reconnecting.
- *
- * All GATT operations go through an event driven [BleCommandQueue]: exactly one operation is in
- * flight at any time, each operation has a timeout, and the completion is matched to the
- * operation by the GATT callback. A lost callback (flaky device, poor signal) therefore fails a
- * single operation instead of stalling the engine, and repeated timeouts are treated as a lost
- * connection which triggers the reconnect logic (endless retries with exponential backoff while
- * the experiment is running).
+ * A generic BLE connection: device search, connect, characteristic setup, error reporting and
+ * reconnect (exponential backoff while running). All GATT operations go through a [BleCommandQueue].
  */
 open class Bluetooth(
     @JvmField var idString: String?,
@@ -61,7 +54,6 @@ open class Bluetooth(
     @JvmField var autoConnect: Boolean,
     @JvmField protected val activity: Activity,
     @JvmField protected val context: Context,
-    /** holds data to all characteristics to add or configure once the device is connected */
     @JvmField protected val characteristics: Vector<CharacteristicData>
 ) : Serializable {
 
@@ -71,19 +63,13 @@ open class Bluetooth(
     @JvmField
     var requestMTU: Int = 0
 
-    /**
-     * The block that owns the GATT connection to this device. Blocks that name the same device
-     * with the same id share one connection, so every one of them but the first points at that
-     * first one and none of the state below is its own. Set by [shareConnections].
-     */
+    //blocks with the same id share the first block's connection, the owner holds all connection state (see shareConnections)
     @Transient
     private var owner: Bluetooth = this
 
-    /** all blocks sharing this connection, this one first. Only maintained on the owner. */
     @Transient
-    private var sharing: MutableList<Bluetooth> = mutableListOf(this)
+    private var sharing: MutableList<Bluetooth> = mutableListOf(this) //this one first, maintained on the owner only
 
-    /** true if this block owns its connection rather than borrowing another block's */
     private val ownsConnection get() = owner === this
 
     @Transient
@@ -103,29 +89,24 @@ open class Bluetooth(
     @Transient
     private var eventCharacteristic: BluetoothGattCharacteristic? = null
 
-    /** number of values from characteristics that should be written */
     @JvmField
-    protected var valuesSize = 0
+    protected var valuesSize = 0 //number of mapped Characteristics
 
-    /** maps all characteristics that have extra=time to the index of the buffer */
     @Transient
     @JvmField
-    protected var saveTime = HashMap<BluetoothGattCharacteristic, Int>()
+    protected var saveTime = HashMap<BluetoothGattCharacteristic, Int>() //extra=time characteristic -> buffer index
 
-    /** each BluetoothGattCharacteristic that should be read or written maps to a list of Characteristics */
     @Transient
     @JvmField
     protected var mapping = HashMap<BluetoothGattCharacteristic, ArrayList<Characteristic>>()
 
-    /** indicates whether the experiment is running */
     @Volatile
     @JvmField
     protected var isRunning = false
 
-    /** true if the experiment is running but the device disconnected */
     @Volatile
     @JvmField
-    protected var forcedBreak = false
+    protected var forcedBreak = false //running, but the device disconnected
 
     @Transient
     @JvmField
@@ -142,21 +123,17 @@ open class Bluetooth(
         get() = owner.ownQueue
         set(value) { owner.ownQueue = value }
 
-    /** completed by onConnectionStateChange while a connection attempt is awaited */
     @Transient
-    private var connectionEvent: CompletableDeferred<Boolean>? = null
+    private var connectionEvent: CompletableDeferred<Boolean>? = null //completed by onConnectionStateChange
 
-    /** the GATT status of the last connection state change, for the retry's log line */
     @Transient
     @Volatile
     private var lastConnectionStatus = 0
 
-    /** true while the owning block's GATT client holds a connection (kept up to date by the callback) */
     @Transient
     @Volatile
     private var ownGattConnected = false
 
-    /** true once the services of the current connection have been discovered */
     @Transient
     @Volatile
     private var ownServicesDiscovered = false
@@ -172,20 +149,17 @@ open class Bluetooth(
     @Transient
     private var reconnectJob: Job? = null
 
-    /** scope for this device's background jobs (reconnect); lives outside the shared BLE thread */
     @Transient
-    private var deviceScope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
+    private var deviceScope = CoroutineScope(SupervisorJob() + Dispatchers.IO) //reconnect jobs, off the shared BLE thread
 
     @Transient
     private var batteryCharacteristic: BluetoothGattCharacteristic? = null
 
     private val connectedDeviceInformation = ConnectedDeviceInfo()
 
-    /** timestamp of the last error toast, to throttle repeated errors while running */
     @Transient
     private var lastToastShown = 0L
 
-    /** timestamp of the last RSSI request, to limit the UI update rate */
     @Transient
     private var lastRssiRequest = 0L
 
@@ -195,27 +169,15 @@ open class Bluetooth(
         }
     }
 
-    /**
-     * Return true if this object holds a usable connection to the device, that is: its own GATT
-     * client is connected and the services of that connection have been discovered.
-     *
-     * This deliberately does not ask the BluetoothManager which devices are connected on the GATT
-     * profile, which is what it used to do. That list is system wide, so it answers "does anybody
-     * hold a link to this device" - a different question, and the wrong one for every caller here:
-     * another app's link gives this object no characteristics to read, and a link this object
-     * opened and then lost is not made usable by somebody else still holding one.
-     */
+    //Deliberately not BluetoothManager.getConnectedDevices(): that list is system wide and says nothing
+    // about whether this GATT client holds a usable link
     open fun isConnected(): Boolean {
         if (btAdapter == null || btAdapter?.isEnabled != true)
             return false
         return btGatt != null && gattConnected && servicesDiscovered
     }
 
-    /**
-     * Connect with the device. Blocking, must be called from a background thread (it is called
-     * from ConnectBluetoothTask and the reconnect job). Throws BluetoothException on any error
-     * during device search, connection, service discovery or characteristic configuration.
-     */
+    //Blocking, must be called from a background thread
     @Throws(BluetoothException::class)
     open fun connect(knownDevices: Map<String, BluetoothDevice>?) {
         var reusedDevice = false
@@ -230,10 +192,8 @@ open class Bluetooth(
                 openConnection()
             }
         } else {
-            //Another block of this experiment already connected to this device (same id), so
-            //there is nothing to search for and nothing to open - only this block's own
-            //characteristics still have to be set up on that connection. The owner is connected
-            //first, because ownership follows the same order the blocks are connected in.
+            //another block with the same id owns the connection and is connected first; only this
+            //block's characteristics still have to be set up on it
             if (btDevice == null)
                 return //the owner's scan dialog was cancelled
             if (!isConnected())
@@ -244,9 +204,7 @@ open class Bluetooth(
         eventCharacteristic = try {
             findCharacteristic(phyphoxEventCharacteristicUUID)
         } catch (e: BluetoothException) {
-            //That's ok. Most devices do not have a phyphox event characteristic, in which case
-            // phyphox simply will not report events.
-            null
+            null //most devices have no event characteristic, phyphox then just does not report events
         }
         if (eventCharacteristic != null && !reusedDevice)
             writeEventCharacteristic(null)
@@ -259,19 +217,13 @@ open class Bluetooth(
         }
     }
 
-    /**
-     * Search for the device with the specified name or address among devices already known from
-     * this experiment (same idString), the paired devices, or by scanning.
-     *
-     * @return true if a device instance from a previous connection of this experiment was reused
-     */
+    //Returns true if a device from a previous connection of this experiment (same idString) was reused
     @Throws(BluetoothException::class)
     protected fun findDevice(knownDevices: Map<String, BluetoothDevice>?): Boolean {
         if (!isEnabled()) {
             throw BluetoothException(context.resources.getString(R.string.bt_exception_disabled), this)
         }
 
-        //First check if we have already connected to a device with the same idString
         if (!idString.isNullOrEmpty() && knownDevices != null && knownDevices.containsKey(idString)) {
             btDevice = knownDevices[idString]
             return true
@@ -293,9 +245,7 @@ open class Bluetooth(
             btDevice = btAdapter?.getRemoteDevice(deviceAddress)
         }
         if (btDevice == null) {
-            //No matching device found - scan for unpaired devices and present possible matches
-            // to the user (blocks this background thread until a device is picked or the dialog
-            // is cancelled)
+            //no match: scan and let the user pick (blocks until picked or cancelled)
             val adapter = btAdapter ?: throw BluetoothException(context.resources.getString(R.string.bt_exception_disabled), this)
             val bsd = BluetoothScanDialog(autoConnect, activity, context, adapter)
             if (!bsd.scanPermission())
@@ -312,11 +262,6 @@ open class Bluetooth(
         return false
     }
 
-    /**
-     * Connect to the GATT server, negotiate the MTU if requested and discover the services.
-     * Each step is awaited with a timeout; a failure throws a BluetoothException with the same
-     * user facing messages as the old implementation.
-     */
     @Throws(BluetoothException::class)
     protected fun openConnection() {
         if (!isEnabled()) {
@@ -350,8 +295,7 @@ open class Bluetooth(
                     Log.d(TAG, "connected on attempt $attempt")
                 break
             }
-            //A refused client keeps its registration in the stack unless it is closed, and
-            //running out of those is one of the things that produces a 133 in the first place.
+            //a refused client keeps its stack registration unless closed, and running out of those causes 133s
             Log.w(TAG, "connect attempt $attempt of $CONNECT_ATTEMPTS failed (status $lastConnectionStatus)")
             btGatt?.close()
             btGatt = null
@@ -379,15 +323,10 @@ open class Bluetooth(
         }
         servicesDiscovered = true
 
-        //Read the battery level for the connected-device info if the device offers it (optional,
-        // guarded - not every device has a battery service)
         batteryCharacteristic = btGatt?.getService(BATTERY_UUID)?.getCharacteristic(BATTERY_LEVEL)
         batteryCharacteristic?.let { requestBatteryLevel(it) }
     }
 
-    /**
-     * Close the connection to the GATT server of the device.
-     */
     open fun closeConnection() {
         mapping.clear()
         saveTime.clear()
@@ -410,9 +349,6 @@ open class Bluetooth(
         queue?.clear()
     }
 
-    /**
-     * Called when the experiment is started.
-     */
     @Throws(BluetoothException::class)
     open fun start() {
         if (!isConnected()) {
@@ -423,15 +359,11 @@ open class Bluetooth(
         startAcquisition()
     }
 
-    /**
-     * Called when the experiment is stopped.
-     */
     open fun stop() {
         isRunning = false
         stopAcquisition()
         mainHandler.post { toast?.cancel() }
-        //The queue and the reconnect belong to the connection, which other blocks of this
-        //experiment may still be using, so they are only dropped once nobody is running.
+        //queue and reconnect belong to the shared connection, dropped only once no block is running
         if (sharing.none { it.isRunning }) {
             owner.reconnectJob?.cancel()
             owner.reconnectJob = null
@@ -439,36 +371,23 @@ open class Bluetooth(
         }
     }
 
-    /**
-     * Subclass hook: begin data acquisition (subscribe to notifications, start polling...).
-     * Also called after a successful reconnect while the experiment keeps running.
-     */
+    /** Subclass hook, also called after a reconnect while the experiment keeps running */
     @Throws(BluetoothException::class)
     protected open fun startAcquisition() {
     }
 
-    /**
-     * Subclass hook: end data acquisition without changing the running state. Also called when
-     * the connection breaks down while the experiment keeps running.
-     */
+    /** Subclass hook, also called when the connection breaks while the experiment keeps running */
     protected open fun stopAcquisition() {
     }
 
-    /**
-     * Called when there was a notification that the value of a characteristic has changed.
-     */
+    /** Called on a notification */
     protected open fun retrieveData(data: ByteArray, characteristic: BluetoothGattCharacteristic) {
     }
 
-    /**
-     * Called with the result of a queued characteristic read (data is null if the read failed).
-     */
+    /** Called with the result of a queued read, data is null if it failed */
     protected open fun saveData(data: ByteArray?, characteristic: BluetoothGattCharacteristic) {
     }
 
-    /**
-     * Searches the connected device for the specified characteristic.
-     */
     @Throws(BluetoothException::class)
     fun findCharacteristic(uuid: UUID): BluetoothGattCharacteristic {
         val services = btGatt?.services ?: emptyList()
@@ -481,11 +400,8 @@ open class Bluetooth(
         throw BluetoothException(context.resources.getString(R.string.bt_exception_uuid) + " " + uuid.toString() + " " + context.resources.getString(R.string.bt_exception_uuid2), this)
     }
 
-    //
     // Queue access for subclasses and CharacteristicData
-    //
 
-    /** Enqueue a write and await its completion. Used for configuration during connect. */
     @Throws(BluetoothException::class)
     internal fun awaitWrite(characteristic: UUID, value: ByteArray) {
         val q = queue ?: throw BluetoothException(context.resources.getString(R.string.bt_exception_no_connection), this)
@@ -495,23 +411,19 @@ open class Bluetooth(
         }
     }
 
-    /** Enqueue a descriptor write and await its completion (notification subscriptions). */
     internal fun awaitWriteDescriptor(characteristic: UUID, descriptor: UUID, value: ByteArray): Boolean {
         val q = queue ?: return false
         return runBlocking { q.run(BleOp.WriteDescriptor(characteristic, descriptor, value)) }.ok
     }
 
-    /** Enqueue a data write without waiting; a newer value replaces a queued one. */
     internal fun submitDataWrite(characteristic: UUID, value: ByteArray) {
         queue?.enqueue(BleOp.Write(characteristic, value, coalescible = true))
     }
 
-    /** Enqueue a control write without waiting (event characteristic). */
     internal fun submitControlWrite(characteristic: UUID, value: ByteArray) {
         queue?.enqueue(BleOp.Write(characteristic, value))
     }
 
-    /** Enqueue a read; the result is passed to saveData. Duplicate pending reads coalesce. */
     internal fun submitRead(characteristic: BluetoothGattCharacteristic) {
         val q = queue ?: return
         val deferred = q.enqueue(BleOp.Read(characteristic.uuid))
@@ -535,13 +447,9 @@ open class Bluetooth(
         }
     }
 
-    //
     // Error handling
-    //
 
-    /**
-     * Display the error message (as toast if the experiment is running, as dialog if not).
-     */
+    //toast while the experiment is running, dialog otherwise
     protected fun displayErrorMessage(message: String?) {
         displayErrorMessage(message, !isRunning)
     }
@@ -551,8 +459,7 @@ open class Bluetooth(
             errorDialog.message = message ?: ""
             mainHandler.post(errorDialog)
         } else {
-            //While the experiment is running errors are shown as a toast, throttled so a
-            // reconnect loop cannot spam the user
+            //throttled so a reconnect loop cannot spam the user
             val now = System.currentTimeMillis()
             if (now - lastToastShown < TOAST_THROTTLE_MS)
                 return
@@ -564,23 +471,15 @@ open class Bluetooth(
         }
     }
 
-    /**
-     * Called by the queue when several operations in a row timed out: the device is most likely
-     * gone without a disconnect callback. Treat it like a disconnect.
-     */
+    //repeated timeouts without a disconnect callback: treat it like a disconnect
     private fun onLinkDead() {
         if (isRunning) {
             handleDisconnect()
         }
     }
 
-    /**
-     * The connection broke down. If the experiment is running, pause the acquisition and retry
-     * with exponential backoff until the device is back or the experiment is stopped.
-     *
-     * May be called from GATT binder threads and from the queue's own worker thread (link-dead
-     * detection), so everything that could block on a queue operation runs on the device scope.
-     */
+    //Retries with exponential backoff while the experiment runs. Called from GATT binder threads and
+    // the queue worker, so anything that may block on a queue operation runs on deviceScope.
     private fun handleDisconnect() {
         queue?.clear()
         synchronized(this) {
@@ -597,9 +496,7 @@ open class Bluetooth(
                 while (isActive && sharing.any { it.isRunning }) {
                     delay(backoff)
                     try {
-                        //Reopens the GATT connection and reconfigures the owner, then every
-                        //block borrowing this connection, which is where their characteristics
-                        //are looked up again on the freshly discovered services.
+                        //the owner reopens the connection, then every block looks its characteristics up again
                         for (b in sharing)
                             b.connect(null)
                         for (b in sharing) {
@@ -619,8 +516,7 @@ open class Bluetooth(
         }
     }
 
-    //Same-class access to the protected hooks above, so the owning block can drive the blocks
-    //that share its connection.
+    //same-class access to the protected hooks, so the owner can drive the blocks sharing its connection
     internal fun dispatchNotification(data: ByteArray, characteristic: BluetoothGattCharacteristic) =
         retrieveData(data, characteristic)
 
@@ -629,26 +525,18 @@ open class Bluetooth(
     @Throws(BluetoothException::class)
     internal fun resumeAcquisition() = startAcquisition()
 
-    //
     // GATT plumbing
-    //
 
-    /** Executes queue operations on the actual BluetoothGatt (shared with other queue users, see [BleGattIo]) */
     @Transient
     private val gattIo = BleGattIo { btGatt }
 
-    /**
-     * The single GATT callback: feeds operation results into the queue and dispatches
-     * notifications to the data path.
-     */
     @Transient
     private val btLeGattCallback = object : BluetoothGattCallback() {
 
         override fun onConnectionStateChange(gatt: BluetoothGatt, status: Int, newState: Int) {
             lastConnectionStatus = status
-            //A callback of a GATT client that has already been replaced must not touch the state
-            //of the current one. btGatt is still null while a fresh attempt is in flight (the
-            //callback can fire before connectGatt has returned), so that case has to pass.
+            //ignore callbacks of a replaced GATT client; btGatt is still null while a fresh attempt is in
+            //flight (the callback can fire before connectGatt has returned), so that case has to pass
             val current = btGatt
             if (current != null && current !== gatt)
                 return
@@ -674,7 +562,6 @@ open class Bluetooth(
 
         @Suppress("DEPRECATION", "OVERRIDE_DEPRECATION")
         override fun onCharacteristicChanged(gatt: BluetoothGatt, characteristic: BluetoothGattCharacteristic) {
-            //Update RSSI/battery info for the connected-device UI at a limited rate
             val now = System.currentTimeMillis()
             if (Experiment.isBluetoothConnectionSuccessful && now - lastRssiRequest >= RSSI_INTERVAL_MS) {
                 lastRssiRequest = now
@@ -689,9 +576,7 @@ open class Bluetooth(
             }
 
             val data = characteristic.value ?: return
-            //One connection can serve several blocks of the experiment (an input and an output
-            //block naming the same device), so the notification goes to each of them. A block
-            //that does not map this characteristic ignores it.
+            //an input and an output block may share this connection; one that does not map the characteristic ignores it
             for (b in sharing)
                 b.dispatchNotification(data, characteristic)
         }
@@ -733,22 +618,19 @@ open class Bluetooth(
 
     private fun updateConnectedDeviceInfo(rssi: Int) {
         connectedDeviceInformation.signalStrength = rssi
-        //Each device only reports its own info. The Experiment activity merges the reports of
-        // all connected devices into the list shown at the bottom of the screen.
         mainHandler.post {
             Experiment.updateConnectedDeviceDelegate?.updateConnectedDevice(arrayListOf(connectedDeviceInformation))
         }
     }
 
-    // Writes the status and time references (experiment time and system time) when triggered by
-    // a start/pause event.
+    //Writes status and time references to the phyphox event characteristic on start/pause/clear/connect
     fun writeEventCharacteristic(timeMapping: ExperimentTimeReference.TimeMapping?) {
         val eventChar = eventCharacteristic
         if (forcedBreak || eventChar == null)
             return
         val out = ByteArray(17)
 
-        //Byte 0 is 0x00 for pause, 0x01 for start, 0x02 for clear, 0xff for "connection established"
+        //byte 0: 0x00 pause, 0x01 start, 0x02 clear, 0xff connection established
         out[0] = when (timeMapping?.event) {
             ExperimentTimeReference.TimeMappingEvent.PAUSE -> 0x00
             ExperimentTimeReference.TimeMappingEvent.START -> 0x01
@@ -756,14 +638,12 @@ open class Bluetooth(
             null -> 0xff.toByte()
         }
 
-        //Bytes 1-8 are experiment time in millis since experiment start as a 64 bit signed
-        // integer (big endian to match the endianness of existing characteristics and Java's
-        // system time format). -1 if no measurement has run yet.
+        //bytes 1-8: experiment time in ms as int64 big endian (like the existing characteristics), -1 if no measurement ran yet
         val experimentTimeMillis = if (timeMapping != null) (timeMapping.experimentTime * 1000).toLong() else -1L
         for (i in 0 until 8)
             out[1 + i] = (experimentTimeMillis shr (56 - 8 * i)).toByte()
 
-        //Bytes 9-16 are system time in millis since 1970 (same format)
+        //bytes 9-16: system time in ms since 1970, same format
         val systemTimeMillis = timeMapping?.systemTime ?: System.currentTimeMillis()
         for (i in 0 until 8)
             out[9 + i] = (systemTimeMillis shr (56 - 8 * i)).toByte()
@@ -771,13 +651,10 @@ open class Bluetooth(
         submitControlWrite(eventChar.uuid, out)
     }
 
-    /**
-     * Represents the attributes of a characteristic as they are defined in the phyphox file.
-     */
+    /** Attributes of a characteristic as defined in the phyphox file */
     class Characteristic {
-        /** Index of the buffer the characteristic value should be saved in / read from */
         @JvmField
-        val index: Int
+        val index: Int //buffer index
 
         @JvmField
         var triggerId: String? = null
@@ -807,21 +684,14 @@ open class Bluetooth(
         }
     }
 
-    /**
-     * Holds data of a characteristic that was collected from the phyphox file.
-     */
+    /** Data of a characteristic collected from the phyphox file */
     abstract class CharacteristicData(@JvmField val uuid: UUID) : Serializable {
-        /**
-         * Called once the connection is established to add the characteristic to the Bluetooth
-         * object (or to write its configuration).
-         */
+        /** Called once connected: registers the characteristic or writes its configuration */
         @Throws(BluetoothException::class)
         abstract fun process(b: Bluetooth)
     }
 
-    /**
-     * A characteristic the values of which are recorded by a BluetoothInput.
-     */
+    /** A characteristic recorded by a BluetoothInput */
     class InputData(uuid: UUID, @JvmField val extraTime: Boolean, @JvmField val index: Int, conversionFunction: ConversionsInput.InputConversion?) : CharacteristicData(uuid), Serializable {
         @JvmField
         val conversionFunction: ConversionsInput.InputConversion? = if (extraTime) null else conversionFunction
@@ -838,9 +708,7 @@ open class Bluetooth(
         }
     }
 
-    /**
-     * A characteristic that is written with buffer data by a BluetoothOutput.
-     */
+    /** A characteristic written with buffer data by a BluetoothOutput */
     class OutputData(uuid: UUID, @JvmField val index: Int, @JvmField val conversionFunction: ConversionsOutput.OutputConversion?, @JvmField val offset: Short, @JvmField val triggerId: String?) : CharacteristicData(uuid), Serializable {
 
         @Throws(BluetoothException::class)
@@ -851,9 +719,7 @@ open class Bluetooth(
         }
     }
 
-    /**
-     * A characteristic that receives a fixed configuration value when the connection is set up.
-     */
+    /** A characteristic that receives a fixed configuration value on connect */
     class ConfigData : CharacteristicData, Serializable {
         @JvmField
         val value: ByteArray
@@ -862,7 +728,7 @@ open class Bluetooth(
         constructor(uuid: UUID, data: String, conversionFunction: ConversionsConfig.ConfigConversion) : super(uuid) {
             try {
                 this.value = conversionFunction.convert(data)
-            } catch (e: Exception) { //catch any exception that occurs in the conversion function
+            } catch (e: Exception) {
                 throw PhyphoxFile.phyphoxFileException("An error occurred on the conversion function \"" + conversionFunction.javaClass.name + "\". ")
             }
         }
@@ -874,14 +740,8 @@ open class Bluetooth(
         }
     }
 
-    /**
-     * Thrown to indicate that there was an error concerning Bluetooth.
-     */
     class BluetoothException(message: String, b: Bluetooth) : Exception(message + getMessage(b)) {
         companion object {
-            /**
-             * Return a String with the device data (address and name if not null).
-             */
             @JvmStatic
             fun getMessage(b: Bluetooth): String {
                 var message = System.lineSeparator() + b.context.resources.getString(R.string.bt_exception_device)
@@ -895,9 +755,7 @@ open class Bluetooth(
         }
     }
 
-    /**
-     * Runnable that displays an AlertDialog with an error message and the option to try again.
-     */
+    /** Shows an error dialog with a try-again option */
     class OnExceptionRunnable : Runnable {
         @JvmField
         var message: String = ""
@@ -929,11 +787,7 @@ open class Bluetooth(
         }
     }
 
-    /**
-     * Connects all Bluetooth devices of an experiment on a background thread, showing a progress
-     * dialog meanwhile and the error dialog (with try again option) on failure. Successor of the
-     * old AsyncTask with the same interface towards Experiment.
-     */
+    /** Connects all devices of an experiment on a background thread, with progress dialog and try-again error dialog */
     class ConnectBluetoothTask {
         @JvmField
         var progress: ProgressDialog? = null
@@ -973,6 +827,7 @@ open class Bluetooth(
         @JvmField
         val baseUUID: UUID = UUID.fromString("00000000-0000-1000-8000-00805f9b34fb")
 
+        //phyphox BLE GATT UUIDs: a contract shared with iOS and the Arduino/MicroPython libraries
         @JvmField
         val phyphoxServiceUUID: UUID = UUID.fromString("cddf0001-30f7-4671-8b43-5e40ba53514a")
 
@@ -990,71 +845,32 @@ open class Bluetooth(
 
         private const val TAG = "phyphoxBle"
 
-        /**
-         * One line per FINISHED connection or transfer, so the device lab can watch the
-         * retries instead of only the verdict.
-         *
-         * Retrying internally is right for the field - boards with the Arduino library's
-         * fixed high-rate transfer will be out there for years, and the app should cope
-         * rather than complain at the user - but it blinds the suite: a scenario passes the
-         * same way whether the app got through on the first attempt or on the last one it
-         * was allowed, so hardware that is slowly getting worse looks healthy right up to
-         * the run that finally exhausts the budget. The lab greps for the token and records
-         * the counts per scenario (phyphox-docs, tools/lab/ble.py: parse_retry_lines).
-         *
-         * Emitted once the operation is over rather than per attempt, because the driver
-         * clears logcat at the start of a scenario and a per-attempt line would be swallowed.
-         */
+        //One log line per finished connect/transfer, emitted at the end because the lab driver
+        // (phyphox-docs tools/lab/ble.py, parse_retry_lines) clears logcat at scenario start
         internal fun reportBleOutcome(tag: String, event: String, attempts: Int, ok: Boolean,
                                       reason: String? = null, bytes: Int? = null,
                                       ms: Long? = null) {
             val line = StringBuilder(RETRY_TOKEN)
             line.append(" event=").append(event)
-            //Every attempt, the successful one included, so 1 means it worked first time.
+            //successful attempt included, so 1 means it worked first time
             line.append(" attempts=").append(attempts)
             line.append(" result=").append(if (ok) "ok" else "failed")
-            //Parsed as space separated key=value, so no value may contain a space.
+            //parsed as space separated key=value, so no value may contain a space
             reason?.let { line.append(" reason=").append(it.replace(' ', '_')) }
             bytes?.let { line.append(" bytes=").append(it) }
             ms?.let { line.append(" ms=").append(it) }
             Log.i(tag, line.toString())
         }
 
-        /** the literal the lab greps for; changing it silently blinds the report */
-        private const val RETRY_TOKEN = "phyphox-ble-retries"
+        private const val RETRY_TOKEN = "phyphox-ble-retries" //the lab greps for this literal
 
         const val CONNECT_TIMEOUT_MS = 10000L
 
-        /**
-         * Attempts for a connection. Android's direct connect fails with GATT_ERROR (133)
-         * often enough to matter - measured in the lab on 2026-08-28 - and the same device
-         * connects a moment later, so a refused attempt is retried rather than reported. It
-         * also covers the board that has not finished releasing the previous connection yet:
-         * the experiment connects immediately after the transfer let go of the same device,
-         * and a peripheral that serves one central at a time needs that moment.
-         *
-         * Three was not enough. A refused attempt comes back in about 0.35 s, so the whole
-         * budget is spent in under three seconds, and the bench kept hitting the end of it:
-         * two connects in 34 needed all three attempts on 2026-08-28, which puts the next
-         * one along - the connect that would need a fourth - at about one in forty. That is
-         * the transfer flake the suite was still seeing. Each additional attempt costs under
-         * a second and only when the previous one failed, so the budget is set by
-         * CONNECT_TOTAL_BUDGET_MS rather than by counting.
-         */
+        //Direct connect often fails with GATT_ERROR (133) and succeeds a moment later, and a board may still
+        // be releasing the previous connection; a refused attempt (~0.35 s) is retried. The attempt count is
+        // only a ceiling, a switched-off device burns CONNECT_TIMEOUT_MS per attempt, so the clock bounds it.
         const val CONNECT_ATTEMPTS = 6
-
-        /** pause before another connection attempt, to let the stack and the device settle */
         const val CONNECT_RETRY_DELAY_MS = 500L
-
-        /**
-         * ...but stop retrying once this much time has gone into it, however many attempts
-         * are left. The two failures cost very different amounts of time: a refused
-         * connection answers in about 0.35 s, while a device that is simply switched off
-         * gives no callback at all and burns the full CONNECT_TIMEOUT_MS. Counting attempts
-         * alone would make the cheap case barely slower and the expensive one a minute of
-         * staring at a progress dialog, so the retrying is bounded by the clock and the
-         * attempt count is only the ceiling.
-         */
         const val CONNECT_TOTAL_BUDGET_MS = 25000L
         const val RSSI_INTERVAL_MS = 1000L
         const val TOAST_THROTTLE_MS = 5000L
@@ -1066,7 +882,6 @@ open class Bluetooth(
 
         internal var btAdapter: BluetoothAdapter? = null
 
-        /** The shared thread all queue workers and light-weight engine jobs run on */
         private val bleThread by lazy {
             HandlerThread("phyphoxBLE").also { it.start() }
         }
@@ -1075,17 +890,11 @@ open class Bluetooth(
             CoroutineScope(SupervisorJob() + Handler(bleThread.looper).asCoroutineDispatcher("phyphoxBLE"))
         }
 
-        /**
-         * Return true if Bluetooth Low Energy is supported on the device.
-         */
         @JvmStatic
         fun isSupported(context: Context): Boolean {
             return context.packageManager.hasSystemFeature(PackageManager.FEATURE_BLUETOOTH_LE)
         }
 
-        /**
-         * Return true if Bluetooth is enabled on the device.
-         */
         @JvmStatic
         fun isEnabled(): Boolean {
             if (btAdapter == null) {
@@ -1094,9 +903,6 @@ open class Bluetooth(
             return btAdapter?.isEnabled == true
         }
 
-        /**
-         * Return a list of all paired Bluetooth Low Energy devices.
-         */
         @JvmStatic
         fun getPairedDevices(): Vector<BluetoothDevice> {
             val result = Vector<BluetoothDevice>()
@@ -1108,20 +914,9 @@ open class Bluetooth(
             return result
         }
 
-        /**
-         * Decide which block owns the connection to each device: blocks naming the same device
-         * with the same id describe ONE physical device (that is what the id is for - see the
-         * device count in Experiment.onExperimentLoaded and the per-device event characteristic
-         * in PhyphoxExperiment.startAllIO), so they get one GATT connection between them instead
-         * of one each. The first block of a group in connection order owns it, so the owner is
-         * always connected before the blocks that borrow from it.
-         *
-         * A block without an id is its own device, exactly as everywhere else in the app, even
-         * if it happens to name the same device as another block.
-         *
-         * Must be called before connecting, and again for every fresh connection attempt, since
-         * it also resets the grouping after a device was dropped.
-         */
+        //Blocks with the same id describe one physical device and share one GATT connection, owned by the
+        // first in connection order; a block without an id is its own device. Called before every
+        // connection attempt, it also resets the grouping.
         @JvmStatic
         fun shareConnections(vararg list: Vector<out Bluetooth>) {
             val owners = HashMap<String, Bluetooth>()
@@ -1148,7 +943,6 @@ open class Bluetooth(
             }
         }
 
-        /** Collects already resolved devices by their idString so multiple inputs/outputs referring to the same device reuse it */
         @JvmStatic
         fun knownDevicesFromIO(vararg list: Vector<out Bluetooth>): Map<String, BluetoothDevice> {
             val knownDevices = HashMap<String, BluetoothDevice>()

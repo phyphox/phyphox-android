@@ -7,11 +7,7 @@ import android.bluetooth.BluetoothStatusCodes
 import android.os.Build
 import java.util.UUID
 
-/**
- * Executes [BleCommandQueue] operations on an actual [BluetoothGatt] (API 33+ value based writes,
- * legacy setValue below). The gatt is obtained through [gattProvider] on every operation, so the
- * owner can replace or close its connection without recreating the queue plumbing.
- */
+/** Executes [BleCommandQueue] operations on the [BluetoothGatt] returned by [gattProvider]. */
 @SuppressLint("MissingPermission")
 class BleGattIo(private val gattProvider: () -> BluetoothGatt?) : GattIo {
 
@@ -27,8 +23,7 @@ class BleGattIo(private val gattProvider: () -> BluetoothGatt?) : GattIo {
             }
             is BleOp.Write -> {
                 val c = findCharacteristicOrNull(gatt, op.characteristic) ?: return false
-                //Note: WRITE_TYPE_DEFAULT on purpose, WRITE_TYPE_NO_RESPONSE does not work
-                // with the BBC micro:bit
+                // WRITE_TYPE_DEFAULT on purpose: WRITE_TYPE_NO_RESPONSE does not work with the BBC micro:bit
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
                     gatt.writeCharacteristic(c, op.value, BluetoothGattCharacteristic.WRITE_TYPE_DEFAULT) == BluetoothStatusCodes.SUCCESS
                 } else {

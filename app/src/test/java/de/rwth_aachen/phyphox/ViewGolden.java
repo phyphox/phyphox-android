@@ -10,15 +10,9 @@ import java.io.IOException;
 import java.io.OutputStream;
 import java.util.Locale;
 
-//Golden-image plumbing for the view snapshot suite: render one view element to a bitmap and
-//compare it against the recorded PNG, or record it when asked.
-//
-//Goldens live in this repository (renderer output is platform-specific by nature - see
-//phyphox-docs fixtures/views/README.md, "The snapshot contract") under
-//app/src/test/goldens/views/<fixture>/<element>/<configuration>.png.
-//
-//Recording: ./gradlew testRegularDebugUnitTest -Pphyphox.goldens=record
-//A recorded golden is reviewed like any other change - it is the reference for every later run.
+//Golden-image plumbing for the view snapshot suite: renders one view element and compares it with
+//app/src/test/goldens/views/<fixture>/<element>/<configuration>.png (kept here, not in phyphox-docs,
+//as renderer output is platform-specific), or records it with -Pphyphox.goldens=record.
 final class ViewGolden {
 
     private static final File ROOT = goldenRoot();
@@ -44,16 +38,15 @@ final class ViewGolden {
         throw new IllegalStateException("Cannot locate the golden directory");
     }
 
-    //A file name that still reads like the element it shows: "precision 6" -> "precision-6".
+    //"precision 6" -> "precision-6"
     static String slug(String name) {
         String slug = (name == null ? "unnamed" : name).toLowerCase(Locale.US)
                 .replaceAll("[^a-z0-9]+", "-").replaceAll("(^-|-$)", "");
         return slug.isEmpty() ? "unnamed" : slug;
     }
 
-    //Draw a view exactly as wide as the screen it belongs to, as tall as it wants to be, on the
-    //window background it sits on. Without the background a dark-theme element is white text on
-    //transparent - a golden nobody can review.
+    //Full screen width, natural height, on the window background - without it a dark-theme element
+    //is white text on transparent.
     static Bitmap render(View view, int widthPx, int backgroundColor) {
         view.measure(View.MeasureSpec.makeMeasureSpec(widthPx, View.MeasureSpec.EXACTLY),
                 View.MeasureSpec.makeMeasureSpec(0, View.MeasureSpec.UNSPECIFIED));

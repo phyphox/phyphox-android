@@ -1,14 +1,9 @@
-# T0 of the phyphox test strategy: JVM unit tests, including the conformance corpus from the
-# public phyphox-docs repository, which is checked out as a sibling of this repository - the
-# same layout the corpus lookup in app/src/test expects on a development machine. If that
-# checkout fails, the run fails: in CI the corpus is mandatory, the skip-with-notice path in
-# the tests exists for plain local clones without the sibling.
+# T0 of the phyphox test strategy: JVM unit tests. The conformance corpus comes from the sibling
+# phyphox-docs checkout and is mandatory in CI; the tests skip it only on plain local clones.
 name: tests
 on: [push, pull_request]
 
-# A new push supersedes the run of the one before it, so the queue does not fill with results
-# nobody is waiting for any more. Not on master: what master reports is the record of a released
-# commit, and that is worth keeping even when two land in a row.
+# A new push supersedes the previous run; not on master, whose runs are the record of a release.
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: ${{ github.ref != 'refs/heads/master' }}

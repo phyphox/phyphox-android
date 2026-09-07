@@ -45,16 +45,13 @@ object CameraHelper {
         }
     }
 
-    //Never null: every caller walks the result directly, and an empty list is the honest answer
-    //both for a device without cameras and for one whose cameras have not been enumerated yet.
+    //Never null: empty both for a device without cameras and before enumeration
     @JvmStatic
     fun getCameraList(): Map<String, CameraCharacteristics> {
         return cameraList ?: emptyMap()
     }
 
-    //Enumerate the cameras unless that has already happened. The experiment list does it when
-    //it loads, but code that can be reached without it - the remote interface's /meta, for
-    //example - would otherwise report a device without any cameras.
+    //The experiment list enumerates on load, but /meta can be reached without it
     @JvmStatic
     fun ensureCameraList(cm: CameraManager) {
         if (cameraList == null)
@@ -108,10 +105,7 @@ object CameraHelper {
     @JvmStatic
     fun getCamera2FormattedCaps(full: Boolean): String {
         val json = JSONArray()
-        //A camera does not have to report every characteristic. camera2 guarantees the ones
-        //below for a regular camera, but this report covers whatever the device lists, and it
-        //is served over the remote interface - where a missing value must not take down the
-        //whole response.
+        //Characteristics may be missing; a null must not take down the /meta response
         for ((key1, value) in getCameraList()) {
             val jsonCam = JSONObject()
             try {
@@ -447,7 +441,7 @@ object CameraHelper {
         val isoMin = state.isoRange?.first()?.toInt() ?: 100
 
         if (shutterLocked) {
-            //Only the ISO may be changed, so pick the available ISO that gets closest to the required adjustment
+            //pick the available ISO closest to the required adjustment
             val targetIso = iso.toDouble() * adjust
             var isoOption = iso
             var optionRating = Double.MAX_VALUE
@@ -463,7 +457,6 @@ object CameraHelper {
         }
 
         if (isoLocked) {
-            //Only the shutter speed may be changed
             shutter = (shutter * adjust).toLong()
             if (shutter > shutterMax)
                 shutter = shutterMax

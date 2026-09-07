@@ -141,17 +141,10 @@ public class ExperimentListActivity extends AppCompatActivity {
     private boolean isSelectionMode = false;
     private View.OnClickListener originalFABListener;
 
-    //Intercepts the back action when it should only dismiss an overlay (selection mode or the
-    //new experiment menu) instead of leaving the activity. It is kept disabled otherwise, so
-    //the system can play predictive back animations.
-    private OnBackPressedCallback backCallback = null;
+    private OnBackPressedCallback backCallback = null; //enabled only while an overlay is open, so predictive back works otherwise
 
-    //Set if this instance was launched by another app to view a phyphox file. In that case this
-    //activity only acts as a dispatcher that examines the file and hands it over to the
-    //Experiment activity, so it should not remain on the back stack below the experiment.
-    private boolean launchedToViewFile = false;
+    private boolean launchedToViewFile = false; //launched by another app to view a file: dispatch to Experiment and leave the back stack
 
-    //Local network permission handling for loading an experiment from a local address
     private static final int LOCAL_NETWORK_LOAD_REQUEST_CODE = 5;
     private Intent lastNetworkLoadIntent = null; //current load from a network scheme; only such a load may offer the local network permission
     private Intent lastNetworkLoadRetryIntent = null; //the load to repeat once the permission has been granted
@@ -224,10 +217,7 @@ public class ExperimentListActivity extends AppCompatActivity {
         backCallback.setEnabled(isSelectionMode || newExperimentDialogOpen);
     }
 
-    //If this activity was only launched to pass a phyphox file from another app to the
-    //Experiment activity, it should be removed from the back stack once the experiment has been
-    //opened. Otherwise the user would navigate back through an unexpected experiment list (in
-    //the other app's task) instead of returning to the app the file came from.
+    //Back from the experiment should return to the app the file came from, not to a list in its task
     private void finishIfViewIntentDispatcher() {
         if (launchedToViewFile)
             finish();
@@ -237,9 +227,7 @@ public class ExperimentListActivity extends AppCompatActivity {
     protected void onNewIntent(Intent intent) {
         super.onNewIntent(intent);
         setIntent(intent);
-        //A reused instance is an experiment list the user already had open, so it should stay
-        //around when dispatching a file to the Experiment activity - unless it sits on top of
-        //another app's task.
+        //A reused instance stays around unless it sits on top of another app's task
         launchedToViewFile = Intent.ACTION_VIEW.equals(intent.getAction()) && intent.getScheme() != null && !isTaskRoot();
         handleIntent(intent);
     }
@@ -735,9 +723,7 @@ public class ExperimentListActivity extends AppCompatActivity {
     public void showError(String error) {
         if (progress != null)
             progress.dismiss();
-        //A failed load from a network address while the local network permission is missing may
-        //well be caused by exactly that - a hostname that resolves to a local address is not
-        //recognized by the up-front check in handleIntent. Explain and offer to grant.
+        //A hostname resolving to a local address escapes the up-front check in handleIntent, so offer the permission here
         if (lastNetworkLoadIntent != null && Helper.needsLocalNetworkPermission(this)) {
             final Intent retryIntent = lastNetworkLoadIntent;
             lastNetworkLoadIntent = null; //offer this once per load attempt
@@ -913,13 +899,9 @@ public class ExperimentListActivity extends AppCompatActivity {
             return;
         lastNetworkLoadIntent = null; //only a load from a network scheme (set below) may offer the local network permission
 
-        //phyphox://asset=<url-encoded path> opens an experiment bundled with the app (see
-        //transferring-experiments.md in phyphox-docs) - no server involved, so it is dispatched
-        //here, before the network branch below, as the same intent the experiment list itself
-        //uses to open a bundled experiment. The path is taken from the raw URI string: Uri's
-        //host/authority accessors normalize their case, which would corrupt the case-sensitive
-        //asset path. Any other phyphox:// URL keeps the https-rewrite behavior of
-        //PhyphoxFile.openXMLInputStream. Mirrored on iOS - the two must stay in step.
+        //phyphox://asset=<url-encoded path> opens a bundled experiment (transferring-experiments.md in phyphox-docs;
+        //mirrored on iOS). Raw URI string, because Uri's host accessors fold the case of the case-sensitive path.
+        //Any other phyphox:// URL takes the https rewrite in PhyphoxFile.openXMLInputStream.
         String dataString = intent.getDataString();
         if (scheme.equals("phyphox") && dataString != null && dataString.startsWith("phyphox://asset=")) {
             String path = Uri.decode(dataString.substring("phyphox://asset=".length()));
@@ -978,14 +960,11 @@ public class ExperimentListActivity extends AppCompatActivity {
         } else if (scheme.equals(ContentResolver.SCHEME_CONTENT) || scheme.equals("phyphox") || scheme.equals("http") || scheme.equals("https")) {
             if (!scheme.equals(ContentResolver.SCHEME_CONTENT)) {
                 lastNetworkLoadIntent = intent;
-                //Loading from the local network needs the local network permission. If the address
-                //already looks local (literal private IP, .local, ...), ask before the first
-                //attempt; other local addresses are caught when the load fails (see showError).
+                //Ask for the local network permission up front if the address looks local; other cases are caught in showError
                 if (Helper.needsLocalNetworkPermission(this) && intent.getData() != null && Helper.isLikelyLocalNetworkAddress(intent.getData().toString())) {
                     lastNetworkLoadRetryIntent = intent;
                     ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.ACCESS_LOCAL_NETWORK}, LOCAL_NETWORK_LOAD_REQUEST_CODE);
-                    //If the permission is granted, the permission callback restarts the load with the same intent
-                    return;
+                    return; //the permission callback restarts the load
                 }
             }
             progress = ProgressDialog.show(this, res.getString(R.string.loadingTitle), res.getString(R.string.loadingText), true);
@@ -1002,13 +981,8 @@ public class ExperimentListActivity extends AppCompatActivity {
         Animation labelIn = AnimationUtils.loadAnimation(getBaseContext(), R.anim.experiment_list_label_in);
         Animation fadeDark = AnimationUtils.loadAnimation(getBaseContext(), R.anim.experiment_list_fade_dark);
 
-        //The animations only move these views around, they do not bring them into existence: the
-        //layout declares them invisible and something has to undo that. They used to be drawn
-        //anyway, because a view with a running or filled-after animation is drawn and hit-tested
-        //regardless of its visibility, which made the menu look and feel right while it stayed
-        //absent from the accessibility tree - so TalkBack could not reach "add experiment from QR
-        //code", "for Bluetooth device" or "simple experiment" at all, and those are the only ways
-        //to get an experiment in that is not bundled with the app.
+        //An animated view is drawn and hit-tested regardless of visibility, but stays out of the accessibility tree
+        //while INVISIBLE, so the visibility has to be set for real
         setNewExperimentMenuVisible(true);
 
         newExperimentButton.startAnimation(rotate45In);
@@ -1038,10 +1012,8 @@ public class ExperimentListActivity extends AppCompatActivity {
         Animation labelOut = AnimationUtils.loadAnimation(getBaseContext(), R.anim.experiment_list_label_out);
         Animation fadeTransparent = AnimationUtils.loadAnimation(getBaseContext(), R.anim.experiment_list_fade_transparent);
 
-        //Hiding them has to wait for the animation to finish, or it cuts the exit short. The same
-        //Animation object drives three views, so this arrives up to three times - setting the same
-        //visibility again is harmless. The check is not: the menu can be reopened while the exit
-        //is still running, and this must not then hide a menu that is on its way back in.
+        //Hide after the exit animation; it arrives up to three times (one Animation, three views) and must
+        //not hide a menu that was reopened while the exit was still running
         fabOut.setAnimationListener(new Animation.AnimationListener() {
             @Override
             public void onAnimationStart(Animation animation) {
@@ -1077,9 +1049,7 @@ public class ExperimentListActivity extends AppCompatActivity {
 
     }
 
-    //Visible or invisible for real, rather than leaving it to the animation. INVISIBLE and not
-    //GONE: the sub-FABs are positioned relative to each other and to the main button, so removing
-    //them from the layout would move what is left.
+    //INVISIBLE, not GONE: the sub-FABs are positioned relative to each other and to the main button
     private void setNewExperimentMenuVisible(boolean visible) {
         int visibility = visible ? View.VISIBLE : View.INVISIBLE;
         newExperimentSimple.setVisibility(visibility);
@@ -1362,8 +1332,7 @@ public class ExperimentListActivity extends AppCompatActivity {
         dialog.show();
     }
 
-    //Scan for supported Bluetooth devices (or devices offering an experiment for download) and
-    //open the choice of experiments for the device picked by the user.
+    //Scan for supported Bluetooth devices (or devices offering an experiment) and open the choice for the picked one
     private void startBluetoothScan() {
         Set<String> bluetoothNameKeySet = experimentRepository.getBluetoothDeviceNameList().keySet();
         Set<UUID> bluetoothUUIDKeySet = experimentRepository.getBluetoothDeviceUUIDList().keySet();

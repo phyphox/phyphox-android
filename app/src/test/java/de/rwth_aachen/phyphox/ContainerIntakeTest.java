@@ -38,21 +38,9 @@ import de.rwth_aachen.phyphox.ExperimentList.model.Const;
 import de.rwth_aachen.phyphox.helper.Helper;
 
 // phyphox-test: containers-load
-//A .phyphox file is not necessarily bare XML: a zip archive carrying several experiments and/or
-//the res/ images a view element names is a container form of the format, and so is the headerless
-//"partial zip" that QR codes and Bluetooth transfers carry. All of that is contract (see the
-//container forms in phyphox-docs, fixtures/containers/README.md) and had no test on either
-//platform until now.
-//
-//The fixtures come from that same directory, so both apps pin the same bytes. What matters here
-//is that they go through the REAL intake route - the signature sniffing in
-//ExperimentListActivity, ZipIntentHandler's extraction with its filter and its
-//path-traversal guard, zipReady's dispatch and PhyphoxFile's loading - and not through a lenient
-//unzip that would prove nothing about the app.
-//
-//ZipIntentHandler is an AsyncTask, driven here by execute().get(): that runs the real
-//doInBackground and waits for it, and idling the main looper afterwards delivers the real
-//onPostExecute, which is what calls zipReady. Nothing is reimplemented.
+//The container forms of the format (phyphox-docs fixtures/containers/README.md, fixtures shared
+//with iOS) taken in through the real intake route: ExperimentListActivity's signature sniffing,
+//ZipIntentHandler's extraction and path-traversal guard, zipReady's dispatch, PhyphoxFile's loading.
 @RunWith(RobolectricTestRunner.class)
 @Config(sdk = 35)
 public class ContainerIntakeTest {
@@ -67,12 +55,10 @@ public class ContainerIntakeTest {
         assumeTrue("no phyphox-docs checkout next to this repository", fixtures != null);
 
         Application application = ApplicationProvider.getApplicationContext();
-        //A container usually arrives from a file manager, i.e. from outside the app's own
-        //directory, which is what openXMLInputStream asks this permission for.
+        //openXMLInputStream asks for this for files from outside the app's own directory.
         Shadows.shadowOf(application).grantPermissions(Manifest.permission.READ_EXTERNAL_STORAGE);
 
-        //Attached but not created: onCreate would build the whole experiment list, which the
-        //intake under test does not need (the same shortcut AssetDeepLinkTest takes).
+        //Attached but not created: onCreate would build the whole experiment list.
         listActivity = Robolectric.buildActivity(ExperimentListActivity.class).get();
         if (listActivity.getBaseContext() == null)
             Shadows.shadowOf(listActivity).callAttach(new Intent());
@@ -89,7 +75,7 @@ public class ContainerIntakeTest {
         return new Intent(Intent.ACTION_VIEW, Uri.fromFile(file));
     }
 
-    //The extraction as the app performs it, plus the callback that decides what happens next.
+    //execute().get() runs the real doInBackground; idling the looper delivers onPostExecute, which calls zipReady.
     private String unpack(Intent intent) throws Exception {
         String result = new ZipIntentHandler(intent, listActivity).execute().get();
         Shadows.shadowOf(Looper.getMainLooper()).idle();
@@ -100,10 +86,9 @@ public class ContainerIntakeTest {
         return new File(listActivity.getFilesDir(), "temp_zip");
     }
 
-    //Loading an extracted experiment the way the app does: through the intent zipReady builds
-    //for it, i.e. a file uri into the extraction directory.
+    //Load an extracted experiment through the intent zipReady builds for it.
     private PhyphoxExperiment load(Intent intent) {
-        //One per test: the simulated device it sets up may only be built once.
+        //The simulated device may only be built once per test.
         if (experimentActivity == null)
             experimentActivity = CorpusTestEnvironment.fullyEquippedActivity();
         PhyphoxFile.PhyphoxStream stream = PhyphoxFile.openXMLInputStream(intent, experimentActivity);
@@ -121,8 +106,7 @@ public class ContainerIntakeTest {
 
     @Test
     public void theZipSignatureDecidesHowAFileIsTakenIn() throws Exception {
-        //This one needs the collection as the user sees it: the zip branch puts a progress
-        //dialog up before it hands over to the handler.
+        //Needs the created collection: the zip branch puts a progress dialog up before the handler runs.
         ExperimentListActivity collection =
                 Robolectric.buildActivity(ExperimentListActivity.class).create().get();
 
@@ -135,8 +119,7 @@ public class ContainerIntakeTest {
         assertNotNull("a bare experiment file was not forwarded anywhere", forwarded);
         assertEquals(Experiment.class.getName(), forwarded.getComponent().getClassName());
 
-        //...while the PK\x03\x04 signature routes the same kind of intent into the zip handler,
-        //which unpacks first and only then decides what to open.
+        //...while the PK\x03\x04 signature routes it into the zip handler, which unpacks before it decides.
         collection.handleIntent(viewIntent(fixture("two-experiments.zip")));
         assertNull("a zip container was forwarded as if it were an experiment file",
                 Shadows.shadowOf(collection).getNextStartedActivity());
@@ -144,8 +127,7 @@ public class ContainerIntakeTest {
 
     @Test
     public void aMultiExperimentZipUnpacksToExactlyItsExperiments() throws Exception {
-        //Several experiments end in the chooser rather than in an experiment, and the chooser is
-        //an AppCompat dialog - the theme is what the created activity would bring along.
+        //The chooser is an AppCompat dialog; the theme is what the created activity would bring along.
         listActivity.setTheme(androidx.appcompat.R.style.Theme_AppCompat);
         assertEquals("", unpack(viewIntent(fixture("two-experiments.zip"))));
 
@@ -158,8 +140,6 @@ public class ContainerIntakeTest {
         assertEquals("the container did not unpack to exactly its two experiments: " + extracted,
                 2, extracted.size());
 
-        //Both load, and they are the two the fixture names - this is the set the chooser offers
-        //(the chooser itself, and saving from it, is the save-to-collection row).
         PhyphoxExperiment a = loadFromTemp("container-a.phyphox");
         PhyphoxExperiment b = loadFromTemp("container-b.phyphox");
         assertTrue("container-a did not load: " + a.message, a.loaded);
@@ -167,8 +147,7 @@ public class ContainerIntakeTest {
         assertEquals("Container fixture A", a.title);
         assertEquals("Container fixture B", b.title);
 
-        //Opened out of a container, so it is not part of the collection yet - which is what makes
-        //the app offer to save it.
+        //Not part of the collection yet, which is what makes the app offer to save it.
         assertFalse("an experiment from a container counts as local", a.isLocal);
     }
 
@@ -202,8 +181,6 @@ public class ContainerIntakeTest {
             throws Exception {
         String result = unpack(viewIntent(fixture("traversal.zip")));
 
-        //The guard is what this pins: an entry whose canonical path leaves the extraction
-        //directory stops the extraction with an error instead of being written.
         assertTrue("the ../ entry was not refused, the handler said: \"" + result + "\"",
                 result.contains("Security exception"));
         assertFalse("the traversal entry was written outside the extraction directory",
@@ -213,9 +190,7 @@ public class ContainerIntakeTest {
         assertTrue("container entries escaped into the app's own directory: " + strays,
                 strays.isEmpty());
 
-        //And an archive that tries it is refused as a whole - nothing out of it is opened, even
-        //though the legitimate entry ahead of the traversal entry had already been extracted and
-        //parses fine. (iOS has no such guard at all; see the handoff note.)
+        //Refused as a whole, though the legitimate entry ahead of it was already extracted and parses fine.
         assertNull("an experiment from a tampered container was opened anyway",
                 Shadows.shadowOf(listActivity).getNextStartedActivity());
         assertTrue("the legitimate entry was not extracted before the guard hit",
@@ -226,9 +201,7 @@ public class ContainerIntakeTest {
 
     @Test
     public void anEntryThatOnlySharesAPrefixWithTheExtractionDirectoryIsRejected() throws Exception {
-        //No fixture for this one: it is not about the container forms but about the guard's own
-        //arithmetic. The extraction directory is temp_zip, so an entry resolving to temp_zipx is
-        //outside it - even though one path is a plain string prefix of the other.
+        //temp_zipx is outside temp_zip although one path is a plain string prefix of the other.
         byte[] xml = Files.readAllBytes(
                 new File(new File(fixtures, "src"), "container-a.phyphox").toPath());
         File archive = new File(listActivity.getFilesDir(), "sibling-prefix.zip");
@@ -249,16 +222,14 @@ public class ContainerIntakeTest {
                 new File(listActivity.getFilesDir(), tempZip().getName() + "x.phyphox").exists());
     }
 
-    //The shapes the guard has to get right, one archive each - a refusal stops the extraction,
-    //so they cannot share one. iOS pins the same set against its destination function.
+    //One archive per shape - a refusal stops the extraction. iOS pins the same set.
     @Test
     public void theGuardJudgesEachEntryShapeCorrectly() throws Exception {
         assertRefused("res/../../evil.png");
         assertRefused("..");
         assertRefused("res/../../../evil.phyphox");
 
-        //A leading slash is not a traversal: it resolves inside the extraction directory like any
-        //other relative name, and the entry is an ordinary bundled resource.
+        //A leading slash is not a traversal: it resolves inside the extraction directory.
         assertEquals("", unpack(viewIntent(archiveWith("/res/pic.png"))));
         assertTrue("a leading slash on a res entry was treated as an escape",
                 new File(tempZip(), "res/pic.png").isFile());
@@ -274,8 +245,7 @@ public class ContainerIntakeTest {
                     + "directory", stray.getName().startsWith("evil"));
     }
 
-    //An archive holding one legitimate experiment and one entry under test, in that order, so a
-    //guard that lets the second one through has already written the first.
+    //The legitimate experiment comes first, so a guard that lets the entry through has already written it.
     private File archiveWith(String entryName) throws Exception {
         byte[] xml = Files.readAllBytes(
                 new File(new File(fixtures, "src"), "container-a.phyphox").toPath());
@@ -294,15 +264,9 @@ public class ContainerIntakeTest {
 
     @Test
     public void aPartialZipIsRebuiltAndLoads() throws Exception {
-        //The QR/BLE form: a single entry's data followed by nothing but a data descriptor - no
-        //local file header, no central directory. Helper.inflatePartialZip builds the missing zip
-        //structure around it, and from there it is an ordinary container.
-        //
-        //The payload is stored, not deflated - that is what the editor emits
-        //(phyphox-blockly-editor/src/utils/offlineQrCode.ts, "For STORE method: compressed size ==
-        //uncompressed size") and what both apps rebuild, writing compression method 0 into the
-        //header they synthesize. Reading the fixture rather than building the form here is the
-        //point: a fixture that stops being what the wire carries has to fail somewhere.
+        //The QR/BLE form: one entry's data followed by a data descriptor, no local file header, no
+        //central directory. The payload is stored, not deflated - what the editor emits
+        //(phyphox-blockly-editor/src/utils/offlineQrCode.ts) and both apps rebuild with method 0.
         byte[] received = Files.readAllBytes(fixture("partial.bin").toPath());
         assertEquals("the fixture does not end in a data descriptor",
                 "PK\u0007\b", new String(received, received.length - 16, 4,
@@ -316,8 +280,7 @@ public class ContainerIntakeTest {
         assertEquals(0x03, rebuilt[2] & 0xff);
         assertEquals(0x04, rebuilt[3] & 0xff);
 
-        //From here the app writes the rebuilt archive out and hands it to the same zip handler
-        //every other container goes through (ExperimentListActivity's QR path).
+        //The rebuilt archive goes through the same zip handler as every other container (the QR path).
         File tempPath = new File(listActivity.getFilesDir(), "temp_qr");
         assertTrue(tempPath.isDirectory() || tempPath.mkdirs());
         File zipFile = new File(tempPath, "qr.zip");
@@ -338,11 +301,8 @@ public class ContainerIntakeTest {
         assertEquals("Container fixture A", experiment.title);
     }
 
-    //The other half of the ruling (partial-zip-intake-scope, decided 2026-08-26): the compact
-    //form is accepted from the QR scanner and the Bluetooth transfer, and from nowhere else. The
-    //same bytes arriving as a file the user opens are not rebuilt - handleIntent sniffs for a
-    //real zip signature, and a partial zip does not carry one - so the file is taken for the
-    //experiment it is not.
+    //The other half of the ruling (partial-zip-intake-scope): the compact form is accepted from the QR
+    //scanner and the Bluetooth transfer only. A file has no zip signature to sniff, so it is not rebuilt.
     @Test
     public void aPartialZipOpenedAsAFileIsNotRebuilt() throws Exception {
         File partial = fixture("partial.bin");
@@ -354,8 +314,7 @@ public class ContainerIntakeTest {
         assertEquals("a partial zip opened as a file was treated as a container",
                 Experiment.class.getName(), forwarded.getComponent().getClassName());
 
-        //And it does not sneak in as bare XML either: the payload is followed by the descriptor,
-        //which is not part of the document.
+        //Nor does it pass as bare XML: the descriptor after the payload is not part of the document.
         Experiment activity = CorpusTestEnvironment.fullyEquippedActivity();
         PhyphoxFile.PhyphoxStream stream = PhyphoxFile.openXMLInputStream(forwarded, activity);
         PhyphoxExperiment experiment = PhyphoxFile.loadExperiment(stream, activity);

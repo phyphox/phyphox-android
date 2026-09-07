@@ -85,7 +85,7 @@ public class SensorInput implements SensorEventListener, Serializable {
     }
 
     public static int resolveSensorString(String type) {
-        //Enumerated values are matched case-insensitively (see rules.yml, enum-case-insensitive)
+        //case-insensitive (rules.yml, enum-case-insensitive)
         SensorName name = de.rwth_aachen.phyphox.helper.Helper.enumFromStringIgnoreCase(SensorName.class, type);
         if (name == null)
             return -2;
@@ -152,7 +152,7 @@ public class SensorInput implements SensorEventListener, Serializable {
         if (this.type < -1)
             throw new SensorException("Unknown sensor.");
 
-        //Enumerated values are matched case-insensitively (see rules.yml, enum-case-insensitive)
+        //case-insensitive (rules.yml, enum-case-insensitive)
         this.sensorName = de.rwth_aachen.phyphox.helper.Helper.enumFromStringIgnoreCase(SensorName.class, type);
     }
 

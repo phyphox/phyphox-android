@@ -21,24 +21,13 @@ import java.nio.charset.StandardCharsets;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
 
-//The /get endpoint against a real RemoteServer, on two counts.
-//
-//What it answers: the three update modes, the threshold filter and the reference-buffer form
-//(y=<threshold>|x), which is the part with the most room to go wrong.
-//
-//And how long it holds the data lock while answering. Everything that reads buffer data takes
-//that lock, and the analysis takes it several times per pass, so a reader that keeps it for the
-//whole response holds up the experiment for as long as the response takes to write - and writing
-//it is the slow half, a DecimalFormat call per value. So the handler copies what it needs under
-//the lock and formats afterwards, and this measures that: while a request for a large buffer is
-//in flight, another thread must be able to take the lock quickly, over and over.
+///get against a real RemoteServer: the update modes, the threshold filter, the y=<threshold>|x
+//reference form, and that the data lock is not held while the answer is formatted.
 @RunWith(RobolectricTestRunner.class)
 @Config(sdk = 35)
 public class RemoteServerGetTest {
 
-    //Big enough that formatting it dominates the response, which is the situation the lock must
-    //not be held through.
-    private static final int BIG = 250000;
+    private static final int BIG = 250000; //large enough that formatting dominates the response
 
     private static final String EXPERIMENT =
             "<phyphox version=\"1.20\">"
@@ -86,9 +75,7 @@ public class RemoteServerGetTest {
 
     private String get(String query) throws Exception {
         HttpURLConnection connection = (HttpURLConnection) new URL(base + "/get?" + query).openConnection();
-        //No keep-alive, for the same reason RemoteServerSetTest gives: a pooled connection would
-        //outlive the server instance of the test that opened it.
-        connection.setRequestProperty("Connection", "close");
+        connection.setRequestProperty("Connection", "close"); //a pooled connection would outlive this test's server
         assertEquals(200, connection.getResponseCode());
         ByteArrayOutputStream os = new ByteArrayOutputStream();
         try (InputStream in = connection.getInputStream()) {
@@ -117,13 +104,11 @@ public class RemoteServerGetTest {
         assertEquals(10.0, values.getDouble(0), 0.0);
         assertEquals(14.0, values.getDouble(4), 0.0);
 
-        //No value after the name at all: the last value only, and the array is never copied.
         JSONObject single = bufferOf(body, "big");
         assertEquals("single", single.getString("updateMode"));
         assertEquals(1, single.getJSONArray("buffer").length());
         assertEquals((BIG - 1) * 0.25, single.getJSONArray("buffer").getDouble(0), 1e-6);
 
-        //A numeric threshold keeps the values above it.
         JSONObject partial = bufferOf(body, "ref");
         assertEquals("partial", partial.getString("updateMode"));
         assertEquals(4, partial.getJSONArray("buffer").length());
@@ -132,7 +117,7 @@ public class RemoteServerGetTest {
 
     @Test
     public void aThresholdCanBeMeasuredAgainstAnotherBuffer() throws Exception {
-        //small=2|ref: keep the values of small at the indices where ref is above 2.
+        //small=2|ref: the values of small where ref is above 2
         JSONObject filtered = bufferOf(get("small=2%7Cref"), "small");
         assertEquals("partial", filtered.getString("updateMode"));
         JSONArray values = filtered.getJSONArray("buffer");
@@ -156,8 +141,7 @@ public class RemoteServerGetTest {
         });
         request.start();
 
-        //While that runs, take the lock over and over the way the analysis does, and remember the
-        //longest anyone had to wait for it.
+        //take the lock repeatedly, as the analysis does
         long worstWaitMs = 0;
         int acquisitions = 0;
         while (request.isAlive()) {
@@ -179,13 +163,9 @@ public class RemoteServerGetTest {
             throw failure.get();
         assertEquals(BIG, bufferOf(answer.get(), "big").getJSONArray("buffer").length());
 
-        //The measurement is only worth anything if writing the answer took a while.
         assertTrue("the response was too quick to measure anything (" + requestMs + " ms) - raise BIG",
                 requestMs > 100);
 
-        //Measured both ways on this test: holding the lock through the formatting, as the handler
-        //used to, gives a worst wait of 146 ms out of a 171 ms response and lets a competing
-        //reader in twice; copying first gives 2 ms out of 168 ms and lets it in 122 times.
         assertTrue("a reader got the data lock only " + acquisitions + " times during a "
                 + requestMs + " ms response - it is being held through the formatting", acquisitions > 10);
         assertTrue("the data lock was held for " + worstWaitMs + " ms of a " + requestMs

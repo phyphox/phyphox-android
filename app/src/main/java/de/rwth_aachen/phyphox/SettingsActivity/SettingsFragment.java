@@ -65,7 +65,7 @@ public class SettingsFragment extends PreferenceFragmentCompat {
         EditTextPreference editTextPreference = findPreference(FileNameFormat.PREF_KEY);
         if (editTextPreference != null) {
             editTextPreference.setOnPreferenceChangeListener((preference, newValue) -> {
-                //An empty template makes no sense, so clearing the text resets it to the default
+                //clearing the text resets it to the default
                 if (newValue.toString().trim().isEmpty()) {
                     editTextPreference.setText(FileNameFormat.DEFAULT_FORMAT);
                     return false;

@@ -1,37 +1,13 @@
 #!/usr/bin/env python3
-"""Capture the Google Play / F-Droid screenshots, from the shipped experiments.
+"""Capture the Google Play / F-Droid screenshots from the shipped experiments.
 
-The Android half of the store release system described in the working root's
-STORE-RELEASE-PLAN.md. The shared half - which six scenes, what data they show,
-which locale maps to which store directory, and how a scene's experiment file is
-built - lives in the sibling phyphox-docs checkout, because iOS needs exactly the
-same answers.
+The scenes, the locale mapping and the composition of a scene's experiment file
+live in the sibling phyphox-docs checkout, shared with iOS. The recorded data is
+baked into the file as init values: the remote interface's banner must not show.
 
     tools/store_screenshots.py --avd phyphox-shot-phone --form-factor phone
     tools/store_screenshots.py --avd phyphox-shot-phone --form-factor phone \
         --languages en,de --scenes accelerometer,strobe      # a quick look
-
-What it does per device, in this order, and why each step is there:
-
-1.  Boots the AVD with **-gpu host**. Not optional: the software rasteriser
-    drops axis-aligned horizontal lines, which empties the stroboscope's square
-    wave (plan, S9).
-2.  Installs, then grants CAMERA and RECORD_AUDIO. A system permission dialog
-    is not something the app's autoConfirm may dismiss, and the camera scene
-    stops dead behind one.
-3.  Dismisses the damage warning and warms away the start-hint balloon. Both are
-    SharedPreferences, so they survive until the app's data is wiped - which is
-    exactly what an install with a different signature does, hence: every run.
-4.  Puts the system UI into demo mode, so the status bar reads 9:41 with a full
-    battery instead of the emulator's own clock and charging bolt.
-5.  For each language and scene: sets the app's language, composes the scene's
-    experiment file from the CURRENT shipped collection, serves it over an adb
-    reverse tunnel, opens it by URL, captures, and repairs the emulator's black
-    graph margins.
-
-The device never runs the remote interface: its banner would be in every
-screenshot. That is why the recorded data is baked into the experiment file as
-init values rather than pushed in with /set.
 """
 
 import argparse
@@ -49,26 +25,16 @@ HERE = os.path.dirname(os.path.abspath(__file__))
 REPO = os.path.dirname(HERE)
 DOCS = os.path.normpath(os.path.join(REPO, "..", "phyphox-docs"))
 COLLECTION = os.path.join(REPO, "app", "src", "main", "assets", "experiments")
-# The capture output. NOT the fastlane tree: these directories are named the
-# way PLAY spells a locale (en-US, de-DE), and F-Droid's metadata tree uses its
-# own shorter names (en, de), so writing straight into it would scatter
-# directories F-Droid does not read beside the ones it does. Only the English
-# phone plates belong in the repository, and tools/store_release.py copies
-# those across - which is also what tools/play_upload.py reads by default.
+# Play's locale names; tools/store_release.py copies the English plates into the fastlane tree
 SHOTS = os.path.normpath(os.path.join(REPO, "..", "screenshots", "android"))
 SDK = os.environ.get("ANDROID_SDK_ROOT") or os.path.expanduser("~/Android/Sdk")
 ADB = os.path.join(SDK, "platform-tools", "adb")
 EMULATOR = os.path.join(SDK, "emulator", "emulator")
 PACKAGE = "de.rwth_aachen.phyphox"
-# what --build leaves in the release output; also what a later run without
-# --build picks up, so the two agree on one name
-SIGNED_APK = "screenshots-signed.apk"
+SIGNED_APK = "screenshots-signed.apk"   # what --build leaves and a later run picks up
 PORT = 8099
 
-# Where each form factor's images belong in the fastlane tree, and the screen
-# the AVD must report. The sizes are Google Play's: each side 320-3840 px and
-# the longer side at most twice the shorter, which rules out every stock phone
-# profile (a medium phone is 1080x2400, i.e. 2.22:1).
+# fastlane directory and required screen (Play: each side 320-3840 px, longer side at most twice the shorter)
 FORM_FACTORS = {
     "phone": ("phoneScreenshots", (1080, 1920)),
     "sevenInch": ("sevenInchScreenshots", (1200, 1920)),
@@ -96,15 +62,7 @@ class Device:
         return self.adb("shell", *args, **kw)
 
     def screencap(self, path, tries=3):
-        """Capture, and refuse to write anything that is not a whole PNG.
-
-        `adb exec-out` returns what it managed to transfer. If the emulator dies
-        or the connection hiccups mid-capture, that is a truncated file, and
-        writing it silently produces a screenshot that only fails much later -
-        when something tries to open it, or worse, when the store does. So the
-        bytes are checked for the PNG signature and a terminating IEND chunk
-        before they reach the disk.
-        """
+        """Capture; adb exec-out returns what it managed, so only a whole PNG is written."""
         for attempt in range(tries):
             r = subprocess.run(
                 [ADB, "-s", self.serial, "exec-out", "screencap", "-p"],
@@ -123,8 +81,7 @@ class Device:
             f"probably gone - check `adb devices`.")
 
     def dump_ui(self, path):
-        """The accessibility tree. Used to find controls by resource id rather
-        than by coordinates - ids are the same in all 23 languages."""
+        """The accessibility tree, to find controls by resource id in every language."""
         self.shell("uiautomator", "dump", "/sdcard/ui.xml", check=False)
         with open(path, "w", encoding="utf-8", errors="replace") as f:
             f.write(self.shell("cat", "/sdcard/ui.xml", check=False))
@@ -147,17 +104,14 @@ class Device:
 
 
 def boot(avd, timeout=300):
-    """Start the emulator and wait for it. -gpu host is the point (S9)."""
+    """Start the emulator and wait for it."""
     before = set(_serials())
     env = dict(os.environ, DISPLAY=os.environ.get("DISPLAY", ":0"))
     subprocess.Popen(
-        [EMULATOR, "-avd", avd, "-no-window", "-no-audio", "-gpu", "host",
+        [EMULATOR, "-avd", avd, "-no-window", "-no-audio", "-gpu", "host",   # swiftshader drops horizontal lines
          "-no-snapshot"],
         stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, env=env)
-    # Take the new device only if it IS the AVD we started. Another session on
-    # this machine boots its own emulators, and "whatever serial appeared while
-    # we were waiting" is a race that would hand us someone else's device -
-    # which on a shared machine is not hypothetical.
+    # only the AVD we started: another session's emulator may appear meanwhile
     deadline = time.time() + timeout
     serial = None
     while time.time() < deadline and not serial:
@@ -183,23 +137,7 @@ def boot(avd, timeout=300):
 
 
 def build_apk():
-    """Assemble regularRelease from the current checkout and sign it.
-
-    The release build type has no signingConfig, so Gradle leaves it unsigned
-    and Android will not install it. It is signed here with the local debug
-    keystore, which is enough: **nothing in a screenshot depends on which key
-    signed the APK.** What matters is that this is the release build type -
-    what users get - and that it contains the automation seams.
-
-    The consequence of a debug key is only that the signature differs from a
-    store install, so the first install has to replace it; prepare() already
-    uninstalls when that happens.
-
-    There is deliberately no --ref: the scenes are composed from the experiment
-    collection in THIS working tree, so building some other commit's APK while
-    composing this tree's experiments would photograph two versions at once.
-    Check the tree out where you want it and build from there.
-    """
+    """Assemble regularRelease from THIS checkout and sign it with the debug keystore (release has no signingConfig)."""
     print("  building regularRelease")
     sh(os.path.join(REPO, "gradlew"), "-p", REPO, "assembleRegularRelease")
     out = os.path.join(REPO, "app", "build", "outputs", "apk", "regular",
@@ -222,15 +160,7 @@ def build_apk():
 
 
 def last_built_apk():
-    """The APK to use when neither --apk nor --build was given.
-
-    Prefers what --build leaves behind, because that is what a previous run of
-    this script produced: the release build type has no signingConfig, so
-    Gradle's own output is `app-regular-release-unsigned.apk` and will not
-    install. Looking for `app-regular-release.apk` - which nothing here ever
-    produces - was the first version of this, and it meant a re-run without
-    --build failed unless --apk was passed by hand.
-    """
+    """The APK when neither --apk nor --build was given: what --build left behind."""
     out = os.path.join(REPO, "app", "build", "outputs", "apk", "regular",
                        "release")
     for name in (SIGNED_APK, "app-regular-release.apk"):
@@ -241,12 +171,7 @@ def last_built_apk():
 
 
 def has_seams(apk):
-    """Whether this build carries debug.phyphox.view.
-
-    Cheap guard against the failure that would otherwise be discovered only by
-    looking at the audio-spectrum plate afterwards and noticing it is on the
-    wrong tab.
-    """
+    """Whether this build carries debug.phyphox.view (the audio-spectrum scene needs it)."""
     import zipfile
     with zipfile.ZipFile(apk) as z:
         for name in z.namelist():
@@ -282,8 +207,7 @@ def prepare(d, apk):
     d.shell("setprop", "debug.phyphox.autoConfirm", "1")
     d.adb("reverse", f"tcp:{PORT}", f"tcp:{PORT}")
 
-    # The damage warning shows on every start until "do not show again" is
-    # ticked; the controls are found by id because this also runs in 23 languages.
+    # the damage warning shows until "do not show again" is ticked
     d.shell("am", "force-stop", PACKAGE)
     d.shell("am", "start", "-n", f"{PACKAGE}/.ExperimentList.ExperimentListActivity")
     time.sleep(9)
@@ -305,19 +229,10 @@ def prepare(d, apk):
                     "the damage warning is still up after being dismissed - "
                     "every screenshot would have it in the middle")
     else:
-        # Already ticked away on this install, which is the normal case for a
-        # device that has been used before. Said out loud because a silent skip
-        # and a mistap look identical afterwards.
         print("  damage warning not shown (already dismissed on this install)")
 
-    # The start hint does not time out and is only counted down by the UI
-    # handler, so a remote start would not do: six taps on play/pause, which
-    # share a position, are three action_play events and retire it for good.
-    #
-    # The anchor is R.id.playhint - the hint animation's own action view, which
-    # exists exactly while the hint is showing and sits where the play button
-    # is. `action_play` is not in the accessibility tree at all, and a fraction
-    # of the screen is a phone constant that misses on a tablet.
+    # the start hint counts down UI taps only; R.id.playhint sits on the play button,
+    # which itself is not in the accessibility tree
     d.shell("am", "start", "-a", "android.intent.action.VIEW",
             "-d", "phyphox://asset=accelerometer.phyphox", check=False)
     time.sleep(9)
@@ -343,15 +258,7 @@ def prepare(d, apk):
 
 
 def installed_stamp(d):
-    """When the package was last installed, as the device reports it.
-
-    Checked again during the run, because another session sharing this machine
-    can install over us: `gradlew installRegularDebug` without ANDROID_SERIAL
-    pinned goes to *every* attached device, and a debug build signed with the
-    same debug keystore replaces ours without a signature prompt. That happened
-    on 2026-09-01 and was caught by the other session saying so, not by anything
-    here.
-    """
+    """When the package was last installed; another session's install replaces ours silently."""
     for line in d.shell("dumpsys", "package", PACKAGE, check=False).splitlines():
         if "lastUpdateTime=" in line:
             return line.strip()
@@ -386,35 +293,17 @@ def demo_mode(d, on=True):
 
 
 def set_language(d, tag):
-    """Per-app language (API 33+). No permission, no reboot, and it works on a
-    release build - which is why no screenshot flavor is needed any more."""
+    """Per-app language (API 33+); needs no permission and works on a release build."""
     d.shell("cmd", "locale", "set-app-locales", PACKAGE, "--locales", tag)
     time.sleep(1)
 
 
 def set_theme(d, light):
-    """Set the app's dark-mode preference by walking its own settings.
-
-    The theme is an app preference (default: permanently dark) that the shell
-    cannot reach on a production build, and SettingsActivity is not exported,
-    so the app's menu is the only way in.
-
-    **The app is put into English first.** Everything on that path is localized
-    - the menu entries, the preference titles, the three choices - and matching
-    any of it by text is what broke the first version of this, in German. In
-    English the labels are known, so the walk can assert what it is tapping
-    instead of counting rows and hoping. The caller sets the real language
-    afterwards; the theme is global and outlives it.
-    """
+    """Set dark mode by walking the app's own settings (SettingsActivity is not exported), in English."""
     set_language(d, "en")
     d.shell("am", "force-stop", PACKAGE)
     d.shell("am", "start", "-n", f"{PACKAGE}/.ExperimentList.ExperimentListActivity")
     time.sleep(7)
-    # The button that opens the menu is R.id.credits in the collection layout.
-    # Found by id, not by a fraction of the screen: the first version tapped
-    # at 93% width and a fixed y, which is a phone's toolbar and misses a
-    # tablet's - the 7-inch profile is a different density, so the bar sits
-    # somewhere else entirely.
     tmp0 = os.path.join(DOCS, "build", "_menu.xml")
     os.makedirs(os.path.dirname(tmp0), exist_ok=True)
     d.dump_ui(tmp0)
@@ -451,8 +340,7 @@ def _tap_item(d, item, settle=1.0):
 
 
 def _labelled_exact(d, tmp, label):
-    """The node with exactly this label. Safe only because set_theme forces the
-    app into English first - see its docstring."""
+    """The node with exactly this label; relies on set_theme having chosen English."""
     for item in _labelled(d, tmp):
         if item[0] == label:
             return item
@@ -468,9 +356,7 @@ def play_locales(row):
 
 
 def view_index(composer, scene):
-    """Which view the app should open on. Resolved from the scene's view LABEL
-    against the shipped file, so an inserted view is an error rather than a
-    silently wrong screenshot."""
+    """The view to open, resolved from the scene's view label so an inserted view errors."""
     if scene.get("kind") == "collection":
         return 0
     from lxml import etree
@@ -479,8 +365,6 @@ def view_index(composer, scene):
 
 
 def main():
-    # A full run is 414 captures over a couple of hours; with stdout redirected
-    # to a log, block buffering would show nothing until it ended.
     try:
         sys.stdout.reconfigure(line_buffering=True)
     except AttributeError:
@@ -509,10 +393,7 @@ def main():
     scenes = composer.load_scenes()
     with open(os.path.join(DOCS, "screenshots", "locales.yml")) as f:
         locales = yaml.safe_load(f)
-    # `order` stays the FULL scene list: it is what numbers the files, and the
-    # store shows them in that order. --scenes narrows what gets captured, not
-    # what things are called - otherwise a one-scene re-run writes
-    # 01-tone-generator.png beside a stale 06-tone-generator.png.
+    # `order` stays the FULL scene list: it numbers the files; --scenes only narrows the capture
     order = [s["id"] for s in yaml.safe_load(
         open(os.path.join(DOCS, "screenshots", "scenes.yml")))["scenes"]]
     capture = order
@@ -562,13 +443,7 @@ def main():
     try:
         stamp = prepare(d, apk)
 
-        # Grouped by THEME, not by language. One scene is shot in light mode
-        # and the rest in dark; walking the settings once per language would be
-        # 23 walks through a localized menu, and each one is a chance to tap the
-        # wrong row. Two walks per device instead, with the language set inside.
-        # The theme is deliberately set even for the first group rather than
-        # assumed: it is a stored preference, so whatever the last run left is
-        # what the first scene would otherwise be shot in.
+        # grouped by theme: two settings walks instead of one per language; the preference outlives the run
         groups = [(False, [s for s in capture if scenes[s].get("theme") != "light"]),
                   (True, [s for s in capture if scenes[s].get("theme") == "light"])]
         total = 0
@@ -579,10 +454,7 @@ def main():
             for row in rows:
                 check_still_ours(d, stamp)
                 set_language(d, row["app"])
-                # `android` may name several listings for one app language:
-                # Portuguese is one language here and two listings on the store,
-                # knowingly given the same translation, so it gets the same
-                # screenshots. Captured once, written to each.
+                # one app language may feed several listings: captured once, copied to each
                 targets = [os.path.join(args.out, name, "images",
                                         FORM_FACTORS[args.form_factor][0])
                            for name in play_locales(row)]

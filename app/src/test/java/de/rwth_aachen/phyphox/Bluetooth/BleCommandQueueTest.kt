@@ -62,8 +62,7 @@ class BleCommandQueueTest {
         }
     }
 
-    //A read that gets no answer and therefore times out after shortTimeout, keeping the worker
-    // busy meanwhile - used to make subsequent operations queue up
+    //a read that gets no answer and times out after shortTimeout, keeping the worker busy meanwhile
     private fun blockerOp() = BleOp.Read(uuidA, timeoutMs = shortTimeout)
 
     @After

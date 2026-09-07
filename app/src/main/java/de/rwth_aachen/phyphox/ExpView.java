@@ -139,10 +139,7 @@ public class ExpView implements Serializable{
         DataBuffer visibilityBuffer = null;
         //Constructor takes the label, any buffer name that should be used an a reference to the resources
         protected expViewElement(String label, String visibility,  String valueOutput, Vector<String> inputs, Resources res) {
-            //An element without a label attribute (a button that only has a dynamicLabel) gets
-            //the empty string, as on iOS - the remote interface writes every label into its view
-            //list, and a null there took the whole index page down.
-            this.label = label == null ? "" : label;
+            this.label = label == null ? "" : label; //Empty string as on iOS: the remote interface writes every label into its view list
             this.visibility = visibility;
             this.labelSize = res.getDimension(R.dimen.label_font);
             this.valueOutput = valueOutput;
@@ -158,7 +155,7 @@ public class ExpView implements Serializable{
 
         // Same as the above Constructor, only change is that it accepts output vector
         protected expViewElement(String label, String visibility ,Vector<String> valueOutputs, Vector<String> inputs, Resources res) {
-            this.label = label == null ? "" : label; //See above
+            this.label = label == null ? "" : label;
             this.visibility = visibility;
             this.labelSize = res.getDimension(R.dimen.label_font);
             this.outputs = valueOutputs;
@@ -294,28 +291,8 @@ public class ExpView implements Serializable{
         }
 
         //This is called when the analysis process is finished and the element is allowed to write to the buffers
-        //An input element's default belongs in its buffer, not only on its face: an element
-        //showing a value the buffer does not contain leaves every analysis reading that buffer
-        //with NaN. So an EMPTY buffer is seeded with what the element displays - at load, after
-        //a clear, and at the start of any analysis cycle, since handleInputViews calls the write
-        //hook every pass - and never over a value somebody set, because a buffer holding one is
-        //not empty.
-        //
-        //Deliberately independent of the element's widget: handleInputViews runs for every view,
-        //but a view the pager has not reached has no views built, and seeding only for the
-        //element on screen is the bug iOS was fixed for.
-        //
-        //A NaN at the end of the buffer is replaced by the default as well (maintainer,
-        //2026-09-02): an input control cannot show NaN and the user could never enter it, so
-        //the buffer would hold something the control does not, and the element would show a
-        //value nothing reads. The default is applied as it was written - a default is
-        //deliberate, so it is not clamped to the element's range (iOS does not either). A saved
-        //state needs no exception: a NaN in it would have been replaced in the run that saved it.
-        //
-        //Returns whether the element counts this pass as user input. Seeding an EMPTY buffer
-        //does, as it did before; replacing a NaN does not, because that NaN came from an
-        //analysis write, and an analysis write must not read as user input on any view - an
-        //analysis with onUserInput would otherwise re-run on its own output every cycle.
+        //Seeds the default into an EMPTY buffer or replaces a trailing NaN, unclamped, as iOS does. Must not
+        //depend on the widget. Returns whether this counts as user input: seeding does, replacing a NaN does not.
         protected boolean applyDefault(PhyphoxExperiment experiment, String name, double value) {
             if (name == null)
                 return false;
@@ -387,9 +364,7 @@ public class ExpView implements Serializable{
             }
         }
 
-        //Called when the user wants to leave this element's exclusive mode (for example via
-        //back navigation). Elements may intercept this to ask the user how to proceed first
-        //(see graphElement, which asks how a temporary zoom should be applied).
+        //Leave exclusive mode on the user's request; elements may intercept this to ask first (see graphElement)
         protected void requestLeaveExclusive() {
             if (parent != null)
                 parent.leaveExclusive();
@@ -980,12 +955,7 @@ public class ExpView implements Serializable{
         private Double max = Double.POSITIVE_INFINITY;
         private boolean focused = false; //Is the element currently focused? (Updates should be blocked while the element has focus and the user is working on its content)
 
-        //Starts false: triggered means "the user worked this control, so its position belongs in
-        //the buffer". Starting it true made the widget's own default count as a user action, and
-        //the first write pass then cleared whatever a container's init had put there. The spec
-        //says a default fills an EMPTY buffer and never overwrites one, so seeding is left to
-        //applyDefault() above and the control follows the data until somebody touches it.
-        private boolean triggered = false;
+        private boolean triggered = false; //Set by user interaction only; seeding the default is left to applyDefault()
         private boolean editable = true;
 
         public String label;
@@ -1158,7 +1128,6 @@ public class ExpView implements Serializable{
             //Add the row to the main linear layout passed to this function
             root_ll.addView(rootView);
 
-            //Handle text changes and focus changes and indicate the status to the user through chaning background colors
             final Drawable originalBackground = et.getBackground();
             final ColorDrawable overlay = new ColorDrawable(Color.TRANSPARENT);
             final LayerDrawable combinedBackground = new LayerDrawable(new Drawable[]{originalBackground, overlay});
@@ -1266,10 +1235,7 @@ public class ExpView implements Serializable{
 
         void setValue(double v) {
             if (!focused) {
-                //A NaN in the buffer is SHOWN as the default; the buffer itself gets the default
-                //from applyDefault() on the next write pass, like every other input element.
-                //This used to arm a write here, which made the replacement count as user input
-                //and clamped the default through the edit box on its way to the buffer.
+                //A NaN is only shown as the default; the buffer gets it from applyDefault() on the next write pass
                 if (Double.isNaN(v))
                     currentValue = defaultValue;
                 else
@@ -1628,7 +1594,6 @@ public class ExpView implements Serializable{
 
         final String warningText;
 
-        // Picker feature
         String pickLabel = null;
         private Vector<DataOutput> outputs = null;
         private Double[] newPickData = null;
@@ -1941,8 +1906,7 @@ public class ExpView implements Serializable{
         }
 
         @Override
-        //Leaving exclusive mode of a graph may require user input on how to apply a temporary
-        //zoom, so show the same dialog as when tapping the maximized graph.
+        //A temporary zoom needs the user's decision, so show the same dialog as tapping the maximized graph
         protected void requestLeaveExclusive() {
             if (parent == null)
                 return;
@@ -2161,10 +2125,7 @@ public class ExpView implements Serializable{
             String rescale = "";
             String scaleX = "";
             if (followX && !Double.isNaN(minX) && !Double.isNaN(maxX)) {
-                //The graph follows the data: Keep the window width given by the minX and maxX
-                //attributes, but anchor its end at the newest x value of the data, mirroring
-                //the behavior of GraphView.rescale() in the app. Before any data arrives (or
-                //after the data has been cleared) the initial range from the attributes is used.
+                //Keep the window width from minX/maxX but anchor its end at the newest x value, like GraphView.rescale()
                 scaleX += "\"min\":" + minX + ", \"max\":" + maxX + ", ";
                 rescale += "if (elementData["+htmlID+"][\"datasets\"][0][\"data\"].length > 0) {";
                 rescale += "elementData["+htmlID+"][\"graph\"].options.scales.xAxes[0].ticks.max = maxX;";
@@ -2867,20 +2828,14 @@ public class ExpView implements Serializable{
         protected void createView(LinearLayout ll, Context c, Resources res, ExpViewFragment parent, PhyphoxExperiment experiment){
             super.createView(ll, c, res, parent, experiment);
 
-            //The src comes from the experiment file, which is not trustworthy: refuse any path
-            //traversal so it cannot reach outside the resource folder.
-            boolean srcIsSafe = Helper.isSafeResourceName(src);
-            //Externally loaded experiments deliver their images in a res folder alongside the
-            //XML file, so try this one first...
+            boolean srcIsSafe = Helper.isSafeResourceName(src); //src comes from the experiment file: refuse path traversal
             if (srcIsSafe && experiment.resourceFolder != null && !experiment.resourceFolder.startsWith("ASSET")) {
                 File srcFile = new File(experiment.resourceFolder, src);
                 Bitmap bmp = BitmapFactory.decodeFile(srcFile.getAbsolutePath());
                 if (bmp != null)
                     drawable = new BitmapDrawable(bmp);
             }
-            //...and fall back to the internal images bundled with phyphox (at the moment only
-            //hue.png). This is the regular source for experiments loaded from the assets, but
-            //it also allows external experiment files to reuse the bundled images.
+            //External experiments may also reuse the images bundled in the assets
             if (srcIsSafe && drawable == null) {
                 String assetPath = "experiments/res/" + src;
                 try {
@@ -3121,9 +3076,7 @@ public class ExpView implements Serializable{
 
         double defaultValue;
 
-        //See applyDefault() above: a default fills an EMPTY buffer and never overwrites one, so
-        //this starts false - the widget's own default is not a user action.
-        private boolean triggered = false;
+        private boolean triggered = false; //Set by user interaction only, see applyDefault()
         private boolean followingBuffer = false;
 
         SwitchMaterial switchView;
@@ -3172,11 +3125,7 @@ public class ExpView implements Serializable{
             row.addView(labelView);
             row.addView(switchViewRow);
 
-            //Built from the BUFFER, falling back to the default only while it is empty. The view
-            //is recreated more than once during a load (the pager resumes the fragment), and a
-            //switch rebuilt at defaultValue used to hand the next write pass a position nobody
-            //had chosen - which is how a container's init, or a value the user had just set,
-            //disappeared behind the element's own default.
+            //Position from the buffer where it has one: the view is recreated when the pager resumes the fragment
             boolean isSwitchedOn = this.defaultValue != 0.0;
             if (experiment != null && inputs.size() > 0) {
                 DataBuffer buffer = experiment.getBuffer(inputs.get(0));
@@ -3185,17 +3134,13 @@ public class ExpView implements Serializable{
             }
             switchView.setChecked(isSwitchedOn);
 
-            //setChecked() fires this listener too, so onMayReadFromBuffers raises followingBuffer
-            //while it moves the switch: a write from the analysis or the remote interface must
-            //not come back out of here as user input (the remote write is already counted as
-            //one by the activity, once, for every view alike).
+            //setChecked() fires this too; followingBuffer keeps a buffer-driven move from counting as user input
             switchView.setOnCheckedChangeListener((compoundButton, b) -> {
                 if (!followingBuffer)
                     triggered = true;
             });
 
-            //A freshly built widget is not a user action, whatever the old one reported.
-            triggered = false;
+            triggered = false; //a freshly built widget is not a user action
 
             rootView = row;
             rootView.setFocusableInTouchMode(true);
@@ -3215,15 +3160,11 @@ public class ExpView implements Serializable{
             if (switchView == null)
                 return;
 
-            //An EMPTY buffer is not a zero: reading it as one used to pull the switch to "off"
-            //before the write pass had seeded the default, and that position was then written
-            //back. Empty means there is nothing to follow yet.
             DataBuffer buffer = experiment.getBuffer(inputs.get(0));
             if (buffer == null || buffer.getFilledSize() == 0)
-                return;
+                return; //an empty buffer is nothing to follow yet, not a zero
 
-            //A switch cannot show NaN; the default stands in until applyDefault() has put it
-            //into the buffer on the next write pass.
+            //A switch cannot show NaN; the default stands in until applyDefault() has seeded the buffer
             boolean checked = Double.isNaN(buffer.value) ? defaultValue != 0.0 : (int) buffer.value != 0;
             if (checked != switchView.isChecked() && !triggered) {
                 followingBuffer = true;
@@ -3246,14 +3187,7 @@ public class ExpView implements Serializable{
             return  true;
         }
 
-        //No clear() here on purpose. It used to set triggered, which wrote the switch's own
-        //position back into the buffer the moment the data was cleared - so a toggle the user
-        //had flipped stayed flipped through the trash. Clearing is how a user deliberately
-        //returns an experiment to its starting state (maintainer, 2026-08-29), and a setting
-        //meant to SURVIVE it is what clearGroup is for; if clearing kept whatever the controls
-        //showed, that attribute would answer a question nobody asked. So the emptied buffer is
-        //seeded with the default like any other, and onMayReadFromBuffers moves the switch to
-        //match - the control follows the data, which is what iOS does.
+        //No clear() on purpose: the switch follows the reseeded buffer, as on iOS
 
         @Override
         protected String createViewHTML() {
@@ -3304,9 +3238,7 @@ public class ExpView implements Serializable{
 
         MaterialAutoCompleteTextView autoCompleteTextView;
 
-        //See applyDefault() above: a default fills an EMPTY buffer and never overwrites one, so
-        //this starts false - the widget's own default is not a user action.
-        private boolean triggered = false;
+        private boolean triggered = false; //Set by user interaction only, see applyDefault()
         private int currentIndex = 0;
 
         protected class Mapping {
@@ -3406,9 +3338,7 @@ public class ExpView implements Serializable{
                 autoCompleteTextView.setText(options[0]);
             }
 
-            //From the BUFFER where it has one, like the toggle: createView runs again when the
-            //pager resumes the fragment, and rebuilding at defaultValue would show a selection
-            //the buffer does not hold.
+            //Selection from the buffer where it has one: createView runs again when the pager resumes the fragment
             double initial = defaultValue;
             if (experiment != null && inputs.size() > 0) {
                 DataBuffer buffer = experiment.getBuffer(inputs.get(0));
@@ -3417,8 +3347,7 @@ public class ExpView implements Serializable{
             }
             setFromValue(initial);
 
-            //A freshly built widget is not a user action, whatever the old one reported.
-            triggered = false;
+            triggered = false; //a freshly built widget is not a user action
 
             autoCompleteTextView.setOnItemClickListener((adapterView, view, position, id) -> {
                 triggered = true;
@@ -3460,13 +3389,11 @@ public class ExpView implements Serializable{
             super.onMayReadFromBuffers(experiment);
             if (!needsUpdate || triggered || autoCompleteTextView == null)
                 return;
-            //Same rule as the toggle: an empty buffer is nothing to follow, not a zero.
             DataBuffer buffer = experiment.getBuffer(inputs.get(0));
             if (buffer == null || buffer.getFilledSize() == 0)
-                return;
+                return; //an empty buffer is nothing to follow yet, not a zero
             needsUpdate = false;
-            //A menu cannot show NaN; the default stands in until applyDefault() has put it into
-            //the buffer on the next write pass.
+            //A menu cannot show NaN; the default stands in until applyDefault() has seeded the buffer
             double x = Double.isNaN(buffer.value) ? defaultValue : buffer.value;
 
             setFromValue(x);
@@ -3668,10 +3595,7 @@ public class ExpView implements Serializable{
                 View rangeSliderView = inflater.inflate(R.layout.range_slider, null);
                 rangeSlider = rangeSliderView.findViewById(R.id.sliderView);
                 rangeSlider.setLabelBehavior(LabelFormatter.LABEL_GONE);
-                //The label bubble is gone, but the formatter is also what an accessibility
-                //service reads out ("Range start, ..."). Without it TalkBack announces the
-                //internal step index - "4" for a slider showing 20 - because the slider works in
-                //step units below (see the note there).
+                //The formatter is also what TalkBack announces, so it has to undo the step conversion
                 rangeSlider.setLabelFormatter(value -> numberFormatter(getSteppedValue(value)));
                 rangeSlider.setLayoutParams(getTableRowParams(0.9f));
                 if(stepSize != 0.0) {
@@ -3708,8 +3632,7 @@ public class ExpView implements Serializable{
                     slider.setValueTo((float)maxValue);
                 }
                 slider.setLabelBehavior(LabelFormatter.LABEL_GONE);
-                //Same as for the range slider above: this formatter is what a screen reader
-                //announces, so it has to undo the step conversion.
+                //Same as for the range slider above: what TalkBack announces
                 slider.setLabelFormatter(value -> numberFormatter(getSteppedValue(value)));
                 slider.setValue((float)defaultValue);
                 slider.setLayoutParams(getTableRowParams(0.9f));
@@ -3762,26 +3685,14 @@ public class ExpView implements Serializable{
             return Math.min(Math.max(steppedVal, minValue), maxValue);
         }
 
-        //The value the slider SHOWS for a configured one: onto the step grid and inside the
-        //range, which is what onMayReadFromBuffers does to position the handle and what
-        //getSteppedValue undoes when the handle is read back. Seeding the raw attribute instead
-        //would put a value in the buffer that the slider never displays.
+        //Stepped and clamped, so the seeded buffer never holds a value the slider does not display
         private double displayedValueFor(double configured) {
             if (stepSize == 0.0)
                 return Math.min(Math.max(configured, minValue), maxValue);
             return getSteppedValue(Math.round(configured / stepSize) - Math.floor(minValue / stepSize));
         }
 
-        //What the slider shows is what its buffers hold. The handle has to be somewhere, and a
-        //slider displaying a value its buffer does not contain leaves every analysis reading
-        //that buffer with NaN - so an empty buffer is seeded with what is on screen: default for
-        //a plain slider, minValue and maxValue for the two handles of a range one.
-        //
-        //Seeded whenever the buffer is EMPTY - at load, after a clear, and at the start of any
-        //analysis cycle - and never over a value somebody set, because a buffer holding one is
-        //not empty. handleInputViews runs this for every view rather than the visible one, and
-        //it reads the configured attributes rather than the widget, so it does not need the
-        //slider to have been laid out.
+        //Seeds empty buffers from the attributes, so it works before the widget has been laid out
         private boolean seedEmptyBuffers(PhyphoxExperiment experiment) {
             if (inputs.size() == 0)
                 return false;
@@ -3835,10 +3746,7 @@ public class ExpView implements Serializable{
             super.onMayReadFromBuffers(experiment);
             if (!needsUpdate || triggered)
                 return;
-            //Nothing to position while the widget does not exist - the read pass runs for every
-            //view, including pages the pager has not built yet, and needsUpdate starts true. The
-            //exception this used to throw was caught in updateViews, but it ended that pass for
-            //every element after this one. needsUpdate stays set; createView sets it anyway.
+            //The read pass also runs for pages the pager has not built yet
             if (type == SliderType.Range ? rangeSlider == null : slider == null)
                 return;
             needsUpdate = false;

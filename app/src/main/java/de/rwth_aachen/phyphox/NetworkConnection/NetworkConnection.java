@@ -119,9 +119,7 @@ public class NetworkConnection implements NetworkService.RequestCallback, Networ
     private java.lang.ref.WeakReference<android.app.Activity> activityRef = null;
     private boolean localNetworkPermissionRequested = false;
 
-    //Whether this connection is expected to touch the local network, so the permission should be
-    //requested before the first connection attempt. Discovery always probes the local network; a
-    //fixed address counts if it looks local (literal private IP, .local, ...).
+    //Discovery always probes the local network; a fixed address counts if it looks local
     public boolean needsLocalNetwork() {
         if (discovery != null)
             return true;
@@ -349,10 +347,8 @@ public class NetworkConnection implements NetworkService.RequestCallback, Networ
                 displayErrorMessage("Network error: Generic error. " + result.message);
                 break;
             case noConnection: {
-                //A connection failure may be caused by the missing local network permission - for
-                //example a hostname that resolves to a local address, which the up-front heuristic
-                //cannot recognize. Say so, and ask for the permission once; if it is granted, the
-                //periodic execution (and the MQTT reconnect loop) recover on their own.
+                //A hostname resolving to a local address escapes the up-front heuristic, so ask for
+                //the local network permission once here; periodic execution and MQTT reconnect recover
                 final android.app.Activity activity = activityRef != null ? activityRef.get() : null;
                 if (activity != null && de.rwth_aachen.phyphox.helper.Helper.needsLocalNetworkPermission(activity)) {
                     displayErrorMessage("Network error: No connection to network service. " + activity.getResources().getString(R.string.localNetworkDeniedHint));
@@ -376,10 +372,8 @@ public class NetworkConnection implements NetworkService.RequestCallback, Networ
             case success:
                 byte[][] data = service.getResults();
                 if (data != null) {
-                    //Parked for the analysis thread, which copies it into the buffers in
-                    //pushDataToBuffers. A response that arrives before the parked one is
-                    //consumed overwrites it - that is intended and identical on iOS - but it
-                    //must not overwrite it halfway through being consumed, hence the lock.
+                    //A newer response may overwrite the parked one (intended, same on iOS), but not
+                    //while pushDataToBuffers is consuming it
                     synchronized (this) {
                         try {
                             conversion.prepare(data);

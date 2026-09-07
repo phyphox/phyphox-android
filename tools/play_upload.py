@@ -1,59 +1,13 @@
 #!/usr/bin/env python3
-"""Upload store listing images to Google Play.
-
-The other half of the release step described in ../STORE-RELEASE-PLAN.md: the
-capture script writes every locale and form factor into the working root's
-`screenshots/android/`, and this puts them on the store. Only `en-US` is ever
-committed to this repository, and that is for F-Droid, which reads the metadata
-tree out of git and needs nothing uploaded.
-
-F-Droid gets the listing TEXT the same way, and `--text` writes it: the title,
-short and full description land in `fastlane/metadata/android/<lang>/` for every
-language that has a directory there, prepared exactly as they are sent to Play -
-same formatting, same trimmed short description - so the two never say different
-things. That is a local write into a tracked tree; git shows what changed, and
-committing it is the maintainer's call. (Until 2026-09-04 nothing wrote those
-files: they were generated once by hand with phyphox-translation's
-updateMetadata.py and had drifted from the translations since.)
+"""Upload the store listing images, and with --text the listing text, to Google Play.
 
     tools/play_upload.py                       # validate, change nothing
-    tools/play_upload.py --commit              # actually publish the listing
+    tools/play_upload.py --commit              # publish the listing (Play sends it for review)
     tools/play_upload.py --release-notes       # the release notes, to paste into a release
 
-**Nothing is published without --commit.** Without it the script creates an
-edit, uploads into it, asks Play to validate it, and then deletes the edit -
-which is as close to a rehearsal as the API offers.
-
-**`--commit` does submit for review**, and cannot avoid it: Play answers
-`changesNotSentForReview` with "Changes are sent for review automatically. The
-query parameter must not be set." Managed publishing is what keeps the reviewed
-result away from users until somebody releases it.
-
-Why not `supply`: it would add a Ruby toolchain, and its client does not expose
-a quota project, which user credentials need for this API. The edits API is a
-handful of REST calls and the auth already works, so this uses neither fastlane
-nor a Google client library - only what is in the standard library.
-
-Authentication is the maintainer's own account through Application Default
-Credentials, obtained with an OAuth client of ours:
-
-    gcloud auth application-default login \
-        --client-id-file=~/.config/phyphox-store/client.json \
-        --scopes=https://www.googleapis.com/auth/androidpublisher,\
-https://www.googleapis.com/auth/cloud-platform
-
-That is deliberately a login rather than a stored key (plan §8.1), so revoking
-it is `gcloud auth application-default revoke`.
-
-RELEASE NOTES ARE NOT PART OF THE LISTING
------------------------------------------
-`--release-notes` is a separate mode and does not touch the listing at all. On
-Play a release is created in the console when a bundle is rolled out, which is
-a different act from updating the store entry - and the edits API cannot attach
-notes to a release this project does not create through it. So that mode reads
-the release notes out of the F-Droid changelogs (asking for them if this version
-has none yet, see tools/changelog.py) and prints the `<locale>` block the
-console's release-notes field takes. Copying it in is the manual step.
+Without --commit the edit is uploaded, validated and deleted. --text also writes
+the same prepared text into fastlane/metadata/android/ for F-Droid. Talks to the
+edits API with the standard library and Application Default Credentials only.
 """
 
 import argparse
@@ -82,18 +36,7 @@ IMAGE_TYPES = {
 
 
 def store_text(po_locale):
-    """Title, short and full description for one locale, from the PO files.
-
-    **phyphox-translation is read, never written.** The formatting - dash lists
-    to bullets, bare URLs to anchors, the escaping artefacts an old import left
-    behind - is not reimplemented here either: `updateMetadata.py` in that repo
-    is the one definition of it, and this imports its two functions rather than
-    keeping a second copy that could drift.
-
-    That module does its work at import time from sys.argv, so it is imported
-    with an argv pointing nowhere: it then prints two lines about an invalid
-    destination and writes nothing, which is exactly what is wanted from it.
-    """
+    """Title, short and full description for one locale, formatted by phyphox-translation's updateMetadata.py."""
     import polib
 
     mod = _formatter()
@@ -130,9 +73,7 @@ def _formatter():
     try:
         sys.argv = ["updateMetadata.py", os.path.join(os.sep, "nonexistent")]
         os.chdir(os.path.join(TRANSLATION, "python"))
-        # phyphox-translation must come out of this byte-for-byte unchanged, and
-        # importing a module from it would otherwise leave a __pycache__ behind
-        sys.dont_write_bytecode = True
+        sys.dont_write_bytecode = True    # no __pycache__ in phyphox-translation
         with contextlib.redirect_stdout(io.StringIO()):
             spec.loader.exec_module(mod)      # says "invalid destination", writes nothing
     finally:
@@ -143,27 +84,13 @@ def _formatter():
     return mod
 
 
-# Play's own limits. Exceeding one is rejected at commit, so it is worth saying
-# which string and by how much rather than reading it out of an API error.
+# Play's limits; F-Droid's lint uses the same numbers
 LIMITS = {"title": 30, "shortDescription": 80, "fullDescription": 4000}
 
 
 def trim_attribution(short):
-    """Drop the trailing bracketed attribution when the line will not fit.
-
-    Every locale's short description ends with a parenthesised "by RWTH Aachen
-    University" in some wording, and nine of them run past Play's 80 characters
-    because of it. The university is the account holder the store already shows,
-    so the bracket is redundant and can go without asking each translator
-    (maintainer, 2026-09-01).
-
-    Only when it is needed, and only from the end: a listing that already fits
-    keeps its attribution, and a bracket anywhere but the end is left alone
-    because it would be part of the sentence rather than a credit.
-    """
-    # CJK locales write the credit in full-width brackets, so those count too -
-    # none of them is over the limit today, but the rule should not quietly
-    # stop applying to a language because of how it punctuates.
+    """Drop the trailing bracketed attribution (the store shows it anyway) when the short description will not fit."""
+    # CJK locales write the credit in full-width brackets
     trimmed = re.sub(r"\s*[(\[（【〔][^()\[\]（）【】〔〕]*[)\]）】〕]\s*$",
                      "", short).rstrip()
     return trimmed or short
@@ -175,11 +102,7 @@ def too_long(text):
 
 
 def token(required=True):
-    """An access token, or - with required=False - None if there are none.
-
-    --release-notes is useful on a machine that has never been logged in, so
-    that mode asks for a token and carries on without one rather than stopping.
-    """
+    """An access token, or None with required=False (--release-notes works logged out)."""
     try:
         out = subprocess.run(
             ["gcloud", "auth", "application-default", "print-access-token"],
@@ -249,19 +172,7 @@ def locale_rows():
 
 
 def prepare_text(po_locale, label):
-    """The listing text for one language, as it goes to BOTH stores.
-
-    Returns (text, None) or (None, why). Every string is measured against the
-    limits here, before anything is sent or written: an over-long one is
-    refused by name and by how much, because the alternative - letting the
-    commit fail, or silently truncating - either wastes a run or mangles
-    somebody's translation. Shortening it is the translator's job, in Weblate;
-    nothing here edits phyphox-translation.
-
-    The limits are Play's, and F-Droid's are the same numbers: its lint flags a
-    summary over 80 characters and a description over 4000. So one prepared
-    text serves both, trimmed attribution included.
-    """
+    """(text, None) for one language, or (None, why) when a string is over a limit."""
     text = store_text(po_locale) if po_locale else None
     if not text:
         return None, f"{label}: no store text for {po_locale!r}"
@@ -287,10 +198,7 @@ def refuse(problems, doing):
           "would be worse than not using it.")
 
 
-# App language -> the directory F-Droid reads, where the two are not spelled
-# the same. F-Droid takes the app's own tags for the rest (`de`, `ja`, `pt`).
-# Serbian: the app has both scripts, F-Droid one directory; Cyrillic is what is
-# there today, and `serbian_screenshots` in locales.yml makes the same choice.
+# app language -> F-Droid directory where they differ; Serbian gets the Cyrillic one (as in locales.yml)
 FDROID_DIRS = {"zh-Hans": "zh-CN", "zh-Hant": "zh-TW", "sr-Latn": "sr"}
 FDROID_FILES = (("title.txt", "title"),
                 ("short_description.txt", "shortDescription"),
@@ -298,17 +206,7 @@ FDROID_FILES = (("title.txt", "title"),
 
 
 def fdroid_text():
-    """Write the listing text into fastlane/metadata/android, for F-Droid.
-
-    Only into directories that already exist there. A language that has a
-    translation but no directory is reported, not created: adding a language
-    to F-Droid is a decision (the maintainer's), and it is the same decision
-    updateMetadata.py in phyphox-translation left to a person - it skips those
-    too. Files are written without a trailing newline, as that script wrote
-    them, so an unchanged text is an unchanged file in git.
-
-    Returns the files it changed, repository-relative.
-    """
+    """Write the listing text into fastlane/metadata/android (no trailing newline, as updateMetadata.py wrote it)."""
     root = os.path.join(REPO, "fastlane", "metadata", "android")
     wanted = {}
     for row in locale_rows():
@@ -357,11 +255,7 @@ def fdroid_text():
 
 
 def upload_text(tok, edit, locales_wanted):
-    """Push title, short and full description from the PO files.
-
-    See prepare_text for the checks; anything over a limit stops the run
-    before the first PUT.
-    """
+    """Push title, short and full description; anything over a limit stops before the first PUT."""
     po_for = {}
     for row in locale_rows():
         a = row["android"]
@@ -385,11 +279,7 @@ def upload_text(tok, edit, locales_wanted):
 
 
 def play_locales():
-    """Every Play listing locale this project has text for, from locales.yml.
-
-    In file order, deduplicated: Serbian is two app languages and one Play
-    listing, and Portuguese is one app language and two listings.
-    """
+    """Every Play listing locale in locales.yml, in file order, deduplicated."""
     import yaml
     docs = os.path.normpath(os.path.join(REPO, "..", "phyphox-docs"))
     with open(os.path.join(docs, "screenshots", "locales.yml")) as f:
@@ -404,14 +294,7 @@ def play_locales():
 
 
 def on_store_locales():
-    """The languages the listing actually has, or None without credentials.
-
-    Play refuses a release-notes block naming a language the listing does not
-    have, and three of the locales in locales.yml have no listing yet. Asking
-    the store is one throwaway edit; a machine that has never been logged in
-    still gets the full block and a warning, because copying the notes into the
-    console is not something to have to be at this desk for.
-    """
+    """The languages the listing actually has, or None without credentials."""
     tok = token(required=False)
     if not tok:
         return None
@@ -463,9 +346,6 @@ def release_notes(version_code=None):
 
 
 def main():
-    # 138 images take minutes to push into an edit; with stdout redirected to a
-    # log, block buffering would show nothing at all until the end - and nothing
-    # whatsoever if the run is interrupted.
     try:
         sys.stdout.reconfigure(line_buffering=True)
     except AttributeError:
@@ -500,9 +380,6 @@ def main():
     args = ap.parse_args()
 
     if args.release_notes:
-        # A mode of its own, not something to combine: it prints text to paste
-        # into a release and never opens an edit, so --commit would silently
-        # publish nothing at all.
         clash = [f for f, on in (("--commit", args.commit), ("--text", args.text))
                  if on]
         if clash:
@@ -520,9 +397,7 @@ def main():
         unknown = keep - set(IMAGE_TYPES)
         if unknown:
             sys.exit(f"unknown image type(s): {', '.join(sorted(unknown))}")
-        # Narrowing matters, not just for speed: uploading a type replaces every
-        # image of it, so re-sending images that are already on the store churns
-        # a listing that may be mid-review for no gain.
+        # uploading a type replaces every image of it, so narrowing spares a listing mid-review
         sets = {loc: {k: v for k, v in kinds.items() if k in keep}
                 for loc, kinds in sets.items()}
         sets = {loc: kinds for loc, kinds in sets.items() if kinds}
@@ -536,9 +411,7 @@ def main():
         if missing:
             raise SystemExit(f"no images for {', '.join(missing)} in "
                              f"{args.screenshots}")
-        # A locale with no listing yet would need its store text created first,
-        # which is a decision rather than a detail - so it is reported, not
-        # invented.
+        # a locale without a listing needs its text created first - a decision, so only reported
         unlisted = [l for l in wanted if l not in on_store]
         if unlisted and not (args.text and args.create_listings):
             print(f"  skipping {', '.join(unlisted)}: no listing on the store "
@@ -546,17 +419,13 @@ def main():
             wanted = [l for l in wanted if l in on_store]
 
         if args.text:
-            # F-Droid first: it is local, it is what the diff will show, and
-            # it is the same prepared text - so a limit that stops the run
-            # stops it before anything is in the edit.
+            # F-Droid first: same prepared text, so a limit stops the run before anything is in the edit
             fdroid_text()
             upload_text(tok, edit, wanted)
 
         total = 0
         for locale in wanted:
             for kind, paths in sorted(sets[locale].items()):
-                # the images live under listings/, not images/ - the resource
-                # is "an image of a listing", and the path says so
                 where = f"applications/{PACKAGE}/edits/{edit}/listings/{locale}/{kind}"
                 call("DELETE", f"{API}/{where}", tok)
                 for p in paths:
@@ -568,13 +437,7 @@ def main():
                 print(f"  {locale:6s} {kind:22s} {len(paths)} image(s)")
 
         if args.commit:
-            # A plain commit, because Play refuses the alternative for this app:
-            # "Changes are sent for review automatically. The query parameter
-            # changesNotSentForReview must not be set." So there is no way to
-            # apply an edit here without submitting it for review, and the
-            # maintainer decided on 2026-09-01 to accept that. Managed
-            # publishing is what still keeps the result away from users until
-            # someone releases it.
+            # Play refuses changesNotSentForReview for this app, so a commit always submits for review
             call("POST", f"{API}/applications/{PACKAGE}/edits/{edit}:commit", tok)
             what = f"{total} image(s)"
             if args.text:

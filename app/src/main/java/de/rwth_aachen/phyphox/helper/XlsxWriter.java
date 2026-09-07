@@ -14,20 +14,9 @@ import java.util.Set;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
 
-//Minimal writer for the xlsx format (Office Open XML spreadsheet, ECMA-376), which allows us to
-// export to Excel without an external library.
-//An xlsx file is a zip archive containing a few XML files: a content type declaration
-// ([Content_Types].xml), relationship files pointing to the actual content (*.rels), a workbook
-// definition listing the sheets (xl/workbook.xml), a style definition (xl/styles.xml, here only
-// used to provide a bold font for header cells) and one XML file per worksheet
-// (xl/worksheets/sheetN.xml).
-//Cell data is streamed directly to the output stream, so large datasets do not have to be held
-// in memory. Only the sheet names are collected until the workbook metadata is written on
-// close().
-//Intentional limitations to keep this minimal: strings are stored inline instead of using a
-// shared string table, the optional cell and row references (r attributes) are omitted (cells
-// simply fill each row from left to right), and there are no number formats or styles beyond
-// the bold header font.
+//Minimal writer for the xlsx format (Office Open XML spreadsheet, ECMA-376), so Excel export needs no
+// external library. Cell data is streamed; only the sheet names are held until close() writes the workbook.
+// Kept minimal: inline strings, no cell/row references, no styles beyond the bold header font.
 public class XlsxWriter implements Closeable {
 
     private final ZipOutputStream zip;
@@ -40,8 +29,7 @@ public class XlsxWriter implements Closeable {
         zip = new ZipOutputStream(os);
         writer = new OutputStreamWriter(zip, StandardCharsets.UTF_8);
 
-        //The package relationship file is static and can be written right away. Everything else
-        // depends on the number of sheets and is written in close().
+        //Only the package relationship file is static; everything else depends on the sheet count and is written in close()
         zip.putNextEntry(new ZipEntry("_rels/.rels"));
         writer.write("<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"yes\"?>" +
                 "<Relationships xmlns=\"http://schemas.openxmlformats.org/package/2006/relationships\">" +
@@ -137,9 +125,8 @@ public class XlsxWriter implements Closeable {
         writer.flush();
         zip.closeEntry();
 
-        //Font 0 is the default font, font 1 is bold. Cell style (cellXfs) 0 is the default, 1
-        // uses the bold font and is referenced by bold cells as s="1". The empty fills, border
-        // and cellStyleXfs entries are the minimum Excel expects to find in a style sheet.
+        //Font 1 is bold and cell style 1 (s="1") uses it; the empty fills, border and cellStyleXfs entries
+        // are the minimum Excel expects in a style sheet
         zip.putNextEntry(new ZipEntry("xl/styles.xml"));
         writer.write("<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"yes\"?>" +
                 "<styleSheet xmlns=\"http://schemas.openxmlformats.org/spreadsheetml/2006/main\">" +

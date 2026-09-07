@@ -18,17 +18,13 @@ import java.nio.charset.StandardCharsets;
 
 import javax.xml.parsers.DocumentBuilderFactory;
 
-//A saved state carries exactly one state-title, color and events element: writeStateFile
-//replaces the metadata of the previous save, it never accumulates it. Re-saving used to leave
-//a stale element behind (the removal loop walked a live NodeList forward), which produced
-//files with two state-titles in the field - and those do not load on iOS at all.
+//A saved state carries exactly one state-title, color and events element: writeStateFile replaces
+//the metadata of the previous save. Files with two state-titles do not load on iOS at all.
 @RunWith(RobolectricTestRunner.class)
 @Config(sdk = 35)
 public class StateFileWriterTest {
 
-    //A saved state in the shape the writer produces it: the three metadata elements appended
-    //back-to-back with no whitespace between them, which is exactly the arrangement the old
-    //forward-removal loop skipped over.
+    //In the shape the writer produces: the three metadata elements back-to-back with no whitespace.
     private static final String SAVED_STATE =
             "<phyphox version=\"1.20\">"
                     + "<title>Pendulum</title>"
@@ -45,15 +41,13 @@ public class StateFileWriterTest {
 
     @Test
     public void replacesMetadataOfPreviousSave() throws Exception {
-        //One activity for both saves - the simulated device it sets up can only be built once
-        //per test.
+        //The simulated device can only be built once per test.
         Experiment activity = CorpusTestEnvironment.fullyEquippedActivity();
 
         byte[] state = write(activity, SAVED_STATE.getBytes(StandardCharsets.UTF_8), "Pendulum on the swing");
         assertMetadata(state, "Pendulum on the swing");
 
-        //Saving the result again is the case that went wrong in the field: the second save read
-        //back its own output, whose metadata elements sit next to each other.
+        //The second save reads back its own output, whose metadata elements sit next to each other.
         byte[] resaved = write(activity, state, "Pendulum, second run");
         assertMetadata(resaved, "Pendulum, second run");
     }

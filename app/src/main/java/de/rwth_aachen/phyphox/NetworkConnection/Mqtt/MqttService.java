@@ -13,14 +13,9 @@ import javax.net.ssl.SSLSocketFactory;
 import de.rwth_aachen.phyphox.NetworkConnection.NetworkService;
 
 /**
- * Base class for the MQTT network services. It drives a from-scratch {@link MqttClient} (MQTT
- * 3.1.1, no external dependency) - see network-mqtts-unofficial in phyphox-docs. The concrete
- * subclasses only choose the payload format (JSON or CSV) and whether TLS and authentication are
- * used.
- *
- * The former QoS-2 "persistence" mode is gone: persistence="true" now publishes with QoS 1
- * (at-least-once) while connected, and there is no more offline message buffering. Plain publishes
- * use QoS 0.
+ * Base class for the MQTT network services, driving {@link MqttClient}. Subclasses only choose the
+ * payload format (JSON/CSV) and whether TLS and authentication are used. persistence="true" means
+ * QoS 1 while connected (no offline buffering); plain publishes use QoS 0.
  */
 public abstract class MqttService extends NetworkService.Service {
     private final List<byte[]> data = new ArrayList<>();
@@ -50,8 +45,7 @@ public abstract class MqttService extends NetworkService.Service {
                 return; // do not connect with a different trust model than the experiment intended
             }
         }
-        // The address is kept scheme-normalised for the metadata id (kept identical to the previous
-        // implementation), while host and port for the socket are parsed out of it separately.
+        // scheme-normalised address feeds the metadata id; host and port are parsed out separately
         if (address.contains("://"))
             this.address = address;
         else

@@ -239,11 +239,8 @@ public class NetworkService {
             return ret;
         }
 
-        //Every request runs on a thread of its own, and the callbacks read the response back
-        //through getResults() rather than receiving it. So storing the response and running the
-        //callbacks has to be one step: two responses finishing close together otherwise store
-        //A, store B, and then BOTH callbacks read B - one poll parked twice, the other lost.
-        //(Seen as a duplicate poll counter in the t1 network fixtures, 2026-09-04.)
+        //Callbacks read the response back through getResults(), so storing it and running them
+        //must be one step or two requests finishing together both read the later response
         public synchronized void requestFinished(HttpTaskResult result) {
             data = result.data;
             for (RequestCallback callback : result.requestCallbacks) {
@@ -291,11 +288,8 @@ public class NetworkService {
             return ret;
         }
 
-        //Every request runs on a thread of its own, and the callbacks read the response back
-        //through getResults() rather than receiving it. So storing the response and running the
-        //callbacks has to be one step: two responses finishing close together otherwise store
-        //A, store B, and then BOTH callbacks read B - one poll parked twice, the other lost.
-        //(Seen as a duplicate poll counter in the t1 network fixtures, 2026-09-04.)
+        //Callbacks read the response back through getResults(), so storing it and running them
+        //must be one step or two requests finishing together both read the later response
         public synchronized void requestFinished(HttpTaskResult result) {
             data = result.data;
             for (RequestCallback callback : result.requestCallbacks) {

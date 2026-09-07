@@ -35,17 +35,8 @@ import java.net.URL;
 import java.util.Arrays;
 
 // phyphox-test: view-behavior
-//What the interactive view elements do to their buffers: type into every edit variant, press
-//every button, flip the toggles, move both slider types, pick from the dropdown - and read the
-//result back through the remote API, which is the bus the fixtures are wired for (every element
-//of phyphox-docs' view fixtures writes to an observable buffer).
-//
-//Reading through the API rather than off the experiment object is deliberate: it proves the
-//value actually landed in the buffer the rest of the app and the web interface see.
-//
-//The taps come from UiAutomator rather than Espresso. An open experiment redraws continuously,
-//so its main looper never idles and every Espresso interaction ends in AppNotIdleException after
-//a minute of waiting; UiAutomator drives the same touch events without that requirement.
+//What the interactive view elements do to their buffers, read back through the remote API.
+//UiAutomator, not Espresso: an open experiment redraws continuously and never idles.
 @RunWith(AndroidJUnit4.class)
 public class ViewBehaviorTest {
 
@@ -53,8 +44,7 @@ public class ViewBehaviorTest {
 
     @Before
     public void enableRemoteApi() throws Exception {
-        //The remote API is switched on the way the lab driver does it - a shell-only property,
-        //read when the experiment launches (see DebugSwitches).
+        //shell-only property, read when the experiment launches (see DebugSwitches)
         shell("setprop debug.phyphox.remote 1");
         shell("setprop debug.phyphox.remotePort " + PORT);
     }
@@ -71,7 +61,6 @@ public class ViewBehaviorTest {
 
     // ----------------------------------------------------------------- the bus
 
-    //The contents of one buffer, read through GET /get on the device itself.
     private double[] buffer(String name) throws Exception {
         HttpURLConnection connection = (HttpURLConnection)
                 new URL("http://127.0.0.1:" + PORT + "/get?" + name + "=full").openConnection();
@@ -93,13 +82,7 @@ public class ViewBehaviorTest {
         }
     }
 
-    //A user input reaches its buffer through the main loop, not synchronously with the tap.
-    //
-    //A refused connection counts as "not yet" until the deadline: FixtureExperiment.launch()
-    //returns as soon as the activity has taken the loaded experiment, and the remote server is
-    //started at the END of that same main-thread pass, after the views are built. A test that
-    //reads a buffer straight after launching - without a tap in between to pass the time -
-    //can land in that window. containerInitBeatsAControlsDefault did, on t1 on 2026-09-02.
+    //A refused connection counts as "not yet": the server starts after launch() has returned
     private double[] awaitBuffer(String name, double expected) throws Exception {
         long deadline = System.currentTimeMillis() + 5000;
         while (true) {
@@ -124,14 +107,7 @@ public class ViewBehaviorTest {
 
     // -------------------------------------------------------------- the views
 
-    //The view of one element, found through the experiment itself rather than by matching text:
-    //the fixtures name their elements, and that name is what the assertions talk about.
-    //
-    //Waits, because FixtureExperiment.awaitLoaded() returns once the experiment has PARSED and
-    //the views are built later, when the pager inflates its first page. Looking only once
-    //therefore raced the layout and failed as "No View for element ..." on a busy emulator -
-    //a t1 failure on 2026-08-28 that had nothing to do with the element it named. Every other
-    //helper here polls to a deadline; so does this one.
+    //Polls: awaitLoaded() returns once parsed, and the views are built later when the pager inflates.
     private <T extends View> T viewOf(Experiment activity, String label, Class<T> type)
             throws InterruptedException {
         long deadline = System.currentTimeMillis() + 5000;
@@ -143,8 +119,6 @@ public class ViewBehaviorTest {
                 break;
             Thread.sleep(100);
         }
-        //Name what IS on screen, so a label that never appears is told apart from one that was
-        //simply not there yet - the message alone could not distinguish them.
         throw new AssertionError("No " + type.getSimpleName() + " for element \"" + label
                 + "\" after 5 s. Elements with a view: " + laidOutLabels(activity));
     }
@@ -194,8 +168,6 @@ public class ViewBehaviorTest {
         return UiDevice.getInstance(getInstrumentation());
     }
 
-    //Brings a view on screen and taps it at a fraction of its width - the whole width for a
-    //button, three quarters along for a slider.
     private void tapAt(View view, float fraction) throws Exception {
         getInstrumentation().runOnMainSync(() ->
                 view.requestRectangleOnScreen(new Rect(0, 0, view.getWidth(), view.getHeight()),
@@ -217,9 +189,7 @@ public class ViewBehaviorTest {
         tapAt(view, 0.5f);
     }
 
-    //Drags along a view, from one fraction of its width to another - how a slider thumb is
-    //actually moved. A single tap works too, but a busy emulator drops it often enough to make a
-    //suite flaky, while a drag is followed all the way.
+    //A drag is followed all the way; a busy emulator drops single taps often enough to be flaky.
     private void dragWithin(View view, float from, float to) throws Exception {
         getInstrumentation().runOnMainSync(() ->
                 view.requestRectangleOnScreen(new Rect(0, 0, view.getWidth(), view.getHeight()),
@@ -238,8 +208,7 @@ public class ViewBehaviorTest {
         Thread.sleep(600);
     }
 
-    //Types with real key events, so the fields' input restrictions apply exactly as they do
-    //under a user's fingers.
+    //Real key events, so the fields' input restrictions apply.
     private void type(EditText edit, String text) throws Exception {
         getInstrumentation().runOnMainSync(() -> edit.setText(""));
         tap(edit);
@@ -249,55 +218,30 @@ public class ViewBehaviorTest {
 
     // --------------------------------------------------------------- the tests
 
-    //Moves the pager to a page and waits for the swap to settle. On a two-page experiment this
-    //rebuilds nothing - the pager keeps both pages alive and only flips the visible hint, which
-    //forces a read pass over every element - so the assertions after it check that a forced read
-    //pass leaves the buffers alone. The widgets ARE built more than once, but at load: each page
-    //is built by its fragment's resume and once more by the activity's setup, milliseconds apart
-    //(traced 2026-09-02), and that second build is where a widget rebuilt at its own default used
-    //to hand that position to the next write pass.
+    //Swaps the page and lets it settle; no waitForIdleSync(), the main looper never idles
     private void page(Experiment activity, int index) throws Exception {
-        //No waitForIdleSync() here. A loaded experiment updates its views on a timer, so the main
-        //looper never goes idle and that call simply hangs - the same trap FixtureExperiment
-        //documents for launching. Posting the swap and waiting a beat is enough; every assertion
-        //after this polls to its own deadline anyway.
         activity.runOnUiThread(() ->
                 ((ViewPager) activity.findViewById(R.id.view_pager)).setCurrentItem(index, false));
         Thread.sleep(1500);
     }
 
-    //A control's own default must never overwrite a value the container already holds. The spec
-    //states it in the remark on the default attribute of edit, toggle, dropdown and slider: a
-    //default fills an EMPTY buffer, and never one that is not. Both halves are asserted here,
-    //because fixing the first by simply not seeding would break the second.
-    //
-    //This is a regression guard with history: toggle and dropdown built their widget from the
-    //default and treated that as a user action, so the first write pass after the view was built
-    //wrote the widget's position over the init - and every page is built twice during a load
-    //(see page() above), which is what made the earlier one-line attempts at this look like they
-    //worked.
+    //A default fills an EMPTY buffer and never one the container already holds (spec, default attribute).
     @Test
     public void containerInitBeatsAControlsDefault() throws Exception {
         assumeTrue(FixtureExperiment.available("init-vs-default.phyphox"));
         Experiment activity = FixtureExperiment.launch("init-vs-default.phyphox");
         try {
-            //Nothing is touched: these are the values a freshly loaded experiment starts with.
             assertBuffer("toggle_init", 1);
             assertBuffer("dropdown_init", 2);
             assertBuffer("edit_init", 42);
             assertBuffer("slider_init", 4);
 
-            //...and where the container is empty, the default is what fills it.
             assertBuffer("toggle_default", 1);
             assertBuffer("dropdown_default", 1);
             assertBuffer("edit_default", 7);
             assertBuffer("slider_default", 3);
 
-            //Again after paging away and back. That rebuilds no widget on a two-page experiment
-            //(see page()), but it forces a read pass over every element on each swap, and a read
-            //pass must not turn into a write: the toggle's read hook used to fire the switch's
-            //own change listener. Nothing here touches a control, so every buffer must be
-            //unchanged.
+            //Paging forces a read pass over every element, and a read pass must not turn into a write.
             page(activity, 1);
             page(activity, 0);
 
@@ -314,12 +258,7 @@ public class ViewBehaviorTest {
         }
     }
 
-    //A NaN in an input element's buffer is replaced by the element's default, because a control
-    //cannot show NaN and the user could never enter it (maintainer, 2026-09-02). The fixture
-    //plants the NaN through the containers' init; an analysis writing one gets the same
-    //treatment. The default is written as it stands - a default is deliberate, so the edit's
-    //range does not clamp it - and, as replacing a NaN is not user input, the run stays
-    //untouched: the experiment must still be stopped afterwards.
+    //A control cannot show NaN: replaced by the unclamped default, and that is not user input
     @Test
     public void aNanIsReplacedByTheDefault() throws Exception {
         assumeTrue(FixtureExperiment.available("nan-vs-default.phyphox"));
@@ -345,26 +284,25 @@ public class ViewBehaviorTest {
             commit(plain);
             assertBuffer("plain", 2.75);
 
-            //Out of range is clamped to the bound, not rejected.
+            //Out of range is clamped, not rejected.
             EditText bounded = viewOf(activity, "bounded", EditText.class);
             type(bounded, "99");
             commit(bounded);
             assertBuffer("bounded", 10);
 
-            //An unsigned field never yields a negative value: typing the minus is refused by the
-            //key listener, and a negative that slips through in another notation is folded.
+            //The key listener refuses the minus; a negative that slips through is folded.
             EditText unsigned = viewOf(activity, "unsigned", EditText.class);
             type(unsigned, "-4");
             commit(unsigned);
             assertBuffer("unsigned", 4);
 
-            //An integer-only field refuses the decimal separator, so "3.5" arrives as 35.
+            //The decimal separator is refused, so "3.5" arrives as 35.
             EditText integer = viewOf(activity, "integer only", EditText.class);
             type(integer, "3.5");
             commit(integer);
             assertBuffer("integer", 35);
 
-            //The field shows a value in cm while the buffer keeps metres: entering 42 stores 0.42.
+            //Shown in cm, stored in metres.
             EditText scaled = viewOf(activity, "unit and factor", EditText.class);
             type(scaled, "42");
             commit(scaled);
@@ -382,8 +320,7 @@ public class ViewBehaviorTest {
             tap(viewOf(activity, "write 7", View.class));
             assertBuffer("target", 7);
 
-            //Two input/output pairs on one buffer: each clears its output first, so the last
-            //write is what remains - never both values.
+            //Two writes to one buffer: each clears its output first, so only the last remains.
             tap(viewOf(activity, "two writes, last wins", View.class));
             double[] log = awaitBuffer("log", 2);
             assertArrayEquals("the second write replaces the first", new double[]{2}, log, 1e-6);
@@ -418,15 +355,13 @@ public class ViewBehaviorTest {
         assumeTrue(FixtureExperiment.available("sliders-dropdowns.phyphox"));
         Experiment activity = FixtureExperiment.launch("sliders-dropdowns.phyphox");
         try {
-            //Where exactly a tap lands is not the point - that it moves the value onto the step
-            //grid, inside the range, and away from where it started is.
-            //The plain slider sits at 2.5 of 0..5, so the thumb is in the middle; drag it right.
+            //The plain slider sits at 2.5 of 0..5; drag the thumb right.
             View plain = viewOf(activity, "plain",
                     com.google.android.material.slider.Slider.class);
             dragWithin(plain, 0.5f, 0.8f);
             double[] s1 = buffer("s1");
             if (s1.length > 0 && Math.abs(s1[0] - 2.5) < 1e-6) {
-                //A dropped touch on a loaded emulator is not a finding about the slider.
+                //a dropped touch on a loaded emulator, not a finding
                 dragWithin(plain, 0.5f, 0.8f);
                 s1 = buffer("s1");
             }
@@ -436,7 +371,7 @@ public class ViewBehaviorTest {
             assertTrue("value off the 0.1 step grid: " + s1[0],
                     Math.abs(s1[0] * 10 - Math.round(s1[0] * 10)) < 1e-6);
 
-            //The range slider holds 20 - 60 of 0..100: drag the upper thumb towards the end.
+            //The range slider holds 20 - 60 of 0..100; drag the upper thumb towards the end.
             View range = viewOf(activity, "range",
                     com.google.android.material.slider.RangeSlider.class);
             dragWithin(range, 0.6f, 0.95f);
@@ -461,9 +396,7 @@ public class ViewBehaviorTest {
         assumeTrue(FixtureExperiment.available("sliders-dropdowns.phyphox"));
         Experiment activity = FixtureExperiment.launch("sliders-dropdowns.phyphox");
         try {
-            //The dropdown is Material's exposed menu - a TextInputLayout over an
-            //AutoCompleteTextView, not a Spinner - so picking means opening the list and
-            //tapping an entry, in its own popup window.
+            //Material's exposed menu (AutoCompleteTextView, not a Spinner): the list is its own popup.
             AutoCompleteTextView dropdown = viewOf(activity, "mode", AutoCompleteTextView.class);
             tap(dropdown);
 

@@ -16,19 +16,9 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.zip.ZipFile;
 
-//Stopping an experiment must not destroy what it recorded.
-//
-//It used to. An analysis module consumes its inputs - an <input> without clear="false" empties
-//the buffer it read - so once a pass has run, the recording is gone and only the results remain.
-//The requireFill gate is what holds the next pass back until the recording has filled up again.
-//stopAllIO used to disarm that gate, and the app keeps analysing while an experiment sits
-//stopped (handleInputViews runs a pass whenever there is user input and no measurement), so the
-//first such pass ran ungated on an empty recording and overwrote every non-append output with
-//nothing. The values vanished from the screen and the export that followed held only headers.
-//
-//Found on a lab Pixel 3 (2026-08-26) as audio_scope exporting header-only files in all six
-//formats. This is that experiment's shape, reduced to what matters: a buffer under requireFill
-//that the analysis consumes, and a result computed from it.
+//Stopping must not destroy what was recorded: the analysis consumes its inputs, the requireFill
+//gate holds the next pass back, and the app keeps analysing while stopped (handleInputViews). A
+//stop that disarmed the gate would let a paused pass overwrite every non-append output with nothing.
 @RunWith(RobolectricTestRunner.class)
 @Config(sdk = 35)
 public class StopKeepsResultsTest {
@@ -59,8 +49,7 @@ public class StopKeepsResultsTest {
         return experiment;
     }
 
-    //A measurement: the input fills the buffer, one analysis pass turns it into a result and
-    //consumes it on the way, and then the user stops.
+    //the input fills the buffer, one pass turns it into a result and consumes it, then the user stops
     private PhyphoxExperiment recordAndStop() throws Exception {
         PhyphoxExperiment experiment = load();
 
@@ -85,8 +74,7 @@ public class StopKeepsResultsTest {
         return experiment;
     }
 
-    //The paused pass through the app's own entry point: while an experiment is stopped, the main
-    //loop calls handleInputViews, which analyses whenever there is user input to act on.
+    //while stopped the main loop calls handleInputViews, which analyses whenever there is user input
     private void pausedPass(PhyphoxExperiment experiment) {
         experiment.newUserInput = true;
         experiment.handleInputViews(false);

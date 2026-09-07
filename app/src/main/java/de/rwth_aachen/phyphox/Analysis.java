@@ -36,21 +36,15 @@ public class Analysis {
     public static native void fftw3complex(float[] xy, int n);
     public static native void fftw3crosscorrelation(float[] x, float[] y, int n);
 
-    //Round to the nearest integer with ties rounding half away from zero (C rounding, like the
-    //formula language's round; -0.5 becomes -1). Non-finite values pass through unchanged.
-    //Math.round is not usable here: it rounds half up (-0.5 -> 0), turns NaN into 0 and clamps
-    //infinities to +-Long.MAX_VALUE. Math.floor(x+0.5) is not usable either: it fails for the
-    //largest double below 0.5, which x+0.5 rounds up to 1.
+    //Rounds half away from zero like the formula language's round; Math.round (half up, NaN -> 0) and floor(x+0.5) both differ
     public static double roundHalfAwayFromZero(double x) {
         if (Math.abs(x % 1) == 0.5)
             return x > 0 ? Math.ceil(x) : Math.floor(x);
         return Math.rint(x);
     }
 
-    //The domain of gcd is non-negative integers: fractional values are rounded half away from
-    //zero like the formula language's round, while negative inputs, non-finite inputs and
-    //values at or beyond 2^64 yield NaN. Euclid's algorithm runs on integer-valued doubles,
-    //for which the % operation is exact, so this matches the exact integer arithmetic on iOS.
+    //Fractional inputs are rounded half away from zero; negative, non-finite or >= 2^64 inputs yield NaN.
+    //% is exact on integer-valued doubles, so this matches the integer arithmetic on iOS.
     public static double gcdOfDoubles(double a, double b) {
         if (Double.isNaN(a) || Double.isInfinite(a) || Double.isNaN(b) || Double.isInfinite(b) || a < 0 || b < 0)
             return Double.NaN;
@@ -66,8 +60,7 @@ public class Analysis {
         return ra;
     }
 
-    //Same domain as gcd. lcm(0,x) is 0 by the usual convention, including lcm(0,0), and a
-    //result at or beyond 2^64 counts as overflow yielding NaN.
+    //Same domain as gcd; lcm(0,x) is 0 and a result >= 2^64 is an overflow yielding NaN
     public static double lcmOfDoubles(double a, double b) {
         if (Double.isNaN(a) || Double.isInfinite(a) || Double.isNaN(b) || Double.isInfinite(b) || a < 0 || b < 0)
             return Double.NaN;
@@ -77,9 +70,7 @@ public class Analysis {
             return Double.NaN;
         if (ra == 0 || rb == 0)
             return 0.;
-        //ra/gcd is exact, so this is the smallest intermediate; overflow here means the lcm
-        //itself does not fit
-        double result = (ra / gcdOfDoubles(ra, rb)) * rb;
+        double result = (ra / gcdOfDoubles(ra, rb)) * rb; //ra/gcd is exact, so an overflow here means the lcm does not fit
         return result >= 0x1.0p64 ? Double.NaN : result;
     }
 
@@ -383,7 +374,6 @@ public class Analysis {
 
         @Override
         protected void update() {
-            //The outputs vector only reaches up to the last output mapped in the experiment file
             if(outputs.size() > 0 && outputs.get(0) != null)
                 outputs.get(0).append(Helper.getBatteryPercentage(context));
 
@@ -493,9 +483,7 @@ public class Analysis {
                 count++;
             }
 
-            //An empty or all-non-finite input is an intermediate error state: average delivers
-            //single values, so each connected output receives NaN instead of nothing
-            double avg = count == 0 ? Double.NaN : sum/count;
+            double avg = count == 0 ? Double.NaN : sum/count; //Single-value output: NaN rather than nothing
 
             if (outputs.size() > 0 && outputs.get(0) != null) {
                 outputs.get(0).append(avg);
@@ -712,9 +700,7 @@ public class Analysis {
                 int sizeA = inputArraySizes.get(0);
                 int sizeB = inputArraySizes.get(1);
 
-                //Any empty input yields an empty output, as documented and as the Java
-                //fallback below behaves - the native code would substitute default operands
-                if (sizeA == 0 || sizeB == 0)
+                if (sizeA == 0 || sizeB == 0) //the native code would substitute default operands
                     return;
 
                 Double[] a = inputArrays.get(0);
@@ -915,8 +901,6 @@ public class Analysis {
             int size = inputArraySizes.get(0);
             for (int i = 0; i < size; i++) {
                 if (!floor && !ceil)
-                    //Non-finite values pass through unchanged and ties round half away from
-                    //zero, like the formula language's round
                     outputs.get(0).append(roundHalfAwayFromZero(array[i]));
                 else if (floor) {
                     outputs.get(0).append(Math.floor(array[i]));
@@ -1153,8 +1137,6 @@ public class Analysis {
             Double array2[] = inputArrays.get(1);
             int size1 = inputArraySizes.get(0);
             int size2 = inputArraySizes.get(1);
-            //Like add/subtract/multiply/divide: the shorter input repeats its last value and the
-            //output has the length of the longest input; any empty input yields an empty output
             if (size1 == 0 || size2 == 0)
                 return;
             int size = Math.max(size1, size2);
@@ -1217,9 +1199,7 @@ public class Analysis {
                     its.add(null);
             }
 
-            //A NaN threshold value participates in the comparisons like any number; only an
-            //absent threshold input or an empty threshold buffer selects the default of 0.
-            if (multiple && inputs.size() > 2 && inputs.get(2) != null && inputs.get(2).getFilledSize() > 0)
+            if (multiple && inputs.size() > 2 && inputs.get(2) != null && inputs.get(2).getFilledSize() > 0) //absent or empty keeps the default, NaN is used as is
                 threshold = inputs.get(2).getValue();
 
             double max = Double.NEGATIVE_INFINITY; //This will hold the maximum value
@@ -1227,8 +1207,6 @@ public class Analysis {
             double currentX = -1; //Current x during iteration
             boolean found = false;
 
-            //An x input shorter than y truncates processing to the common length; only an
-            //omitted x input auto-generates indices.
             while (its.get(1).hasNext() && (its.get(0) == null || its.get(0).hasNext())) { //For each value of input1
                 double v = (double)its.get(1).next();
 
@@ -1266,9 +1244,7 @@ public class Analysis {
                 if (outputs.size() > 1 && outputs.get(1) != null) {
                     outputs.get(1).append(x);
                 }
-            } else if (!multiple) {
-                //An empty or all-invalid input is an intermediate error state: in single mode
-                //each connected output receives NaN instead of nothing
+            } else if (!multiple) { //empty or all-invalid input yields NaN, not nothing
                 if (outputs.size() > 0 && outputs.get(0) != null) {
                     outputs.get(0).append(Double.NaN);
                 }
@@ -1309,9 +1285,7 @@ public class Analysis {
                     its.add(null);
             }
 
-            //A NaN threshold value participates in the comparisons like any number; only an
-            //absent threshold input or an empty threshold buffer selects the default of 0.
-            if (multiple && inputs.size() > 2 && inputs.get(2) != null && inputs.get(2).getFilledSize() > 0)
+            if (multiple && inputs.size() > 2 && inputs.get(2) != null && inputs.get(2).getFilledSize() > 0) //absent or empty keeps the default, NaN is used as is
                 threshold = inputs.get(2).getValue();
 
             double min = Double.POSITIVE_INFINITY; //This will hold the minimum value
@@ -1319,8 +1293,6 @@ public class Analysis {
             double currentX = -1; //Current x during iteration
             boolean found = false;
 
-            //An x input shorter than y truncates processing to the common length; only an
-            //omitted x input auto-generates indices.
             while (its.get(1).hasNext() && (its.get(0) == null || its.get(0).hasNext())) { //For each value of input1
                 double v = (double)its.get(1).next();
 
@@ -1343,7 +1315,6 @@ public class Analysis {
                         found = false;
                     }
                 } else if (v < min) {
-                    //Set minimum and location of minimum
                     min = v;
                     x = currentX;
                     found = true;
@@ -1358,9 +1329,7 @@ public class Analysis {
                 if (outputs.size() > 1 && outputs.get(1) != null) {
                     outputs.get(1).append(x);
                 }
-            } else if (!multiple) {
-                //An empty or all-invalid input is an intermediate error state: in single mode
-                //each connected output receives NaN instead of nothing
+            } else if (!multiple) { //empty or all-invalid input yields NaN, not nothing
                 if (outputs.size() > 0 && outputs.get(0) != null) {
                     outputs.get(0).append(Double.NaN);
                 }
@@ -1389,12 +1358,9 @@ public class Analysis {
 
         @Override
         protected void update() {
-            //A NaN threshold value participates like any number: no comparison with it is ever
-            //true, so no crossing is found and NaN is output. Only an absent threshold input or
-            //an empty threshold buffer selects the default of 0.
             double vthreshold = 0.;
             if (inputs.size() > 2 && inputs.get(2) != null && inputs.get(2).getFilledSize() > 0)
-                vthreshold = inputs.get(2).getValue();
+                vthreshold = inputs.get(2).getValue(); //absent or empty keeps the default, NaN is used as is
 
             //Get iterators
             Vector<Iterator> its = new Vector<>();
@@ -1407,9 +1373,8 @@ public class Analysis {
 
             double result = Double.NaN; //x of the crossing; NaN if no crossing is found
             double currentX = -1; //Current x during iteration
-            //We want to cross (!) the threshold: any value not on the trigger side - NaN
-            //included - arms the trigger, and the next value on the trigger side fires
-            boolean onOppositeSide = false;
+            //Any value not on the trigger side (NaN included) arms the trigger, the next value on the trigger side fires
+            boolean onOppositeSide = false; //NaN arms the trigger like any value on the opposite side
             while (its.get(1).hasNext()) { //For each value of input1
                 double v = (double)its.get(1).next();
 
@@ -1451,9 +1416,6 @@ public class Analysis {
             if (inputs.size() > 2 && inputs.get(2) != null && inputs.get(2).getFilledSize() > 0)
                 dx = inputs.get(2).getValue();
 
-            //Any invalid dx - zero, negative or non-finite - and a non-finite x0 are error
-            //states yielding empty outputs; there is no silent substitution. Only absent inputs
-            //(or empty parameter buffers) keep the documented defaults x0 = 0 and dx = 1.
             if (Double.isNaN(x0) || Double.isInfinite(x0) || Double.isNaN(dx) || Double.isInfinite(dx) || dx <= 0)
                 return;
 
@@ -1464,12 +1426,8 @@ public class Analysis {
                 double v = (double)it.next();
                 if (Double.isNaN(v) || Double.isInfinite(v))
                     continue;
-                //Bins are lower-edge inclusive: floor semantics. Truncation toward zero would
-                //give bin 0 double width, collecting everything in (x0-dx, x0+dx).
-                double ratio = Math.floor((v-x0)/dx);
-                //A finite ratio can still exceed the int range - skip the value instead of
-                //clamping it into a bogus bin
-                if (ratio < Integer.MIN_VALUE || ratio > Integer.MAX_VALUE)
+                double ratio = Math.floor((v-x0)/dx); //Lower-edge inclusive bins; truncation would double the width of bin 0
+                if (ratio < Integer.MIN_VALUE || ratio > Integer.MAX_VALUE) //A finite ratio can still exceed the int range
                     continue;
                 int binIndex = (int)ratio;
                 if (binStarts.size() == 0) {
@@ -1535,7 +1493,6 @@ public class Analysis {
                 || inputArraySizes.get(3) < 1 || inputArraySizes.get(4) < 1 || inputArraySizes.get(5) < 1)
                 return;
 
-            //A non-finite or non-positive grid size is an error state yielding empty outputs
             double mapWidthValue = inputArrays.get(0)[0];
             double mapHeightValue = inputArrays.get(3)[0];
             if (Double.isNaN(mapWidthValue) || Double.isInfinite(mapWidthValue) || Double.isNaN(mapHeightValue) || Double.isInfinite(mapHeightValue))
@@ -1564,16 +1521,11 @@ public class Analysis {
             int[] nout = new int[mapHeight*mapWidth];
 
             for (int i = 0; i < n; i++) {
-                //Points with a non-finite x, y or z are skipped instead of being binned at
-                //index 0 (or poisoning their bin's z sum)
                 if (xin[i].isNaN() || xin[i].isInfinite() || yin[i].isNaN() || yin[i].isInfinite())
                     continue;
                 if (zin != null && (zin[i].isNaN() || zin[i].isInfinite()))
                     continue;
-                //Degenerate ranges (such as minx equal to maxx) make the bin index non-finite;
-                //clamp before rounding so infinities fall outside the bounds check below (a
-                //NaN index becomes bin 0) instead of wrapping in the long-to-int cast. Ties
-                //round half away from zero like on iOS: -0.5 falls outside the grid.
+                //Clamp before rounding: a degenerate range makes the index non-finite and the int cast would wrap
                 int x = (int)roundHalfAwayFromZero(Math.min(Math.max((mapWidth-1)*(xin[i]-minx)/(maxx-minx), -1.), (double)mapWidth));
                 int y = (int)roundHalfAwayFromZero(Math.min(Math.max((mapHeight-1)*(yin[i]-miny)/(maxy-miny), -1.), (double)mapHeight));
                 if (x < 0 || x >= mapWidth || y < 0 || y >= mapHeight)
@@ -1679,13 +1631,9 @@ public class Analysis {
             if (inputs.size() > 2 && inputs.get(2) != null)
                 ity = inputs.get(2).getIterator();
 
-            //A non-finite factor is an error state yielding empty outputs (and a factor <= 0
-            //generates no output either)
             if (Double.isNaN(inFactor) || Double.isInfinite(inFactor))
                 return;
 
-            //Processing truncates to the shortest present buffer; only an absent y input keeps
-            //processing all of x (with 0 as the y contribution)
             if (inFactor > 1) {
                 int factor = (int)Math.round(inFactor);
                 while (itx.hasNext() && (ity == null || ity.hasNext())) {
@@ -1712,8 +1660,6 @@ public class Analysis {
                                 newx += x;
                         }
                     }
-                    //The incomplete final chunk is averaged over the number of values actually
-                    //summed, not the nominal factor
                     if (averageX)
                         newx /= (double) used;
                     if (averageY)
@@ -1761,8 +1707,6 @@ public class Analysis {
                 if (inputArrays.size() == 0)
                     return;
 
-                //A provided im input truncates the transform to the shorter of re and im;
-                //only an absent im input is zero-filled to re's length
                 boolean hasIm = inputArrays.size() > 1 && inputArrays.get(1) != null;
                 int size = inputArraySizes.get(0);
                 if (hasIm)
@@ -1788,8 +1732,6 @@ public class Analysis {
                 }
             } else {
 
-                //A provided im input truncates the transform to the shorter of re and im;
-                //only an absent im input is zero-filled to re's length
                 boolean hasIm = inputArrays.size() > 1 && inputArrays.get(1) != null;
                 int size = inputArrays.get(0).length;
                 if (hasIm)
@@ -1801,8 +1743,6 @@ public class Analysis {
                     fft.prepare(size);
                 }
 
-                //Copy the first size values and zero-pad up to the power of two used for the
-                //calculation
                 Double x[] = new Double[fft.np2];
                 Double y[] = new Double[fft.np2];
                 for (int i = 0; i < fft.np2; i++) {
@@ -1914,8 +1854,6 @@ public class Analysis {
             Double x[] = inputs.get(0).buffer.getArray();
             Double y[] = inputs.get(1).buffer.getArray();
 
-            //An x input shorter than y truncates processing to the common length - the
-            //interpolation below reads x at the found period position
             int n = Math.min(inputs.get(0).buffer.getFilledSize(), inputs.get(1).buffer.getFilledSize());
 
             //Get dx and overlap
@@ -1965,11 +1903,7 @@ public class Analysis {
                 double maxValueRight = Double.NEGATIVE_INFINITY;
                 double lastSum = Double.NEGATIVE_INFINITY;
 
-                //An int, not a double: this is the update of an int loop counter, and a double
-                //that is anything below 1 makes "i += step" a no-op, so the loop cannot end. The
-                //lab's Galaxy A3 hit exactly that - the local was read back as +0.0 there, with
-                //i frozen and the innermost loop spinning - and since the analysis holds the data
-                //lock for a whole pass, the experiment and the whole remote API stopped with it.
+                //Must stay an int: as a double, the Galaxy A3 read it back as +0.0 and spun the loop below under the data lock
                 int step = 1;
                 if (!userSelectedRange)
                     step = 2; //Until we find the first negative value, we can go faster...
@@ -2145,8 +2079,7 @@ public class Analysis {
                 if (asize == 0 || bsize == 0)
                     return;
 
-                //The actual calculation. The output is the raw correlation sum without any
-                //normalization, matching the default of numpy.correlate and MATLAB xcorr.
+                //Raw correlation sum without normalization, as numpy.correlate and MATLAB xcorr
                 int compRange = asize - bsize;
                 for (int i = 0; i < compRange; i++) {
                     double sum = 0.;
@@ -2237,8 +2170,6 @@ public class Analysis {
             Double y[] = inputArrays.get(1);
             if (inputArraySizes.get(2) == 0)
                 return;
-            //d is read from the last element of its buffer, the convention for single-value
-            //inputs; a non-positive or non-finite d is an error state yielding empty outputs
             d = inputArrays.get(2)[inputArraySizes.get(2)-1];
             if (d <= 0.0 || Double.isNaN(d) || Double.isInfinite(d))
                 return;
@@ -2534,8 +2465,6 @@ public class Analysis {
 
         @Override
         protected void update() {
-            //An empty start/stop buffer and a non-finite start/stop value are errors yielding
-            //empty output (a value-type input is never empty)
             double vstart = 0.;
             double vstop = 100.;
             if (inputs.size() > 0 && inputs.get(0) != null) {
@@ -2551,9 +2480,6 @@ public class Analysis {
             if (Double.isNaN(vstart) || Double.isInfinite(vstart) || Double.isNaN(vstop) || Double.isInfinite(vstop))
                 return;
 
-            //An explicit length of 0, an empty length buffer and a non-finite or negative
-            //length all yield an empty output; only an absent length input falls back to the
-            //output buffer's size.
             int vlength;
             if (inputs.size() > 2 && inputs.get(2) != null) {
                 if (inputs.get(2).getFilledSize() == 0)
@@ -2567,9 +2493,7 @@ public class Analysis {
             }
 
             if (vlength == 1) {
-                //A single-point ramp outputs its start value: the step is undefined for one
-                //point and used to produce NaN through the division by length-1
-                outputs.get(0).append(vstart);
+                outputs.get(0).append(vstart); //single point: the step would be NaN
                 return;
             }
 
@@ -2593,9 +2517,6 @@ public class Analysis {
 
         @Override
         protected void update() {
-            //An absent value input keeps the default 0; a present input with an empty buffer is
-            //an error yielding empty output. A present NaN value is permitted and fills the
-            //output with NaN as a deliberate initialization.
             double vvalue = 0.;
             if (inputs.size() > 0 && inputs.get(0) != null) {
                 if (inputs.get(0).getFilledSize() == 0)
@@ -2603,9 +2524,6 @@ public class Analysis {
                 vvalue = inputs.get(0).getValue();
             }
 
-            //An explicit length of 0, an empty length buffer and a non-finite or negative
-            //length all yield an empty output; only an absent length input falls back to the
-            //output buffer's size.
             int vlength;
             if (inputs.size() > 1 && inputs.get(1) != null) {
                 if (inputs.get(1).getFilledSize() == 0)
@@ -2636,8 +2554,6 @@ public class Analysis {
         @Override
         protected void update() {
 
-            //A present but non-finite from/to/length value is an error state yielding empty
-            //outputs; only an absent input or an empty parameter buffer keeps the defaults.
             int start = 0;
             int end = -1;
             if (inputs.size() > 0 && inputs.get(0) != null && inputs.get(0).getFilledSize() > 0) {
@@ -2748,13 +2664,8 @@ public class Analysis {
 
         @Override
         protected void update() {
-            //A NaN threshold participates in the comparisons like any number (no trigger ever
-            //fires); only an absent input or an empty buffer selects the default of 0.
-            double threshold = 0.;
-            //index/skip/last are the module's own state loop: absent inputs or empty buffers
-            //keep the documented start defaults (0/0/NaN). A present but non-finite
-            //distance/index/skip value is an error state yielding empty outputs - which resets
-            //the state loop to its start defaults on the next run.
+            double threshold = 0.; //absent or empty keeps the default, NaN is used as is
+            //index/skip/last are the module's own state loop; a non-finite distance/index/skip yields empty output and resets it
             double distanceValue = 0.;
             double indexValue = 0.;
             double skipValue = 0.;
@@ -2859,9 +2770,6 @@ public class Analysis {
 
         @Override
         protected void update() {
-            //The documented default width of 10 is kept for an absent input or an empty width
-            //buffer; a present but invalid width - non-finite or negative - is an error state
-            //yielding empty output and must not act as some substitute width.
             int width = 10;
 
             Double[] data = inputArrays.get(0);
@@ -2876,8 +2784,6 @@ public class Analysis {
 
             for (int i = start; i < inputArraySizes.get(0); i++) {
                 int substart = Math.max(i-width, 0);
-                //Skip non-finite values inside the window, aligning with average and binning; a
-                //window without any finite value yields NaN
                 double sum = 0.0;
                 int count = 0;
                 for (int j = substart; j <= i; j++) {
@@ -2909,10 +2815,6 @@ public class Analysis {
 
             int n = inputArraySizes.get(0);
 
-            //A present but non-finite index or overlap is an error state yielding empty
-            //outputs. Finite values are clamped into range - negative and out-of-range positive
-            //indices alike. Absent inputs or empty buffers keep the defaults (index = input
-            //length, overlap = 0).
             double indexValue = n;
             if (inputArrays.size() > 1 && inputArrays.get(1) != null && inputArraySizes.get(1) > 0)
                 indexValue = inputArrays.get(1)[inputArraySizes.get(1)-1];
@@ -2935,9 +2837,7 @@ public class Analysis {
         }
     }
 
-    //Decode an image file (any format supported by Android's BitmapFactory, at least PNG, JPEG and
-    //BMP) from a buffer holding the bytes of the encoded file (one byte per value, 0..255) into
-    //its dimensions and per-pixel channel data (0..1, line-wise from the top)
+    //Decode an encoded image file (one byte per value, any BitmapFactory format) into dimensions and per-pixel channels (0..1, line-wise from the top)
     public static class imagedecodeAM extends AnalysisModule implements Serializable {
 
         protected imagedecodeAM(PhyphoxExperiment experiment, Vector<DataInput> inputs, Vector<DataOutput> outputs) {
@@ -2963,10 +2863,8 @@ public class Analysis {
 
             byte[] encoded = new byte[n];
             for (int i = 0; i < n; i++) {
-                //Ties round half away from zero and non-finite or out-of-int-range values
-                //become 0 instead of Java's long coercion, matching iOS
                 double rounded = roundHalfAwayFromZero(in[i]);
-                if (Double.isNaN(rounded) || Math.abs(rounded) > Integer.MAX_VALUE)
+                if (Double.isNaN(rounded) || Math.abs(rounded) > Integer.MAX_VALUE) //matching iOS
                     encoded[i] = 0;
                 else
                     encoded[i] = (byte)((int)rounded & 0xff);
@@ -3044,9 +2942,8 @@ public class Analysis {
         }
     }
 
-    //Apply the magnitude of a Butterworth filter's transfer function to data in the frequency
-    //domain (the FFT itself is done separately with the fft module). With only "cutoff" set this
-    //is a lowpass; with a non-zero "cutofflow" it becomes a bandpass with -3dB at both cutoffs.
+    //Apply the magnitude of a Butterworth transfer function in the frequency domain (FFT done separately).
+    //Lowpass with only "cutoff", bandpass with a non-zero "cutofflow" (-3dB at both cutoffs).
     public static class butterworthAM extends AnalysisModule implements Serializable {
 
         protected butterworthAM(PhyphoxExperiment experiment, Vector<DataInput> inputs, Vector<DataOutput> outputs) {
@@ -3081,8 +2978,7 @@ public class Analysis {
                 double f = Math.abs(x[i]);
                 double gain;
                 if (cutoffLow > 0.) {
-                    //Bandpass from the standard lowpass-to-bandpass transformation:
-                    //|H|^2 = 1 / (1 + ((f^2 - fl*fh) / (f*(fh - fl)))^2n), unity at sqrt(fl*fh), -3dB at fl and fh
+                    //Bandpass: |H|^2 = 1 / (1 + ((f^2 - fl*fh) / (f*(fh - fl)))^2n), -3dB at fl and fh
                     if (f == 0.)
                         gain = 0.;
                     else {

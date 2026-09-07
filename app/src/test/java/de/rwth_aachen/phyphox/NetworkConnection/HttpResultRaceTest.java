@@ -24,14 +24,9 @@ import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
 
-//Each HTTP request runs on a thread of its own, and a callback does not receive the response:
-//it reads it back through the service's getResults(). So two responses finishing close
-//together could store A, store B, and have both callbacks read B - one poll parked twice and
-//one lost, which the t1 network fixtures saw as a duplicate poll counter (2026-09-04).
-//
-//This pins the order: the first callback is held while the second response arrives, and it
-//must still read its own body. The hold is the window the race needs; the service's lock is
-//what keeps the second request out of it.
+//A callback reads the response back through getResults() rather than receiving it, so two
+//responses finishing close together could both read the second one. The first callback is held
+//while the second response arrives and must still read its own body.
 @RunWith(RobolectricTestRunner.class)
 @Config(sdk = 35)
 public class HttpResultRaceTest {
@@ -41,8 +36,7 @@ public class HttpResultRaceTest {
     //released by the test once the first callback is inside requestFinished
     private final CountDownLatch secondMayRespond = new CountDownLatch(1);
 
-    //A stub rather than com.sun.net.httpserver, which the Android compile classpath does not
-    //have. HttpURLConnection needs nothing more than a status line and a Content-Length.
+    //a stub rather than com.sun.net.httpserver, which the Android compile classpath lacks
     @Before
     public void serve() throws Exception {
         server = new ServerSocket(0, 0, java.net.InetAddress.getLoopbackAddress());
@@ -65,7 +59,7 @@ public class HttpResultRaceTest {
         try (Socket s = socket) {
             BufferedReader in = new BufferedReader(new InputStreamReader(s.getInputStream(), StandardCharsets.UTF_8));
             String requestLine = in.readLine();
-            //The body is the request's own v, so a callback can tell whose response it read.
+            //the body is the request's own v, so a callback can tell whose response it read
             String v = requestLine.replaceAll("^.*v=(\\d+).*$", "$1");
             for (String line = in.readLine(); line != null && !line.isEmpty(); line = in.readLine()) {
                 //headers, not needed
@@ -112,16 +106,14 @@ public class HttpResultRaceTest {
             secondDone.countDown();
         };
 
-        //execute copies the address synchronously before its thread starts, so two requests
-        //can be given two addresses this way
+        //execute copies the address synchronously before its thread starts
         service.connect(base + "1");
         service.execute(new HashMap<>(), new ArrayList<>(Collections.singletonList(cb1)));
         service.connect(base + "2");
         service.execute(new HashMap<>(), new ArrayList<>(Collections.singletonList(cb2)));
 
         assertTrue("first response never arrived", firstInCallback.await(10, TimeUnit.SECONDS));
-        //The first callback is now inside requestFinished. Let the second response through
-        //and give its thread time to reach the point where it would overwrite the result.
+        //let the second response through and give its thread time to reach the overwrite
         secondMayRespond.countDown();
         Thread.sleep(500);
         firstMayRead.countDown();

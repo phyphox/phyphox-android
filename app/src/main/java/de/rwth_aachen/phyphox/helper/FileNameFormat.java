@@ -10,9 +10,7 @@ import java.util.Locale;
 
 import de.rwth_aachen.phyphox.ExperimentTimeReference;
 
-//Generates default file names for data exports, screenshots and saved states from a user-defined
-// template (see settings). The template may contain placeholders like {title} or {date}, which
-// are replaced by the corresponding values of the current experiment.
+//Default file names for exports, screenshots and saved states from the user's template (settings) with placeholders like {title} or {date}
 public class FileNameFormat {
 
     public static final String PREF_KEY = "fileNameFormat";
@@ -27,8 +25,7 @@ public class FileNameFormat {
         return format;
     }
 
-    //Replaces all placeholders in the user's template. The result is not sanitized and may be
-    // used as a title. Use sanitize() or formatFilename() if the result is used as a file name.
+    //Not sanitized (may serve as a title); use sanitize() or formatFilename() for a file name
     public static String format(Context ctx, String title, ExperimentTimeReference timeReference) {
         SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd", Locale.US);
         SimpleDateFormat timeFormat = new SimpleDateFormat("HH-mm-ss", Locale.US);
@@ -50,13 +47,11 @@ public class FileNameFormat {
                 .replace("{duration}", String.format(Locale.US, "%.1fs", duration));
     }
 
-    //Removes characters that are problematic in file names
     public static String sanitize(String name) {
         String sanitized = name.replaceAll("[\\\\/:*?\"<>|\\x00-\\x1f]", "").trim();
         return sanitized.isEmpty() ? FALLBACK_NAME : sanitized;
     }
 
-    //Formatted template, sanitized for use as a file name (without extension)
     public static String formatFilename(Context ctx, String title, ExperimentTimeReference timeReference) {
         return sanitize(format(ctx, title, timeReference));
     }

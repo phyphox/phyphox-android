@@ -384,10 +384,7 @@ public class RemoteServer {
         return ret;
     }
 
-    //CORS: allow cross-origin browser pages to read remote-access responses, including error
-    //responses - the case where a browser client most needs to read the body. The header is set
-    //before the request is dispatched, so it is also present on the error pages jlhttp generates
-    //itself (404, 405, ...), which never pass through respond().
+    //Sets the CORS header before dispatch, so jlhttp's own error pages (404, 405, ...) carry it too
     private static class CorsHTTPServer extends HTTPServer {
         CorsHTTPServer(int port) {
             super(port);
@@ -400,17 +397,9 @@ public class RemoteServer {
         }
     }
 
-    //Thrown by the parameter extraction when a request body cannot be understood (a POST that
-    //declares a JSON body but does not contain a valid JSON object). Turned into a 400 by
-    //withErrorResponse. A malformed body is a transport-level error, distinct from a
-    //well-formed request carrying a bad value (which each endpoint answers in its own way).
-    private static class BadRequestException extends RuntimeException {}
+    private static class BadRequestException extends RuntimeException {} //unparseable request body; withErrorResponse answers 400
 
-    //Wraps a context handler so that an unhandled exception becomes a clean 500 carrying the
-    //API's JSON error object. Without this, the exception would escape to jlhttp's connection
-    //handling, which answers with an HTML error page and without the CORS header set in
-    //handleTransaction - and an error response is never empty in this API, whatever the status
-    //code. A BadRequestException instead becomes a clean 400.
+    //Answers with the API's JSON error object (500, or 400 for a BadRequestException) instead of jlhttp's HTML page without the CORS header
     private HTTPServer.ContextHandler withErrorResponse(HTTPServer.ContextHandler handler) {
         return (request, response) -> {
             try {
@@ -420,10 +409,6 @@ public class RemoteServer {
                     throw e;
                 return respondError(response, 400, "Malformed request body.");
             } catch (RuntimeException | StackOverflowError | AssertionError e) {
-                //Errors are caught alongside exceptions because they reach us the same way: a
-                //failure deep in a framework call should still be answered, not turned into a
-                //broken connection. Everything else (OutOfMemoryError and friends) is left
-                //alone - answering it is not this method's business.
                 Log.e("remoteServer", "Unhandled exception while serving " + request.getPath() + ".", e);
                 if (response.headersSent())
                     throw e; //Too late for an error response, let jlhttp abort the connection
@@ -432,18 +417,8 @@ public class RemoteServer {
         };
     }
 
-    //A request's parameters, combining the query string with the POST body if one is present.
-    //Every endpoint accepts POST as well as GET (see control-post in phyphox-docs), and a POST
-    //may carry its parameters as either a JSON object or a form-encoded body, chosen by the
-    //request's Content-Type:
-    //  - application/json: a flat object like {"cmd":"set","buffer":"x","value":42}. Every value
-    //    is coerced to its string form (so "value":42 and "value":"42" are equivalent), because
-    //    the parameter model is string-based throughout - a JSON body is a convenience, not a
-    //    second type system.
-    //  - application/x-www-form-urlencoded (or no body): the classic form encoding, which jlhttp
-    //    parses itself.
-    //Body parameters take precedence over query-string parameters of the same name, matching the
-    //order jlhttp already uses for form bodies. This mirror must stay in step with iOS.
+    //Request parameters: the query string merged with a POST body, body wins on the same name (control-post in phyphox-docs, in step with iOS):
+    //  application/json: a flat object, values coerced to strings; application/x-www-form-urlencoded or no body: parsed by jlhttp
     private boolean hasJsonBody(Request request) throws IOException {
         String contentType = request.getHeaders().get("Content-Type");
         return contentType != null && contentType.toLowerCase(Locale.US).startsWith("application/json");
@@ -453,9 +428,6 @@ public class RemoteServer {
         if (!hasJsonBody(request))
             return request.getParamsList(); //form body (if any) + query, handled by jlhttp
 
-        //A JSON body: jlhttp does not touch a non-form body, so we read and parse it ourselves
-        //and then append the query parameters (which requestParamsList lists after the body, so
-        //the body wins in the deduplicated map form below).
         List<String[]> params = new ArrayList<>();
         String body = readBody(request);
         try {
@@ -464,9 +436,7 @@ public class RemoteServer {
             while (keys.hasNext()) {
                 String key = keys.next();
                 Object value = obj.get(key);
-                //Coerce every scalar to its string form; JSON null becomes an empty value, as an
-                //empty form field would. Nested objects/arrays are not part of this flat API and
-                //simply stringify (and will then fail the value parsing of the endpoint).
+                //JSON null becomes an empty value, nested objects/arrays stringify
                 params.add(new String[]{key, value == JSONObject.NULL ? "" : value.toString()});
             }
         } catch (JSONException e) {
@@ -477,8 +447,6 @@ public class RemoteServer {
     }
 
     private Map<String, String> requestParams(Request request) throws IOException {
-        //First occurrence wins, and requestParamsList lists body parameters before the query, so
-        //the body takes precedence over a query parameter of the same name.
         Map<String, String> map = new LinkedHashMap<>();
         for (String[] param : requestParamsList(request)) {
             if (!map.containsKey(param[0]))
@@ -505,16 +473,9 @@ public class RemoteServer {
     }
 
     //This starts the http server and registers the handlers for several requests
-    //If the port setting is at its default, we assume that the user does not care (or might not
-    //even know) which port is used, so if the default port is taken by another app, we simply
-    //count upwards from it until we find a free one.
-    //Returns false if no server socket could be opened, which usually means that another app
-    //already uses the configured port.
+    //Counts upwards from the configured port until a free one is found; false if no server socket could be opened
     public synchronized boolean start() {
-        //An unattended run pins the port through a shell-only system property (see
-        //DebugSwitches), because a host script cannot see which port the ladder below settled
-        //on. A pinned port is used as it is: if it is taken, the run should fail loudly rather
-        //than serve somewhere the script does not look.
+        //An unattended run pins the port (DebugSwitches) so a host script knows it; a taken pinned port fails rather than moving
         int debugPort = DebugSwitches.remotePort();
         int configuredPort = debugPort > 0 ? debugPort
                 : Integer.parseInt(PreferenceManager.getDefaultSharedPreferences(context).getString("remoteAccessPort", String.valueOf(defaultPort)));
@@ -532,10 +493,7 @@ public class RemoteServer {
             httpServer.setExecutor(executor);
             HTTPServer.VirtualHost host = httpServer.getVirtualHost(null);
 
-            //Now register a handler for different requests. Every endpoint accepts POST as well as
-            //GET (see control-post in phyphox-docs); a POST body may be JSON or form-encoded, chosen
-            //by Content-Type. The handlers read their parameters through requestParams()/
-            //requestParamsList(), which merge body and query, so they do not need to care.
+            //Now register a handler for different requests. Every endpoint accepts POST as well as GET (control-post in phyphox-docs)
             host.addContext("/", withErrorResponse(this::handleHome), "GET", "POST"); //The basic interface (index.html) when the user just calls the address
             host.addContext("/style.css", withErrorResponse(this::handleStyle), "GET", "POST"); //The style sheet (style.css) linked from index.html
             host.addContext("/logo", withErrorResponse(this::handleLogo), "GET", "POST"); //The phyphox logo, also included in style.css
@@ -555,7 +513,6 @@ public class RemoteServer {
             }
         }
 
-        //No free port found. Clean up and report the configured port as blocked.
         executor.shutdown();
         executor = null;
         httpServer = null;
@@ -571,7 +528,6 @@ public class RemoteServer {
 
     protected int respond(Response response, String contentType, InputStream in, long length) throws IOException {
         try {
-            //The CORS header is already set for every response in CorsHTTPServer.handleTransaction
             response.sendHeaders(200, length, System.currentTimeMillis(), null, contentType, null);
             response.sendBody(in, -1, null);
         } finally {
@@ -600,9 +556,7 @@ public class RemoteServer {
     }
 
     protected int respondError(Response response, int status, String reason) throws IOException {
-        //An error response is never empty: whatever the status code, it carries a JSON error
-        //object like the ones /export and /res send (see error-response-content-type in
-        //phyphox-docs). The reason text is human-readable and not part of the contract.
+        //Always a JSON error object (error-response-content-type in phyphox-docs)
         byte[] bytes = ("{\"error\": " + JSONObject.quote(reason) + "}").getBytes();
         InputStream in = new ByteArrayInputStream(bytes);
         try {
@@ -656,8 +610,7 @@ public class RemoteServer {
             }
             //We only offer 8-digit precision, so we need to move the threshold to avoid receiving a close number multiple times.
             //Missing something will probably not be visible on a remote graph and a missing value will be recent after stopping anyway.
-            //The nudge magnitude derives from the absolute value (log10 of a negative threshold would be NaN and break the request);
-            //its direction stays positive, so a value equal to an already delivered negative threshold does not pass the comparison again.
+            //abs(): log10 of a negative threshold would be NaN; the nudge must stay positive so a negative threshold is not repeated
             br.threshold += Math.pow(10, Math.floor(Math.log10(Math.abs(br.threshold) / 1e7)));
         }
         return br;
@@ -667,8 +620,6 @@ public class RemoteServer {
         Set<BufferRequest> buffers = new LinkedHashSet<>(); //This list will hold all requests
         List<String[]> params = requestParamsList(request);
         if (!params.isEmpty()) {
-            //First occurrence wins, so a buffer requested in both the body and the query is
-            //answered once, with the body's value (same convention as requestParams())
             Set<String> seen = new LinkedHashSet<>();
             for (String[] param : params) {
                 if (!seen.add(param[0]))
@@ -681,10 +632,7 @@ public class RemoteServer {
         return buffers;
     }
 
-    //Everything an answer needs from one buffer, copied while the data lock is held so that the
-    //formatting - the slow half by far, a DecimalFormat call per value - can happen without it.
-    //Building the JSON under the lock made a big buffer on a slow phone hold up the analysis and
-    //every other reader for as long as the whole response took to write.
+    //Copy of a buffer taken under the data lock; the formatting (the slow half) runs afterwards without it
     protected static class BufferSnapshot {
         final BufferRequest request;
         final String name;
@@ -780,22 +728,17 @@ public class RemoteServer {
         try {
             buffers = getBufferRequests(request);
         } catch (NumberFormatException e) {
-            //A threshold that does not parse as a number: reject the bad request instead of
-            //failing it with a server error (see get-invalid-threshold in phyphox-docs)
+            //get-invalid-threshold in phyphox-docs
             return respondError(response, 400, "Invalid threshold.");
         }
 
-        //A threshold referencing a buffer that does not exist is a bad request (unknown buffers
-        //in the *requested* position are skipped below instead, so a client with a stale buffer
-        //list still gets the session id and can notice the experiment change)
+        //An unknown reference buffer is a bad request; an unknown requested buffer is skipped so a stale buffer list still gets the session id
         for (BufferRequest buffer : buffers) {
             if (!buffer.reference.isEmpty() && experiment.getBuffer(buffer.name) != null && experiment.getBuffer(buffer.reference) == null)
                 return respondError(response, 400, "Unknown reference buffer.");
         }
 
-        //Lock the data only to copy it, so all the buffers in one answer still belong to the same
-        //moment, and let the formatting - which is the expensive part and needs nothing the
-        //analysis could change - run afterwards.
+        //Lock only to copy, so all buffers belong to the same moment
         List<BufferSnapshot> snapshots = new ArrayList<>();
         experiment.dataLock.lock();
         try {
@@ -870,10 +813,7 @@ public class RemoteServer {
         if (cmd != null) {
             switch (cmd) {
                 case "start": //Start the measurement
-                    //The only command whose result says more than "accepted": it reports whether
-                    //the measurement actually began, because an experiment can refuse to start
-                    //(a Bluetooth device that is not connected, for instance) and a client would
-                    //otherwise have to read status.measuring back to find out.
+                    //false if the experiment refused to start (e.g. a Bluetooth device that is not connected)
                     return respond(response, callActivity.remoteStartMeasurement());
                 case "stop": //Stop the measurement
                     callActivity.remoteStopMeasurement();
@@ -907,7 +847,6 @@ public class RemoteServer {
                         } else {
                             DataBuffer db = experiment.getBuffer(buffer);
                             if (db == null) {
-                                //Unknown buffer: reject cleanly instead of failing the request
                                 return respond(response, false);
                             }
 
@@ -939,9 +878,7 @@ public class RemoteServer {
                             return respond(response, false);
                         }
                         if (htmlID < 0 || htmlID >= htmlID2View.size() || htmlID >= htmlID2Element.size()) {
-                            //Out-of-range element: reject cleanly instead of failing the request.
-                            //(Note this deliberately answers false for a trigger that was not
-                            //performed, see control-trigger-out-of-range in phyphox-docs.)
+                            //Deliberately false, not an error (control-trigger-out-of-range in phyphox-docs)
                             return respond(response, false);
                         }
                         experiment.experimentViews.get(htmlID2View.get(htmlID)).elements.get(htmlID2Element.get(htmlID)).trigger();
@@ -955,21 +892,11 @@ public class RemoteServer {
             return respond(response, false);
     }
 
-    //The /set endpoint writes values into one or more buffers in a single request - the bulk,
-    //array-valued counterpart of control?cmd=set, which can also write the non-finite values a
-    //buffer may legitimately hold. Unlike every other endpoint it takes only a JSON body (the
-    //payload is structured, so the flat parameter convention does not apply):
-    //  {"buffers": {"abc": [1, 2.5, null, "nan"]}, "mode": "replace"}
-    //Array entries are JSON numbers, null (which writes NaN, matching /get's representation of
-    //every non-finite value) or strings in the file format's number lexical space (parsed by
-    //PhyphoxFile.parseNumber, so "nan"/"Infinity"/"-infinity" work and "inf" does not). The
-    //request is atomic: everything is validated first, and on any error nothing is written.
-    //Specified in phyphox-docs/docs/remote-interface/openapi.yaml (API 1.1.0); this mirror must
-    //stay in step with iOS.
+    ///set: bulk, array-valued counterpart of control?cmd=set; JSON body only, e.g. {"buffers": {"abc": [1, 2.5, null, "nan"]}, "mode": "replace"}
+    //Entries: numbers, null (NaN) or number strings (PhyphoxFile.parseNumber); atomic, nothing is written on any error.
+    //Specified in phyphox-docs openapi.yaml (API 1.1.0), in step with iOS.
     public int handleSet(Request request, Response response) throws IOException {
-        //A GET or a form-encoded body is a well-formed request that cannot carry the documented
-        //shape - rejected with result:false, while a body that is not parseable JSON at all is
-        //a 400 like everywhere else (BadRequestException via withErrorResponse).
+        //A GET or a form body gets result:false, unparseable JSON a 400
         if (!hasJsonBody(request))
             return respondSetError(response, "A JSON body of the form {\"buffers\": {...}} is required.");
 
@@ -1018,14 +945,13 @@ public class RemoteServer {
                         return respondSetError(response, "Invalid value \"" + entry + "\" for buffer \"" + name + "\".");
                     }
                 } else {
-                    //Booleans, nested arrays/objects
                     return respondSetError(response, "Invalid entry for buffer \"" + name + "\": must be a number, null or a number string.");
                 }
             }
             writes.put(db, values);
         }
 
-        //...then write. An empty buffers object is a valid no-op and does not mark new data.
+        //...then write. An empty buffers object is a valid no-op.
         if (!writes.isEmpty()) {
             callActivity.remoteInput = true;
             experiment.newData = true;
@@ -1068,8 +994,7 @@ public class RemoteServer {
         try {
             formatInt = Integer.parseInt(format);
         } catch (NumberFormatException e) {
-            //A missing or non-numeric format is rejected with the same error object as an
-            //out-of-range one instead of failing the request
+            //Same error object as for an out-of-range format
             return respond(response, "{\"error\": \"Invalid format.\"}");
         }
         if (formatInt < 0 || formatInt >= experiment.exporter.exportFormats.length) {
@@ -1258,8 +1183,6 @@ public class RemoteServer {
         if (src == null || src.isEmpty() || !experiment.resources.contains(src) || !Helper.isSafeResourceName(src))
             return respond(response, "{\"error\": \"Unknown file.\"}");
 
-        //Externally loaded experiments deliver their resources in a res folder alongside the
-        //XML file, so try this one first...
         if (experiment.resourceFolder != null && !experiment.resourceFolder.startsWith("ASSET")) {
             File file = new File(experiment.resourceFolder, src);
             if (file.isFile()) {
@@ -1271,8 +1194,7 @@ public class RemoteServer {
             }
         }
 
-        //...and fall back to the internal images bundled with phyphox (at the moment only
-        //hue.png), matching the fallback of the image view element in the app.
+        //Fall back to the images bundled with phyphox, like the image view element
         try {
             InputStream is = context.getAssets().open("experiments/res/" + src);
             ByteArrayOutputStream os = new ByteArrayOutputStream();

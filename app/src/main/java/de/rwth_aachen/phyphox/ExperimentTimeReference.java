@@ -10,10 +10,8 @@ import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
 
-//All access to the time mappings is serialized: they are written on the UI thread (start, pause,
-//reset) while several background threads read them - the analysis thread, the webserver, the
-//exporter and the network connections. The list itself is private, so no caller can iterate it
-//while it is being modified; getTimeMappings() hands out an immutable snapshot instead.
+//Time mappings are written on the UI thread and read from several background threads, so all
+//access is synchronized and getTimeMappings() hands out a snapshot.
 public class ExperimentTimeReference implements Serializable {
     interface Listener {
         void onExperimentTimeReferenceUpdated(ExperimentTimeReference experimentTimeReference);
@@ -45,8 +43,6 @@ public class ExperimentTimeReference implements Serializable {
         reset();
     }
 
-    //A snapshot for callers that need to look at all events. The TimeMapping objects are never
-    //modified after they have been created, so the copy stays valid for the caller.
     public List<TimeMapping> getTimeMappings() {
         synchronized (this) {
             return Collections.unmodifiableList(new ArrayList<>(timeMappings));
@@ -63,7 +59,7 @@ public class ExperimentTimeReference implements Serializable {
         return timeMappings.get(timeMappings.size() - 1);
     }
 
-    //Restores an event of an experiment state saved earlier (see the events block of a state file).
+    //Restores an event from the events block of a saved state file
     public synchronized void addRestoredMapping(TimeMappingEvent event, Double experimentTime, long systemTime) {
         timeMappings.add(new TimeMapping(event, experimentTime, 0, systemTime));
     }
@@ -84,8 +80,7 @@ public class ExperimentTimeReference implements Serializable {
         }
         long systemTime = System.currentTimeMillis();
 
-        //The listener is notified outside the lock: it walks the view elements, which read this
-        //object back and take locks of their own.
+        //the listener is notified outside the lock: it reads this object back and takes locks of its own
         synchronized (this) {
             if (timeMappings.isEmpty()) {
                 if (event != TimeMappingEvent.START)
@@ -155,22 +150,15 @@ public class ExperimentTimeReference implements Serializable {
         return i;
     }
 
-    //An index is usually retrieved from one of the methods above and used in a separate call, so
-    //the list may have been reset in between. Out-of-range indices give the same answer as an
-    //empty list instead of throwing.
+    //The list may have been reset between retrieving an index and using it, so out-of-range indices do not throw
     public synchronized long getSystemTimeReferenceByIndex(int i) {
         if (i < 0 || i >= timeMappings.size())
             return 0;
         return timeMappings.get(i).systemTime;
     }
 
-    //The same lookup for callers that need a usable timestamp rather than a stored one: before
-    //the first start there is no mapping yet and the experiment time is exactly zero, so the
-    //current time is the only answer that keeps "experiment time plus offset" a real timestamp.
-    //This is what the timer module's offset1970 output promises (timer-offset1970-prestart,
-    //decided 2026-08-24; iOS falls back to Date() for the same reason). Callers that read a
-    //stored reference and take 0 as "nothing recorded yet" - the absolute time axis of a graph,
-    //the export file name - keep using getSystemTimeReferenceByIndex.
+    //Before the first start the timer module's offset1970 has to be a real timestamp
+    //(timer-offset1970-prestart; iOS falls back to Date() too)
     public synchronized long getSystemTimeReferenceByIndexOrNow(int i) {
         if (timeMappings.isEmpty())
             return System.currentTimeMillis();

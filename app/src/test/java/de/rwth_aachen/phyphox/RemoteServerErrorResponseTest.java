@@ -18,10 +18,9 @@ import java.net.HttpURLConnection;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
 
-//An error response of this API is never empty: whatever the status code, it carries a JSON
-//error object (the same rule phyphox-docs' contract test checks API-wide). That has to hold for
-//an unexpected failure inside a handler as well, which used to escape into jlhttp's HTML error
-//page - and without the CORS header, so a browser client could not even read the status.
+//An error response is never empty: whatever the status, it carries a JSON error object and the
+//CORS header (the rule phyphox-docs' contract test checks API-wide), also for an unexpected
+//failure inside a handler.
 @RunWith(RobolectricTestRunner.class)
 @Config(sdk = 35)
 public class RemoteServerErrorResponseTest {
@@ -57,9 +56,7 @@ public class RemoteServerErrorResponseTest {
 
     @Test
     public void unexpectedFailureAnswersJsonError() throws Exception {
-        //Break the experiment behind the server's back. /time dereferences the time reference
-        //directly, so this stands in for any unexpected failure inside a handler - the point is
-        //the shape of the answer, not this particular fault.
+        //break the experiment behind the server's back; /time dereferences the time reference directly
         experiment.experimentTimeReference = null;
 
         HttpURLConnection connection = (HttpURLConnection) new URL(base + "/time").openConnection();

@@ -42,9 +42,7 @@ public class SettingsActivity extends AppCompatActivity {
 
     @Override
     public boolean onSupportNavigateUp() {
-        //Up should behave like back here: the settings are always opened on top of the
-        //experiment list within our own task, so the default up navigation would only recreate
-        //the experiment list unnecessarily.
+        //up behaves like back: the default up navigation would recreate the experiment list
         getOnBackPressedDispatcher().onBackPressed();
         return true;
     }

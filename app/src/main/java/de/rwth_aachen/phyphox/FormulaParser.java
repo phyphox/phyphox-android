@@ -77,8 +77,7 @@ public class FormulaParser {
         }
     }
 
-    //Marker classes for the arity check at load: a Function1 takes exactly one operand, a
-    //Function2 exactly two
+    //Marker classes for the arity check at load
     static class Function1 extends Function {
     }
 
@@ -227,8 +226,7 @@ public class FormulaParser {
 
     static class RoundFunction extends Function1 {
         protected Double apply (Double in1, Double in2) {
-            //C rounding: ties round half away from zero, NaN stays NaN
-            return Analysis.roundHalfAwayFromZero(in1);
+            return Analysis.roundHalfAwayFromZero(in1); //C rounding: ties away from zero, NaN stays NaN
         }
     }
 
@@ -338,8 +336,7 @@ public class FormulaParser {
                         }
                         break;
                     case '-':
-                        //A minus at the start of the term or after an operator is a unary
-                        //minus, handled below - only the rest is a binary subtraction
+                        //a leading minus is unary, handled below
                         if (i == start)
                             break;
                         if (previousPriority >= 1 && formula.charAt(i-1) != 'e' && formula.charAt(i-1) != '+' && formula.charAt(i-1) != '*' && formula.charAt(i-1) != '-' && formula.charAt(i-1) != '/' && formula.charAt(i-1) != '%' && formula.charAt(i-1) != '^') {
@@ -382,8 +379,7 @@ public class FormulaParser {
                         }
                         break;
                     case '^':
-                        //Strictly greater: the FIRST ^ splits, making ^ right-associative
-                        //(2^3^2 = 2^(3^2) = 512)
+                        //strictly greater: ^ is right-associative (2^3^2 = 512)
                         if (previousPriority > 3) {
                             previousPriority = 3;
                             operator = new PowerFunction();
@@ -487,9 +483,7 @@ public class FormulaParser {
         if (brackets != 0)
             throw new FormulaException("Brackets do not match!");
 
-        //A leading minus is a unary minus binding tighter than + - * / % but looser than ^
-        //and function calls: it applies to the immediately following operand only, so
-        //-2+3 = 1 and -2^2 = -(2^2) = -4
+        //unary minus binds tighter than + - * / % but looser than ^: -2+3 = 1, -2^2 = -4
         if (formula.charAt(start) == '-' && (operator == null || previousPriority >= 3)) {
             Source operand = parse(formula, start+1, end);
             if (operand == null)
@@ -500,9 +494,7 @@ public class FormulaParser {
         if (operator != null) {
             Source in1 = parse(formula, start1, end1);
             Source in2 = parse(formula, start2, end2);
-            //Structurally broken formulas - wrong arity, dangling operands - are a permanent
-            //failure state and reject the file at load instead of producing an empty output
-            //at runtime
+            //wrong arity rejects the file at load instead of producing an empty output at runtime
             if (operator instanceof Function2) {
                 if (in1 == null || in2 == null)
                     throw new FormulaException("Missing operand in: " + formula.substring(start, end));
@@ -524,8 +516,6 @@ public class FormulaParser {
     FormulaParser(String formula) throws FormulaException {
         String strippedFormula = formula.replaceAll("\\s+","").toLowerCase();
         base = parse(strippedFormula, 0, strippedFormula.length());
-        //An empty formula is a permanent failure state and rejects the file at load, like any
-        //other structurally broken formula
         if (base == null)
             throw new FormulaException("Empty formula.");
     }

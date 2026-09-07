@@ -5,57 +5,11 @@
     tools/store_release.py --skip-capture   # reuse the plates already captured
     tools/store_release.py --no-publish     # stop after the rehearsal
 
-The pieces this drives - tools/store_screenshots.py, phyphox-docs's verify.py
-and tools/play_upload.py - all keep their own options, and those are what a
-rehearsal or a repair uses. This is the routine: the order they go in, the
-checks between them, and the one question that has to be answered before
-anything reaches the store. The iOS counterpart is
-phyphox-ios/tools/store_release.py, run on the Mac.
-
-WHAT IT DOES, AND WHY IN THIS ORDER
-
-1.  Preflight. Everything that can be known before the work starts is checked
-    first, because step 3 takes about three hours and finding out afterwards
-    that there are no credentials is three hours wasted.
-
-2.  Release notes, asked for now rather than at the end. They are the only step
-    that needs a person at the keyboard, and answering while the emulators are
-    still cold means the rest can run unattended. They are written into
-    fastlane/metadata/android/<lang>/changelogs/, which is where F-Droid reads
-    them and what both stores take their text from - see tools/changelog.py.
-
-3.  Screenshots, all three form factors, from ONE build. The APK is assembled
-    once and photographed three times: building per form factor would risk
-    three different builds in one listing, and the scenes are composed from the
-    experiment collection in this working tree either way.
-
-4.  The mechanical check over every plate (verify.py). It catches broken and
-    blank captures, not ugly ones - those still need eyes, and this says so.
-
-5.  The F-Droid half of the release: the listing text for every language that
-    has a directory in the metadata tree, prepared exactly as Play gets it,
-    and the six English phone plates. No other images: Play and the App Store
-    upload over their APIs and never look at git, so the other locales' plates
-    would be binary weight for nothing, and F-Droid falls back to English.
-
-6.  A rehearsal against Play: the listing text and all the images go into an
-    edit, Play validates it, and the edit is thrown away.
-
-7.  THE QUESTION. Everything up to here is local or discarded. Answering yes
-    runs the same upload with --commit, which for this app also submits it for
-    review - Play refuses `changesNotSentForReview`. Managed publishing is what
-    keeps the reviewed listing away from users until you release it.
-
-8.  The release-notes block for the Play Console, printed last so it is the
-    last thing on the screen when you go there to roll out the bundle.
-
-WHAT IT DELIBERATELY DOES NOT DO
-
-**It never touches git.** The F-Droid half of the release is a commit and a
-push, and when that happens is the maintainer's call in this project; the run
-ends by saying exactly what is waiting. It also does not build, upload or
-release the app bundle itself - that is the Play Console, and a release there
-is a separate act from updating the store entry.
+Drives tools/store_screenshots.py, phyphox-docs's verify.py and
+tools/play_upload.py in order: preflight, release notes, one build photographed
+on three AVDs, verify, the F-Droid metadata, a discarded Play rehearsal, then
+the real upload after one question. It never touches git and never uploads the
+app bundle. The iOS counterpart is phyphox-ios/tools/store_release.py.
 """
 
 import argparse
@@ -72,15 +26,11 @@ TRANSLATION = os.path.join(ROOT, "phyphox-translation")
 SHOTS = os.path.join(ROOT, "screenshots", "android")
 METADATA = os.path.join(REPO, "fastlane", "metadata", "android")
 
-# form factor -> the AVD that has the right screen. Google Play rejects a
-# longer side more than twice the shorter, which rules out every stock phone
-# profile, so these are profiles of ours rather than anything the SDK ships.
+# form factor -> AVD. Play rejects a longer side more than twice the shorter, hence our own profiles
 AVDS = [("phone", "phyphox-shot-phone"),
         ("sevenInch", "phyphox-shot-7in"),
         ("tenInch", "phyphox-shot-10in")]
 
-# The one locale whose images are committed, and the only kind of them: what
-# F-Droid shows, and what it falls back to for every other language.
 FDROID_LOCALE = "en-US"          # as the capture names it (Play's spelling)
 FDROID_DIR = "en"                # as F-Droid names it in the metadata tree
 FDROID_KIND = "phoneScreenshots"
@@ -128,8 +78,6 @@ def preflight(args):
             if not os.path.isfile(os.path.join(avd_home, f"{avd}.ini")):
                 problems.append(f"no AVD {avd} for the {factor} plates")
 
-    # Play is only talked to at the end, but a missing login is the most common
-    # way for this to fall over, and it is free to find out now.
     sys.path.insert(0, HERE)
     import play_upload
     if not args.no_publish and not play_upload.token(required=False):
@@ -143,8 +91,6 @@ def preflight(args):
     if problems:
         raise SystemExit("cannot start:\n  - " + "\n  - ".join(problems))
 
-    # Not a problem, but the one thing the run cannot check for you: the scenes
-    # are composed from the collection in THIS working tree.
     out = subprocess.run(["git", "-C", REPO, "status", "--short"],
                          capture_output=True, text=True).stdout.strip()
     print(f"  phyphox-android at "
@@ -175,8 +121,7 @@ def have_plates():
 
 def capture(args):
     """One build, three form factors, into the working root's screenshots/."""
-    # The APK is built by the first run and reused by the other two. Its path
-    # is what store_screenshots.py's --build leaves behind.
+    # built by the first run (store_screenshots.py --build), reused by the other two
     apk = os.path.join(REPO, "app", "build", "outputs", "apk", "regular",
                        "release", "screenshots-signed.apk")
     for i, (factor, avd) in enumerate(AVDS):
@@ -213,8 +158,6 @@ def verify():
 
 def copy_fdroid():
     """The listing text and the English phone plates into the metadata tree."""
-    # The text: play_upload.py's own writer, so F-Droid and Play get one
-    # prepared text - same formatting, same trimmed short description.
     import play_upload
     play_upload.fdroid_text()
 
@@ -222,8 +165,7 @@ def copy_fdroid():
     dst = os.path.join(METADATA, FDROID_DIR, "images", FDROID_KIND)
     if not os.path.isdir(src):
         raise SystemExit(f"no {FDROID_LOCALE} {FDROID_KIND} in {SHOTS}")
-    # Cleared first: a scene that was renamed or dropped would otherwise leave
-    # its old plate behind, and F-Droid shows everything it finds.
+    # cleared first: F-Droid shows every plate it finds, dropped scenes included
     shutil.rmtree(dst, ignore_errors=True)
     os.makedirs(dst, exist_ok=True)
     names = sorted(f for f in os.listdir(src) if f.endswith(".png"))

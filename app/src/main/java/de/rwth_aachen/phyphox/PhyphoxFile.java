@@ -82,11 +82,8 @@ public abstract class PhyphoxFile {
     private static Map<String, String> translation = new HashMap<>();
     private static int languageRating = 0; //Rating of the best language seen so far, initialized from the root locale attribute. A translation block is only selected if it rates strictly better.
 
-    //A link element inside a translation block. Matched by label against the base links: a matched
-    //label replaces the base link in place, an unmatched label is an additional link appended after
-    //the base links, and a matched label with nothing but the label removes the base link
-    //(translation-link-matching in phyphox-docs). url and highlighted stay null when absent because
-    //an absent value inherits from the replaced base link.
+    //A link inside a translation block, matched by label against the base links (translation-link-matching
+    //in phyphox-docs). Null url/highlighted inherit from the replaced base link.
     private static class TranslatedLink {
         String label;
         String translation;
@@ -98,10 +95,8 @@ public abstract class PhyphoxFile {
         }
     }
 
-    //Content of a single translation block. Exactly one block is applied - the one whose locale
-    //best matches the user's locale, with the base strings of the file used where no block matches
-    //better. Blocks are never combined (translation-block-selection in phyphox-docs). All blocks
-    //are parsed into instances of this class first, then only the best-rated one is applied.
+    //A single translation block. All are parsed, only the best-rated one is applied, never a
+    //combination (translation-block-selection in phyphox-docs).
     private static class TranslationBlock {
         String locale; //Only used for error messages
         String title = null;
@@ -293,18 +288,11 @@ public abstract class PhyphoxFile {
     }
 
     //A xmlBlockParser loads all the xml data into the experiment within a specific xml block
-    //Lexical space of a number in the phyphox file format (see rules.yml,
-    //number-invalid-value): plain decimal notation plus the special values NaN and
-    //+-Infinity matched case-insensitively. Deliberately narrower than Java's own parsers,
-    //which also accept hexadecimal floats, type suffixes and surrounding whitespace that
-    //do not parse on other platforms.
+    //Lexical space of a number in the file format (rules.yml, number-invalid-value). Deliberately
+    //narrower than Java's parsers (no hex floats, suffixes, whitespace), which other platforms reject.
     private final static Pattern floatLexical = Pattern.compile("[+-]?([0-9]+(\\.[0-9]*)?|\\.[0-9]+)([eE][+-]?[0-9]+)?|[nN][aA][nN]|[+-]?[iI][nN][fF][iI][nN][iI][tT][yY]");
 
-    //Parse a number from the lexical space above, throwing NumberFormatException on
-    //anything outside it. Double.parseDouble only accepts the exact spellings "NaN",
-    //"Infinity", "+Infinity" and "-Infinity", so the special values are matched here.
-    //Static at this level because the same lexical space also applies to numbers arriving
-    //through the remote API (RemoteServer's /set endpoint).
+    //Static because the same lexical space applies to numbers arriving through RemoteServer's /set endpoint.
     public static double parseNumber(String str) throws NumberFormatException {
         if (!floatLexical.matcher(str).matches())
             throw new NumberFormatException(str);
@@ -358,9 +346,7 @@ public abstract class PhyphoxFile {
 
         private final static Pattern intLexical = Pattern.compile("[+-]?[0-9]+");
 
-        //Helper to receive an integer typed attribute, if not present, return default
-        //A present value has to be sign and digits only, anything else is an error
-        //(see rules.yml, number-invalid-value)
+        //Helper to receive an integer typed attribute, if not present, return default (invalid is an error, see rules.yml, number-invalid-value)
         protected int getIntAttribute(String identifier, int defaultValue) throws phyphoxFileException {
             final String att = xpp.getAttributeValue(XmlPullParser.NO_NAMESPACE, identifier);
             if (att == null)
@@ -374,9 +360,7 @@ public abstract class PhyphoxFile {
             }
         }
 
-        //Helper to receive a double typed attribute, if not present, return default
-        //A present value outside the format's lexical space is an error
-        //(see rules.yml, number-invalid-value)
+        //Helper to receive a double typed attribute, if not present, return default (invalid is an error, see rules.yml, number-invalid-value)
         protected double getDoubleAttribute(String identifier, double defaultValue) throws phyphoxFileException {
             final String att = xpp.getAttributeValue(XmlPullParser.NO_NAMESPACE, identifier);
             if (att == null)
@@ -388,9 +372,7 @@ public abstract class PhyphoxFile {
             }
         }
 
-        //Helper to receive a boolean attribute, if not present, return default
-        //Only "true" and "false" (in any capitalization) are accepted, anything else is an error
-        //(see rules.yml, enum-invalid-value / enum-case-insensitive)
+        //Helper to receive a boolean attribute, if not present, return default (invalid is an error, see rules.yml, enum-invalid-value)
         protected boolean getBooleanAttribute(String identifier, boolean defaultValue) throws phyphoxFileException {
             final String att = xpp.getAttributeValue(XmlPullParser.NO_NAMESPACE, identifier);
             if (att == null)
@@ -402,9 +384,7 @@ public abstract class PhyphoxFile {
             throw new phyphoxFileException("Invalid value \"" + att + "\" for boolean attribute \"" + identifier + "\".", xpp.getLineNumber());
         }
 
-        //Helper to receive a color attribute, if not present, return default
-        //A present color has to be a named phyphox color or a six-digit hex RGB value, anything
-        //else is an error (maintainer decision 2026-08-12, see views-map-color-unparseable)
+        //Helper to receive a color attribute, if not present, return default (invalid is an error, see views-map-color-unparseable)
         protected RGB getColorAttribute(String identifier, RGB defaultValue) throws phyphoxFileException {
             final String att = xpp.getAttributeValue(XmlPullParser.NO_NAMESPACE, identifier);
             if (att == null)
@@ -488,7 +468,6 @@ public abstract class PhyphoxFile {
 
         @Override
         protected void processStartTag(String tag) throws IOException, XmlPullParserException, phyphoxFileException {
-            // Handle nested tags like <input> for strobe rate modulation if desired
             switch (tag.toLowerCase()) {
                 case "input": {
                     String parameter = getStringAttribute("parameter");
@@ -560,9 +539,7 @@ public abstract class PhyphoxFile {
                     String parameter = getStringAttribute("parameter");
 
                     if (level == 1) {
-                        //Direct input. It takes no type attribute - its text is always the
-                        //name of the data container holding the waveform, so a type
-                        //attribute is ignored like on iOS.
+                        //Direct input: the text is always a buffer name, a type attribute is ignored like on iOS
                         String bufferName = getText();
                         DataBuffer buffer = experiment.getBuffer(bufferName);
                         if (buffer == null) {
@@ -1138,12 +1115,8 @@ public abstract class PhyphoxFile {
         }
     }
 
-    //Specialized ioBlockParser for the graph element: output tags use the usual slot logic of
-    //ioBlockParser, but input tags are collected in document order together with their axis and
-    //styling attributes, so that the graph element code can pair x/y/z inputs into datasets by
-    //their order of appearance (see "How the input tags form datasets" on the graph page of
-    //phyphox-docs, docs/file-format/views/graph.md). The axis attribute is required on every
-    //graph input.
+    //ioBlockParser for the graph element: inputs are collected in document order with their axis and
+    //styling attributes so they can be paired into datasets (phyphox-docs, docs/file-format/views/graph.md)
     private static class graphIoBlockParser extends ioBlockParser {
 
         public static class GraphInput {
@@ -1235,9 +1208,7 @@ public abstract class PhyphoxFile {
                     experiment.description = getText().trim().replaceAll("(?m) +$", "").replaceAll("(?m)^ +", "");
                     break;
                 case "link": //Links to external sources like documentation (might be replaced by a later translation block)
-                    //The label is required and acts as the key a translated link is matched on; the
-                    //translation attribute and an empty URL are only meaningful inside a translation
-                    //block and are errors here (translation-link-matching in phyphox-docs)
+                    //The label is the key translated links match on (translation-link-matching in phyphox-docs)
                     boolean highlighted = getBooleanAttribute("highlight", false);
                     String label = getStringAttribute("label");
                     if (label == null)
@@ -1320,10 +1291,7 @@ public abstract class PhyphoxFile {
 
         @Override
         protected void done() throws phyphoxFileException {
-            //A link in a translation block that matches no base label is an addition, which needs
-            //a URL of its own. This is checked for every translation block, not just the applied
-            //one, so an invalid file fails to load regardless of the user's locale
-            //(translation-link-matching in phyphox-docs).
+            //Checked for every block, not just the applied one, so an invalid file fails regardless of locale
             for (TranslationBlock block : allTranslationBlocks) {
                 for (TranslatedLink translatedLink : block.links) {
                     if (translatedLink.url != null)
@@ -1340,13 +1308,8 @@ public abstract class PhyphoxFile {
                 }
             }
 
-            //Apply the link elements of the selected translation block to the base links: a
-            //translated link matching a base label replaces it in its original position
-            //(inheriting URL and highlight where not given), a label-only link with no URL removes
-            //the base link, and an unmatched label is an additional link appended after the base
-            //links in declaration order. The displayed text is the translation attribute if
-            //present, otherwise the label as written - labels never pass through the
-            //string-translation mechanism.
+            //Apply translated links: matched label replaces in place (inheriting absent attributes), label-only
+            //removes, unmatched label appends (translation-link-matching in phyphox-docs)
             if (selectedTranslationBlock != null) {
                 List<PhyphoxExperiment.Link> localized = new ArrayList<>();
                 for (PhyphoxExperiment.Link baseLink : experiment.links) {
@@ -1400,11 +1363,8 @@ public abstract class PhyphoxFile {
                 case "translation": //A translation block holds all translation information for a single language
                     String thisLocale = getStringAttribute("locale");
                     int thisLaguageRating = Helper.getLanguageRating(parent.getResources(), thisLocale);
-                    //Every block is parsed so an invalid one fails to load regardless of the
-                    //user's locale, but only the best-rated one is applied (see done()). On equal
-                    //ratings the first block wins, and a block has to rate strictly better than
-                    //the root locale attribute to beat the base strings of the file
-                    //(translation-block-selection in phyphox-docs).
+                    //Every block is parsed, only the best-rated one is applied in done(); on equal ratings the
+                    //first wins (translation-block-selection in phyphox-docs)
                     TranslationBlock block = new TranslationBlock();
                     block.locale = thisLocale;
                     (new translationBlockParser(xpp, experiment, parent, block)).process();
@@ -1421,9 +1381,7 @@ public abstract class PhyphoxFile {
 
         @Override
         protected void done() throws phyphoxFileException {
-            //Apply the selected block's title, category, description and strings. The links are
-            //applied when the root element is done, so base links defined after this block are
-            //still considered.
+            //Links are applied when the root element is done, so base links after this block still count
             if (selectedTranslationBlock == null)
                 return;
             if (selectedTranslationBlock.title != null)
@@ -1437,9 +1395,7 @@ public abstract class PhyphoxFile {
 
     }
 
-    //Blockparser for a specific translation block. The content is not applied to the experiment
-    //directly but collected into a TranslationBlock, so that exactly one block - the best-rated
-    //one - can be applied after all blocks have been seen.
+    //Blockparser for a specific translation block, collected into a TranslationBlock rather than applied
     private static class translationBlockParser extends xmlBlockParser {
 
         private final TranslationBlock block;
@@ -1462,10 +1418,7 @@ public abstract class PhyphoxFile {
                     block.description = getText().trim().replaceAll("(?m) +$", "").replaceAll("(?m)^ +", "");
                     break;
                 case "link": //Links to external sources like documentation
-                    //Unlike a link at the root, the URL may be omitted (inherits from or removes
-                    //the matched base link) and highlight is kept tri-state so that an absent
-                    //attribute can inherit the base link's state (translation-link-matching in
-                    //phyphox-docs)
+                    //URL and highlight may be absent here and then inherit from the matched base link
                     TranslatedLink translatedLink = new TranslatedLink();
                     translatedLink.label = getStringAttribute("label");
                     if (translatedLink.label == null)
@@ -1526,10 +1479,7 @@ public abstract class PhyphoxFile {
                     newBuffer.setStatic(isStatic);
 
                     if (strInit != null && !strInit.isEmpty()) {
-                        //Split with a negative limit, so a trailing comma yields an empty
-                        //entry (an error, see rules.yml, number-invalid-value) instead of
-                        //being silently dropped. Note that entries may deliberately be NaN,
-                        //which is the documented way to put a gap marker into a buffer.
+                        //Negative limit: a trailing comma is an error, not silently dropped (rules.yml, number-invalid-value)
                         String strInitArray[] = strInit.split(",", -1);
                         Double init[] = new Double[strInitArray.length];
                         for (int i = 0; i < init.length; i++) {
@@ -1843,15 +1793,9 @@ public abstract class PhyphoxFile {
                     if (yCount < 1)
                         throw new phyphoxFileException("A minimum of 1 inputs was expected for y but 0 were found.", xpp.getLineNumber());
 
-                    //Pair x and y inputs into datasets following the decided model (see
-                    //graph-multiset-input-order and graph-multiset-omitted-x in phyphox-docs):
-                    //every y input is one dataset. With exactly as many x inputs as y inputs
-                    //(z inputs do not count), they are matched 1-on-1 in order of appearance
-                    //regardless of interleaving. Otherwise each y is plotted against the most
-                    //recent preceding x input, or against its element index if none preceded it,
-                    //and an x input that no y input uses - trailing, or shadowed - is an error.
-                    //Styling attributes on an x input apply to its matched dataset; a shared x
-                    //styles only the first dataset that uses it.
+                    //Pair x and y inputs into datasets (graph-multiset-input-order and graph-multiset-omitted-x in
+                    //phyphox-docs): equal counts match 1-on-1 in order, otherwise each y takes the most recent
+                    //preceding x (or its index); an unused x is an error.
                     graphIoBlockParser.GraphInput[] yForDataset = new graphIoBlockParser.GraphInput[yCount];
                     graphIoBlockParser.GraphInput[] xForDataset = new graphIoBlockParser.GraphInput[yCount];
                     graphIoBlockParser.GraphInput[] zForDataset = new graphIoBlockParser.GraphInput[yCount];
@@ -1904,10 +1848,7 @@ public abstract class PhyphoxFile {
                         }
                     }
 
-                    //Build the flat input list of the graph element: a pair of buffer names
-                    //(y, x or null) per dataset. For efficiency reasons z is not handled
-                    //separately but encoded as an additional graph of style mapZ following its
-                    //dataset.
+                    //Flat input list (y, x or null per dataset); z is encoded as an additional mapZ graph following its dataset
                     Vector<String> inStrings = new Vector<>();
                     int[] curveOfDataset = new int[yCount];
                     int[] curveOfZ = new int[yCount];
@@ -1978,9 +1919,7 @@ public abstract class PhyphoxFile {
                             }
                         }
                     }
-                    //Apply per-input styling attributes to each dataset. Applied in the order
-                    //x, y, z, so that attributes on the y input override those of its x input
-                    //and attributes on a z input override both.
+                    //Styling precedence: z over y over x
                     for (int i = 0; i < yCount; i++) {
                         graphIoBlockParser.GraphInput[] styleSources = {xStylesDataset[i] ? xForDataset[i] : null, yForDataset[i], zForDataset[i]};
                         for (graphIoBlockParser.GraphInput gi : styleSources) {
@@ -2778,8 +2717,7 @@ public abstract class PhyphoxFile {
                                 if (certificate != null && !certificate.isEmpty()) {
                                     if (!Helper.isSafeResourceName(certificate))
                                         throw new phyphoxFileException("Invalid certificate file name.", xpp.getLineNumber());
-                                    //The certificate is an experiment resource: delivered in the res
-                                    //directory of the container and copied along with the experiment.
+                                    //The certificate is an experiment resource from the container's res directory
                                     experiment.resources.add(certificate);
                                 }
                                 service = new MqttTlsJson(receiveTopicStr,sendTopicStr,username,password,certificate,experiment.resourceFolder,parent.getApplicationContext(),persistence);
@@ -2800,8 +2738,7 @@ public abstract class PhyphoxFile {
                                 if (certificate != null && !certificate.isEmpty()) {
                                     if (!Helper.isSafeResourceName(certificate))
                                         throw new phyphoxFileException("Invalid certificate file name.", xpp.getLineNumber());
-                                    //The certificate is an experiment resource: delivered in the res
-                                    //directory of the container and copied along with the experiment.
+                                    //The certificate is an experiment resource from the container's res directory
                                     experiment.resources.add(certificate);
                                 }
                                 service = new MqttTlsCsv(receiveTopicStr,username,password,certificate,experiment.resourceFolder,parent.getApplicationContext());
@@ -2869,8 +2806,7 @@ public abstract class PhyphoxFile {
                         throw new phyphoxFileException("Missing id in send element.", xpp.getLineNumber());
 
                     String datatype = getStringAttribute("datatype");
-                    //Enumerated values are matched case-insensitively (see rules.yml, enum-case-insensitive)
-                    //Normalized to lowercase here so the send-time checks can compare exactly.
+                    //Case-insensitive (rules.yml, enum-case-insensitive), normalized so send-time checks compare exactly
                     if (datatype != null) {
                         if (datatype.equalsIgnoreCase("number"))
                             datatype = "number";
@@ -3448,8 +3384,6 @@ public abstract class PhyphoxFile {
                         default:        throw new phyphoxFileException("Unknown zMode " + zModeStr, xpp.getLineNumber());
                     }
 
-                    //A missing z input with zMode sum or average is a permanent configuration
-                    //error, not an intermediate state, so it rejects the file at load
                     final boolean zRequired = zMode != Analysis.mapAM.ZMode.count;
 
                     ioBlockParser.ioMapping[] inputMapping = {
@@ -3496,8 +3430,6 @@ public abstract class PhyphoxFile {
                             new ioBlockParser.ioMapping() {{name = "y"; asRequired = true; minCount = 0; maxCount = 1; valueAllowed = false; repeatableOffset = -1; }}
                     };
                     ioBlockParser.ioMapping[] outputMapping = {
-                            //The x output is required: without it the module has nowhere to
-                            //write and used to crash at runtime instead of failing at load
                             new ioBlockParser.ioMapping() {{name = "x"; asRequired = true; minCount = 1; maxCount = 1; repeatableOffset = -1; }},
                             new ioBlockParser.ioMapping() {{name = "y"; asRequired = true; minCount = 0; maxCount = 1; repeatableOffset = -1; }},
                     };
@@ -3592,9 +3524,7 @@ public abstract class PhyphoxFile {
                     experiment.analysis.add(new Analysis.crosscorrelationAM(experiment, inputs, outputs));
                 } break;
                 case "gausssmooth": { //Smooth the data with a Gauss profile
-                    //A present sigma must be a positive width; omitting it keeps the module's
-                    //default of 3. A present value of zero or less is a mistake and rejected
-                    //rather than silently substituting the default (see gausssmooth-nonpositive-sigma).
+                    //sigma <= 0 is rejected, not defaulted (gausssmooth-nonpositive-sigma)
                     String sigmaStr = getStringAttribute("sigma");
                     Double sigma = null;
                     if (sigmaStr != null && !sigmaStr.isEmpty()) {
@@ -3624,7 +3554,6 @@ public abstract class PhyphoxFile {
                             new ioBlockParser.ioMapping() {{name = "d"; asRequired = true; minCount = 1; maxCount = 1; valueAllowed = true; repeatableOffset = -1; }},
                             new ioBlockParser.ioMapping() {{name = "xi"; asRequired = true; minCount = 1; maxCount = 1; valueAllowed = true; repeatableOffset = -1; }}
                     };
-                    //Each output exists at most once - repeats were accepted but never written
                     ioBlockParser.ioMapping[] outputMapping = {
                             new ioBlockParser.ioMapping() {{name = "yi0"; asRequired = false; minCount = 1; maxCount = 1; repeatableOffset = -1; }},
                             new ioBlockParser.ioMapping() {{name = "yi1"; asRequired = true; minCount = 0; maxCount = 1; repeatableOffset = -1; }},
@@ -3658,7 +3587,6 @@ public abstract class PhyphoxFile {
                             new ioBlockParser.ioMapping() {{name = "y"; asRequired = true; minCount = 1; maxCount = 1; valueAllowed = false; repeatableOffset = -1; }},
                             new ioBlockParser.ioMapping() {{name = "xi"; asRequired = true; minCount = 1; maxCount = 1; valueAllowed = true; repeatableOffset = -1; }}
                     };
-                    //The output exists at most once - repeats were accepted but never written
                     ioBlockParser.ioMapping[] outputMapping = {
                             new ioBlockParser.ioMapping() {{name = "out"; asRequired = false; minCount = 1; maxCount = 1; repeatableOffset = -1; }},
                     };
@@ -3966,12 +3894,9 @@ public abstract class PhyphoxFile {
 
     }
 
-    //Load a phyphoxExperiment from an already opened PhyphoxStream. Every experiment goes through
-    //this path, whichever way its stream was obtained. It is also the entry point used by the
-    //corpus conformance tests (app/src/test), which is why it is public.
+    //Load a phyphoxExperiment from an opened PhyphoxStream. Public because the corpus tests use it.
     public static PhyphoxExperiment loadExperiment(PhyphoxStream input, Experiment parent) {
-        //Reset the per-parse translation state. openXMLInputStream does this too, but callers
-        //that bring their own PhyphoxStream (like the corpus tests) do not go through it.
+        //Reset translation state here too for callers that bypass openXMLInputStream
         languageRating = 0;
         translation = new HashMap<>();
         selectedTranslationBlock = null;
@@ -4034,11 +3959,8 @@ public abstract class PhyphoxFile {
                         languageRating = Helper.getLanguageRating(parent.getResources(), globalLocale);
                     }
 
-                    //isLink marks an entry that is not an experiment at all but a pointer to a
-                    //web page (the collection scanner reads it as well and opens the link when
-                    //the entry is tapped). Such a file has no views, so it has to be recognized
-                    //here too - otherwise a file arriving by URL, QR code or share ends in "No
-                    //valid view found" instead of opening its link. iOS does the same.
+                    //isLink entries are pointers to a web page without views; recognized here so files
+                    //arriving by URL, QR code or share open their link like on iOS
                     String isLinkAttribute = xpp.getAttributeValue(XmlPullParser.NO_NAMESPACE, "isLink");
                     experiment.isLink = isLinkAttribute != null && isLinkAttribute.equalsIgnoreCase("true");
                     (new phyphoxBlockParser(xpp, experiment, parent)).process();
@@ -4061,8 +3983,7 @@ public abstract class PhyphoxFile {
 
         }
 
-        //Sanity check: If the experiment did not define any views, we cannot use it - unless it
-        //is a link entry, which never has views and is not run but opened (see isLink above).
+        //Sanity check: If the experiment did not define any views, we cannot use it - unless it is a link entry
         if (experiment.experimentViews.size() == 0 && !experiment.isLink) {
             experiment.message = "Bad experiment definition: No valid view found.";
             return experiment;
@@ -4144,8 +4065,7 @@ public abstract class PhyphoxFile {
                 File newResFolder = new File(parent.get().getFilesDir(), Long.toHexString(exp.crc32).toLowerCase());
                 newResFolder.mkdirs();
                 for (String src : exp.resources) {
-                    //The src comes from the experiment file and is not trustworthy: refuse any
-                    //path traversal so it cannot read from or write to outside the folders here.
+                    //src comes from the experiment file: refuse path traversal
                     if (!Helper.isSafeResourceName(src)) {
                         Log.e("CopyXML", "Refusing to save resource with path traversal: " + src);
                         warnings += "Could not save resource: " + src + "\n";
@@ -4153,9 +4073,7 @@ public abstract class PhyphoxFile {
                     }
                     File srcFile = new File(exp.resourceFolder, src);
                     if (!srcFile.isFile()) {
-                        //Resources that were not delivered alongside the experiment file may
-                        //reference the internal images bundled with phyphox instead. These do
-                        //not need to be copied, so only warn if there is no such image either.
+                        //Only warn if the resource is not a bundled image either
                         try {
                             parent.get().getAssets().open("experiments/res/" + src).close();
                         } catch (Exception e) {

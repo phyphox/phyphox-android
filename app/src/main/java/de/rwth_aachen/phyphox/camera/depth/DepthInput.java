@@ -68,10 +68,8 @@ public class DepthInput {
         }
     }
 
-    //Characteristics a camera does not have to report. camera2 guarantees them for a regular
-    //camera, but the scans below walk every camera the device lists and are also reached from
-    //the remote interface's /meta, where a NullPointerException took down the whole response -
-    //so a camera that does not answer is skipped instead.
+    //Optional characteristics: a camera not reporting them is skipped rather than throwing, as
+    //these scans are also reached from the remote interface's /meta
     private static int facingOf(CameraCharacteristics cam) {
         Integer facing = cam.get(CameraCharacteristics.LENS_FACING);
         return facing == null ? -1 : facing;

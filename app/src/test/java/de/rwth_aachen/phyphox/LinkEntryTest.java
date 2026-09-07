@@ -22,10 +22,9 @@ import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.nio.charset.StandardCharsets;
 
-//A file with isLink="true" is not an experiment: it points at a web page and has no views. The
-//collection list opens the link when its entry is tapped, and a file arriving by URL, QR code
-//or share has to end up in the same place instead of "no valid view found" (iOS does this since
-//2026-08-25 - the two must behave alike).
+//A file with isLink="true" points at a web page and has no views: the collection opens the link
+//when its entry is tapped, and a file arriving by URL, QR code or share must end up in the same
+//place instead of "no valid view found" (iOS behaves alike).
 @RunWith(RobolectricTestRunner.class)
 @Config(sdk = 35)
 public class LinkEntryTest {
@@ -62,7 +61,7 @@ public class LinkEntryTest {
         assertTrue(experiment.message, experiment.message.contains("No valid view"));
     }
 
-    //A browser, so that the link intent resolves the way it does on a real device.
+    //So that the link intent resolves the way it does on a real device.
     private void installBrowser(Experiment activity, String url) {
         ResolveInfo browser = new ResolveInfo();
         browser.activityInfo = new ActivityInfo();
@@ -88,8 +87,7 @@ public class LinkEntryTest {
         assertTrue("The experiment view must not stay behind", activity.isFinishing());
     }
 
-    //A URL the app cannot open is not silently swallowed: the experiment list complains about
-    //it, and so does this path.
+    //A URL the app cannot open is not silently swallowed.
     @Test
     public void aLinkEntryWithAnUnusableUrlComplains() {
         Experiment activity = Robolectric.buildActivity(Experiment.class).setup().get();

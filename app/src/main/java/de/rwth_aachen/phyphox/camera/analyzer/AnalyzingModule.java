@@ -20,12 +20,8 @@ public abstract class AnalyzingModule {
     static EGLContext eglContext;
     static EGLConfig eglConfig;
     static int cameraTexture;
-    //All analysis passes render into framebuffer objects backed by ordinary textures, so the
-    //result of one pass can be sampled by the next one. (This used to be done by rendering into
-    //pbuffer surfaces and binding them via eglBindTexImage, but that render-to-texture mechanism
-    //is an optional EGL feature that some drivers do not support - on those devices every
-    //analysis draw failed and camera experiments produced no data. FBOs are core in GLES2.)
-    //The context still needs some surface to be made current, which is all this tiny pbuffer does.
+    //Analysis passes render into FBOs backed by ordinary textures; eglBindTexImage render-to-texture
+    //is optional in EGL and fails on some drivers. This tiny pbuffer only makes the context current.
     static EGLSurface analyzingSurface = null;
     static int analyzingTexture = 0;
     static int analyzingFramebuffer = 0;
@@ -130,8 +126,7 @@ public abstract class AnalyzingModule {
         return framebuffer[0];
     }
 
-    //Make the shared context current and direct rendering into the given framebuffer object
-    //(0 meaning the pbuffer surface itself, which is only used during setup).
+    //framebuffer 0 means the pbuffer surface itself, only used during setup
     protected static void makeCurrent(int framebuffer, int w, int h) {
         if (!EGL14.eglMakeCurrent(eglDisplay, analyzingSurface, analyzingSurface, eglContext)) {
             throw new RuntimeException("Camera analysis: eglMakeCurrent failed");

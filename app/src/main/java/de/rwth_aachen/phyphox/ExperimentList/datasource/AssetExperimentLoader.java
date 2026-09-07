@@ -167,10 +167,8 @@ public class AssetExperimentLoader {
             boolean isLink = false;
             String link = null;
 
-            //Content of the current candidate translation block. Exactly one translation block
-            //applies - the best-rated one, first wins on ties (translation-block-selection in
-            //phyphox-docs) - so a block's content is collected here and only applied over the base
-            //strings after parsing, when no better block can follow anymore.
+            //Candidate translation block, applied after parsing: exactly one block wins (best rating,
+            //first on ties; translation-block-selection in phyphox-docs), blocks are never combined
             String trTitle = null;
             String trFullDescription = null;
             String trCategory = null;
@@ -206,9 +204,6 @@ public class AssetExperimentLoader {
                                 String thisLocale = xpp.getAttributeValue(null, "locale");
                                 int thisLaguageRating = Helper.getLanguageRating(environment.resources, thisLocale);
                                 if (translationDepth < 0 && thisLaguageRating > languageRating) {
-                                    //This block beats the running maximum and becomes the new
-                                    //candidate, replacing the previous candidate entirely - blocks
-                                    //are never combined. The last candidate is the selected block.
                                     languageRating = thisLaguageRating;
                                     translationDepth = xpp.getDepth(); //Remember depth of the translation block
                                     trTitle = null;
@@ -430,7 +425,7 @@ public class AssetExperimentLoader {
                 eventType = xpp.next(); //Next event in the file...
             }
 
-            //Apply the selected translation block (the last candidate) over the base strings
+            //Apply the selected translation block over the base strings
             if (trTitle != null)
                 shortInfo.title = trTitle;
             if (trFullDescription != null) {
@@ -473,9 +468,7 @@ public class AssetExperimentLoader {
             shortInfo.isLink = isLink ? link : null;
             shortInfo.categoryName = category;
 
-            //The store screenshots are captured on emulators, which have almost none of the
-            //sensors the collection tests for, so every second entry would be greyed out. This
-            //shell-only switch (see DebugSwitches) reports them all as present instead.
+            //Shell-only switch for the store screenshot emulators, which lack most sensors (see DebugSwitches)
             if (DebugSwitches.assumeSensors())
                 shortInfo.unavailableSensor = -1;
 

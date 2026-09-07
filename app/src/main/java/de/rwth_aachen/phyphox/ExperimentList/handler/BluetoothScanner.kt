@@ -10,14 +10,9 @@ import de.rwth_aachen.phyphox.R
 import java.util.UUID
 
 /**
- * Scans for BLE devices from the experiment list, i.e. without an experiment definition: any
- * device that either matches an experiment bundled with the app (by advertised name or service
- * UUID) or that advertises the phyphox service (offering an experiment for download) can be
- * picked by the user.
- *
- * The scan itself is done by the [BluetoothScanDialog], which is designed to block until the
- * user picks a device, so it is run on a background thread and the listener is called on the
- * main thread.
+ * Scans from the experiment list (no experiment loaded) for devices matching a bundled experiment
+ * or advertising the phyphox service. The blocking [BluetoothScanDialog] runs on a background
+ * thread; the listener is called on the main thread.
  */
 class BluetoothScanner(
     private val parent: Activity,
@@ -46,9 +41,6 @@ class BluetoothScanner(
                 if (result != null)
                     mainHandler.post { listener.onBluetoothDeviceFound(result) }
                 else if (failure != null) {
-                    //A scan that never started used to end here in silence: the dialog closed
-                    //itself and the user was left on the screen they came from, with the reason
-                    //only in the log.
                     val msg = res.getString(R.string.bt_scan_failed) + " " + failure
                     mainHandler.post { listener.onBluetoothScanError(msg, true, false) }
                 }

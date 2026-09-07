@@ -17,20 +17,14 @@ import java.io.OutputStream;
 
 import de.rwth_aachen.phyphox.ExperimentList.model.Const;
 
-//Opens one of phyphox-docs' view fixtures (fixtures/views/, built into this test APK's assets by
-//app/build.gradle) in the real Experiment activity. The file is copied into the app's private
-//directory and opened with the intent the experiment list itself uses, so the fixture arrives
-//through the normal loading path - no server, no storage permission, no picker.
-//
-//The fixtures render deterministically: all data comes from container init values, no sensors,
-//no analysis, and they are never started.
+//Opens one of phyphox-docs' view fixtures (fixtures/views/, packed into the test APK's assets by
+//app/build.gradle) in the real Experiment activity through the normal loading path.
 final class FixtureExperiment {
 
     private FixtureExperiment() {
     }
 
-    //True when the phyphox-docs checkout was present at build time; the suites skip themselves
-    //otherwise, the way the corpus tests do.
+    //False when phyphox-docs was not checked out at build time; the suites skip themselves then.
     static boolean available(String fixture) {
         try (InputStream ignored = getInstrumentation().getContext().getAssets().open(fixture)) {
             return true;
@@ -39,8 +33,7 @@ final class FixtureExperiment {
         }
     }
 
-    //The theme is a phyphox setting, applied the way the collection applies it. Set it before
-    //launching: AppCompat resolves the night mode when the activity is created.
+    //Set before launching: AppCompat resolves the night mode when the activity is created.
     static void applyThemeSetting(String setting) {
         Context app = getInstrumentation().getTargetContext();
         androidx.preference.PreferenceManager.getDefaultSharedPreferences(app)
@@ -51,28 +44,20 @@ final class FixtureExperiment {
                 de.rwth_aachen.phyphox.SettingsActivity.SettingsFragment.setApplicationTheme(setting));
     }
 
-    //The one-off hints ("Touch the triangle to start the experiment.") float over the screen and
-    //would land in every golden and in the way of every tap. The app stops showing them once
-    //they have been dismissed a few times, so the suites start from that state.
+    //The one-off hints float over the screen and would land in every golden and under every tap.
     static void suppressHints() {
         getInstrumentation().getTargetContext()
                 .getSharedPreferences(de.rwth_aachen.phyphox.ExperimentList.model.Const.PREFS_NAME, 0)
                 .edit()
                 .putInt("menuHintDismissCount", 3)
                 .putInt("startHintDismissCount", 3)
-                //The collection greets a fresh install with a warning dialog about not damaging
-                //the phone; it has its own "do not show again", which is what this sets.
+                //the fresh-install warning dialog's "do not show again"
                 .putBoolean("skipWarning", true)
                 .commit();
     }
 
-    //Starts the fixture and returns the running activity once its experiment is loaded.
-    //
-    //Deliberately not ActivityScenario: everything it does waits for the main looper to go idle,
-    //and a running experiment redraws its views every 40 ms for as long as it is open, so the
-    //looper never does and the test hangs where it launches. Starting the activity and watching
-    //the lifecycle monitor waits for nothing but the app itself. Espresso interactions are
-    //unaffected - it ignores messages scheduled further than a few milliseconds ahead.
+    //Starts the fixture and returns the activity once its experiment is loaded. Not ActivityScenario:
+    //a running experiment redraws every 40 ms, so the main looper never idles and it would hang.
     static Experiment launch(String fixture) throws IOException {
         Context app = getInstrumentation().getTargetContext();
         suppressHints();
@@ -87,20 +72,17 @@ final class FixtureExperiment {
         return awaitLoaded();
     }
 
-    //The host as the device reaches it: the emulator's alias for the machine running the tests,
-    //where the suites serve a fixture over http to exercise the "opened from elsewhere" path.
+    //The emulator's alias for the machine running the tests, which serves fixtures over http.
     static String hostFromDevice() {
         return "10.0.2.2:8115";
     }
 
-    //One of the experiments shipped with the app, opened the way a deep link opens it.
     static Experiment launchAsset(String asset) {
         launchAssetWithoutWaiting(asset);
         return awaitLoaded();
     }
 
-    //The same, for the cases that expect something other than a loaded experiment - a permission
-    //dialog, for instance.
+    //For the cases that expect something other than a loaded experiment, e.g. a permission dialog.
     static void launchAssetWithoutWaiting(String asset) {
         Context app = getInstrumentation().getTargetContext();
         suppressHints();
@@ -112,9 +94,7 @@ final class FixtureExperiment {
         app.startActivity(intent);
     }
 
-    //Brings the app back to the front without recreating anything - the way tapping its icon
-    //does. Launching the fixture again instead would start a fresh experiment, which is a
-    //different thing entirely.
+    //Without recreating anything, the way tapping the icon does; relaunching would start afresh.
     static void bringToForeground() {
         Context app = getInstrumentation().getTargetContext();
         Intent intent = app.getPackageManager().getLaunchIntentForPackage(app.getPackageName());
@@ -124,7 +104,6 @@ final class FixtureExperiment {
         app.startActivity(intent);
     }
 
-    //Closes the experiment again, so the next fixture starts from the collection.
     static void close(Experiment activity) {
         if (activity != null)
             getInstrumentation().runOnMainSync(activity::finish);
@@ -140,13 +119,7 @@ final class FixtureExperiment {
         }
     }
 
-    //The running experiment activity, without going through ActivityScenario.onActivity.
-    //
-    //A running experiment redraws its views every 40 ms for as long as it is open, so the main
-    //looper is never idle - and everything built on waitForIdleSync (onActivity among them)
-    //waits for exactly that and never returns. runOnMainSync only waits for its own runnable, so
-    //it works on a screen that keeps itself busy. Espresso is fine either way: it ignores
-    //messages scheduled further than a few milliseconds into the future.
+    //Via runOnMainSync, not ActivityScenario.onActivity: the main looper never idles (see launch).
     static Experiment activity() {
         final Experiment[] holder = new Experiment[1];
         getInstrumentation().runOnMainSync(() -> {
@@ -159,7 +132,6 @@ final class FixtureExperiment {
         return holder[0];
     }
 
-    //Waits until the experiment has finished loading, which happens on a background task.
     static Experiment awaitLoaded() {
         final long deadline = System.currentTimeMillis() + 30000;
         while (System.currentTimeMillis() < deadline) {

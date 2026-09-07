@@ -12,11 +12,9 @@ import java.io.ByteArrayInputStream;
 import java.nio.charset.StandardCharsets;
 
 // phyphox-test: corpus-version-gate
-//A file declaring a format version newer than PhyphoxFile.phyphoxFileVersion (supported + 0.1)
-//must be refused, and the identical file declaring the exact supported version must load. This
-//guards the version gate that all format feature rollout relies on. The experiment is built
-//from a minimal valid skeleton at test time, not a corpus fixture, so this test does not need
-//the phyphox-docs checkout. Contract: phyphox-docs/corpus/README.md, "The app test suites".
+//A file declaring a version newer than PhyphoxFile.phyphoxFileVersion must be refused and the same
+//file at the supported version must load. Built from a skeleton, so no phyphox-docs checkout is
+//needed. Contract: phyphox-docs/corpus/README.md, "The app test suites".
 @RunWith(RobolectricTestRunner.class)
 @Config(sdk = 35)
 public class CorpusVersionGateTest {

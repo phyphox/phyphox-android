@@ -30,21 +30,16 @@ import de.rwth_aachen.phyphox.NetworkConnection.NetworkService;
 
 public class MqttHelper {
 
-    // Builds the SSL socket factory for a TLS ("mqtts") connection. The certificate is an
-    // experiment resource named by the connection's certificate attribute: it lives in the res
-    // directory of the experiment container and is copied along with the experiment like an image
-    // resource, so it survives saving to the collection. If no certificate is named, the system
-    // trust store is used. A named certificate that cannot be loaded is an error - silently
-    // falling back to the system trust store would connect with a different trust model than the
-    // experiment author intended.
+    // The certificate is an experiment resource (certificate attribute, res directory of the
+    // container). A named certificate that cannot be loaded is an error, never a fallback to the
+    // system trust store.
     public static SSLSocketFactory buildSslSocketFactory(Context context,
                                                          String resourceFolder,
                                                          String certificateFileName) throws Exception {
         if (certificateFileName == null || certificateFileName.isEmpty())
             return (SSLSocketFactory) SSLSocketFactory.getDefault(); // system trust store
 
-        // Resolve the certificate like an image resource: from the experiment's resource folder if
-        // it has one, falling back to the res assets bundled with phyphox.
+        // resolved like an image resource: experiment resource folder, then bundled res assets
         InputStream input = null;
         if (resourceFolder != null && !resourceFolder.startsWith("ASSET")) {
             File certFile = new File(resourceFolder, certificateFileName);

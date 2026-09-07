@@ -34,16 +34,9 @@ import java.util.UUID
 import java.util.concurrent.atomic.AtomicBoolean
 
 /**
- * Scans for BLE devices and lets the user pick one. In autoConnect mode only a progress message
- * is shown and the first matching device is picked automatically.
- *
- * [getBluetoothDevice] is designed to block until a device has been picked or the dialog has
- * been dismissed, so it must be called from a background thread (both the connection process of
- * the Bluetooth engine and the scan from the experiment list run on one).
- *
- * A device matches by advertised name and/or advertised service UUIDs. The "supported" filters
- * do not hide devices, they mark which list entries are selectable (devices for which the app
- * has a matching experiment or which advertise the phyphox service for an experiment download).
+ * Scans for BLE devices and lets the user pick one (autoConnect: the first match). [getBluetoothDevice]
+ * blocks until then, so it must be called from a background thread. The "supported" filters do not
+ * hide devices, they mark which entries are selectable.
  */
 @SuppressLint("MissingPermission") //scanPermission() is checked before any scan is started
 class BluetoothScanDialog(
@@ -55,31 +48,22 @@ class BluetoothScanDialog(
 
     class BluetoothDeviceInfo(
         @JvmField val device: BluetoothDevice,
-        /** resolved once when the device is first seen - BluetoothDevice.getName() is a binder IPC call */
+        /** resolved once: BluetoothDevice.getName() is a binder IPC call */
         val name: String,
         @JvmField var supported: Boolean,
         @JvmField var phyphoxService: Boolean,
         @JvmField val uuids: MutableSet<UUID>,
         @JvmField var lastRSSI: Int
     ) {
-        /** more than one device with this name is in range (highlight the strongest one) */
         var oneOfMany = false
         var strongestSignal = true
 
         val selectable get() = supported || phyphoxService
     }
 
-    /**
-     * Set before the lock is notified. Object.wait() only hears a notify that arrives while it
-     * is waiting, and a scan can fail before the waiting thread has got that far - startScan
-     * answers on another thread and a refused registration comes back at once - so the notify
-     * was lost and the thread waited for good. That left stopScan below unreached, which leaks
-     * the scan registration for the life of the process, and the next scan then fails to
-     * register too: one failure and the app can never scan again until it is restarted.
-     */
+    /** set before the lock is notified: a scan can fail before the waiting thread has reached wait() */
     private var finished = false
 
-    /** the error code of a scan that never started, so the caller can say so instead of nothing */
     @Volatile
     var scanFailureCode: Int? = null
         private set
@@ -89,7 +73,7 @@ class BluetoothScanDialog(
     private var listAdapter: DeviceListAdapter? = null
     private val lock = Object()
 
-    /** all matching devices seen so far, keyed by MAC address, guarded by itself */
+    /** keyed by MAC address, guarded by itself */
     private val foundDevices = LinkedHashMap<String, BluetoothDeviceInfo>()
 
     private val uiHandler = Handler(Looper.getMainLooper())
@@ -144,11 +128,7 @@ class BluetoothScanDialog(
         }
     }
 
-    /**
-     * Scan and block until the user picks a device (or, in autoConnect mode, the first match is
-     * found) or the dialog is cancelled. Returns null if cancelled or if scanning is not
-     * possible (missing permission, disabled location service, Bluetooth turned off).
-     */
+    /** Scans and blocks until a device is picked or the dialog is cancelled; null if cancelled or scanning is not possible. */
     fun getBluetoothDevice(
         nameFilter: String?,
         uuidFilter: UUID?,
@@ -184,8 +164,6 @@ class BluetoothScanDialog(
         }
 
         synchronized(lock) {
-            //Guarded: a notify that arrived before this point has already set the flag, and a
-            //bare wait() would have slept through it.
             while (!finished) {
                 try {
                     lock.wait()
@@ -215,21 +193,14 @@ class BluetoothScanDialog(
         }
 
         override fun onScanFailed(errorCode: Int) {
-            //The scan never started, so there is nothing to find and nothing to wait for. Told
-            //to the caller rather than only to the log: dismissing the dialog on its own leaves
-            //the user looking at the screen they started from, with no idea that anything went
-            //wrong. SCAN_FAILED_APPLICATION_REGISTRATION_FAILED (2) is the one seen in the
-            //field, and it is what a leaked registration from an earlier scan produces.
+            //SCAN_FAILED_APPLICATION_REGISTRATION_FAILED (2) is what a leaked registration from an earlier scan produces
             Log.e("BluetoothScanDialog", "BLE scan failed with error code $errorCode.")
             scanFailureCode = errorCode
             parentActivity.runOnUiThread { dialog?.dismiss() }
         }
     }
 
-    //Called for every received advertisement, i.e. at a high rate when many devices are in
-    // range. Bookkeeping is done here on the callback thread with cheap operations only (no
-    // binder calls for known devices, no UI work) and the visible list is rebuilt at a limited
-    // rate by scheduleListUpdate().
+    //Called per advertisement: cheap bookkeeping only, the visible list is rebuilt at a limited rate by scheduleListUpdate()
     private fun handleScanResult(result: ScanResult) {
         val address = result.device.address
         val advertisedUuids = result.scanRecord?.serviceUuids
@@ -246,14 +217,8 @@ class BluetoothScanDialog(
                     existing.supported = true
                 deviceInfo = existing
             } else {
-                //First sighting of this device: resolve the name and apply the filters. The
-                // name cached by the stack takes precedence, as it may hold the full name from
-                // the GAP device name characteristic (0x2a00) of a previous connection, while
-                // the advertisement may only carry a shortened form - and some devices append
-                // distinguishing codes to the full name that students rely on to tell devices
-                // apart in class. The advertised name is only the fallback for devices the
-                // stack has no name for; it is used as is by some devices and may contain
-                // surrounding whitespace or even a line break.
+                //The stack's cached name takes precedence: it may hold the full GAP name (0x2a00) of a previous
+                // connection where the advertisement carries a shortened one; advertised names may contain whitespace
                 val name = (result.device.name ?: result.scanRecord?.deviceName)?.trim() ?: return
                 if (name.isEmpty())
                     return
@@ -287,10 +252,7 @@ class BluetoothScanDialog(
         }
     }
 
-    /**
-     * Rebuild the visible device list at most every LIST_UPDATE_INTERVAL_MS, no matter how fast
-     * scan results come in.
-     */
+    /** Rebuilds the visible list at most every LIST_UPDATE_INTERVAL_MS. */
     private fun scheduleListUpdate() {
         if (!listUpdatePending.compareAndSet(false, true)) {
             return
@@ -300,8 +262,7 @@ class BluetoothScanDialog(
 
             val devices = synchronized(foundDevices) { ArrayList(foundDevices.values) }
 
-            //Mark devices that share their name with another one and among those the one with
-            // the strongest signal, which is most likely the one the user is looking for.
+            //mark devices sharing a name, and the strongest of those
             for (device in devices) {
                 device.oneOfMany = false
                 device.strongestSignal = true
@@ -338,7 +299,7 @@ class BluetoothScanDialog(
                     .setPositiveButton(parentActivity.resources.getText(R.string.doContinue)) { d, _ ->
                         d.cancel()
                         ActivityCompat.requestPermissions(parentActivity, arrayOf(Manifest.permission.ACCESS_FINE_LOCATION), 0)
-                        //We will stop here. If the user grants the permission, the permission callback will restart the action
+                        //the permission callback restarts the action if granted
                     }
                     .setNegativeButton(parentActivity.resources.getText(R.string.cancel)) { d, _ -> d.cancel() }
                     .create()
@@ -358,9 +319,7 @@ class BluetoothScanDialog(
     }
 
     fun locationEnabled(): Boolean {
-        //Below Android 6 scanning does not require location access. From Android 12 on the
-        // BLUETOOTH_SCAN permission is declared with neverForLocation, so the location service
-        // is not required either.
+        //Android 6-11 only: from 12 on BLUETOOTH_SCAN is declared neverForLocation
         if (Build.VERSION.SDK_INT < Build.VERSION_CODES.M || Build.VERSION.SDK_INT >= Build.VERSION_CODES.S)
             return true
 
@@ -384,7 +343,7 @@ class BluetoothScanDialog(
         return true
     }
 
-    /** List of the found devices. Only accessed on the UI thread. */
+    /** Only accessed on the UI thread. */
     private inner class DeviceListAdapter : BaseAdapter() {
         private val devices = ArrayList<BluetoothDeviceInfo>()
         private val inflater = ctx.getSystemService(Context.LAYOUT_INFLATER_SERVICE) as LayoutInflater
@@ -444,7 +403,6 @@ class BluetoothScanDialog(
     companion object {
         const val BLUETOOTH_SCAN_REQUEST_CODE = 3
 
-        /** minimum time between two updates of the visible device list */
         const val LIST_UPDATE_INTERVAL_MS = 300L
     }
 }

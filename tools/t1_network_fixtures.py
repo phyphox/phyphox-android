@@ -1,35 +1,18 @@
 #!/usr/bin/env python3
 """T1 network fixture driver (test-matrix rows network-http, network-mqtt).
 
-Runs phyphox-docs' network fixtures against a phyphox build on an emulator
-or device: start the deterministic fixture server on this host, open each
-fixture experiment in the app, let its connection poll for a few seconds and
-assert the buffer contents the fixtures promise - through the remote API,
-which is the bus for all of this.
+Runs phyphox-docs' network fixtures against a build on an emulator or device:
+starts the fixture server on this host, opens each fixture experiment through a
+phyphox:// URL (FIXTURE-HOST/FIXTURE-PORT substituted; 10.0.2.2 is this host as
+the emulator sees it), lets it poll and checks the buffers over the remote API.
+Needs adb and, for the mqtt fixture, mosquitto in PATH; sets and clears
+debug.phyphox.remote / debug.phyphox.autoConfirm itself (see DebugSwitches).
 
     python3 tools/t1_network_fixtures.py [--serial S] [--docs PATH]
         [--seconds 4] [--port 8080] [--fixture-port 8113] [--file-port 8114]
         [--host 10.0.2.2] [--skip-mqtt] [--out results.json]
 
-Preconditions:
-  - adb in PATH and the device/emulator connected; the driver sets up the
-    port forward itself.
-  - The app must serve the remote API for launched experiments and must not
-    stop at the network privacy notice. The driver flips both switches
-    itself (debug.phyphox.remote, debug.phyphox.autoConfirm - see
-    DebugSwitches in the app sources) and clears them when it is done.
-  - mosquitto in PATH for the mqtt fixture, which is skipped with a notice
-    when it is missing (--skip-mqtt skips it unconditionally).
-
-The fixture files carry FIXTURE-HOST and FIXTURE-PORT placeholders. The
-driver substitutes them in the raw bytes - 10.0.2.2 is the host as seen from
-an Android emulator - serves the result over a throwaway HTTP server and
-opens it with "am start" on a phyphox:// URL, so the file arrives through
-the app's normal remote-loading path.
-
-Results: one JSON object per fixture (started, buffers read, findings),
-written to --out and summarized on stdout. Exit 1 if any fixture failed its
-assertions or the app stopped answering.
+Exit 1 if any fixture failed its assertions or the app stopped answering.
 """
 
 import argparse
@@ -50,9 +33,7 @@ ROOT = os.path.normpath(os.path.join(os.path.dirname(os.path.abspath(__file__)),
 DEFAULT_DOCS = os.path.normpath(os.path.join(ROOT, "..", "phyphox-docs"))
 BUNDLE = "de.rwth_aachen.phyphox"
 
-#Every fixture, the buffers to read and how long to let it run. The assertions
-#themselves are one function per fixture below; they are the README of
-#fixtures/network turned into code.
+#fixture -> buffers to read; the assertions are one function per fixture below
 FIXTURES = [
     ("http-get-receive", ["seq", "value"]),
     ("http-get-send-roundtrip", ["back", "seq"]),
@@ -70,13 +51,8 @@ def close(a, b, tol=1e-6):
 
 
 def strictly_increasing_poll_counter(values):
-    """The fixture's poll counter as the contract requires it: positive
-    integers, strictly increasing, no duplicates - but not gap-free. A
-    completed request parks its result until the next analysis pass copies it
-    into the buffers, so a response arriving before the parked one is consumed
-    overwrites it, identically on both platforms. A busy device therefore
-    drops values at the fixtures' 0.2 s interval; a value going backwards or
-    appearing twice is a real defect (fixtures/network/README.md)."""
+    """Positive integers, strictly increasing, but not gap-free: a response arriving before the
+    parked one is consumed overwrites it on both platforms (fixtures/network/README.md)."""
     return (all(v >= 1 and v == int(v) for v in values)
             and all(b > a for a, b in zip(values, values[1:])))
 
@@ -133,8 +109,6 @@ def check_http_post_roundtrip(buffers):
 
 
 def check_stays_alive(buffers):
-    #The assertion IS that nothing crashed or hung: the run below already
-    #required the remote API to answer after the fixture ran.
     if buffers["never"]:
         return ["never holds %s - the error response was accepted as data"
                 % buffers["never"][:6]]
@@ -202,8 +176,7 @@ class Driver:
         return self.get_json("%s/control?cmd=%s" % (self.base, cmd))
 
     def read_buffers(self, names):
-        #A null in the response is a NaN (the API cannot spell one in JSON); it is kept as
-        #such rather than dropped, so a buffer that filled with NaNs cannot pass for empty.
+        #null is a NaN; kept, so a buffer full of NaNs cannot pass for empty
         query = "&".join("%s=full" % name for name in names)
         data = self.get_json("%s/get?%s" % (self.base, query))
         return {name: [float("nan") if v is None else v
@@ -285,9 +258,8 @@ def serve_fixture_files(docs, host, fixture_port, file_port):
             f.write(content)
 
     class QuietHandler(http.server.SimpleHTTPRequestHandler):
-        #Quiet on purpose: the app tries https before http on a phyphox:// URL (see
-        #PhyphoxFile.openXMLInputStream), so every load starts with a TLS handshake into
-        #this plain server, which would otherwise log a wall of "bad request" noise.
+        #The app tries https first on a phyphox:// URL, so every load starts with a TLS
+        #handshake into this plain server and a "bad request" log line
         def log_message(self, *a):
             pass
 

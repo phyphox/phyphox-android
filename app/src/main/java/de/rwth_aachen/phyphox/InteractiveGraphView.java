@@ -212,10 +212,8 @@ public class InteractiveGraphView extends RelativeLayout implements GraphView.Po
         for (int i = 0; i < menu.size(); i++) {
             MenuItem menuItem = menu.getItem(i);
 
-            // Inflate the single item template
             View itemView = LayoutInflater.from(context).inflate(R.layout.interactive_graph_menu_item, toolbar, false);
 
-            // Populate the data using your original XML values
             ImageView iconView = itemView.findViewById(R.id.item_icon);
             TextView textView = itemView.findViewById(R.id.item_title);
 
@@ -295,7 +293,6 @@ public class InteractiveGraphView extends RelativeLayout implements GraphView.Po
                 }
             });
 
-            // Add the dynamically built item into the main bar container
             toolbar.addView(itemView);
         }
 

@@ -287,7 +287,7 @@ public class AnalyzingOpenGLRenderer implements Preview.SurfaceProvider, Surface
 
                     cameraSurfaceTexture.updateTexImage();
 
-                    //The transform matrix has to be checked on every frame: It changes with a new surface texture, but a new texture may also report a default matrix until the first actual frame has arrived
+                    //Checked on every frame: a new surface texture may report a default matrix until its first frame has arrived
                     cameraSurfaceTexture.getTransformMatrix(latestCamMatrix);
                     if (surfaceTextureIsNew || (running && !Arrays.equals(camMatrix, latestCamMatrix))) {
                         System.arraycopy(latestCamMatrix, 0, camMatrix, 0, 16);
@@ -295,7 +295,7 @@ public class AnalyzingOpenGLRenderer implements Preview.SurfaceProvider, Surface
                         int newCamHeight = Math.abs(Math.round(camMatrix[4] * camNativeWidth + camMatrix[5] * camNativeHeight));
                         Log.i("AnalyzingOpenGLRenderer", "camMatrix: " + Arrays.toString(camMatrix));
 
-                        //Only rebuild the GL setup if the effective camera size changed. A matrix change that keeps the size (like a shifted crop) must not tear down the analysis buffers mid-measurement.
+                        //A matrix change that keeps the size (like a shifted crop) must not tear down the analysis buffers mid-measurement
                         if (surfaceTextureIsNew || newCamWidth != camWidth || newCamHeight != camHeight) {
                             camWidth = newCamWidth;
                             camHeight = newCamHeight;
@@ -322,7 +322,7 @@ public class AnalyzingOpenGLRenderer implements Preview.SurfaceProvider, Surface
                     long reportedTime = cameraSurfaceTexture.getTimestamp();
                     long timestampDelta = reportedTime + timeAdjustment - SystemClock.elapsedRealtimeNanos();
                     if (Math.abs(timestampDelta) > 60e9) {
-                        //The reported time stamp is off by a whole minute. This is nonsense. The reported time is not even trying to relate to uptime, so we need to adjust the timestamps.
+                        //Off by more than a minute: the reported time does not relate to uptime at all
                         timeAdjustment -= timestampDelta;
                         Log.w("AnalyzingOpenGLRenderer", "timestampDelta too large: " + timestampDelta + ", timeAdjustment: " + timeAdjustment);
                     }
@@ -413,7 +413,7 @@ public class AnalyzingOpenGLRenderer implements Preview.SurfaceProvider, Surface
                     }
                     checkGLError("Create eglCameraTexture");
 
-                    //Detach and release any leftover surface texture from a previous camera session, so its stray frames cannot trigger draw calls anymore
+                    //Stray frames of a leftover surface texture must not trigger draw calls anymore
                     if (cameraSurfaceTexture != null) {
                         cameraSurfaceTexture.setOnFrameAvailableListener(null);
                         cameraSurfaceTexture.release();
@@ -428,14 +428,14 @@ public class AnalyzingOpenGLRenderer implements Preview.SurfaceProvider, Surface
                     cameraSurfaceTexture.setDefaultBufferSize(camNativeWidth, camNativeHeight);
                     cameraSurfaceTexture.setOnFrameAvailableListener(this);
                     cameraSurface = new Surface(cameraSurfaceTexture);
-                    //Only set surfaceTextureIsNew now that the new surface texture is in place: If it is set before this executor task runs, a draw call triggered by a late frame from the old camera would consume the flag and permanently cache the old camera's transform matrix
+                    //Set only now that the new surface texture is in place, or a late frame from the old camera would consume the flag and cache the old transform matrix
                     surfaceTextureIsNew = true;
                     request.provideSurface(cameraSurface, executor, result -> {
                         Surface releasedSurface = result.getSurface();
                         if (releasedSurface == cameraSurface) {
                             releaseCameraSurface(()->{});
                         } else {
-                            //This surface has already been replaced by a newer one, just make sure it is released
+                            //already replaced by a newer surface
                             releasedSurface.release();
                         }
                         checkGLError("destroy camera surface");

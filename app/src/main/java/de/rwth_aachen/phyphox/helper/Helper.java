@@ -147,10 +147,7 @@ public abstract class Helper {
         return score;
     }
 
-    //A resource name (an image element's src) comes from the experiment file, which is not
-    //trustworthy. Refuse any path traversal so a malicious file cannot reach outside its
-    //resource folder - relevant especially for the /res endpoint, which serves the resolved
-    //file over the network. Matches the guard in the iOS app (Experiment.resolveResource).
+    //Resource names come from the untrusted experiment file and reach the /res endpoint: refuse path traversal (as iOS Experiment.resolveResource)
     public static boolean isSafeResourceName(String src) {
         if (src == null || src.isEmpty())
             return false;
@@ -161,22 +158,16 @@ public abstract class Helper {
         return true;
     }
 
-    //Does the app need to ask for the local network permission before touching the local network?
-    //(The permission exists from SDK 37 on; below that there is nothing to request.)
+    //ACCESS_LOCAL_NETWORK exists from SDK 37 on
     public static boolean needsLocalNetworkPermission(android.content.Context context) {
         return android.os.Build.VERSION.SDK_INT >= 37 &&
                 androidx.core.content.ContextCompat.checkSelfPermission(context, android.Manifest.permission.ACCESS_LOCAL_NETWORK) != android.content.pm.PackageManager.PERMISSION_GRANTED;
     }
 
-    //Fast heuristic for "this address is on the local network", used to request the local network
-    //permission BEFORE the first connection attempt. Deliberately without any DNS resolution (this
-    //must not block): it recognizes literal private/link-local/loopback IPs, mDNS names (.local)
-    //and localhost. A hostname that merely resolves to a LAN address is not recognized - those
-    //cases are handled by requesting the permission after a failed connection attempt instead.
+    //Heuristic without DNS (must not block): hostnames that merely resolve to a LAN address are caught after a failed attempt
     public static boolean isLikelyLocalNetworkAddress(String address) {
         if (address == null || address.isEmpty())
             return false;
-        //Reduce a URL or host:port to the bare host
         String host = address;
         int schemeIdx = host.indexOf("://");
         if (schemeIdx >= 0)
@@ -223,10 +214,7 @@ public abstract class Helper {
                 || (b[0] == 169 && b[1] == 254);
     }
 
-    //Enumerated attribute values in the phyphox file format are matched case-insensitively (see
-    //the enum-case-insensitive rule in phyphox-docs). This resolves an enum constant by name
-    //ignoring case, returning null if there is no match (so the caller can reject the value).
-    //Works for camelCase enum constants too, unlike Enum.valueOf on a lowercased string.
+    //Case-insensitive match (enum-case-insensitive in phyphox-docs), null if none; handles camelCase constants unlike Enum.valueOf on lowercased input
     public static <E extends Enum<E>> E enumFromStringIgnoreCase(Class<E> enumClass, String value) {
         if (value == null)
             return null;
@@ -259,10 +247,7 @@ public abstract class Helper {
             XPath xpath = XPathFactory.newInstance().newXPath();
             NodeList nodes = (NodeList) xpath.evaluate(tag, doc, XPathConstants.NODESET);
 
-            //Set the first match and drop any further ones: the tags handled here hold a single
-            //value (state-title), so several of them are leftovers of an old writer bug that
-            //appended instead of replaced. Renaming heals such a file - the duplicate would
-            //otherwise keep it unloadable on iOS.
+            //Single-value tags (state-title): keep the first match only; an old writer bug appended duplicates, which keep the file unloadable on iOS
             List<Node> matches = new ArrayList<>();
             for (int i = 0; i < nodes.getLength(); i++)
                 matches.add(nodes.item(i));
@@ -678,9 +663,7 @@ public abstract class Helper {
         return voltage * 1e-3;
     }
 
-    //Battery current in amperes, positive when charging and negative when discharging (as
-    // defined by the Android API, but note that some devices do not follow this convention and
-    // report an inverted sign). NaN if unavailable.
+    //Battery current in amperes, positive when charging per Android API (some devices invert the sign), NaN if unavailable
     public static double getBatteryCurrent(Context context) {
         if (context == null) return Double.NaN;
 

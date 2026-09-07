@@ -17,11 +17,8 @@ import java.util.List;
 import java.util.Map;
 
 // phyphox-test: corpus-invalid-reject
-//Every file in phyphox-docs' corpus/invalid whose expected.yml entry says "parser: rejects"
-//must fail to load. Any error is acceptable; error message texts are platform wording and are
-//not asserted (the defects themselves are documented in corpus/invalid/expected.yml). Files
-//classified "parser: accepts" are covered by CorpusToleratedAttributesLoadTest instead.
-//Contract: phyphox-docs/corpus/README.md, "The app test suites".
+//Every file in corpus/invalid whose expected.yml entry says "parser: rejects" must fail to load;
+//error texts are platform wording and not asserted. Contract: phyphox-docs/corpus/README.md.
 @RunWith(ParameterizedRobolectricTestRunner.class)
 @Config(sdk = 35)
 public class CorpusInvalidRejectTest {
@@ -43,8 +40,7 @@ public class CorpusInvalidRejectTest {
         try {
             Map<String, String> classification = CorpusTestEnvironment.parserClassification(corpus);
             for (String file : CorpusTestEnvironment.listPhyphoxFiles(corpus, new File(corpus, "invalid")))
-                //Unclassified files run here too, so a missing expected.yml entry fails visibly
-                //instead of the file silently not being tested at all.
+                //Unclassified files run here too, so a missing expected.yml entry fails visibly.
                 if (!"accepts".equals(classification.get(new File(file).getName())))
                     parameters.add(new Object[]{file});
         } catch (Exception e) {

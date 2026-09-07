@@ -18,10 +18,7 @@ import java.util.UUID
 import java.util.Vector
 import java.util.concurrent.locks.Lock
 
-/**
- * A Bluetooth Low Energy device that provides measurement data to the experiment, either pushed
- * by the device (mode "notification"/"indication") or read periodically (mode "poll").
- */
+/** A BLE device delivering data to the experiment, pushed (notification/indication) or polled (poll). */
 class BluetoothInput @Throws(PhyphoxFile.phyphoxFileException::class) constructor(
     idString: String?,
     deviceName: String?,
@@ -31,7 +28,6 @@ class BluetoothInput @Throws(PhyphoxFile.phyphoxFileException::class) constructo
     autoConnect: Boolean,
     rate: Double,
     private val subscribeOnStart: Boolean,
-    /** data buffers the received values are appended to (indexed by Characteristic.index) */
     private val data: Vector<DataOutput>,
     private val dataLock: Lock,
     activity: Activity,
@@ -42,15 +38,13 @@ class BluetoothInput @Throws(PhyphoxFile.phyphoxFileException::class) constructo
 
     private val mode: String = mode.lowercase()
 
-    /** acquisition period in nanoseconds (inverse rate), 0 corresponds to as fast as possible */
-    private val period: Long
+    private val period: Long //ns, 0 = as fast as possible
 
     @Transient
     private var pollJob: Job? = null
 
-    /** collects one set of values per polled characteristic before they are written to the buffers together */
     @Transient
-    private var outputs = HashMap<Int, List<Double>>()
+    private var outputs = HashMap<Int, List<Double>>() //one set of polled values, flushed to the buffers together
 
     init {
         if (this.mode == "poll" && rate < 0) {
@@ -61,16 +55,12 @@ class BluetoothInput @Throws(PhyphoxFile.phyphoxFileException::class) constructo
 
     private val subscribed get() = mode == "notification" || mode == "indication"
 
-    /**
-     * Connect and - unless subscribeOnStart is set - enable notifications/indications already
-     * now, so slowly delivering sensors show data as soon as possible.
-     */
     @Throws(BluetoothException::class)
     override fun connect(knownDevices: Map<String, BluetoothDevice>?) {
         super.connect(knownDevices)
 
         if (!subscribeOnStart && subscribed) {
-            subscribeToNotifications()
+            subscribeToNotifications() //already now, so slowly delivering sensors show data as soon as possible
         }
     }
 
@@ -93,9 +83,7 @@ class BluetoothInput @Throws(PhyphoxFile.phyphoxFileException::class) constructo
             val periodMs = (period / 1000000L).coerceAtLeast(1)
             pollJob = bleScope.launch {
                 while (isActive) {
-                    //Read all characteristics; pending duplicates coalesce in the queue, so a
-                    // device that answers slower than the requested rate is polled as fast as it
-                    // can answer instead of piling up a backlog.
+                    //duplicate reads coalesce in the queue, so a slow device is polled as fast as it answers
                     for (c in mapping.keys)
                         submitRead(c)
                     delay(periodMs)
@@ -113,11 +101,6 @@ class BluetoothInput @Throws(PhyphoxFile.phyphoxFileException::class) constructo
         }
     }
 
-    /**
-     * Turn on notifications/indications for every mapped characteristic. Each descriptor write
-     * is awaited (with the queue timeout); devices without a client characteristic configuration
-     * descriptor are tolerated, they might be sending notifications permanently.
-     */
     @Throws(BluetoothException::class)
     private fun subscribeToNotifications() {
         for (c in mapping.keys) {
@@ -150,22 +133,17 @@ class BluetoothInput @Throws(PhyphoxFile.phyphoxFileException::class) constructo
     private fun unsubscribeFromNotifications() {
         for (c in mapping.keys) {
             if (c.getDescriptor(CONFIG_DESCRIPTOR) != null) {
-                //awaited, but a failure is not reported - the connection might be gone already
+                //a failure is not reported, the connection might be gone already
                 awaitWriteDescriptor(c.uuid, CONFIG_DESCRIPTOR, BluetoothGattDescriptor.DISABLE_NOTIFICATION_VALUE)
             }
             btGatt?.setCharacteristicNotification(c, false)
         }
     }
 
-    /**
-     * Result of a queued poll read. Collects the converted values and flushes them to the
-     * buffers when a value has arrived for every mapped characteristic (or when a characteristic
-     * delivers a second value before the set is complete).
-     */
+    //poll result: flushed when every characteristic delivered a value or one delivers a second
     override fun saveData(data: ByteArray?, characteristic: BluetoothGattCharacteristic) {
         val characteristicList = mapping[characteristic] ?: return
         for (c in characteristicList) {
-            //flush if the data from this characteristic is already stored
             if (outputs.containsKey(c.index)) {
                 flushPolledData()
                 return
@@ -174,15 +152,11 @@ class BluetoothInput @Throws(PhyphoxFile.phyphoxFileException::class) constructo
                 outputs[c.index] = convertData(data, c.inputConversionFunction)
             }
         }
-        //flush if data from every characteristic has been received
         if (outputs.size == valuesSize) {
             flushPolledData()
         }
     }
 
-    /**
-     * A notification arrived: convert and append to the buffers immediately.
-     */
     override fun retrieveData(data: ByteArray, characteristic: BluetoothGattCharacteristic) {
         if (!isRunning)
             return //Experiment has not started yet. Discard early events.
@@ -199,8 +173,7 @@ class BluetoothInput @Throws(PhyphoxFile.phyphoxFileException::class) constructo
                     this.data[c.index].append(v)
                 this.data[c.index].markSet()
             }
-            //append time to its buffer if extra=time is set for this characteristic
-            saveTime[characteristic]?.let { index ->
+            saveTime[characteristic]?.let { index -> //extra=time
                 this.data[index].append(t)
                 this.data[index].markSet()
             }
@@ -209,10 +182,6 @@ class BluetoothInput @Throws(PhyphoxFile.phyphoxFileException::class) constructo
         }
     }
 
-    /**
-     * Write one complete set of polled values (and the poll time for extra=time outputs) to the
-     * buffers.
-     */
     private fun flushPolledData() {
         val t = experimentTimeReference.experimentTime
 
@@ -235,10 +204,6 @@ class BluetoothInput @Throws(PhyphoxFile.phyphoxFileException::class) constructo
         }
     }
 
-    /**
-     * Convert data using the specified conversion function. Returns an empty list in case of an
-     * exception, so a malformed packet never crashes the experiment.
-     */
     private fun convertData(data: ByteArray, conversionFunction: ConversionsInput.InputConversion?): List<Double> {
         return try {
             conversionFunction?.convert(data) ?: emptyList()
@@ -248,8 +213,7 @@ class BluetoothInput @Throws(PhyphoxFile.phyphoxFileException::class) constructo
     }
 
     companion object {
-        /** UUID of the descriptor for the client characteristic configuration */
         @JvmField
-        val CONFIG_DESCRIPTOR: UUID = UUID.fromString("00002902-0000-1000-8000-00805f9b34fb")
+        val CONFIG_DESCRIPTOR: UUID = UUID.fromString("00002902-0000-1000-8000-00805f9b34fb") //client characteristic configuration
     }
 }

@@ -16,12 +16,9 @@ import java.util.List;
 import java.util.Map;
 
 // phyphox-test: corpus-tolerated-attributes-load
-//Every file in phyphox-docs' corpus/invalid whose expected.yml entry says "parser: accepts"
-//must LOAD successfully: its only defects are unknown or misapplied attributes, which the
-//parsers ignore per the unknown-attribute-ignored rule (phyphox-docs spec/rules.yml, decided
-//2026-08-24). This pins the compatibility guarantee - a parser that starts rejecting unknown
-//attributes breaks files in the wild. Contract: phyphox-docs/corpus/README.md, "The app test
-//suites".
+//Every file in corpus/invalid whose expected.yml entry says "parser: accepts" must load: its only
+//defects are unknown or misapplied attributes, which the parsers ignore (phyphox-docs
+//spec/rules.yml, unknown-attribute-ignored). Contract: phyphox-docs/corpus/README.md.
 @RunWith(ParameterizedRobolectricTestRunner.class)
 @Config(sdk = 35)
 public class CorpusToleratedAttributesLoadTest {

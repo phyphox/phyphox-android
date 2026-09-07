@@ -18,26 +18,9 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 
 // phyphox-test: app-chrome
-//Both answers to a runtime permission request, on an experiment that needs the microphone.
-//
-//The permission state is arranged from OUTSIDE this run, and that is not a matter of taste:
-//"pm grant" and "pm revoke" restart the app they apply to, and the instrumentation lives in that
-//process - changing a permission from within kills the test run mid-test ("Process crashed").
-//So the T1 job runs this class twice:
-//
-//    adb shell pm revoke de.rwth_aachen.phyphox android.permission.RECORD_AUDIO
-//    adb shell am instrument -w -e class de.rwth_aachen.phyphox.PermissionFlowTest ...
-//    adb shell pm grant de.rwth_aachen.phyphox android.permission.RECORD_AUDIO
-//    adb shell am instrument -w -e class de.rwth_aachen.phyphox.PermissionFlowTest ...
-//
-//and the test asserts whichever path the current state calls for, naming it in the failure
-//message so a single run is never mistaken for both.
-//
-//The denied path has two shapes, and which one appears is up to the device rather than the app:
-//where the microphone has never been refused for good, phyphox asks and the system dialog comes
-//up; where Android has stopped asking, phyphox refuses the experiment itself with "Need
-//permission to record audio.". The test answers the dialog if it appears and then asserts the
-//same ending either way - phyphox in front, saying why the experiment did not open.
+//Both answers to a runtime permission request. The permission state is arranged from OUTSIDE:
+//"pm grant"/"pm revoke" restart the app, and the instrumentation lives in that process, so the
+//T1 job runs this class twice (revoked, then granted) and the test asserts whichever path applies.
 @RunWith(AndroidJUnit4.class)
 public class PermissionFlowTest {
 
@@ -75,16 +58,10 @@ public class PermissionFlowTest {
     private void deniedPathLeavesTheAppStanding() throws Exception {
         FixtureExperiment.launchAssetWithoutWaiting(AUDIO_EXPERIMENT);
 
-        //Two shapes, depending on what the device remembers. On a fresh device phyphox asks for
-        //the microphone and the system dialog comes up; where the request was already refused
-        //for good, Android does not ask again and phyphox refuses the experiment itself. Both
-        //end the same way, and that ending is what this pins.
+        //Either the system dialog, or - where Android has stopped asking - phyphox's own refusal.
         UiObject2 deny = device().wait(Until.findObject(By.textStartsWith("Don")), 20000);
         if (deny != null) {
-            //Answered until it is really gone, rather than tapped once. A dialog that is still
-            //animating in swallows the tap, and the app cannot put it back up - the denied branch
-            //of onRequestPermissionsResult does nothing at all - so a dialog that is still there
-            //means the tap did not land. Seen on the tablet profile in CI.
+            //Answered until gone: a dialog still animating in swallows the tap (seen on the tablet profile).
             long deadline = System.currentTimeMillis() + 20000;
             boolean gone = false;
             while (!gone && System.currentTimeMillis() < deadline) {
@@ -96,7 +73,7 @@ public class PermissionFlowTest {
                 try {
                     button.click();
                 } catch (StaleObjectException e) {
-                    //The dialog changed under the tap - look it up again and answer that one
+                    //the dialog changed under the tap - look it up again
                 }
                 gone = device().wait(Until.gone(By.textStartsWith("Don")), 5000);
             }
