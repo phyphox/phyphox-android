@@ -3,21 +3,17 @@ package de.rwth_aachen.phyphox.Bluetooth
 import android.annotation.SuppressLint
 import android.bluetooth.BluetoothDevice
 import android.bluetooth.BluetoothGatt
-import android.bluetooth.BluetoothGattCallback
 import android.bluetooth.BluetoothGattCharacteristic
 import android.bluetooth.BluetoothGattDescriptor
 import android.bluetooth.BluetoothProfile
 import android.content.Context
 import android.net.Uri
-import android.os.Build
 import android.os.SystemClock
 import android.util.Log
 import de.rwth_aachen.phyphox.R
 import de.rwth_aachen.phyphox.helper.Helper
 import kotlinx.coroutines.CancellationException
-import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.NonCancellable
 import kotlinx.coroutines.channels.Channel
@@ -26,6 +22,7 @@ import kotlinx.coroutines.withContext
 import kotlinx.coroutines.withTimeoutOrNull
 import java.io.File
 import java.io.FileOutputStream
+import java.nio.ByteBuffer
 import java.util.zip.CRC32
 import kotlin.math.min
 
@@ -51,8 +48,7 @@ class BluetoothExperimentLoader(private val ctx: Context, private val callback: 
     private var queue: BleCommandQueue? = null
     private var transferJob: Job? = null
 
-    @Volatile
-    private var connectionEvent: CompletableDeferred<Boolean>? = null
+    private val connector = BleConnector(ctx, TAG)
 
     @Volatile
     private var notifications: Channel<ByteArray>? = null
@@ -76,9 +72,6 @@ class BluetoothExperimentLoader(private val ctx: Context, private val callback: 
     /** a disconnect callback while connect() is trying belongs to the retried attempt, not to a transfer */
     @Volatile
     private var connecting = false
-
-    @Volatile
-    private var lastConnectionStatus = 0
 
     /** nonzero once there is a transfer to report */
     private var transferStartMs = 0L
@@ -153,48 +146,17 @@ class BluetoothExperimentLoader(private val ctx: Context, private val callback: 
         deliverResult()
     }
 
-    /**
-     * Opens the connection, retrying a refused attempt: Android's direct connect fails with
-     * GATT_ERROR (133) often enough to matter and the same board connects a minute later.
-     * Every attempt gets a fresh client and the refused one is closed (unclosed registrations cause 133).
-     */
     private suspend fun connect(device: BluetoothDevice) {
         connecting = true
-        var attemptsMade = 0
-        val deadline = SystemClock.elapsedRealtime() + Bluetooth.CONNECT_TOTAL_BUDGET_MS
-        try {
-            for (attempt in 1..Bluetooth.CONNECT_ATTEMPTS) {
-                attemptsMade = attempt
-                val connected = CompletableDeferred<Boolean>()
-                connectionEvent = connected
-                gatt = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M)
-                    device.connectGatt(ctx, false, gattCallback, BluetoothDevice.TRANSPORT_LE)
-                else
-                    device.connectGatt(ctx, false, gattCallback)
-                val ok = gatt != null && withTimeoutOrNull(Bluetooth.CONNECT_TIMEOUT_MS) { connected.await() } == true
-                connectionEvent = null
-                if (ok) {
-                    Log.d(TAG, "connected to " + device.address
-                            + (if (attempt > 1) " on attempt $attempt" else ""))
-                    Bluetooth.reportBleOutcome(TAG, "connect", attempt, true)
-                    return
-                }
-                Log.w(TAG, "connect attempt $attempt of ${Bluetooth.CONNECT_ATTEMPTS} failed"
-                        + " (status $lastConnectionStatus)")
-                gatt?.close()
-                gatt = null
-                //Bounded by the clock as well as the count: see CONNECT_TOTAL_BUDGET_MS.
-                if (attempt >= Bluetooth.CONNECT_ATTEMPTS ||
-                        SystemClock.elapsedRealtime() + Bluetooth.CONNECT_RETRY_DELAY_MS >= deadline)
-                    break
-                delay(Bluetooth.CONNECT_RETRY_DELAY_MS)
-            }
+        val ok = try {
+            connector.connect(device, gattCallback) { gatt = it } != null
         } finally {
             connecting = false
         }
-        Bluetooth.reportBleOutcome(TAG, "connect", attemptsMade, false,
-                reason = "gatt_$lastConnectionStatus")
-        throw TransferException(ctx.getString(R.string.bt_exception_connection), "connect")
+        Bluetooth.reportBleOutcome(TAG, "connect", connector.attempts, ok,
+                reason = if (ok) null else "gatt_${connector.lastStatus}")
+        if (!ok)
+            throw TransferException(ctx.getString(R.string.bt_exception_connection), "connect")
     }
 
     private suspend fun runTransfer(device: BluetoothDevice, channel: Channel<ByteArray>): ByteArray {
@@ -254,12 +216,9 @@ class BluetoothExperimentLoader(private val ctx: Context, private val callback: 
         val header = receivePacket()
         if (header.size < 15 || !String(header, 0, 7).startsWith("phyphox"))
             throw TransferException(ctx.getString(R.string.newExperimentBTReadErrorCorrupted) + " (invalid header)", "header")
-        var size = 0
-        for (i in 0 until 4)
-            size = (size shl 8) or (header[7 + i].toInt() and 0xff)
-        var crc = 0L
-        for (i in 0 until 4)
-            crc = (crc shl 8) or (header[11 + i].toLong() and 0xff)
+        val fields = ByteBuffer.wrap(header, 7, 8) //big endian
+        val size = fields.int
+        val crc = fields.int.toLong() and 0xffffffffL
         if (size < 0 || size > 10_000_000)
             throw TransferException(ctx.getString(R.string.newExperimentBTReadErrorCorrupted) + " (invalid size in header)", "header_size")
         expectedCrc = crc
@@ -362,51 +321,19 @@ class BluetoothExperimentLoader(private val ctx: Context, private val callback: 
     private fun notificationError(detail: String): String =
         ctx.getString(R.string.bt_exception_notification) + " " + Bluetooth.phyphoxExperimentCharacteristicUUID.toString() + " " + ctx.getString(R.string.bt_exception_notification_enable) + " (" + detail + ")"
 
-    private val gattCallback = object : BluetoothGattCallback() {
+    private val gattCallback = object : QueueGattCallback({ queue }) {
 
         override fun onConnectionStateChange(gatt: BluetoothGatt, status: Int, newState: Int) {
             //status (133 refused, 8 supervision timeout, 19 peer disconnect) is dropped below this point
             Log.d(TAG, "connection state $newState, status $status")
-            lastConnectionStatus = status
-            when (newState) {
-                BluetoothProfile.STATE_CONNECTED -> {
-                    connectionEvent?.complete(status == BluetoothGatt.GATT_SUCCESS)
-                }
-                else -> {
-                    connectionEvent?.complete(false)
-                    //a refused attempt belongs to connect(), which retries it
-                    if (connecting)
-                        return
-                    //a disconnect during a running transfer is an error unless we asked for it
-                    if (transferJob?.isActive == true && !finished && !disconnectExpected) {
-                        pendingError = ctx.getString(R.string.newExperimentBTReadErrorCorrupted) + " (connection lost)"
-                        transferJob?.cancel()
-                    }
-                }
+            connector.onConnectionStateChange(status, newState)
+            if (newState == BluetoothProfile.STATE_CONNECTED || connecting) //a refused attempt belongs to connect(), which retries it
+                return
+            //a disconnect during a running transfer is an error unless we asked for it
+            if (transferJob?.isActive == true && !finished && !disconnectExpected) {
+                pendingError = ctx.getString(R.string.newExperimentBTReadErrorCorrupted) + " (connection lost)"
+                transferJob?.cancel()
             }
-        }
-
-        override fun onServicesDiscovered(gatt: BluetoothGatt, status: Int) {
-            queue?.onEvent(BleEvent.ServicesDiscovered(status == BluetoothGatt.GATT_SUCCESS))
-        }
-
-        @Suppress("DEPRECATION", "OVERRIDE_DEPRECATION")
-        override fun onCharacteristicRead(gatt: BluetoothGatt, characteristic: BluetoothGattCharacteristic, status: Int) {
-            queue?.onEvent(
-                BleEvent.CharacteristicRead(
-                    characteristic.uuid,
-                    if (status == BluetoothGatt.GATT_SUCCESS) characteristic.value?.copyOf() else null,
-                    status == BluetoothGatt.GATT_SUCCESS
-                )
-            )
-        }
-
-        override fun onCharacteristicWrite(gatt: BluetoothGatt, characteristic: BluetoothGattCharacteristic, status: Int) {
-            queue?.onEvent(BleEvent.CharacteristicWritten(characteristic.uuid, status == BluetoothGatt.GATT_SUCCESS))
-        }
-
-        override fun onDescriptorWrite(gatt: BluetoothGatt, descriptor: BluetoothGattDescriptor, status: Int) {
-            queue?.onEvent(BleEvent.DescriptorWritten(descriptor.characteristic.uuid, descriptor.uuid, status == BluetoothGatt.GATT_SUCCESS))
         }
 
         @Suppress("DEPRECATION", "OVERRIDE_DEPRECATION")
