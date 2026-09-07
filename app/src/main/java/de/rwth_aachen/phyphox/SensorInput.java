@@ -4,7 +4,6 @@ import android.hardware.Sensor;
 import android.hardware.SensorEvent;
 import android.hardware.SensorEventListener;
 import android.hardware.SensorManager;
-import android.os.Build;
 import android.os.SystemClock;
 import android.util.Log;
 
@@ -284,7 +283,7 @@ public class SensorInput implements SensorEventListener, Serializable {
 
     //Start the data acquisition by registering a listener for this sensor.
     public void start() {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN_MR2 && (type == Sensor.TYPE_MAGNETIC_FIELD || type == Sensor.TYPE_MAGNETIC_FIELD_UNCALIBRATED)) {
+        if (type == Sensor.TYPE_MAGNETIC_FIELD || type == Sensor.TYPE_MAGNETIC_FIELD_UNCALIBRATED) {
             if (calibrated)
                 this.type = Sensor.TYPE_MAGNETIC_FIELD;
             else
@@ -390,12 +389,7 @@ public class SensorInput implements SensorEventListener, Serializable {
     }
 
     public void updateGeneratedRate() {
-        long now;
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN_MR1) {
-            now = SystemClock.elapsedRealtimeNanos();
-        } else {
-            now = SystemClock.elapsedRealtime() * 1000000L;
-        }
+        long now = SystemClock.elapsedRealtimeNanos();
         if (rateStrategy == SensorRateStrategy.generate && lastReading > 0) {
             while (lastReading + 2*period <= now) { //In case we did not get a sensor event in the last 200ms + 2*period, we fill it up here. This just ensures that the user gets data even with sensor types that do not update without a change.
                 appendToBuffers(lastReading + period, genX, genY, genZ, genAccuracy);

@@ -14,7 +14,6 @@ import android.content.Intent;
 import android.content.pm.ResolveInfo;
 import android.content.res.Resources;
 import android.net.Uri;
-import android.os.Build;
 import android.util.Log;
 import android.util.TypedValue;
 import android.view.LayoutInflater;
@@ -113,14 +112,9 @@ public class ExperimentItemAdapter extends BaseAdapter {
             intent.putExtra(EXPERIMENT_PRESELECTED_BLUETOOTH_ADDRESS, this.preselectedBluetoothAddress);
         intent.setAction(Intent.ACTION_VIEW);
 
-        //If we are on a recent API, we can add a nice zoom animation
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN) {
-            ActivityOptions options = ActivityOptions.makeScaleUpAnimation(v, 0,
-                    0, v.getWidth(), v.getHeight());
-            v.getContext().startActivity(intent, options.toBundle());
-        } else { //old API? Just fire up the experiment.
-            v.getContext().startActivity(intent);
-        }
+        ActivityOptions options = ActivityOptions.makeScaleUpAnimation(v, 0,
+                0, v.getWidth(), v.getHeight());
+        v.getContext().startActivity(intent, options.toBundle());
     }
 
     //Called to fill the adapter with experiment.

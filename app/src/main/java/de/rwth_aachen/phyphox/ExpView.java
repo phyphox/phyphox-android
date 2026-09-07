@@ -2704,11 +2704,7 @@ public class ExpView implements Serializable{
                     R.color.phyphox_white_100)));
 
 
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN_MR1) {
-                autoCompleteTvCameraSelection.setText(options[0], false);
-            } else {
-                autoCompleteTvCameraSelection.setText(options[0]);
-            }
+            autoCompleteTvCameraSelection.setText(options[0], false);
 
             autoCompleteTvCameraSelection.setOnItemClickListener((adapterView, view, i, l) -> cv.setCamera(camOptions.get(i).key));
 
@@ -3325,11 +3321,7 @@ public class ExpView implements Serializable{
                                             R.color.phyphox_white_100)));
 
 
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN_MR1) {
-                autoCompleteTextView.setText(options[0], false);
-            } else {
-                autoCompleteTextView.setText(options[0]);
-            }
+            autoCompleteTextView.setText(options[0], false);
 
             setFromValue(bufferValueOrDefault(experiment, defaultValue));
 

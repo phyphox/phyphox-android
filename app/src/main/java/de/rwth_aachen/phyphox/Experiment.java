@@ -368,13 +368,11 @@ public class Experiment extends AppCompatActivity implements View.OnClickListene
                 networkConnection.disconnect();
                 networkConnection.specificAddress = null;
             }
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN_MR2) {
-                //Close all bluetooth connections, when the activity is recreated, they will be reestablished while initializing the experiment
-                for (BluetoothInput bti : experiment.bluetoothInputs)
-                    bti.closeConnection();
-                for (BluetoothOutput bti : experiment.bluetoothOutputs)
-                    bti.closeConnection();
-            }
+            //Close all bluetooth connections, when the activity is recreated, they will be reestablished while initializing the experiment
+            for (BluetoothInput bti : experiment.bluetoothInputs)
+                bti.closeConnection();
+            for (BluetoothOutput bti : experiment.bluetoothOutputs)
+                bti.closeConnection();
             if (experiment.depthInput != null && Build.VERSION.SDK_INT >= Build.VERSION_CODES.M)
                 experiment.depthInput.stopCameras();
 
@@ -665,7 +663,7 @@ public class Experiment extends AppCompatActivity implements View.OnClickListene
 
             //Preselect only if the experiment uses exactly one device (blocks sharing an id are one), like iOS
             String btAddress = intent.getStringExtra(EXPERIMENT_PRESELECTED_BLUETOOTH_ADDRESS);
-            if (btAddress != null && Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN_MR2) {
+            if (btAddress != null) {
                 List<Bluetooth> bluetoothDevices = new ArrayList<>();
                 bluetoothDevices.addAll(this.experiment.bluetoothInputs);
                 bluetoothDevices.addAll(this.experiment.bluetoothOutputs);
@@ -913,48 +911,46 @@ public class Experiment extends AppCompatActivity implements View.OnClickListene
     // connects to the bluetooth devices in an async task
     // if startMeasurement is true the measurement will be started automatically once all devices are connected
     public void connectBluetoothDevices(boolean startMeasurement, final boolean timed) {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN_MR2) {
-            if (!(experiment.bluetoothInputs.isEmpty() && experiment.bluetoothOutputs.isEmpty())) {
-                isBluetoothConnectionSuccessful = false;
-                // connect all bluetooth devices with an asyncTask
-                final Bluetooth.ConnectBluetoothTask btTask = new Bluetooth.ConnectBluetoothTask();
-                btTask.progress = ProgressDialog.show(Experiment.this, getResources().getString(R.string.loadingTitle), getResources().getString(R.string.loadingBluetoothConnectionText), true);
+        if (!(experiment.bluetoothInputs.isEmpty() && experiment.bluetoothOutputs.isEmpty())) {
+            isBluetoothConnectionSuccessful = false;
+            // connect all bluetooth devices with an asyncTask
+            final Bluetooth.ConnectBluetoothTask btTask = new Bluetooth.ConnectBluetoothTask();
+            btTask.progress = ProgressDialog.show(Experiment.this, getResources().getString(R.string.loadingTitle), getResources().getString(R.string.loadingBluetoothConnectionText), true);
 
-                // define onSuccess
-                btTask.onSuccess = () -> {
+            // define onSuccess
+            btTask.onSuccess = () -> {
+                isBluetoothConnectionSuccessful = true;
+                showBluetoothConnectedDeviceInfo();
+
+                if(startMeasurement){
+                    if(timed){
+                        startTimedMeasurement();
+                    } else {
+                        startMeasurement();
+                    }
+                }
+            };
+
+            // set attributes of errorDialog
+            Bluetooth.errorDialog.context = Experiment.this;
+            Bluetooth.errorDialog.cancel = () -> btTask.progress.dismiss();
+            Bluetooth.errorDialog.tryAgain = () -> {
+                // start a new task with the same attributes
+                Bluetooth.ConnectBluetoothTask newBtTask = new Bluetooth.ConnectBluetoothTask();
+                newBtTask.progress = btTask.progress;
+                newBtTask.onSuccess = btTask.onSuccess;
+                // show ProgressDialog again
+                if (btTask.progress != null) {
+                    btTask.progress.show();
+                }
+                newBtTask.onSuccess = () -> {
                     isBluetoothConnectionSuccessful = true;
                     showBluetoothConnectedDeviceInfo();
-
-                    if(startMeasurement){
-                        if(timed){
-                            startTimedMeasurement();
-                        } else {
-                            startMeasurement();
-                        }
-                    }
                 };
+                newBtTask.execute(experiment.bluetoothInputs, experiment.bluetoothOutputs);
 
-                // set attributes of errorDialog
-                Bluetooth.errorDialog.context = Experiment.this;
-                Bluetooth.errorDialog.cancel = () -> btTask.progress.dismiss();
-                Bluetooth.errorDialog.tryAgain = () -> {
-                    // start a new task with the same attributes
-                    Bluetooth.ConnectBluetoothTask newBtTask = new Bluetooth.ConnectBluetoothTask();
-                    newBtTask.progress = btTask.progress;
-                    newBtTask.onSuccess = btTask.onSuccess;
-                    // show ProgressDialog again
-                    if (btTask.progress != null) {
-                        btTask.progress.show();
-                    }
-                    newBtTask.onSuccess = () -> {
-                        isBluetoothConnectionSuccessful = true;
-                        showBluetoothConnectedDeviceInfo();
-                    };
-                    newBtTask.execute(experiment.bluetoothInputs, experiment.bluetoothOutputs);
-
-                };
-                btTask.execute(experiment.bluetoothInputs, experiment.bluetoothOutputs);
-            }
+            };
+            btTask.execute(experiment.bluetoothInputs, experiment.bluetoothOutputs);
         }
     }
 
@@ -994,9 +990,7 @@ public class Experiment extends AppCompatActivity implements View.OnClickListene
 
         popupWindow = new PopupWindow(hintView, ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT);
 
-        if(Build.VERSION.SDK_INT >= 21){
-            popupWindow.setElevation(4.0f);
-        }
+        popupWindow.setElevation(4.0f);
 
         popupWindow.setOutsideTouchable(false);
         popupWindow.setTouchable(false);
@@ -1200,10 +1194,10 @@ public class Experiment extends AppCompatActivity implements View.OnClickListene
         //The remote server option is checked if activated
         remote.setChecked(serverEnabled);
 
-        //The calibrated magnetometer entry is only shown if the experiment uses a magnetometer and if the API level is high enough to offer an uncalibrated alternative
+        //The calibrated magnetometer entry is only shown if the experiment uses a magnetometer and the device offers an uncalibrated alternative
         boolean magnetometer = false;
         boolean calibrated = false;
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN_MR2 && sensorManager.getDefaultSensor(Sensor.TYPE_MAGNETIC_FIELD_UNCALIBRATED) != null) {
+        if (sensorManager.getDefaultSensor(Sensor.TYPE_MAGNETIC_FIELD_UNCALIBRATED) != null) {
             for (SensorInput sensor : experiment.inputSensors) {
                 if (sensor.type == Sensor.TYPE_MAGNETIC_FIELD || sensor.type == Sensor.TYPE_MAGNETIC_FIELD_UNCALIBRATED) {
                     magnetometer = true;
@@ -1415,11 +1409,9 @@ public class Experiment extends AppCompatActivity implements View.OnClickListene
 
         if (id == R.id.action_calibrated_magnetometer) {
             stopMeasurement();
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN_MR2) {
-                for (SensorInput sensor : experiment.inputSensors) {
-                    if (sensor.type == Sensor.TYPE_MAGNETIC_FIELD || sensor.type == Sensor.TYPE_MAGNETIC_FIELD_UNCALIBRATED) {
-                        sensor.calibrated = !item.isChecked();
-                    }
+            for (SensorInput sensor : experiment.inputSensors) {
+                if (sensor.type == Sensor.TYPE_MAGNETIC_FIELD || sensor.type == Sensor.TYPE_MAGNETIC_FIELD_UNCALIBRATED) {
+                    sensor.calibrated = !item.isChecked();
                 }
             }
         }
@@ -1673,21 +1665,19 @@ public class Experiment extends AppCompatActivity implements View.OnClickListene
         try {
             experiment.startAllIO();
         } catch (Bluetooth.BluetoothException e) {
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN_MR2) {
-                stopMeasurement(); // stop experiment
-                // show an error dialog
-                Bluetooth.errorDialog.message = e.getMessage();
-                Bluetooth.errorDialog.context = Experiment.this;
-                // try to connect the bluetooth devices again when the user clicks "try again"
-                Bluetooth.errorDialog.tryAgain = new Runnable() {
-                  @Override
-                     public void run() {
-                      connectBluetoothDevices(true, false);
-                  }
-                 };
-                 Bluetooth.errorDialog.run();
-                 return false;
-	        }
+            stopMeasurement(); // stop experiment
+            // show an error dialog
+            Bluetooth.errorDialog.message = e.getMessage();
+            Bluetooth.errorDialog.context = Experiment.this;
+            // try to connect the bluetooth devices again when the user clicks "try again"
+            Bluetooth.errorDialog.tryAgain = new Runnable() {
+              @Override
+                 public void run() {
+                  connectBluetoothDevices(true, false);
+              }
+             };
+             Bluetooth.errorDialog.run();
+             return false;
         } catch (DepthInput.DepthInputException e) {
             stopMeasurement(); // stop experiment
             AlertDialog.Builder builder = new AlertDialog.Builder(this);
@@ -1758,37 +1748,35 @@ public class Experiment extends AppCompatActivity implements View.OnClickListene
         //No more turning off during the measurement
         setKeepScreenOn(true);
 
-	if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN_MR2) {
-            // check if all Bluetooth devices are connected and display an errorDialog if not
-            Bluetooth notConnectedDevice = null;
-            for (Bluetooth b : experiment.bluetoothInputs) {
+        // check if all Bluetooth devices are connected and display an errorDialog if not
+        Bluetooth notConnectedDevice = null;
+        for (Bluetooth b : experiment.bluetoothInputs) {
+            if (!b.isConnected()) {
+                notConnectedDevice = b;
+                break;
+            }
+        }
+        if (notConnectedDevice == null) {
+            for (Bluetooth b : experiment.bluetoothOutputs) {
                 if (!b.isConnected()) {
                     notConnectedDevice = b;
                     break;
                 }
             }
-            if (notConnectedDevice == null) {
-                for (Bluetooth b : experiment.bluetoothOutputs) {
-                    if (!b.isConnected()) {
-                        notConnectedDevice = b;
-                        break;
-                    }
+        }
+        if (notConnectedDevice != null) {
+            // show an error dialog
+            Bluetooth.errorDialog.message = getResources().getString(R.string.bt_exception_no_connection)+Bluetooth.BluetoothException.getMessage(notConnectedDevice);
+            Bluetooth.errorDialog.context = Experiment.this;
+            // try to connect the bluetooth devices again when the user clicks "try again"
+            Bluetooth.errorDialog.tryAgain = new Runnable() {
+                @Override
+                public void run() {
+                    connectBluetoothDevices(true, true);
                 }
-            }
-            if (notConnectedDevice != null) {
-                // show an error dialog
-                Bluetooth.errorDialog.message = getResources().getString(R.string.bt_exception_no_connection)+Bluetooth.BluetoothException.getMessage(notConnectedDevice);
-                Bluetooth.errorDialog.context = Experiment.this;
-                // try to connect the bluetooth devices again when the user clicks "try again"
-                Bluetooth.errorDialog.tryAgain = new Runnable() {
-                    @Override
-                    public void run() {
-                        connectBluetoothDevices(true, true);
-                    }
-                };
-                Bluetooth.errorDialog.run();
-                return false;
-            }
+            };
+            Bluetooth.errorDialog.run();
+            return false;
         }
 
         if (timedRunBeepCountdown || timedRunBeepStart || timedRunBeepRunning || timedRunBeepStop) {
@@ -1995,9 +1983,7 @@ public class Experiment extends AppCompatActivity implements View.OnClickListene
             Log.e("Error in QrCode", e.getMessage());
         }
 
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN) {
-            ivServerAddressQr.setBackground(new BitmapDrawable(getResources(), bitmap));
-        }
+        ivServerAddressQr.setBackground(new BitmapDrawable(getResources(), bitmap));
 
         //TODO: Translate the text
         builder.setTitle("For easy URL access, scan the QR code from your device.");

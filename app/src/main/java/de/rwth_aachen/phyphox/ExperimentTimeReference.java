@@ -1,6 +1,5 @@
 package de.rwth_aachen.phyphox;
 
-import android.os.Build;
 import android.os.SystemClock;
 import android.util.Log;
 
@@ -72,12 +71,7 @@ public class ExperimentTimeReference implements Serializable {
     }
 
     public void registerEvent(TimeMappingEvent event) {
-        long eventTime;
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN_MR1) {
-            eventTime = SystemClock.elapsedRealtimeNanos();
-        } else {
-            eventTime = SystemClock.elapsedRealtime() * 1000000L;
-        }
+        long eventTime = SystemClock.elapsedRealtimeNanos();
         long systemTime = System.currentTimeMillis();
 
         //the listener is notified outside the lock: it reads this object back and takes locks of its own

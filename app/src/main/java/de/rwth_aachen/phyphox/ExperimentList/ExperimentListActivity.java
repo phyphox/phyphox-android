@@ -55,7 +55,6 @@ import android.widget.Toast;
 import androidx.activity.EdgeToEdge;
 import androidx.activity.OnBackPressedCallback;
 import androidx.annotation.NonNull;
-import androidx.annotation.RequiresApi;
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.view.ContextThemeWrapper;
@@ -418,10 +417,7 @@ public class ExperimentListActivity extends AppCompatActivity {
             for (int i = 0; i < pInfo.requestedPermissions.length; i++) {
                 sb.append(pInfo.requestedPermissions[i].startsWith("android.permission.") ? pInfo.requestedPermissions[i].substring(19) : pInfo.requestedPermissions[i]);
                 sb.append(": ");
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN)
-                    sb.append((pInfo.requestedPermissionsFlags[i] & PackageInfo.REQUESTED_PERMISSION_GRANTED) == 0 ? "no" : "yes");
-                else
-                    sb.append("API < 16");
+                sb.append((pInfo.requestedPermissionsFlags[i] & PackageInfo.REQUESTED_PERMISSION_GRANTED) == 0 ? "no" : "yes");
                 sb.append("<br />");
             }
         } else {
@@ -645,9 +641,7 @@ public class ExperimentListActivity extends AppCompatActivity {
 
         popupWindow = new PopupWindow(hintView, ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT);
 
-        if (Build.VERSION.SDK_INT >= 21) {
-            popupWindow.setElevation(4.0f);
-        }
+        popupWindow.setElevation(4.0f);
 
         popupWindow.setOutsideTouchable(false);
         popupWindow.setTouchable(false);
@@ -773,7 +767,6 @@ public class ExperimentListActivity extends AppCompatActivity {
         }
     }
 
-    @RequiresApi(api = Build.VERSION_CODES.JELLY_BEAN_MR2)
     public void loadExperimentFromBluetoothDevice(final BluetoothDevice device) {
         final ExperimentListActivity parent = this;
         if (bluetoothExperimentLoader == null) {
@@ -1060,7 +1053,6 @@ public class ExperimentListActivity extends AppCompatActivity {
         });
     }
 
-    @RequiresApi(api = Build.VERSION_CODES.JELLY_BEAN_MR2)
     protected void showBluetoothExperimentReadError(String msg, final BluetoothDevice device) {
         final AlertDialog.Builder builder = new AlertDialog.Builder(this);
         builder.setMessage(msg)
@@ -1196,7 +1188,6 @@ public class ExperimentListActivity extends AppCompatActivity {
         }
     }
 
-    @RequiresApi(api = Build.VERSION_CODES.JELLY_BEAN_MR2)
     @SuppressLint("MissingPermission")
     //TODO: The permission is actually checked when entering the entire BLE dialog and I do not see how we could reach this part of the code if it failed. However, I cannot rule out some other mechanism of revoking permissions during an app switch or from the notifications bar (?), so a cleaner implementation might be good idea
     public void openBluetoothExperiments(final BluetoothDevice device, final Set<UUID> uuids, boolean phyphoxService) {

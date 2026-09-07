@@ -472,20 +472,18 @@ public class PhyphoxExperiment implements Serializable, ExperimentTimeReference.
         for (NetworkConnection networkConnection : networkConnections)
             networkConnection.stop();
 
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN_MR2) {
-            //Bluetooth
-            Map<String, Bluetooth> uniqueBluetoothDevices = new HashMap<>();
-            for (BluetoothInput bti : bluetoothInputs) {
-                bti.stop();
-                uniqueBluetoothDevices.put(bti.idString != null && !bti.idString.isEmpty() ? bti.idString : bti.deviceAddress, bti);
-            }
-            for (BluetoothOutput bto : bluetoothOutputs) {
-                bto.stop();
-                uniqueBluetoothDevices.put(bto.idString != null && !bto.idString.isEmpty() ? bto.idString : bto.deviceAddress, bto);
-            }
-            for (Bluetooth b : uniqueBluetoothDevices.values()) {
-                b.writeEventCharacteristic(event);
-            }
+        //Bluetooth
+        Map<String, Bluetooth> uniqueBluetoothDevices = new HashMap<>();
+        for (BluetoothInput bti : bluetoothInputs) {
+            bti.stop();
+            uniqueBluetoothDevices.put(bti.idString != null && !bti.idString.isEmpty() ? bti.idString : bti.deviceAddress, bti);
+        }
+        for (BluetoothOutput bto : bluetoothOutputs) {
+            bto.stop();
+            uniqueBluetoothDevices.put(bto.idString != null && !bto.idString.isEmpty() ? bto.idString : bto.deviceAddress, bto);
+        }
+        for (Bluetooth b : uniqueBluetoothDevices.values()) {
+            b.writeEventCharacteristic(event);
         }
 
     }
@@ -498,18 +496,16 @@ public class PhyphoxExperiment implements Serializable, ExperimentTimeReference.
             return;
 
         experimentTimeReference.registerEvent(ExperimentTimeReference.TimeMappingEvent.START);
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN_MR2) {
-            ExperimentTimeReference.TimeMapping event = experimentTimeReference.getLastMapping();
-            Map<String, Bluetooth> uniqueBluetoothDevices = new HashMap<>();
-            for (BluetoothInput bti : bluetoothInputs) {
-                uniqueBluetoothDevices.put(bti.idString != null && !bti.idString.isEmpty() ? bti.idString : bti.deviceAddress, bti);
-            }
-            for (BluetoothOutput bto : bluetoothOutputs) {
-                uniqueBluetoothDevices.put(bto.idString != null && !bto.idString.isEmpty() ? bto.idString : bto.deviceAddress, bto);
-            }
-            for (Bluetooth b : uniqueBluetoothDevices.values()) {
-                b.writeEventCharacteristic(event);
-            }
+        ExperimentTimeReference.TimeMapping event = experimentTimeReference.getLastMapping();
+        Map<String, Bluetooth> uniqueBluetoothDevices = new HashMap<>();
+        for (BluetoothInput bti : bluetoothInputs) {
+            uniqueBluetoothDevices.put(bti.idString != null && !bti.idString.isEmpty() ? bti.idString : bti.deviceAddress, bti);
+        }
+        for (BluetoothOutput bto : bluetoothOutputs) {
+            uniqueBluetoothDevices.put(bto.idString != null && !bto.idString.isEmpty() ? bto.idString : bto.deviceAddress, bto);
+        }
+        for (Bluetooth b : uniqueBluetoothDevices.values()) {
+            b.writeEventCharacteristic(event);
         }
 
         newUserInput = true; //Set this to true to execute analysis at least ones with default values.
@@ -538,13 +534,11 @@ public class PhyphoxExperiment implements Serializable, ExperimentTimeReference.
             flashlightOutput.start();
         }
 
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN_MR2) {
-            for (BluetoothInput bti : bluetoothInputs) {
-                bti.start();
-            }
-            for (BluetoothOutput btO : bluetoothOutputs) {
-                btO.start();
-            }
+        for (BluetoothInput bti : bluetoothInputs) {
+            bti.start();
+        }
+        for (BluetoothOutput btO : bluetoothOutputs) {
+            btO.start();
         }
 
         for (NetworkConnection networkConnection : networkConnections)

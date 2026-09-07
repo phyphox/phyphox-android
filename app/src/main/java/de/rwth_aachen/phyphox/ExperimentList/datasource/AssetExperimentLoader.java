@@ -375,9 +375,7 @@ public class AssetExperimentLoader {
                                 if (uuid != null) {
                                    shortInfo.bluetoothDeviceUUIDs.add(uuid);
                                 }
-                                if (Build.VERSION.SDK_INT < Build.VERSION_CODES.JELLY_BEAN_MR2) {
-                                    shortInfo.unavailableSensor = R.string.bluetooth;
-                                } else if (!Bluetooth.isSupported(environment.context)) {
+                                if (!Bluetooth.isSupported(environment.context)) {
                                     shortInfo.unavailableSensor = R.string.bluetooth;
                                 }
                                 if (!customColor)

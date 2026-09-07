@@ -2,7 +2,6 @@ package de.rwth_aachen.phyphox.Bluetooth;
 
 import android.content.Context;
 import android.graphics.drawable.Drawable;
-import android.os.Build;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -12,7 +11,6 @@ import android.widget.RelativeLayout;
 import android.widget.TextView;
 
 import androidx.annotation.NonNull;
-import androidx.annotation.RequiresApi;
 import androidx.core.content.ContextCompat;
 import androidx.recyclerview.widget.RecyclerView;
 
@@ -45,7 +43,6 @@ public class ConnectedBluetoothDeviceInfoAdapter extends RecyclerView.Adapter<Co
         return new ViewHolder(listItem);
     }
 
-    @RequiresApi(api = Build.VERSION_CODES.JELLY_BEAN_MR2)
     @Override
     public void onBindViewHolder(ViewHolder holder, int position) {
 
