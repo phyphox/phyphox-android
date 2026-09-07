@@ -590,6 +590,23 @@ public class InteractiveGraphView extends RelativeLayout implements GraphView.Po
         graphLabel.setTextSize(textSizeAsDisplay);
     }
 
+    //Outputs come in (value, mapped value) pairs cycling through the x, y and z axes
+    private void commitPick(Marker marker, int outputIndex, Double userValue) {
+        double markerValue;
+        switch ((outputIndex / 2) % 3) {
+            case 0: markerValue = marker.dataX; break;
+            case 1: markerValue = marker.dataY; break;
+            default: markerValue = marker.dataZ; break;
+        }
+        if (pickData == null)
+            pickData = new Double[outputs.size()];
+        pickData[outputIndex] = markerValue;
+        if (userValue != null)
+            pickData[outputIndex+1] = userValue;
+        observer.onPick(pickData);
+        updatePickMarker();
+    }
+
     private void requestPickMappingValue(Marker pickableMarker, int outputIndex) {
         String title = outputs.get(outputIndex).label;
         String message = outputs.get(outputIndex+1).label;
@@ -617,24 +634,7 @@ public class InteractiveGraphView extends RelativeLayout implements GraphView.Po
             public void onClick(DialogInterface dialog, int which) {
                 try {
                     double userValue = Double.valueOf(input.getText().toString().replace(",", "."));
-                    double markerValue = Double.NaN;
-                    switch ((outputIndex / 2) % 3) {
-                        case 0: //x axis
-                            markerValue = pickableMarker.dataX;
-                            break;
-                        case 1: //y axis
-                            markerValue = pickableMarker.dataY;
-                            break;
-                        case 2: //z axis
-                            markerValue = pickableMarker.dataZ;
-                            break;
-                    }
-                    if (pickData == null)
-                        pickData = new Double[outputs.size()];
-                    pickData[outputIndex] = markerValue;
-                    pickData[outputIndex+1] = userValue;
-                    observer.onPick(pickData);
-                    updatePickMarker();
+                    commitPick(pickableMarker, outputIndex, userValue);
                 } catch (NumberFormatException e) {
                     Toast.makeText(getContext(), R.string.invalidValue, Toast.LENGTH_SHORT).show();
                 }
@@ -660,23 +660,7 @@ public class InteractiveGraphView extends RelativeLayout implements GraphView.Po
                             if (outputs.size() > finalI+1 && outputs.get(finalI+1) != null && outputs.get(finalI+1).label != null) {
                                 requestPickMappingValue(pickableMarker, finalI);
                             } else {
-                                double markerValue = Double.NaN;
-                                switch ((finalI / 2) % 3) {
-                                    case 0: //x axis
-                                        markerValue = pickableMarker.dataX;
-                                        break;
-                                    case 1: //y axis
-                                        markerValue = pickableMarker.dataY;
-                                        break;
-                                    case 2: //z axis
-                                        markerValue = pickableMarker.dataZ;
-                                        break;
-                                }
-                                if (pickData == null)
-                                    pickData = new Double[outputs.size()];
-                                pickData[finalI] = markerValue;
-                                observer.onPick(pickData);
-                                updatePickMarker();
+                                commitPick(pickableMarker, finalI, null);
                             }
                         }
                     });

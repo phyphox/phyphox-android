@@ -1,6 +1,7 @@
 package de.rwth_aachen.phyphox.ExperimentList.datasource;
 
 import android.app.Activity;
+import android.content.Context;
 import android.content.res.Resources;
 import android.util.Log;
 import android.widget.LinearLayout;
@@ -73,6 +74,15 @@ public class ExperimentRepository{
         for (ExperimentsInCategory cat : categories) {
             cat.addToParent(target);
         }
+    }
+
+    //Removes a collection experiment and its resource folder (named after the hex CRC32 of the file)
+    public static void deleteExperiment(Context context, String xmlFile) {
+        long crc32 = Helper.getCRC32(new File(context.getFilesDir(), xmlFile));
+        context.deleteFile(xmlFile);
+        File resFolder = new File(context.getFilesDir(), Long.toHexString(crc32).toLowerCase());
+        if (resFolder.isDirectory())
+            Helper.deleteRecursive(resFolder);
     }
 
     private void saveFileToMainList(ExperimentShortInfo experimentShortInfo, File file, File folder, ExperimentListEnvironment environment) {

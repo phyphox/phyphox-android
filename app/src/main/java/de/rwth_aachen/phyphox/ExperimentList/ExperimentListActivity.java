@@ -32,7 +32,6 @@ import android.hardware.camera2.CameraCharacteristics;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
-import android.provider.Settings;
 import android.text.Html;
 import android.text.SpannableStringBuilder;
 import android.text.Spanned;
@@ -258,7 +257,7 @@ public class ExperimentListActivity extends AppCompatActivity {
             if(grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
                 Toast.makeText(this,getString(R.string.bt_permission_granted), Toast.LENGTH_SHORT).show();
             } else {
-                showSettingsRedirectDialog(this);
+                Helper.showAppSettingsDialog(this, R.string.bl_scan_permission_required_title, R.string.bt_scan_permission_needed);
             }
             return;
         }
@@ -267,42 +266,13 @@ public class ExperimentListActivity extends AppCompatActivity {
                 if (lastNetworkLoadRetryIntent != null)
                     handleIntent(lastNetworkLoadRetryIntent); //retry the load that needed the permission
             } else {
-                showLocalNetworkSettingsRedirectDialog(this);
+                Helper.showAppSettingsDialog(this, R.string.localNetworkPermission, R.string.localNetworkPermissionMessage);
             }
             return;
         }
         if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
             this.recreate();
         }
-    }
-
-    private void showLocalNetworkSettingsRedirectDialog(Activity activity){
-        AlertDialog.Builder builder = new AlertDialog.Builder(activity);
-        builder.setTitle(getString(R.string.localNetworkPermission));
-        builder.setMessage(getString(R.string.localNetworkPermissionMessage));
-        builder.setPositiveButton(getString(R.string.gotoSetting), (dialog, which) -> {
-            Intent intent = new Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS);
-            Uri uri = Uri.fromParts("package", activity.getPackageName(), null);
-            intent.setData(uri);
-            activity.startActivityForResult(intent, 1);
-        });
-        builder.setNegativeButton(getString(R.string.cancel), null);
-        builder.create().show();
-    }
-
-    private void  showSettingsRedirectDialog(Activity activity){
-        AlertDialog.Builder builder = new AlertDialog.Builder(activity);
-        builder.setTitle(getString(R.string.bl_scan_permission_required_title));
-        builder.setMessage(getString(R.string.bt_scan_permission_needed));
-        builder.setPositiveButton(getString(R.string.gotoSetting), (dialog, which) -> {
-            Intent intent = new Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS);
-            Uri uri = Uri.fromParts("package", activity.getPackageName(), null);
-            intent.setData(uri);
-            activity.startActivityForResult(intent, 1);
-        });
-        builder.setNegativeButton(getString(R.string.cancel), null);
-        AlertDialog dialog = builder.create();
-        dialog.show();
     }
 
     private void setUpOnClickListener(){
@@ -728,12 +698,7 @@ public class ExperimentListActivity extends AppCompatActivity {
             final Intent retryIntent = lastNetworkLoadIntent;
             lastNetworkLoadIntent = null; //offer this once per load attempt
             lastNetworkLoadRetryIntent = retryIntent;
-            new AlertDialog.Builder(this)
-                    .setTitle(getString(R.string.localNetworkPermission))
-                    .setMessage(error + "\n\n" + getString(R.string.localNetworkLoadMessage))
-                    .setPositiveButton(getString(R.string.ok), (d, w) -> ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.ACCESS_LOCAL_NETWORK}, LOCAL_NETWORK_LOAD_REQUEST_CODE))
-                    .setNegativeButton(getString(R.string.cancel), null)
-                    .show();
+            Helper.requestLocalNetworkPermission(this, R.string.localNetworkPermission, error + "\n\n" + getString(R.string.localNetworkLoadMessage), LOCAL_NETWORK_LOAD_REQUEST_CODE, null);
             return;
         }
         Toast.makeText(this, error, Toast.LENGTH_LONG).show();
@@ -1472,14 +1437,8 @@ public class ExperimentListActivity extends AppCompatActivity {
         builder.setMessage(res.getString(R.string.confirmDelete))
                 .setTitle(R.string.confirmDeleteTitle)
                 .setPositiveButton(R.string.delete, (dialog, id) -> {
-                    for (ExperimentShortInfo info : selected) {
-                        long crc32 = Helper.getCRC32(new File(getFilesDir(), info.xmlFile));
-                        File resFolder = new File(getFilesDir(), Long.toHexString(crc32).toLowerCase());
-                        deleteFile(info.xmlFile);
-                        if (resFolder.isDirectory()) {
-                            Helper.deleteRecursive(resFolder);
-                        }
-                    }
+                    for (ExperimentShortInfo info : selected)
+                        ExperimentRepository.deleteExperiment(this, info.xmlFile);
                     exitSelectionMode();
                     experimentRepository.loadAndShowMainExperimentList(this);
                 })

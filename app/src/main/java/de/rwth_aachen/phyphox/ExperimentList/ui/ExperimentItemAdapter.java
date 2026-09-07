@@ -290,24 +290,7 @@ public class ExperimentItemAdapter extends BaseAdapter {
                                 .setTitle(R.string.confirmDeleteTitle)
                                 .setPositiveButton(R.string.delete, new DialogInterface.OnClickListener() {
                                     public void onClick(DialogInterface dialog, int id) {
-                                        //Confirmed. Delete the item and reload the list
-                                        long crc32 = Helper.getCRC32(new File(parentActivity.getFilesDir(), experimentShortInfos.get(position).xmlFile));
-                                        File resFolder = new File(parentActivity.getFilesDir(), Long.toHexString(crc32).toLowerCase());
-                                        Log.d("ExperimentList", "Deleting " + experimentShortInfos.get(position).xmlFile);
-                                        parentActivity.deleteFile(experimentShortInfos.get(position).xmlFile);
-                                        if (resFolder.isDirectory()) {
-                                            Log.d("ExperimentList", "Also deleting resource folder " + Long.toHexString(crc32).toLowerCase());
-                                            String[] files = resFolder.list();
-                                            for (String file : files) {
-                                                if (new File(resFolder, file).delete()) {
-                                                    Log.d("ExperimentList", "Done.");
-                                                } else {
-                                                    Log.d("ExperimentList", "Failed.");
-                                                }
-                                            }
-                                        } else {
-                                            Log.d("ExperimentList", "No resource folder found at " + resFolder.getAbsolutePath());
-                                        }
+                                        ExperimentRepository.deleteExperiment(parentActivity, experimentShortInfos.get(position).xmlFile);
                                         experimentRepository.loadAndShowMainExperimentList(parentActivity);
                                     }
                                 })

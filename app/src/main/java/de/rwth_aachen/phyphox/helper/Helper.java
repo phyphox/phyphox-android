@@ -9,6 +9,8 @@ import android.content.Context;
 import android.content.ContextWrapper;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.net.Uri;
+import android.provider.Settings;
 import android.content.pm.ActivityInfo;
 import android.content.pm.PackageManager;
 import android.content.res.Configuration;
@@ -37,6 +39,7 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.view.Window;
 
+import androidx.appcompat.app.AlertDialog;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
 
@@ -162,6 +165,34 @@ public abstract class Helper {
     public static boolean needsLocalNetworkPermission(android.content.Context context) {
         return android.os.Build.VERSION.SDK_INT >= 37 &&
                 androidx.core.content.ContextCompat.checkSelfPermission(context, android.Manifest.permission.ACCESS_LOCAL_NETWORK) != android.content.pm.PackageManager.PERMISSION_GRANTED;
+    }
+
+    //Explains why ACCESS_LOCAL_NETWORK is needed, then requests it. With an onDeclined action the dialog is not
+    //cancelable, so the user has to take one of the two paths.
+    public static void requestLocalNetworkPermission(Activity activity, int titleRes, String message, int requestCode, Runnable onDeclined) {
+        AlertDialog.Builder builder = new AlertDialog.Builder(activity)
+                .setTitle(activity.getString(titleRes))
+                .setMessage(message)
+                .setPositiveButton(activity.getString(R.string.ok), (d, w) -> ActivityCompat.requestPermissions(activity, new String[]{Manifest.permission.ACCESS_LOCAL_NETWORK}, requestCode));
+        if (onDeclined != null)
+            builder.setNegativeButton(activity.getString(R.string.cancel), (d, w) -> onDeclined.run()).setCancelable(false);
+        else
+            builder.setNegativeButton(activity.getString(R.string.cancel), null);
+        builder.show();
+    }
+
+    //After a denied permission: offer to open the app's system settings page
+    public static void showAppSettingsDialog(Activity activity, int titleRes, int messageRes) {
+        new AlertDialog.Builder(activity)
+                .setTitle(activity.getString(titleRes))
+                .setMessage(activity.getString(messageRes))
+                .setPositiveButton(activity.getString(R.string.gotoSetting), (dialog, which) -> {
+                    Intent intent = new Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS);
+                    intent.setData(Uri.fromParts("package", activity.getPackageName(), null));
+                    activity.startActivityForResult(intent, 1);
+                })
+                .setNegativeButton(activity.getString(R.string.cancel), null)
+                .show();
     }
 
     //Heuristic without DNS (must not block): hostnames that merely resolve to a LAN address are caught after a failed attempt
