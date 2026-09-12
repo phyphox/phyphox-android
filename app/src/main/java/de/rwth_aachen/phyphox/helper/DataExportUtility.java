@@ -73,9 +73,14 @@ public class DataExportUtility{
 
         ContentResolver resolver = activity.getContentResolver();
         Uri collection = MediaStore.Downloads.getContentUri(MediaStore.VOLUME_EXTERNAL_PRIMARY);
-        Uri fileUri = resolver.insert(collection, values);
+        Uri fileUri = null;
 
-        if (fileUri != null) {
+        //The MediaStore provider reports its own problems (no unique name, volume gone) as IllegalStateException or SecurityException
+        try {
+            fileUri = resolver.insert(collection, values);
+            if (fileUri == null)
+                throw new IOException("MediaStore did not create an entry.");
+
             try (OutputStream out = resolver.openOutputStream(fileUri);
                  InputStream in = Files.newInputStream(file.toPath())) {
 
@@ -84,15 +89,22 @@ public class DataExportUtility{
                 while ((len = in.read(buffer)) > 0) {
                     out.write(buffer, 0, len);
                 }
-
-                Toast.makeText(activity, R.string.savedToDownloadsMessage, Toast.LENGTH_SHORT).show();
-
-                values.clear();
-                values.put(MediaStore.Downloads.IS_PENDING, 0); // Mark as finished
-                resolver.update(fileUri, values, null, null);
-            } catch (IOException e) {
-                e.printStackTrace();
             }
+
+            values.clear();
+            values.put(MediaStore.Downloads.IS_PENDING, 0); // Mark as finished
+            resolver.update(fileUri, values, null, null);
+
+            Toast.makeText(activity, R.string.savedToDownloadsMessage, Toast.LENGTH_SHORT).show();
+        } catch (IOException | IllegalStateException | SecurityException e) {
+            e.printStackTrace();
+            if (fileUri != null) {
+                try {
+                    resolver.delete(fileUri, null, null);
+                } catch (Exception ignored) {
+                }
+            }
+            Toast.makeText(activity, activity.getString(R.string.savedToDownloadsError) + " " + e.getMessage(), Toast.LENGTH_LONG).show();
         }
     }
 

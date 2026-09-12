@@ -58,6 +58,7 @@
     <string name="share">Share screenshot</string>
     <string name="download">Download</string>
     <string name="savedToDownloadsMessage">File saved to Downloads</string>
+    <string name="savedToDownloadsError">Could not save the file to Downloads:</string>
     <string name="permissionRequiredToSaveToDownloads">Storage permission is needed to save files to Downloads</string>
     <string name="errorWritingStateFile">Error writing state file: </string>
     <string name="share_subject">Screenshot from phyphox</string>
