@@ -370,26 +370,34 @@ public class GraphView extends View {
             float[] yi = null;
             float[] zi = null;
             if (i+1 < graphSetup.dataSets.size() && graphSetup.dataSets.get(i+1).style == Style.mapZ) {
+                FloatBufferRepresentation fbZ = graphSetup.dataSets.get(i + 1).fbY;
+                if (fbZ == null)
+                    continue;
                 synchronized (cd.fbX.lock) {
                     synchronized (cd.fbY.lock) {
-                        synchronized (graphSetup.dataSets.get(i + 1).fbY.lock) {
-                            n = cd.n;
+                        synchronized (fbZ.lock) {
+                            //An empty buffer is represented by a null FloatBuffer, so there is nothing to pick
+                            if (cd.fbX.data == null || cd.fbY.data == null || fbZ.data == null)
+                                continue;
+                            n = Math.min(Math.min(cd.n, cd.fbX.size), Math.min(cd.fbY.size, fbZ.size));
                             xi = new float[n];
                             yi = new float[n];
                             zi = new float[n];
                             cd.fbX.data.position(cd.fbX.offset);
                             cd.fbY.data.position(cd.fbY.offset);
-                            graphSetup.dataSets.get(i + 1).fbY.data.position(graphSetup.dataSets.get(i + 1).fbY.offset);
+                            fbZ.data.position(fbZ.offset);
                             cd.fbX.data.get(xi, 0, n);
                             cd.fbY.data.get(yi, 0,  n);
-                            graphSetup.dataSets.get(i + 1).fbY.data.get(zi, 0,  n);
+                            fbZ.data.get(zi, 0,  n);
                         }
                     }
                 }
             } else {
                 synchronized (cd.fbX.lock) {
                     synchronized (cd.fbY.lock) {
-                        n = cd.n;
+                        if (cd.fbX.data == null || cd.fbY.data == null)
+                            continue;
+                        n = Math.min(cd.n, Math.min(cd.fbX.size, cd.fbY.size));
                         xi = new float[n];
                         yi = new float[n];
                         cd.fbX.data.position(cd.fbX.offset);
@@ -1257,6 +1265,8 @@ public class GraphView extends View {
     }
 
     private double offsetFromExperimentTime(double v) {
+        if (graphSetup.trStarts == null || graphSetup.systemTimeReferenceGap == null || graphSetup.systemTimeReferenceGap.isEmpty())
+            return 0.0;
         if (absoluteTime && !linearTime) {
             int i = 0;
             while (i + 1 < graphSetup.trStarts.size() && graphSetup.trStarts.get(i + 1) < v)
@@ -1272,6 +1282,8 @@ public class GraphView extends View {
     }
 
     private double offsetFromSystemTime(double v) {
+        if (graphSetup.trStarts == null || graphSetup.systemTimeReferenceGap == null || graphSetup.systemTimeReferenceGap.isEmpty())
+            return 0.0;
         if (absoluteTime && !linearTime) {
             int i = 0;
             while (i + 1 < graphSetup.trStarts.size() && i + 1 < graphSetup.systemTimeReferenceGap.size() && graphSetup.trStarts.get(i + 1) + graphSetup.systemTimeReferenceGap.get(i + 1) < v)
