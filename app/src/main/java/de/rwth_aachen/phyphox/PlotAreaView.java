@@ -203,6 +203,10 @@ class GraphSetup implements Serializable {
             t = (float)maxY + (plotBoundT) / (float) plotBoundH * ((float)maxY - (float)minY);
         }
 
+        //The double ranges above differ, but the float versions may not; orthoM throws on equal bounds
+        if (l == r || b == t)
+            return;
+
         if (style.contains(GraphView.Style.mapXY) && maxZ != minZ) {
             float zminOnX, zmaxOnX, zmin, zmax;
             if (logZ) {
