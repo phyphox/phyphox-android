@@ -39,6 +39,7 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.lang.ref.WeakReference;
 import java.net.URL;
+import java.net.URLConnection;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -141,17 +142,42 @@ public abstract class PhyphoxFile {
         long crc32;
     }
 
+    //A loaded file exists several times at once (the growing copy below, its byte array, the parsed
+    //experiment and the retained source), so anything that does not fit into a fraction of the heap
+    //still available is refused with a message instead of dying with an OutOfMemoryError later.
+    private static void checkLoadSize(long size) throws IOException {
+        Runtime rt = Runtime.getRuntime();
+        long available = rt.maxMemory() - (rt.totalMemory() - rt.freeMemory());
+        if (size > available / 4)
+            throw new IOException("The file is too large to be loaded on this device (" + (size / (1024 * 1024)) + " MB).");
+    }
+
     //Helper function to read an input stream into memory and return an input stream to the data in memory as well as the data
     public static void remoteInputToMemory(PhyphoxStream stream, String resourceFolder, boolean resourceViaCRC32) throws IOException {
+        remoteInputToMemory(stream, resourceFolder, resourceViaCRC32, -1);
+    }
+
+    //expectedSize is the announced size if known in advance (Content-Length), so oversized downloads fail before the first byte
+    public static void remoteInputToMemory(PhyphoxStream stream, String resourceFolder, boolean resourceViaCRC32, long expectedSize) throws IOException {
+        if (expectedSize > 0)
+            checkLoadSize(expectedSize);
+
         ByteArrayOutputStream os = new ByteArrayOutputStream();
 
         CRC32 crc32 = new CRC32();
 
         int n;
+        long total = 0;
+        long nextCheck = 1024 * 1024;
         byte[] buffer = new byte[1024];
         while ((n = stream.inputStream.read(buffer, 0, 1024)) != -1) {
             os.write(buffer, 0, n);
             crc32.update(buffer, 0, n);
+            total += n;
+            if (total >= nextCheck) {
+                checkLoadSize(total);
+                nextCheck = total + 1024 * 1024;
+            }
         }
 
         os.flush();
@@ -254,14 +280,16 @@ public abstract class PhyphoxFile {
                 Uri uri = intent.getData();
                 try {
                     URL url = new URL("https", uri.getHost(), uri.getPort(), uri.getPath() + (uri.getQuery() != null ? ("?" + uri.getQuery()) : ""));
-                    phyphoxStream.inputStream = url.openStream();
-                    remoteInputToMemory(phyphoxStream, null, false);
+                    URLConnection connection = url.openConnection();
+                    phyphoxStream.inputStream = connection.getInputStream();
+                    remoteInputToMemory(phyphoxStream, null, false, connection.getContentLength());
                 } catch (Exception e) {
                     //ok, https did not work. Maybe we success with http?
                     try {
                         URL url = new URL("http", uri.getHost(), uri.getPort(), uri.getPath() + (uri.getQuery() != null ? ("?" + uri.getQuery()) : ""));
-                        phyphoxStream.inputStream = url.openStream();
-                        remoteInputToMemory(phyphoxStream, null, false);
+                        URLConnection connection = url.openConnection();
+                        phyphoxStream.inputStream = connection.getInputStream();
+                        remoteInputToMemory(phyphoxStream, null, false, connection.getContentLength());
                     } catch (Exception e2) {
                         phyphoxStream.errorMessage = "Error loading experiment from phyphox: " + e2.getMessage();
                     }
