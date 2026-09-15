@@ -484,8 +484,28 @@ public class ExperimentListActivity extends AppCompatActivity {
                 sb.append("- Name: ");
                 sb.append(sensor.getName());
                 sb.append("<br />");
+                sb.append("- String type: ");
+                sb.append(sensor.getStringType());
+                sb.append("<br />");
                 sb.append("- Reporting Mode: ");
                 sb.append(sensor.getReportingMode());
+                switch (sensor.getReportingMode()) {
+                    case Sensor.REPORTING_MODE_CONTINUOUS: sb.append(" (continuous)"); break;
+                    case Sensor.REPORTING_MODE_ON_CHANGE: sb.append(" (on change)"); break;
+                    case Sensor.REPORTING_MODE_ONE_SHOT: sb.append(" (one shot)"); break;
+                    case Sensor.REPORTING_MODE_SPECIAL_TRIGGER: sb.append(" (special trigger)"); break;
+                }
+                sb.append("<br />");
+                sb.append("- Wake-up: ");
+                sb.append(sensor.isWakeUpSensor() ? "yes" : "no");
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
+                    sb.append("<br />");
+                    sb.append("- Dynamic: ");
+                    sb.append(sensor.isDynamicSensor() ? "yes" : "no");
+                    sb.append("<br />");
+                    sb.append("- Additional info: ");
+                    sb.append(sensor.isAdditionalInfoSupported() ? "yes" : "no");
+                }
                 sb.append("<br />");
                 sb.append("- Range: ");
                 sb.append(sensor.getMaximumRange());
@@ -500,6 +520,11 @@ public class ExperimentListActivity extends AppCompatActivity {
                 sb.append("- Min delay: ");
                 sb.append(sensor.getMinDelay());
                 sb.append(" µs");
+                if (sensor.getMinDelay() > 0) {
+                    sb.append(" (");
+                    sb.append(String.format(Locale.US, "%.1f", 1e6 / sensor.getMinDelay()));
+                    sb.append(" Hz)");
+                }
                 sb.append("<br />");
                 sb.append("- Max delay: ");
                 sb.append(sensor.getMaxDelay());
@@ -514,6 +539,12 @@ public class ExperimentListActivity extends AppCompatActivity {
                 sb.append("<br />");
                 sb.append("- Version: ");
                 sb.append(sensor.getVersion());
+                sb.append("<br />");
+                sb.append("- FIFO: ");
+                sb.append(sensor.getFifoReservedEventCount());
+                sb.append(" reserved / ");
+                sb.append(sensor.getFifoMaxEventCount());
+                sb.append(" max events");
                 sb.append("<br /><br />");
             }
         }

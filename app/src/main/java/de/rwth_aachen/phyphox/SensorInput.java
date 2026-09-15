@@ -9,6 +9,7 @@ import android.util.Log;
 
 import java.io.Serializable;
 import java.security.InvalidParameterException;
+import java.util.List;
 import java.util.Vector;
 import java.util.concurrent.locks.Lock;
 
@@ -159,10 +160,19 @@ public class SensorInput implements SensorEventListener, Serializable {
 
         Sensor sensor = null;
         vendorSensor = false;
+        int defaultType = -1;
         if (type >= 0)
-            sensor = sensorManager.getDefaultSensor(type);
+            defaultType = type;
         else if (type == -1 && sensorTypeFilter >= 0 && sensorNameFilter == null)
-            sensor = sensorManager.getDefaultSensor(sensorTypeFilter);
+            defaultType = sensorTypeFilter;
+        if (defaultType >= 0) {
+            sensor = sensorManager.getDefaultSensor(defaultType);
+            if (sensor == null) {
+                List<Sensor> ofType = sensorManager.getSensorList(defaultType);
+                if (!ofType.isEmpty())
+                    sensor = ofType.get(0);
+            }
+        }
 
         if (sensor != null) {
             return sensor;
@@ -269,6 +279,12 @@ public class SensorInput implements SensorEventListener, Serializable {
                 return "µT";
             case Sensor.TYPE_MAGNETIC_FIELD_UNCALIBRATED:
                 return "µT";
+            case Sensor.TYPE_GRAVITY:
+                return "m/s²";
+            case Sensor.TYPE_ACCELEROMETER_UNCALIBRATED:
+                return "m/s²";
+            case Sensor.TYPE_GYROSCOPE_UNCALIBRATED:
+                return "rad/s";
             case Sensor.TYPE_PRESSURE:
                 return "hPa";
             case Sensor.TYPE_AMBIENT_TEMPERATURE:
