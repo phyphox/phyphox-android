@@ -446,20 +446,27 @@ public class SensorInput implements SensorEventListener, Serializable {
         //From here only listen to "this" sensor
         if (event.sensor.getType() == sensor.getType()) {
 
-            Double accuracy = Double.NaN;
-            if (type == Sensor.TYPE_MAGNETIC_FIELD_UNCALIBRATED) {
+            //Accuracy: 0 for uncalibrated raw data, otherwise the status Android reports for every sensor type (-1 unreliable, 1 low, 2 medium, 3 high)
+            double accuracy;
+            if (type != calibratedVersion(type)) {
                 accuracy = 0.0;
-            } else if (type == Sensor.TYPE_MAGNETIC_FIELD) {
+            } else {
                 switch (event.accuracy) {
                     case SensorManager.SENSOR_STATUS_NO_CONTACT:
                     case SensorManager.SENSOR_STATUS_UNRELIABLE:
                         accuracy = -1.0;
+                        break;
                     case SensorManager.SENSOR_STATUS_ACCURACY_LOW:
                         accuracy = 1.0;
+                        break;
                     case SensorManager.SENSOR_STATUS_ACCURACY_MEDIUM:
                         accuracy = 2.0;
+                        break;
                     case SensorManager.SENSOR_STATUS_ACCURACY_HIGH:
                         accuracy = 3.0;
+                        break;
+                    default:
+                        accuracy = Double.NaN;
                 }
             }
 
@@ -496,7 +503,7 @@ public class SensorInput implements SensorEventListener, Serializable {
                             avgZ += event.values[2];
                     }
 
-                    avgAccuracy = Math.min(accuracy, avgAccuracy);
+                    avgAccuracy = aquisitions == 0 ? accuracy : Math.min(accuracy, avgAccuracy); //Worst accuracy within the averaging period
                     aquisitions++;
                 } else {
                     //No averaging. Just keep the last result
