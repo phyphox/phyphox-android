@@ -266,6 +266,8 @@ THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND 
     <string name="sensorNotAvailableWarningMoreInfo">More info</string>
     <string name="sensorNotAvailableWarningMoreInfoURL">http://phyphox.org/faq/#faqMissingSensor</string>
     <string name="calibrated_magnetometer">Use calibrated magnetometer</string>
+    <string name="calibrated_gyroscope">Use calibrated gyroscope</string>
+    <string name="calibrated_accelerometer">Use calibrated accelerometer</string>
     <string name="force_gnss">Satellite location only</string>
     <!-- Bluetooth  -->
     <string name="bluetooth">Bluetooth Low Energy</string>

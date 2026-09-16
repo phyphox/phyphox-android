@@ -77,7 +77,7 @@ import de.rwth_aachen.phyphox.camera.model.ShowCameraControls;
 //of a remote phyphox-file to the local collection. Both are implemented as an AsyncTask
 public abstract class PhyphoxFile {
 
-    public final static String phyphoxFileVersion = "1.20";
+    public final static String phyphoxFileVersion = "1.21";
 
     //translation maps any term for which a suitable translation is found to the current locale or, as fallback, to English
     private static Map<String, String> translation = new HashMap<>();
@@ -2262,6 +2262,7 @@ public abstract class PhyphoxFile {
                     int typeFilter = getIntAttribute("typeFilter", -1);
                     String nameFilter = getStringAttribute("nameFilter");
                     boolean ignoreUnavailable = getBooleanAttribute("ignoreUnavailable", false);
+                    boolean preferUncalibrated = getBooleanAttribute("preferUncalibrated", false); //Start with the uncalibrated version if the device has both (since 1.21)
 
                     //Allowed input/output configuration
                     ioBlockParser.ioMapping[] outputMapping = {
@@ -2277,7 +2278,9 @@ public abstract class PhyphoxFile {
 
                     //Add a sensor. If the string is unknown, sensorInput throws a phyphoxFileException
                     try {
-                        experiment.inputSensors.add(new SensorInput(type, nameFilter, typeFilter, ignoreUnavailable, rate, rateStrategy, stride, average, outputs, experiment.dataLock, experiment.experimentTimeReference));
+                        SensorInput sensorInput = new SensorInput(type, nameFilter, typeFilter, ignoreUnavailable, rate, rateStrategy, stride, average, outputs, experiment.dataLock, experiment.experimentTimeReference);
+                        sensorInput.calibrated = !preferUncalibrated;
+                        experiment.inputSensors.add(sensorInput);
                         experiment.inputSensors.lastElement().attachSensorManager(parent.sensorManager);
                     } catch (SensorInput.SensorException e) {
                         throw new phyphoxFileException(e.getMessage(), xpp.getLineNumber());

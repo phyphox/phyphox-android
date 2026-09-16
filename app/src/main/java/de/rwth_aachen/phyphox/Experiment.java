@@ -1116,6 +1116,13 @@ public class Experiment extends AppCompatActivity implements View.OnClickListene
         editor.apply();
     }
 
+    //Menu item and calibrated sensor type of each calibrated/uncalibrated switch
+    private static final int[][] calibrationMenuEntries = {
+            {R.id.action_calibrated_magnetometer, Sensor.TYPE_MAGNETIC_FIELD},
+            {R.id.action_calibrated_gyroscope, Sensor.TYPE_GYROSCOPE},
+            {R.id.action_calibrated_accelerometer, Sensor.TYPE_ACCELEROMETER}
+    };
+
     @Override
     //Refresh the options menu
     public boolean onPrepareOptionsMenu(Menu menu) {
@@ -1135,7 +1142,6 @@ public class Experiment extends AppCompatActivity implements View.OnClickListene
         MenuItem timed_run = menu.findItem(R.id.action_timedRun);
         MenuItem remote = menu.findItem(R.id.action_remoteServer);
         MenuItem saveLocally = menu.findItem(R.id.action_saveLocally);
-        MenuItem calibratedMagnetometer = menu.findItem(R.id.action_calibrated_magnetometer);
         MenuItem forceGNSSItem = menu.findItem(R.id.action_force_gnss);
 
         Iterator<PhyphoxExperiment.Link> it = experiment.getHighlightedLinks().iterator();
@@ -1194,19 +1200,22 @@ public class Experiment extends AppCompatActivity implements View.OnClickListene
         //The remote server option is checked if activated
         remote.setChecked(serverEnabled);
 
-        //The calibrated magnetometer entry is only shown if the experiment uses a magnetometer and the device offers an uncalibrated alternative
-        boolean magnetometer = false;
-        boolean calibrated = false;
-        if (sensorManager.getDefaultSensor(Sensor.TYPE_MAGNETIC_FIELD_UNCALIBRATED) != null) {
-            for (SensorInput sensor : experiment.inputSensors) {
-                if (sensor.type == Sensor.TYPE_MAGNETIC_FIELD || sensor.type == Sensor.TYPE_MAGNETIC_FIELD_UNCALIBRATED) {
-                    magnetometer = true;
-                    calibrated = sensor.calibrated;
+        //A calibrated/uncalibrated entry is only shown if the experiment uses that sensor type and the device offers an uncalibrated alternative
+        for (int[] entry : calibrationMenuEntries) {
+            boolean used = false;
+            boolean calibrated = false;
+            if (SensorInput.hasUncalibratedVersion(sensorManager, entry[1])) {
+                for (SensorInput sensor : experiment.inputSensors) {
+                    if (SensorInput.calibratedVersion(sensor.type) == entry[1]) {
+                        used = true;
+                        calibrated = sensor.calibrated;
+                    }
                 }
             }
+            MenuItem item = menu.findItem(entry[0]);
+            item.setVisible(used);
+            item.setChecked(calibrated);
         }
-        calibratedMagnetometer.setVisible(magnetometer);
-        calibratedMagnetometer.setChecked(calibrated);
 
         boolean gps = false;
         boolean forceGNSS = false;
@@ -1407,11 +1416,12 @@ public class Experiment extends AppCompatActivity implements View.OnClickListene
 
         }
 
-        if (id == R.id.action_calibrated_magnetometer) {
-            stopMeasurement();
-            for (SensorInput sensor : experiment.inputSensors) {
-                if (sensor.type == Sensor.TYPE_MAGNETIC_FIELD || sensor.type == Sensor.TYPE_MAGNETIC_FIELD_UNCALIBRATED) {
-                    sensor.calibrated = !item.isChecked();
+        for (int[] entry : calibrationMenuEntries) {
+            if (id == entry[0]) {
+                stopMeasurement();
+                for (SensorInput sensor : experiment.inputSensors) {
+                    if (SensorInput.calibratedVersion(sensor.type) == entry[1])
+                        sensor.calibrated = !item.isChecked();
                 }
             }
         }
