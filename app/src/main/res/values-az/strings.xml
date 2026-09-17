@@ -431,4 +431,8 @@
     <string name="localNetworkDeniedHint">Yerli şəbəkə icazəsi olmadan yerli şəbəkənizdəki cihazlara bağlantılar uğursuz olacaq.</string>
     <string name="remoteServerPortInUseTitle">Uzaqdan giriş aktivləşdirilə bilmədi</string>
     <string name="remoteServerPortInUse">Uzaqdan giriş aktivləşdirilə bilmədi, çünki port bu cihazdakı başqa bir tətbiq tərəfindən istifadə olunur. Portu istifadə edən tətbiqi dayandırın və ya phyphox tənzimləmələrində başqa port təyin edin.</string>
+    <string name="savedToDownloadsError">Faylı Endirmələr qovluğuna saxlamaq mümkün olmadı:</string>
+    <string name="calibrated_gyroscope">Kalibrlənmiş giroskopdan istifadə et</string>
+    <string name="calibrated_accelerometer">Kalibrlənmiş akselerometrdən istifadə et</string>
+    <string name="bt_scan_failed">Bluetooth axtarışını başlatmaq mümkün olmadı. Adətən Bluetooth-u söndürüb yenidən yandırmaq bunu aradan qaldırır. Android xəta kodunu bildirdi:</string>
 </resources>
