@@ -32,7 +32,7 @@
 \nDominik Dorsel
 \nJonas Gessner
 \nCamilla Lummerzheim</string>
-    <string name="creditsLibs">L\'interface web pour le contrôle à distance utilise la bibliothèque JavaScript \"Chart.js\" (http://chartjs.org), disponible sous la licence MIT. Pour la transformée de Fourier, nous utilisons la bibliothèque FFTW (http://fftw.org), Copyright © 2003, 2007-11 Matteo Frigo, Copyright © 2003, 2007-11 Massachusetts Institute of Technology, disponible avec GNU General Public Licence (version 2 ou plus). Les données d\'élévation GPS sont converties de l\'ellipsoïde WGS84 au géoïde EGM84 à l\'aide des données EGM84 (résolution 30 \') et d\'une fonction portée de GographicLib (https://geographiclib.sourceforge.io/, licence MIT / X11).</string>
+    <string name="creditsLibs">L\'interface web pour le contrôle à distance utilise le serveur HTTP léger Java (jlhttp), sous licence GNU General Public Licence v2, et affiche les données à l\'aide de la bibliothèque JavaScript \"Chart.js\" (http://chartjs.org), disponible sous la licence MIT. Pour la transformée de Fourier, nous utilisons la bibliothèque FFTW (http://fftw.org), Copyright © 2003, 2007-11 Matteo Frigo, Copyright © 2003, 2007-11 Massachusetts Institute of Technology, disponible avec GNU General Public Licence (version 2 ou plus). Les données d\'élévation GPS sont converties de l\'ellipsoïde WGS84 au géoïde EGM84 à l\'aide des données EGM84 (résolution 30 \') et d\'une fonction portée de GographicLib (https://geographiclib.sourceforge.io/, licence MIT / X11).</string>
     <string name="sensorLight">Luminosité</string>
     <string name="sensorGyroscope">Gyroscope</string>
     <string name="sensorAccelerometer">Accéléromètre</string>
@@ -174,7 +174,7 @@
     <string name="experimentinfo_hint">Regardez les informations sur l\'expérience pour apprendre comment l\'utiliser.</string>
     <string name="start_hint">Appuyez sur le triangle pour commencer l\'expérience.</string>
     <string name="bluetooth">Bluetooth à basse consommation</string>
-    <string name="bt_android_version">La technologie Bluetooth à basse consommation n\'est pas compatible avec les versions Android antérieures à 4.3.</string>
+    <string name="bt_android_version">La technologie Bluetooth à basse consommation (Bluetooth Low Energy) n\'est pas compatible avec cet appareil.</string>
     <string name="bt_pick_device">Choisissez un appareil.</string>
     <string name="bt_scanning_generic">Recherche d\'appareils Bluetooth…</string>
     <string name="bt_scanning_specific1">Recherche d\'appareils Bluetooth avec</string>
@@ -214,8 +214,8 @@
     <string name="bt_location_service_explanation">En plus de l\'autorisation d\'obtenir des informations sur la localisation, Android exige que les services de localisation soient activés pour les scans Bluetooth car le résultat pourrait être utilisé pour trouver des informations de localisation. Nous vous redirigerons vers les paramètres de votre système.</string>
     <string name="networkPrivacyWarning">Avertissement de confidentialité</string>
     <string name="networkVisitPrivacyURL">Politique de confidentialité</string>
-    <string name="networkPrivacyInfo">"Cette expérience utilise une connexion réseau, ce qui signifie que les données de l\'expérience peuvent être transmises à un service réseau. Vous pouvez trouver plus de détails en cliquant sur le bouton  \"politique de confidentialité\" ci-dessous, qui vous amènera au site Web donnant la politique de confidentialité fournie par le créateur de cette expérience. Si le service réseau n\'est pas un appareil local, vous devez savoir que phyphox peut transmettre les informations suivantes si vous démarrez cette expérience :"</string>
-    <string name="networkPrivacyUniqueID">Un identifiant unique à cet appareil et au service réseau, qui permet de faire correspondre toutes les données envoyées depuis cet appareil via cette configuration d\'expérience.</string>
+    <string name="networkPrivacyInfo">Cette expérience utilise une connexion réseau, ce qui signifie que les données de l\'expérience peuvent être transmises à un service réseau. Vous pouvez trouver plus de détails en cliquant sur le bouton \"politique de confidentialité\" ci-dessous, qui vous amènera au site Web donnant la politique de confidentialité fournie par le créateur de cette expérience. Si le service réseau n\'est pas un appareil local, vous devez savoir que phyphox peut transmettre les informations suivantes si vous démarrez cette expérience :</string>
+    <string name="networkPrivacyUniqueID">Un identifiant unique à cet appareil et à ce réseau, qui permet de faire correspondre toutes les données envoyées depuis cet appareil par cette expérience.</string>
     <string name="networkPrivacySensorData">Données issues des capteurs suivants :</string>
     <string name="networkPrivacySensorMicrophone">Enregistrements ou données issues des enregistrements du microphone.</string>
     <string name="networkPrivacySensorLocation">Données de localisation (données GPS ou similaires).</string>
@@ -345,7 +345,7 @@
     <string name="cameraFrontFacing">Caméra face avant</string>
     <string name="cameraBackFacing">Caméra face arrière</string>
     <string name="cameraExternal">Caméra externe</string>
-    <string name="sensorGravity">Vecteur gravité</string>
+    <string name="sensorGravity">Gravité</string>
     <string name="settingsDefault">Valeur par défaut</string>
     <string name="settings">Paramètres</string>
     <string name="settingsHeadLanguage">Langue</string>
@@ -375,4 +375,60 @@
     <string name="camera_not_ready">La caméra n\'est pas disponible</string>
     <string name="common_quantity_short_luminance">Lv</string>
     <string name="common_quantity_percentage">Pourcent</string>
+    <string name="common_quantity_short_sound_pressure_level">SPL</string>
+    <string name="depthAggregationMode">Mode d\'agrégation</string>
+    <string name="depthAggregationModePrompt">Sélectionnez la méthode d\'agrégation des mesures de profondeur dans la zone sélectionnée.</string>
+    <string name="depthAggregationModeClosest">La plus proche</string>
+    <string name="depthAggregationModeAverage">Moyenne</string>
+    <string name="depthAggregationModeWeighted">Pondérée</string>
+    <string name="remoteCameraPreviewWarning">La prévisualisation et le contrôle de la caméra ne sont pas pris en charge par l\'interface de contôle à distance.</string>
+    <string name="common_quantity_short_luma">Y\'</string>
+    <string name="cameraZoom">Zoom</string>
+    <string name="download">Télécharger</string>
+    <string name="savedToDownloadsMessage">Fichier enregistré dans les Téléchargements</string>
+    <string name="permissionRequiredToSaveToDownloads">Une permission est nécessaire pour enregistrer des fichiers dans les Téléchargements</string>
+    <string name="errorWritingStateFile">Erreur lors d\'écriture du fichier :</string>
+    <string name="wb_auto">Auto</string>
+    <string name="wb_incandescent">Incandescence (filament)</string>
+    <string name="wb_fluorescent">Fluorescence</string>
+    <string name="wb_daylight">Lumière du jour</string>
+    <string name="wb_cloudy">Nuageux</string>
+    <string name="error">Erreur</string>
+    <string name="invalidValue">Valeur invalide</string>
+    <string name="clear_data_question_select">Voulez-vous effacer les données mesurées et les items optionnels qui suivent \?</string>
+    <string name="warning_photosensitivity">Avertissement : risque pour les personnes photosensibles</string>
+    <string name="warning_photosensitivity_message">Cette expérience produit des clignotements lumineux à des fréquences élevées. Cela peut provoquer une gêne ou des crises chez les personnes souffrant d\'épilepsie photosensible, ou plus généralement chez les personnes photosensibles.
+\n
+\nNe regardez pas directement lampe.</string>
+    <string name="device_overheating">Surchauffe de l\'appareil</string>
+    <string name="device_heating_serious">L\'appareil est en surchauffe. La lampe a été éteinte pour permettre son refroidissement.</string>
+    <string name="which_spectrum_orientation">Quelle est l\'orientation de la lumière diffractée par rapport à votre appareil \?</string>
+    <string name="portrait_orientation">Portrait</string>
+    <string name="landscape_orientation">Paysage</string>
+    <string name="spectrum_analysis_setting">Paramètres d\'analyse du spectre</string>
+    <string name="bl_scan_permission_required_title">Une permission est nécessaire pour faire une recherche Bluetooth</string>
+    <string name="bt_scan_permission_needed">Vous avez désactivé l\'accès à la recherche Bluetooth sur votre appareil. Veuillez activer l\'option « Appareils à proximité » dans les paramètres de votre smartphone pour détecter les appareils Bluetooth.</string>
+    <string name="bt_permission_granted">Autorisation accordée : vous pouvez désormais lancer le scan.</string>
+    <string name="localNetworkPermission">Autorisation de réseau local requise</string>
+    <string name="localNetworkPermissionMessage">Vous avez désactivé l\'accès d votre appareil au réseau local. Veuillez activer l\'option « Appareils à proximité » dans les paramètres de votre smartphone pour détecter les périphériques locaux.</string>
+    <string name="localNetworkRationaleMessage">Un accès au réseau local est nécessaire pour le contrôle à distance. Veuillez accorder cette autorisation.</string>
+    <string name="gotoSetting">Aller dans « Paramètres »</string>
+    <string name="permissionRequired">Autorisation nécessaire</string>
+    <string name="settingsFileNameFormat">Nom par défaut des fichiers</string>
+    <string name="settingsFileNameFormatDetail">Modèle pour les noms par défaut des fichiers lors de l\'exportation de données, du partage d\'une capture d\'écran ou de l\'enregistrement d\'une expérience. Variables disponibles :
+\n{title} – titre de l\'expérience
+\n{date} – date actuelle
+\n{time} – heure actuelle
+\n{startDate} – date de début de la mesure
+\n{startTime} – heure de début de la mesure
+\n{duration} – durée de la mesure</string>
+    <string name="common_unit_short_nano_meter">nm</string>
+    <string name="common_unit_short_micro_meter">µm</string>
+    <string name="common_quantity_short_wavelength">λ</string>
+    <string name="spectrum_orientation">Orientation</string>
+    <string name="localNetworkLoadMessage">L\'expérience n\'a pas pu être chargée à partir de cette adresse. Si elle est hébergée sur un appareil de votre réseau local, phyphox a besoin d\'une autorisation pour y accéder. Voulez-vous accorder l\'autorisation d\'accès à un réseau local et réessayer \?</string>
+    <string name="localNetworkExperimentMessage">Cette expérience utilise une connexion à un périphérique de votre réseau local. phyphox a besoin d\'une autorisation pour accéder au réseau local afin de pouvoir y accéder.</string>
+    <string name="localNetworkDeniedHint">Sans autorisation d\'accès au réseau local, les connexions aux appareils de votre réseau local échoueront.</string>
+    <string name="remoteServerPortInUseTitle">Impossible d\'activer l\'accès à distance</string>
+    <string name="remoteServerPortInUse">L\'accès à distance n\'a pas pu être activé car le port est déjà utilisé par une autre application sur cet appareil. Fermez l\'application qui utilise ce port ou définissez un autre port dans les paramètres de phyphox.</string>
 </resources>
