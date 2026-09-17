@@ -58,6 +58,7 @@
     <string name="share">Share screenshot</string>
     <string name="download">Download</string>
     <string name="savedToDownloadsMessage">File saved to Downloads</string>
+    <string name="savedToDownloadsError">Could not save the file to Downloads:</string>
     <string name="permissionRequiredToSaveToDownloads">Storage permission is needed to save files to Downloads</string>
     <string name="errorWritingStateFile">Error writing state file: </string>
     <string name="share_subject">Screenshot from phyphox</string>
@@ -265,6 +266,8 @@ THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND 
     <string name="sensorNotAvailableWarningMoreInfo">More info</string>
     <string name="sensorNotAvailableWarningMoreInfoURL">http://phyphox.org/faq/#faqMissingSensor</string>
     <string name="calibrated_magnetometer">Use calibrated magnetometer</string>
+    <string name="calibrated_gyroscope">Use calibrated gyroscope</string>
+    <string name="calibrated_accelerometer">Use calibrated accelerometer</string>
     <string name="force_gnss">Satellite location only</string>
     <!-- Bluetooth  -->
     <string name="bluetooth">Bluetooth Low Energy</string>
@@ -281,6 +284,7 @@ THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND 
     <string name="bt_exception_disabled">Bluetooth is disabled. Please enable bluetooth and try again.</string>
     <string name="bt_exception_connection">Bluetooth connection could not be opened.</string>
     <string name="bt_exception_notfound">Bluetooth device not found.</string>
+    <string name="bt_scan_failed">The Bluetooth scan could not be started. Switching Bluetooth off and on again usually clears this. Android reported error code:</string>
     <string name="bt_exception_services">Services could not be discovered.</string>
     <string name="bt_exception_device">Error for the device with</string>
     <string name="bt_exception_device_address">address</string>

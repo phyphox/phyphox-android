@@ -78,7 +78,9 @@ class CameraPreviewFragment (
 
     public fun setInteractive(interactive: Boolean) {
         isInteractive = interactive
-        cameraPreviewScreen.setInteractive(interactive)
+        //Before onViewCreated there is no screen yet; the value is applied once it exists
+        if (::cameraPreviewScreen.isInitialized)
+            cameraPreviewScreen.setInteractive(interactive)
     }
 
     @RequiresApi(Build.VERSION_CODES.O)

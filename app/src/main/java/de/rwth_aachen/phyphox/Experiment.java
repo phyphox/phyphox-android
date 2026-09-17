@@ -32,7 +32,6 @@ import android.os.CountDownTimer;
 import android.os.Handler;
 import android.os.PowerManager;
 import android.provider.ContactsContract;
-import android.provider.Settings;
 import android.text.Layout;
 import android.util.Log;
 import android.util.TypedValue;
@@ -75,7 +74,6 @@ import androidx.core.app.ActivityCompat;
 import androidx.core.app.NavUtils;
 import androidx.core.app.ShareCompat;
 import androidx.core.app.TaskStackBuilder;
-import androidx.core.content.ContextCompat;
 import androidx.core.content.FileProvider;
 import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowInsetsCompat;
@@ -226,22 +224,19 @@ public class Experiment extends AppCompatActivity implements View.OnClickListene
     private  RecyclerView recyclerView;
 
     static final int REQUEST_LOCAL_NETWORK_SCAN  = 2;
-    public static final int REQUEST_LOCAL_NETWORK_CONNECTIONS = 4; //local network permission for the experiment's network connections (3 is the Bluetooth scan code)
+    public static final int REQUEST_LOCAL_NETWORK_CONNECTIONS = 4; //3 is the Bluetooth scan code
     private boolean localNetworkPermissionAskedForConnections = false;
 
-    OnBackPressedCallback backCallback = null; //Intercepts the back action when leaving needs confirmation or an element is in exclusive mode
+    OnBackPressedCallback backCallback = null;
 
 
-    //Back action: leave the activity and return to whatever is below us in the current task.
-    //This may be the experiment list, but it may also be another app that opened a phyphox file.
+    //Back: return to whatever is below us in the task, which may be another app that opened a phyphox file
     private void shutdownAndFinish() {
         shutdownIO();
         finish();
     }
 
-    //Up action: in contrast to back, up always leads to the experiment list. If it is not below
-    //us in our own task (for example because the experiment was opened directly from another
-    //app), it has to be created as a new task first.
+    //Up always leads to the experiment list, which may have to be created as a new task first
     private void navigateUpToExperimentList() {
         shutdownIO();
         Intent upIntent = NavUtils.getParentActivityIntent(this);
@@ -257,7 +252,6 @@ public class Experiment extends AppCompatActivity implements View.OnClickListene
         return experiment != null && experiment.analysisTime > 10.0;
     }
 
-    //Ask for confirmation if the user would lose measured data, then execute the leave action.
     private void leaveExperiment(final Runnable leaveAction) {
         if (leaveRequiresConfirmation()) {
             AlertDialog.Builder builder = new AlertDialog.Builder(this);
@@ -285,10 +279,7 @@ public class Experiment extends AppCompatActivity implements View.OnClickListene
         return (ExpViewFragment)getSupportFragmentManager().findFragmentByTag("android:switcher:" + pager.getId() + ":" + adapter.getItemId(pager.getCurrentItem()));
     }
 
-    //The back callback only needs to intercept the back action if we cannot simply leave the
-    //activity: either a view element is in fullscreen/exclusive mode or leaving needs to be
-    //confirmed by the user. Keeping it disabled otherwise lets the system play predictive back
-    //animations.
+    //Only intercept back when needed, otherwise the system cannot play predictive back animations
     void updateBackCallbackState() {
         if (backCallback == null)
             return;
@@ -315,9 +306,7 @@ public class Experiment extends AppCompatActivity implements View.OnClickListene
         getOnBackPressedDispatcher().addCallback(this, backCallback);
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
-            //Nice animation when leaving the experiment. This replaces the deprecated
-            //overridePendingTransition in onStop on older devices and in contrast to that one
-            //it does not interfere with predictive back gestures.
+            //Replaces overridePendingTransition in onStop, which interferes with predictive back
             overrideActivityTransition(OVERRIDE_TRANSITION_CLOSE, R.anim.hold, R.anim.exit_experiment);
         }
 
@@ -341,12 +330,7 @@ public class Experiment extends AppCompatActivity implements View.OnClickListene
             ab.setDisplayShowTitleEnabled(false);
         }
 
-        //Only restore the experiment from the application-wide instance if the saved state stems
-        //from a completed load of this activity (onSaveInstanceState only writes the full state
-        //including STATE_CURRENT_VIEW if loadCompleted was set). If the activity is recreated
-        //while still loading (typically after granting a permission that was requested during
-        //loading), app.experiment might hold an entirely different experiment that saved its
-        //state earlier, so we must reload from the intent instead.
+        //STATE_CURRENT_VIEW is only saved after a completed load; if recreated mid-load, app.experiment may differ
         if (savedInstanceState != null && savedInstanceState.containsKey(STATE_CURRENT_VIEW)) {
             App app = (App) this.getApplicationContext();
             experiment = app.experiment;
@@ -364,9 +348,7 @@ public class Experiment extends AppCompatActivity implements View.OnClickListene
 
         WindowInsetHelper.setInsets(findViewById(R.id.customActionBar), WindowInsetHelper.ApplyTo.PADDING, WindowInsetHelper.ApplyTo.PADDING, WindowInsetHelper.ApplyTo.PADDING, WindowInsetHelper.ApplyTo.IGNORE);
         WindowInsetHelper.setInsets(findViewById(R.id.tab_layout), WindowInsetHelper.ApplyTo.PADDING, WindowInsetHelper.ApplyTo.IGNORE, WindowInsetHelper.ApplyTo.PADDING, WindowInsetHelper.ApplyTo.IGNORE);
-        //The pager insets must be margins, not padding: ViewPager's scroll position recovery on
-        //size changes (recomputeScrollPosition) miscalculates if its padding changes on rotation,
-        //leaving the pager stuck between two pages.
+        //Margins, not padding: ViewPager's recomputeScrollPosition miscalculates when its padding changes on rotation
         WindowInsetHelper.setInsets(findViewById(R.id.view_pager), WindowInsetHelper.ApplyTo.MARGIN, WindowInsetHelper.ApplyTo.IGNORE, WindowInsetHelper.ApplyTo.MARGIN, WindowInsetHelper.ApplyTo.IGNORE);
         WindowInsetHelper.setInsets(findViewById(R.id.fl_remoteInfo), WindowInsetHelper.ApplyTo.PADDING, WindowInsetHelper.ApplyTo.IGNORE, WindowInsetHelper.ApplyTo.PADDING, WindowInsetHelper.ApplyTo.IGNORE);
         WindowInsetHelper.setInsets(findViewById(R.id.errorMessage), WindowInsetHelper.ApplyTo.PADDING, WindowInsetHelper.ApplyTo.IGNORE, WindowInsetHelper.ApplyTo.PADDING, WindowInsetHelper.ApplyTo.IGNORE);
@@ -386,13 +368,11 @@ public class Experiment extends AppCompatActivity implements View.OnClickListene
                 networkConnection.disconnect();
                 networkConnection.specificAddress = null;
             }
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN_MR2) {
-                //Close all bluetooth connections, when the activity is recreated, they will be reestablished while initializing the experiment
-                for (BluetoothInput bti : experiment.bluetoothInputs)
-                    bti.closeConnection();
-                for (BluetoothOutput bti : experiment.bluetoothOutputs)
-                    bti.closeConnection();
-            }
+            //Close all bluetooth connections, when the activity is recreated, they will be reestablished while initializing the experiment
+            for (BluetoothInput bti : experiment.bluetoothInputs)
+                bti.closeConnection();
+            for (BluetoothOutput bti : experiment.bluetoothOutputs)
+                bti.closeConnection();
             if (experiment.depthInput != null && Build.VERSION.SDK_INT >= Build.VERSION_CODES.M)
                 experiment.depthInput.stopCameras();
 
@@ -420,7 +400,7 @@ public class Experiment extends AppCompatActivity implements View.OnClickListene
             popupWindow.dismiss();
 
         if (Build.VERSION.SDK_INT < Build.VERSION_CODES.UPSIDE_DOWN_CAKE)
-            overridePendingTransition(R.anim.hold, R.anim.exit_experiment); //Make a nice animation... (Newer devices use overrideActivityTransition, set in onCreate)
+            overridePendingTransition(R.anim.hold, R.anim.exit_experiment); //Newer devices use overrideActivityTransition (see onCreate)
     }
 
     @Override
@@ -447,9 +427,7 @@ public class Experiment extends AppCompatActivity implements View.OnClickListene
     }
 
     @Override
-    //Config changes declared in the manifest (rotation, network operator change when crossing a
-    //border, hardware keyboard connecting) do not recreate the activity, so they cannot
-    //interrupt a running measurement. They do not affect our UI, so they can simply be ignored.
+    //Config changes declared in the manifest do not recreate the activity and do not affect our UI
     public void onConfigurationChanged(Configuration newConfig) {
         super.onConfigurationChanged(newConfig);
     }
@@ -472,21 +450,17 @@ public class Experiment extends AppCompatActivity implements View.OnClickListene
 
         if(requestCode == REQUEST_LOCAL_NETWORK_SCAN){
             if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-                serverEnabled = true; //keep the state and the menu toggle in sync with the now running server
+                serverEnabled = true; //keep the menu toggle in sync with the running server
                 invalidateOptionsMenu();
                 startRemoteServer();
             } else {
-                showSettingsRedirectDialog(this);
+                Helper.showAppSettingsDialog(this, R.string.localNetworkPermission, R.string.localNetworkPermissionMessage);
             }
             return;
         }
 
         if(requestCode == REQUEST_LOCAL_NETWORK_CONNECTIONS){
-            //Either the up-front request before connecting the experiment's network connections or
-            //a request triggered by a failed connection attempt. Continuing the connect flow is
-            //correct in both cases: at startup it resumes the dialog chain, later it re-runs
-            //discovery for connections that could not probe the network before, while established
-            //services recover through their own retry loops.
+            //Reached by the up-front request and by one after a failed connection attempt; continuing is right in both cases
             if (grantResults.length == 0 || grantResults[0] != PackageManager.PERMISSION_GRANTED)
                 Toast.makeText(this, getString(R.string.localNetworkDeniedHint), Toast.LENGTH_LONG).show();
             connectNetworkConnections();
@@ -519,15 +493,7 @@ public class Experiment extends AppCompatActivity implements View.OnClickListene
         if (experiment == null || !experiment.loaded)
             return;
 
-        //An unattended run cannot tap the notices below, and the network privacy notice gates
-        //the connection setup that follows them, so a driver can confirm them in advance through
-        //a shell-only system property (see DebugSwitches). Exactly three are bypassed, the same
-        //three as iOS's -phyphoxAutoConfirm and the ones the switch-bypassed-ui test row pins:
-        //the network privacy notice, the photosensitivity warning, and the offer to save a
-        //downloaded experiment locally, which counts as declined. The vendor sensor warning is
-        //deliberately not among them - it exists only on Android, so bypassing it would put a
-        //dialog outside that row's scope. The chain then continues with the network and
-        //bluetooth connections as if the user had dismissed each notice.
+        //Shell-only auto-confirm for unattended runs (see DebugSwitches), same three notices as iOS's -phyphoxAutoConfirm
         if (DebugSwitches.autoConfirm()) {
             dataPolicyDismissed = true;
             photosensitivityWarningDismissed = true;
@@ -565,7 +531,7 @@ public class Experiment extends AppCompatActivity implements View.OnClickListene
 
             SharedPreferences prefs = getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE);
             photosensitivityWarningDismissed = false; //prefs.getBoolean(PREF_PHOTOSENSITIVITY_DISMISSED, false);
-            // For now we ignore the stored dismissal state as this can easily disable the warning forever during a first test after installation, while it should probably be shown again when the user revisits the app after a few years. Until we have a better idea, we will show it each time.
+            //The stored dismissal is ignored for now: a first test could hide the warning forever
 
             if(!photosensitivityWarningDismissed){
                 showPhotosensitivityWarning();
@@ -680,10 +646,7 @@ public class Experiment extends AppCompatActivity implements View.OnClickListene
         }
         this.experiment = experiment; //Store the loaded experiment
 
-        //A link entry is not an experiment: it points at a web page and has no views at all.
-        //Tapping it in the collection opens the link, and a file arriving by URL, QR code or
-        //share has to do the same - it used to end up here as "no valid view found" (iOS opened
-        //the link from its URL path since 2026-08-25; the two must behave alike).
+        //A link entry has no views: open the link and leave, like tapping it in the list (iOS does the same)
         if (experiment.loaded && experiment.isLink) {
             openLinkEntry();
             return;
@@ -698,21 +661,9 @@ public class Experiment extends AppCompatActivity implements View.OnClickListene
             timedRunStartDelay = experiment.timedRunStartDelay;
             timedRunStopDelay = experiment.timedRunStopDelay;
 
-            //If the experiment has been launched from a Bluetooth scan (or was transferred from a
-            //device that provides its own experiment over BLE), we set that device in the
-            //experiment so it does not ask the user for it again. The preselected device is a
-            //single physical device, but the scan/transfer only tells us its address, not which
-            //of the experiment's Bluetooth blocks it is meant for. So we may only apply it when
-            //the experiment uses exactly one device - otherwise an experiment with a second
-            //device (e.g. another sensor of the same model, or a separate input device next to an
-            //output-only sender) would silently bind that one to the sender too instead of
-            //scanning for it. With more than one device the scan dialog asks for each in turn,
-            //including the sender. Devices are told apart by their id (the block's "id"
-            //attribute); a block without an id is its own device, and blocks sharing an id are
-            //the same physical device. Matches iOS (ExperimentsCollectionViewController, which
-            //only preselects when bluetoothDevices.count == 1).
+            //Preselect only if the experiment uses exactly one device (blocks sharing an id are one), like iOS
             String btAddress = intent.getStringExtra(EXPERIMENT_PRESELECTED_BLUETOOTH_ADDRESS);
-            if (btAddress != null && Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN_MR2) {
+            if (btAddress != null) {
                 List<Bluetooth> bluetoothDevices = new ArrayList<>();
                 bluetoothDevices.addAll(this.experiment.bluetoothInputs);
                 bluetoothDevices.addAll(this.experiment.bluetoothOutputs);
@@ -724,7 +675,7 @@ public class Experiment extends AppCompatActivity implements View.OnClickListene
                         if (distinctIds.add(bt.idString))
                             deviceCount++;
                     } else {
-                        deviceCount++; //a block without an id is its own device
+                        deviceCount++;
                     }
                 }
 
@@ -740,9 +691,7 @@ public class Experiment extends AppCompatActivity implements View.OnClickListene
             if (titleDefaultTextSize <= 0f)
                 titleDefaultTextSize = titleText.getTextSize();
             fitTitle(titleText);
-            //This activity handles orientation changes itself, so the title has to be fitted again
-            //when the toolbar changes width. Its width does not depend on the title, so adjusting
-            //the title from here cannot trigger another round.
+            //Orientation changes are handled by this activity, so refit when the toolbar width changes
             findViewById(R.id.customActionBar).addOnLayoutChangeListener((v, left, top, right, bottom, oldLeft, oldTop, oldRight, oldBottom) -> {
                 int width = right - left;
                 if (width == titleFittedForWidth)
@@ -752,7 +701,8 @@ public class Experiment extends AppCompatActivity implements View.OnClickListene
             });
 
 
-            int startView = 0;
+            //Shell-only override for store screenshots (see DebugSwitches); a restored instance state still wins
+            int startView = DebugSwitches.startView();
 
             //If we have a savedInstanceState, it would be a good time to interpret it...
             if (savedInstanceState != null) {
@@ -781,6 +731,8 @@ public class Experiment extends AppCompatActivity implements View.OnClickListene
             }
 
             setupTabLayout();
+            if (startView >= tabLayout.getTabCount())
+                startView = 0;
             tabLayout.getTabAt(startView).select();
 
             //Everything is ready. Let's start the "main loop"
@@ -811,7 +763,7 @@ public class Experiment extends AppCompatActivity implements View.OnClickListene
                     @Override
                     public void onFailure(Throwable error) {
                             if(experiment.flashlightOutput != null){
-                                //we allow flashlight to work if camera failed. needs testing.
+                                //the flashlight may still work if the camera failed
                                 experiment.flashlightOutput.initHardware(null);
                             }
                     }
@@ -822,9 +774,7 @@ public class Experiment extends AppCompatActivity implements View.OnClickListene
             }
 
 
-            //An unattended run enables remote access through a shell-only system property instead
-            //of the menu toggle, which would need someone to confirm its dialog (see
-            //DebugSwitches).
+            //Shell-only remote access for unattended runs (see DebugSwitches)
             if (DebugSwitches.remoteEnabled())
                 serverEnabled = true;
 
@@ -903,22 +853,18 @@ public class Experiment extends AppCompatActivity implements View.OnClickListene
         dialog.show();
     }
 
-    //Fits the experiment title into the toolbar. The title is what identifies an experiment on a
-    //student's screenshot, so it should not be reduced to an ellipsis if that can be avoided: it
-    //is shown at full size when it fits, shrunk down to at most 70% of that size to stay on a
-    //single line, and only wrapped onto a second line when even that does not fit. Same policy as
-    //iOS since 1.2.1.
+    //Fit the title into the toolbar: shrink to at most 70%, wrap only if even that fails (same policy as iOS)
     private void fitTitle(final TextView titleText) {
         if (titleDefaultTextSize <= 0f)
             return;
         final int minSize = Math.max(1, Math.round(titleDefaultTextSize * 0.7f));
         titleText.setMaxLines(1);
         TextViewCompat.setAutoSizeTextTypeUniformWithConfiguration(titleText, minSize, Math.round(titleDefaultTextSize), 1, TypedValue.COMPLEX_UNIT_PX);
-        //Whether the shrunk title fits can only be told after it has been laid out.
+        //Whether the shrunk title fits can only be told after layout
         titleText.post(() -> {
             Layout layout = titleText.getLayout();
             if (layout == null || layout.getLineCount() < 1 || layout.getEllipsisCount(0) <= 0)
-                return; //It fits on one line, at the largest size that did.
+                return;
             TextViewCompat.setAutoSizeTextTypeWithDefaults(titleText, TextViewCompat.AUTO_SIZE_TEXT_TYPE_NONE);
             titleText.setTextSize(TypedValue.COMPLEX_UNIT_PX, minSize);
             titleText.setMaxLines(2);
@@ -926,25 +872,15 @@ public class Experiment extends AppCompatActivity implements View.OnClickListene
     }
 
     public void connectNetworkConnections() {
-        //If any connection is expected to touch the local network (discovery, or an address that
-        //looks local), ask for the local network permission before the first attempt. Addresses
-        //that only resolve to a local IP are caught later by the failed connection attempt (see
-        //NetworkConnection.requestFinished). Whatever the user answers, the startup continues -
-        //internet connections work without the permission.
+        //Ask up front if any connection looks local; the failed attempt catches the rest (NetworkConnection.requestFinished)
         if (!localNetworkPermissionAskedForConnections && de.rwth_aachen.phyphox.helper.Helper.needsLocalNetworkPermission(this)) {
             for (NetworkConnection networkConnection : experiment.networkConnections) {
                 if (networkConnection.needsLocalNetwork()) {
                     localNetworkPermissionAskedForConnections = true;
-                    new AlertDialog.Builder(this)
-                            .setTitle(getString(R.string.permissionRequired))
-                            .setMessage(getString(R.string.localNetworkExperimentMessage))
-                            .setPositiveButton(getString(R.string.ok), (d, w) -> ActivityCompat.requestPermissions(Experiment.this, new String[]{Manifest.permission.ACCESS_LOCAL_NETWORK}, REQUEST_LOCAL_NETWORK_CONNECTIONS))
-                            .setNegativeButton(getString(R.string.cancel), (d, w) -> {
-                                Toast.makeText(Experiment.this, getString(R.string.localNetworkDeniedHint), Toast.LENGTH_LONG).show();
-                                connectNetworkConnections();
-                            })
-                            .setCancelable(false)
-                            .show();
+                    Helper.requestLocalNetworkPermission(this, R.string.permissionRequired, getString(R.string.localNetworkExperimentMessage), REQUEST_LOCAL_NETWORK_CONNECTIONS, () -> {
+                        Toast.makeText(Experiment.this, getString(R.string.localNetworkDeniedHint), Toast.LENGTH_LONG).show();
+                        connectNetworkConnections();
+                    });
                     return;
                 }
             }
@@ -975,48 +911,46 @@ public class Experiment extends AppCompatActivity implements View.OnClickListene
     // connects to the bluetooth devices in an async task
     // if startMeasurement is true the measurement will be started automatically once all devices are connected
     public void connectBluetoothDevices(boolean startMeasurement, final boolean timed) {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN_MR2) {
-            if (!(experiment.bluetoothInputs.isEmpty() && experiment.bluetoothOutputs.isEmpty())) {
-                isBluetoothConnectionSuccessful = false;
-                // connect all bluetooth devices with an asyncTask
-                final Bluetooth.ConnectBluetoothTask btTask = new Bluetooth.ConnectBluetoothTask();
-                btTask.progress = ProgressDialog.show(Experiment.this, getResources().getString(R.string.loadingTitle), getResources().getString(R.string.loadingBluetoothConnectionText), true);
+        if (!(experiment.bluetoothInputs.isEmpty() && experiment.bluetoothOutputs.isEmpty())) {
+            isBluetoothConnectionSuccessful = false;
+            // connect all bluetooth devices with an asyncTask
+            final Bluetooth.ConnectBluetoothTask btTask = new Bluetooth.ConnectBluetoothTask();
+            btTask.progress = ProgressDialog.show(Experiment.this, getResources().getString(R.string.loadingTitle), getResources().getString(R.string.loadingBluetoothConnectionText), true);
 
-                // define onSuccess
-                btTask.onSuccess = () -> {
+            // define onSuccess
+            btTask.onSuccess = () -> {
+                isBluetoothConnectionSuccessful = true;
+                showBluetoothConnectedDeviceInfo();
+
+                if(startMeasurement){
+                    if(timed){
+                        startTimedMeasurement();
+                    } else {
+                        startMeasurement();
+                    }
+                }
+            };
+
+            // set attributes of errorDialog
+            Bluetooth.errorDialog.context = Experiment.this;
+            Bluetooth.errorDialog.cancel = () -> btTask.progress.dismiss();
+            Bluetooth.errorDialog.tryAgain = () -> {
+                // start a new task with the same attributes
+                Bluetooth.ConnectBluetoothTask newBtTask = new Bluetooth.ConnectBluetoothTask();
+                newBtTask.progress = btTask.progress;
+                newBtTask.onSuccess = btTask.onSuccess;
+                // show ProgressDialog again
+                if (btTask.progress != null) {
+                    btTask.progress.show();
+                }
+                newBtTask.onSuccess = () -> {
                     isBluetoothConnectionSuccessful = true;
                     showBluetoothConnectedDeviceInfo();
-
-                    if(startMeasurement){
-                        if(timed){
-                            startTimedMeasurement();
-                        } else {
-                            startMeasurement();
-                        }
-                    }
                 };
+                newBtTask.execute(experiment.bluetoothInputs, experiment.bluetoothOutputs);
 
-                // set attributes of errorDialog
-                Bluetooth.errorDialog.context = Experiment.this;
-                Bluetooth.errorDialog.cancel = () -> btTask.progress.dismiss();
-                Bluetooth.errorDialog.tryAgain = () -> {
-                    // start a new task with the same attributes
-                    Bluetooth.ConnectBluetoothTask newBtTask = new Bluetooth.ConnectBluetoothTask();
-                    newBtTask.progress = btTask.progress;
-                    newBtTask.onSuccess = btTask.onSuccess;
-                    // show ProgressDialog again
-                    if (btTask.progress != null) {
-                        btTask.progress.show();
-                    }
-                    newBtTask.onSuccess = () -> {
-                        isBluetoothConnectionSuccessful = true;
-                        showBluetoothConnectedDeviceInfo();
-                    };
-                    newBtTask.execute(experiment.bluetoothInputs, experiment.bluetoothOutputs);
-
-                };
-                btTask.execute(experiment.bluetoothInputs, experiment.bluetoothOutputs);
-            }
+            };
+            btTask.execute(experiment.bluetoothInputs, experiment.bluetoothOutputs);
         }
     }
 
@@ -1056,9 +990,7 @@ public class Experiment extends AppCompatActivity implements View.OnClickListene
 
         popupWindow = new PopupWindow(hintView, ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT);
 
-        if(Build.VERSION.SDK_INT >= 21){
-            popupWindow.setElevation(4.0f);
-        }
+        popupWindow.setElevation(4.0f);
 
         popupWindow.setOutsideTouchable(false);
         popupWindow.setTouchable(false);
@@ -1140,9 +1072,7 @@ public class Experiment extends AppCompatActivity implements View.OnClickListene
         Animation anim = AnimationUtils.loadAnimation(this, R.anim.play_highlight);
         anim.setRepeatCount(Animation.INFINITE);
         anim.setRepeatMode(Animation.REVERSE);
-        if (!BuildConfig.FLAVOR.equals("screenshot")) {
-            hintAnimation.startAnimation(anim); //Do not animate while taking screenshots
-        }
+        hintAnimation.startAnimation(anim);
 
         hintAnimation.setContentDescription(res.getString(R.string.start));
 
@@ -1170,7 +1100,7 @@ public class Experiment extends AppCompatActivity implements View.OnClickListene
                     showInitialDialogs();
                 })
                 .setPositiveButton(R.string.ok, (dialog, id) -> {
-                    //savePhotosensitivityDismissed(); // Disabled as we currently show the dialog every time
+                    //savePhotosensitivityDismissed(); //disabled, the dialog is currently shown every time
                 });
 
         AlertDialog dialog = builder.create();
@@ -1185,6 +1115,13 @@ public class Experiment extends AppCompatActivity implements View.OnClickListene
         editor.putBoolean(PREF_PHOTOSENSITIVITY_DISMISSED, true);
         editor.apply();
     }
+
+    //Menu item and calibrated sensor type of each calibrated/uncalibrated switch
+    private static final int[][] calibrationMenuEntries = {
+            {R.id.action_calibrated_magnetometer, Sensor.TYPE_MAGNETIC_FIELD},
+            {R.id.action_calibrated_gyroscope, Sensor.TYPE_GYROSCOPE},
+            {R.id.action_calibrated_accelerometer, Sensor.TYPE_ACCELEROMETER}
+    };
 
     @Override
     //Refresh the options menu
@@ -1205,7 +1142,6 @@ public class Experiment extends AppCompatActivity implements View.OnClickListene
         MenuItem timed_run = menu.findItem(R.id.action_timedRun);
         MenuItem remote = menu.findItem(R.id.action_remoteServer);
         MenuItem saveLocally = menu.findItem(R.id.action_saveLocally);
-        MenuItem calibratedMagnetometer = menu.findItem(R.id.action_calibrated_magnetometer);
         MenuItem forceGNSSItem = menu.findItem(R.id.action_force_gnss);
 
         Iterator<PhyphoxExperiment.Link> it = experiment.getHighlightedLinks().iterator();
@@ -1264,19 +1200,22 @@ public class Experiment extends AppCompatActivity implements View.OnClickListene
         //The remote server option is checked if activated
         remote.setChecked(serverEnabled);
 
-        //The calibrated magnetometer entry is only shown if the experiment uses a magnetometer and if the API level is high enough to offer an uncalibrated alternative
-        boolean magnetometer = false;
-        boolean calibrated = false;
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN_MR2 && sensorManager.getDefaultSensor(Sensor.TYPE_MAGNETIC_FIELD_UNCALIBRATED) != null) {
-            for (SensorInput sensor : experiment.inputSensors) {
-                if (sensor.type == Sensor.TYPE_MAGNETIC_FIELD || sensor.type == Sensor.TYPE_MAGNETIC_FIELD_UNCALIBRATED) {
-                    magnetometer = true;
-                    calibrated = sensor.calibrated;
+        //A calibrated/uncalibrated entry is only shown if the experiment uses that sensor type and the device offers an uncalibrated alternative
+        for (int[] entry : calibrationMenuEntries) {
+            boolean used = false;
+            boolean calibrated = false;
+            if (SensorInput.hasUncalibratedVersion(sensorManager, entry[1])) {
+                for (SensorInput sensor : experiment.inputSensors) {
+                    if (SensorInput.calibratedVersion(sensor.type) == entry[1]) {
+                        used = true;
+                        calibrated = sensor.calibrated;
+                    }
                 }
             }
+            MenuItem item = menu.findItem(entry[0]);
+            item.setVisible(used);
+            item.setChecked(calibrated);
         }
-        calibratedMagnetometer.setVisible(magnetometer);
-        calibratedMagnetometer.setChecked(calibrated);
 
         boolean gps = false;
         boolean forceGNSS = false;
@@ -1477,13 +1416,12 @@ public class Experiment extends AppCompatActivity implements View.OnClickListene
 
         }
 
-        if (id == R.id.action_calibrated_magnetometer) {
-            stopMeasurement();
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN_MR2) {
+        for (int[] entry : calibrationMenuEntries) {
+            if (id == entry[0]) {
+                stopMeasurement();
                 for (SensorInput sensor : experiment.inputSensors) {
-                    if (sensor.type == Sensor.TYPE_MAGNETIC_FIELD || sensor.type == Sensor.TYPE_MAGNETIC_FIELD_UNCALIBRATED) {
+                    if (SensorInput.calibratedVersion(sensor.type) == entry[1])
                         sensor.calibrated = !item.isChecked();
-                    }
                 }
             }
         }
@@ -1509,26 +1447,15 @@ public class Experiment extends AppCompatActivity implements View.OnClickListene
                         .setTitle(R.string.remoteServerWarningTitle)
                         .setPositiveButton(R.string.ok, new DialogInterface.OnClickListener() {
                             public void onClick(DialogInterface dialog, int id) {
-                                if(Build.VERSION.SDK_INT >= 37){
-                                    boolean hasPermission =  ContextCompat.checkSelfPermission(Experiment.this, Manifest.permission.ACCESS_LOCAL_NETWORK) == PackageManager.PERMISSION_GRANTED;
-                                    boolean shouldShowRationale = ActivityCompat.shouldShowRequestPermissionRationale(Experiment.this, Manifest.permission.ACCESS_LOCAL_NETWORK);
-
-                                    if(hasPermission){
-                                        itemRef.setChecked(true);
-                                        serverEnabled = true;
-                                        startRemoteServer();
-                                    } else if(shouldShowRationale){
-                                        showRationaleAndRequest();
-                                    } else {
-                                        ActivityCompat.requestPermissions(Experiment.this, new String[]{Manifest.permission.ACCESS_LOCAL_NETWORK}, REQUEST_LOCAL_NETWORK_SCAN);
-                                    }
-
-                                } else {
+                                if (!Helper.needsLocalNetworkPermission(Experiment.this)) {
                                     itemRef.setChecked(true);
                                     serverEnabled = true;
                                     startRemoteServer();
+                                } else if (ActivityCompat.shouldShowRequestPermissionRationale(Experiment.this, Manifest.permission.ACCESS_LOCAL_NETWORK)) {
+                                    Helper.requestLocalNetworkPermission(Experiment.this, R.string.permissionRequired, getString(R.string.localNetworkRationaleMessage), REQUEST_LOCAL_NETWORK_SCAN, null);
+                                } else {
+                                    ActivityCompat.requestPermissions(Experiment.this, new String[]{Manifest.permission.ACCESS_LOCAL_NETWORK}, REQUEST_LOCAL_NETWORK_SCAN);
                                 }
-
                             }
                         })
                         .setNeutralButton(R.string.hotspotSettings, new DialogInterface.OnClickListener() {
@@ -1588,30 +1515,6 @@ public class Experiment extends AppCompatActivity implements View.OnClickListene
         return super.onOptionsItemSelected(item);
     }
 
-    private void  showSettingsRedirectDialog(Activity activity){
-        AlertDialog.Builder builder = new AlertDialog.Builder(activity);
-        builder.setTitle(getString(R.string.localNetworkPermission));
-        builder.setMessage(getString(R.string.localNetworkPermissionMessage));
-        builder.setPositiveButton(getString(R.string.gotoSetting), (dialog, which) -> {
-            Intent intent = new Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS);
-            Uri uri = Uri.fromParts("package", activity.getPackageName(), null);
-            intent.setData(uri);
-            activity.startActivityForResult(intent, 1);
-        });
-        builder.setNegativeButton(getString(R.string.cancel), null);
-        AlertDialog dialog = builder.create();
-        dialog.show();
-    }
-
-    private void showRationaleAndRequest() {
-        new AlertDialog.Builder(this)
-                .setTitle(getString(R.string.permissionRequired))
-                .setMessage(getString(R.string.localNetworkRationaleMessage))
-                .setPositiveButton(getString(R.string.ok), (d, w) -> ActivityCompat.requestPermissions(Experiment.this, new String[]{Manifest.permission.ACCESS_LOCAL_NETWORK}, REQUEST_LOCAL_NETWORK_SCAN))
-                .setNegativeButton(getString(R.string.cancel), null)
-                .show();
-    }
-
     //Below follow two runnable, which act as our "main loop" (although this feels like a function,
     //   technically these are instances of the Runnable class with our function being the
     //   overridden version of the run() function. But it feels better to write the whole thing down
@@ -1667,8 +1570,7 @@ public class Experiment extends AppCompatActivity implements View.OnClickListene
                     started = false;
                 }
                 updateState = false;
-                //Release a remote cmd=start waiting for this. A stop that raced in front of it
-                //reports false, which is the honest answer: the experiment is not running.
+                //Release a waiting remote cmd=start; a stop that raced in front of it reports false
                 CountDownLatch verdict = remoteStartVerdict;
                 if (verdict != null) {
                     remoteStartSucceeded = started;
@@ -1764,8 +1666,7 @@ public class Experiment extends AppCompatActivity implements View.OnClickListene
         dialog.show();
     }
 
-    //Start a measurement. Returns false if the experiment refused to start, which the remote
-    //interface has to report back (see remoteStartMeasurement).
+    //Returns false if the experiment refused to start, which the remote interface reports back
     public boolean startMeasurement() {
         //Disable play-button highlight
         beforeStart = false;
@@ -1774,21 +1675,19 @@ public class Experiment extends AppCompatActivity implements View.OnClickListene
         try {
             experiment.startAllIO();
         } catch (Bluetooth.BluetoothException e) {
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN_MR2) {
-                stopMeasurement(); // stop experiment
-                // show an error dialog
-                Bluetooth.errorDialog.message = e.getMessage();
-                Bluetooth.errorDialog.context = Experiment.this;
-                // try to connect the bluetooth devices again when the user clicks "try again"
-                Bluetooth.errorDialog.tryAgain = new Runnable() {
-                  @Override
-                     public void run() {
-                      connectBluetoothDevices(true, false);
-                  }
-                 };
-                 Bluetooth.errorDialog.run();
-                 return false;
-	        }
+            stopMeasurement(); // stop experiment
+            // show an error dialog
+            Bluetooth.errorDialog.message = e.getMessage();
+            Bluetooth.errorDialog.context = Experiment.this;
+            // try to connect the bluetooth devices again when the user clicks "try again"
+            Bluetooth.errorDialog.tryAgain = new Runnable() {
+              @Override
+                 public void run() {
+                  connectBluetoothDevices(true, false);
+              }
+             };
+             Bluetooth.errorDialog.run();
+             return false;
         } catch (DepthInput.DepthInputException e) {
             stopMeasurement(); // stop experiment
             AlertDialog.Builder builder = new AlertDialog.Builder(this);
@@ -1854,44 +1753,40 @@ public class Experiment extends AppCompatActivity implements View.OnClickListene
         return true;
     }
 
-    //Start a timed measurement. Returns false if it refused to start; true once the countdown is
-    //running, which is what the remote interface reports for a timed run (see the openapi spec:
-    //"begin measuring, or begin the countdown if timed run is on").
+    //Returns true once the countdown runs (openapi: "begin measuring, or begin the countdown if timed run is on")
     public boolean startTimedMeasurement() {
         //No more turning off during the measurement
         setKeepScreenOn(true);
 
-	if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN_MR2) {
-            // check if all Bluetooth devices are connected and display an errorDialog if not
-            Bluetooth notConnectedDevice = null;
-            for (Bluetooth b : experiment.bluetoothInputs) {
+        // check if all Bluetooth devices are connected and display an errorDialog if not
+        Bluetooth notConnectedDevice = null;
+        for (Bluetooth b : experiment.bluetoothInputs) {
+            if (!b.isConnected()) {
+                notConnectedDevice = b;
+                break;
+            }
+        }
+        if (notConnectedDevice == null) {
+            for (Bluetooth b : experiment.bluetoothOutputs) {
                 if (!b.isConnected()) {
                     notConnectedDevice = b;
                     break;
                 }
             }
-            if (notConnectedDevice == null) {
-                for (Bluetooth b : experiment.bluetoothOutputs) {
-                    if (!b.isConnected()) {
-                        notConnectedDevice = b;
-                        break;
-                    }
+        }
+        if (notConnectedDevice != null) {
+            // show an error dialog
+            Bluetooth.errorDialog.message = getResources().getString(R.string.bt_exception_no_connection)+Bluetooth.BluetoothException.getMessage(notConnectedDevice);
+            Bluetooth.errorDialog.context = Experiment.this;
+            // try to connect the bluetooth devices again when the user clicks "try again"
+            Bluetooth.errorDialog.tryAgain = new Runnable() {
+                @Override
+                public void run() {
+                    connectBluetoothDevices(true, true);
                 }
-            }
-            if (notConnectedDevice != null) {
-                // show an error dialog
-                Bluetooth.errorDialog.message = getResources().getString(R.string.bt_exception_no_connection)+Bluetooth.BluetoothException.getMessage(notConnectedDevice);
-                Bluetooth.errorDialog.context = Experiment.this;
-                // try to connect the bluetooth devices again when the user clicks "try again"
-                Bluetooth.errorDialog.tryAgain = new Runnable() {
-                    @Override
-                    public void run() {
-                        connectBluetoothDevices(true, true);
-                    }
-                };
-                Bluetooth.errorDialog.run();
-                return false;
-            }
+            };
+            Bluetooth.errorDialog.run();
+            return false;
         }
 
         if (timedRunBeepCountdown || timedRunBeepStart || timedRunBeepRunning || timedRunBeepStop) {
@@ -2002,9 +1897,7 @@ public class Experiment extends AppCompatActivity implements View.OnClickListene
             remote.forceFullUpdate = true;
     }
 
-    //Open the web page a link entry points at and leave - the same thing tapping the entry in
-    //the experiment list does (ExperimentItemAdapter), including its complaint about a URL that
-    //cannot be opened.
+    //Open a link entry's web page and leave, like tapping it in the list (ExperimentItemAdapter)
     private void openLinkEntry() {
         String url = experiment.links.isEmpty() ? null : experiment.links.get(0).url;
         try {
@@ -2018,7 +1911,6 @@ public class Experiment extends AppCompatActivity implements View.OnClickListene
                 }
             }
         } catch (Exception ignored) {
-            //Falls through to the complaint below, like the experiment list does.
         }
         new AlertDialog.Builder(this)
                 .setTitle("Invalid URL")
@@ -2052,8 +1944,7 @@ public class Experiment extends AppCompatActivity implements View.OnClickListene
         } else
             remote = new RemoteServer(experiment, this, sessionID);
         if (!remote.start()) {
-            //The server socket could not be opened, usually because another app already uses the
-            //configured port. Leave remote access off and explain the problem to the user.
+            //Usually the port is already in use by another app
             remote = null;
             serverEnabled = false;
             invalidateOptionsMenu();
@@ -2075,8 +1966,7 @@ public class Experiment extends AppCompatActivity implements View.OnClickListene
         btn_moreInfo.animate().translationY(0).alpha(1.0f);
         tv_announcer.animate().translationY(0).alpha(1.0f);
 
-        //Modify the existing layout params instead of creating new ones to keep the margins set
-        //by the window inset listener intact
+        //Keep the existing params so the margins set by the window inset listener survive
         ViewPager pagerView = (ViewPager)findViewById(R.id.view_pager);
         RelativeLayout.LayoutParams lp = (RelativeLayout.LayoutParams)pagerView.getLayoutParams();
         lp.addRule(RelativeLayout.ABOVE, R.id.fl_remoteInfo);
@@ -2103,9 +1993,7 @@ public class Experiment extends AppCompatActivity implements View.OnClickListene
             Log.e("Error in QrCode", e.getMessage());
         }
 
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN) {
-            ivServerAddressQr.setBackground(new BitmapDrawable(getResources(), bitmap));
-        }
+        ivServerAddressQr.setBackground(new BitmapDrawable(getResources(), bitmap));
 
         //TODO: Translate the text
         builder.setTitle("For easy URL access, scan the QR code from your device.");
@@ -2133,8 +2021,7 @@ public class Experiment extends AppCompatActivity implements View.OnClickListene
         announcer.animate().translationY(announcer.getMeasuredHeight()).alpha(0.0f);
         fl_announcer.setVisibility(View.GONE);
 
-        //Modify the existing layout params instead of creating new ones to keep the margins set
-        //by the window inset listener intact
+        //Keep the existing params so the margins set by the window inset listener survive
         ViewPager pagerView = (ViewPager)findViewById(R.id.view_pager);
         RelativeLayout.LayoutParams lp = (RelativeLayout.LayoutParams)pagerView.getLayoutParams();
         lp.addRule(RelativeLayout.ABOVE, R.id.recycler_view_battery);
@@ -2154,16 +2041,8 @@ public class Experiment extends AppCompatActivity implements View.OnClickListene
         updateState = true;
     }
 
-    //Called by remote server to start the measurement from other thread.
-    //
-    //Unlike the other commands this one answers whether the measurement actually began, because
-    //that is what the remote interface promises for cmd=start: an experiment can refuse to start
-    //(most commonly with a Bluetooth device that is not connected yet) and a client has no other
-    //way to tell than a second request for status.measuring. The start itself has to happen on
-    //the main thread, so this hands the intent to the update loop and waits for it to report
-    //back. The loop runs every 400 ms while nothing is measured, and the remote server only
-    //answers while the activity is started (onStop stops it), so the wait below is short in
-    //practice; the timeout is a safety net for a start that blocks, not the expected case.
+    //Called by the remote server from another thread. Answers whether the measurement actually began
+    //(cmd=start contract): the start is handed to the main-thread update loop and awaited, the timeout is a safety net
     public boolean remoteStartMeasurement() {
         CountDownLatch verdict = new CountDownLatch(1);
         remoteStartVerdict = verdict;
@@ -2268,8 +2147,6 @@ public class Experiment extends AppCompatActivity implements View.OnClickListene
 
     @Override
     public void updateConnectedDevice(ArrayList<ConnectedDeviceInfo> connectedDeviceInfos) {
-        //Each Bluetooth device reports its own status. Merge it into the list of all connected
-        //devices (matched by address), so multiple devices are shown next to each other.
         for (ConnectedDeviceInfo info : connectedDeviceInfos) {
             boolean found = false;
             for (int i = 0; i < connectedDevices.size(); i++) {

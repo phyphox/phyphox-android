@@ -9,10 +9,8 @@ import org.junit.Test;
 import java.util.Arrays;
 import java.util.Vector;
 
-//Pins the formula language decided in the 2026-08-19 analysis-module audit: conventional
-//precedence, C round semantics and load-time rejection of structurally broken formulas. The
-//same cases exist as FormulaParserTests in the iOS DeserializerTests.swift - keep the two in
-//step so the corpus stays a cross-platform conformance check.
+//Pins the formula language: conventional precedence, C round semantics, load-time rejection of
+//broken formulas. The same cases exist as FormulaParserTests in iOS DeserializerTests.swift - keep in step.
 public class FormulaParserTest {
 
     private Vector<Double[]> buffers(double[]... ins) {

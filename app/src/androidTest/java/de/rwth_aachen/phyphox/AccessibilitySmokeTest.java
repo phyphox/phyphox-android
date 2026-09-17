@@ -28,17 +28,9 @@ import java.util.List;
 import java.util.Locale;
 
 // phyphox-test: accessibility-smoke
-//The accessibility checks of the Android Accessibility Test Framework over the screens the
-//chrome suite visits: unlabelled controls, touch targets that are too small, text that does not
-//contrast with what it sits on, and the rest of the preset.
-//
-//REPORT ONLY, by decision of the test matrix: every finding is logged and the run stays green.
-//What it does assert is that the check ran at all and had a screen to look at - a silent zero
-//would otherwise read like a clean bill of health. Read the findings with
-//
-//    adb logcat -s phyphoxA11y
-//
-//and escalate the row to failing once they are triaged.
+//Accessibility Test Framework checks over the screens the chrome suite visits. Report only, by
+//decision of the test matrix: findings go to "adb logcat -s phyphoxA11y" and the run stays green;
+//what is asserted is that the check ran and had a screen to look at.
 @RunWith(AndroidJUnit4.class)
 public class AccessibilitySmokeTest {
 
@@ -58,8 +50,7 @@ public class AccessibilitySmokeTest {
         FixtureExperiment.close(FixtureExperiment.activity());
     }
 
-    //Runs the framework's own validator over whatever is on screen and reports what it finds.
-    //setThrowExceptionForErrors(false) is what makes it report-only.
+    //setThrowExceptionForErrors(false) makes the framework's validator report-only
     private int report(String screen, View root) {
         AccessibilityValidator validator = new AccessibilityValidator()
                 .setCheckPreset(AccessibilityCheckPreset.LATEST)
@@ -94,8 +85,7 @@ public class AccessibilitySmokeTest {
         assertTrue("the collection did not open",
                 device().wait(Until.hasObject(By.textContains("Raw Sensors")), 15000));
 
-        //The collection is not the Experiment activity, so its window is taken from the screen
-        //rather than from the fixture harness.
+        //The collection is not the Experiment activity, so its window comes from the screen
         final View[] root = new View[1];
         getInstrumentation().runOnMainSync(() -> {
             for (android.app.Activity activity : androidx.test.runner.lifecycle
@@ -112,13 +102,10 @@ public class AccessibilitySmokeTest {
         assumeTrue(FixtureExperiment.available("buttons-toggles.phyphox"));
         FixtureExperiment.launch("buttons-toggles.phyphox");
 
-        //The view is looked up from the test thread (the lifecycle monitor does its own hop to
-        //the main thread); the check itself then runs there.
         View root = decorViewOfTheForeground();
         final int[] findings = new int[1];
         getInstrumentation().runOnMainSync(() -> findings[0] = report("experiment", root));
-        //Nothing to assert about the count - the row is report-only - but the check must have
-        //had a screen to look at.
+        //Report-only, but the check must have had a screen to look at
         assertTrue("the accessibility check ran on nothing", findings[0] >= 0);
     }
 }

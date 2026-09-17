@@ -21,9 +21,7 @@ public class RGB implements Serializable {
         return new RGB(0xffffff & ((r << 16) | (g << 8) | b));
     }
 
-    //Strict parser used by the experiment file parser: returns null unless the string is a named
-    //phyphox color or a six-digit hex RGB value, optionally prefixed with '#'. Anything else is an
-    //error to be reported by the caller. Color names fold case like enumerated values.
+    //Null unless a named phyphox color (case-insensitive) or a six-digit hex value with optional '#'; the caller reports the error
     public static RGB fromPhyphoxStringStrict(String colorStr, Resources res) {
         if (colorStr == null)
             return null;
@@ -46,15 +44,13 @@ public class RGB implements Serializable {
             case "weakwhite": return new RGB(res.getColor(R.color.phyphox_white_60));
         }
 
-        //Not a constant, so it has to be a six-digit hex value...
         String hex = colorStr.startsWith("#") ? colorStr.substring(1) : colorStr;
         if (hex.length() == 6 && hex.matches("[0-9a-fA-F]+"))
             return new RGB(Integer.parseInt(hex, 16));
         return null;
     }
 
-    //Lenient variant for callers that must not fail on a bad value, like the experiment list
-    //scanner: an unparseable color falls back to the given default.
+    //Lenient variant: an unparseable color falls back to the default
     public static RGB fromPhyphoxString(String colorStr, Resources res, RGB fallback) {
         RGB color = fromPhyphoxStringStrict(colorStr, res);
         return color == null ? fallback : color;
@@ -161,8 +157,17 @@ public class RGB implements Serializable {
         return max/255.0;
     }
 
+    //sRGB EOTF (0..1), the same curve as the luminance output of the camera input (LuminanceAnalyzer)
+    public static double linearize(double x) {
+        if (x < 0.04045)
+            return x / 12.92;
+        else
+            return Math.pow((x + 0.055) / 1.055, 2.4);
+    }
+
+    //Relative luminance (Rec. 709 weights)
     public double luminance() {
-        return 0.2126f*(float)Math.pow((r()/255.0+0.055f)/1.055f, 2.4f) + 0.7152f*(float)Math.pow((g()/255.0+0.055f)/1.055f, 2.4f) + 0.0722f*(float)Math.pow((b()/255.0+0.055f)/1.055f, 2.4f);
+        return 0.2126 * linearize(r() / 255.0) + 0.7152 * linearize(g() / 255.0) + 0.0722 * linearize(b() / 255.0);
     }
 
     public RGB adjustedColorForLightTheme(Resources res) {

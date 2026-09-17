@@ -79,9 +79,7 @@ class CameraInput : Serializable, AnalyzingOpenGLRenderer.ExposureStatisticsList
 
     @Transient var analyzingOpenGLRenderer: AnalyzingOpenGLRenderer? = null
 
-    //Focus distance in meters as set by the "focus_distance" option of the locked attribute.
-    //Zero denotes infinity and null means that the autofocus stays enabled.
-    var lockedFocusDistance: Float? = null
+    var lockedFocusDistance: Float? = null //meters, 0 = infinity, null = autofocus stays enabled
 
     interface OnCameraReadyListener {
         fun onReady(camera: Camera?)
@@ -113,11 +111,8 @@ class CameraInput : Serializable, AnalyzingOpenGLRenderer.ExposureStatisticsList
             val sensorFrameDuration = 1_000_000_000/maxFpsRange.upper.toLong()
             extender.setCaptureRequestOption(CaptureRequest.SENSOR_FRAME_DURATION, sensorFrameDuration)
 
-            //A locked focus distance turns off the autofocus and focusses at a fixed distance.
-            //Besides being desirable for a fixed setup, this also helps against devices (notably
-            //Pixels) that switch the active physical camera of a logical multi camera on their
-            //own when their macro focus heuristic believes that another lens focusses better on a
-            //close subject, which ruins spectroscopy measurements.
+            //Also keeps logical multi cameras (notably Pixels) from switching the physical lens on
+            //their own for close subjects, which ruins spectroscopy measurements
             lockedFocusDistance?.let { focusDistance ->
                 val afModes = camera2Info.getCameraCharacteristic(CameraCharacteristics.CONTROL_AF_AVAILABLE_MODES)
                 if (afModes?.contains(CameraMetadata.CONTROL_AF_MODE_OFF) != true) {
@@ -125,9 +120,7 @@ class CameraInput : Serializable, AnalyzingOpenGLRenderer.ExposureStatisticsList
                     return@let
                 }
 
-                //The API takes the reciprocal of the distance in dioptres, with zero denoting
-                //infinity. The closest distance the camera can focus at gives the largest value it
-                //accepts, so the request has to be limited to this range.
+                //The API takes dioptres (0 = infinity), limited by the closest focus distance
                 val minFocusDistance = camera2Info.getCameraCharacteristic(CameraCharacteristics.LENS_INFO_MINIMUM_FOCUS_DISTANCE) ?: 0.0f
                 val requestedDioptres = if (focusDistance > 0.0f) 1.0f / focusDistance else 0.0f
                 val dioptres = requestedDioptres.coerceIn(0.0f, minFocusDistance)
@@ -573,9 +566,7 @@ class CameraInput : Serializable, AnalyzingOpenGLRenderer.ExposureStatisticsList
             apertureCurrentValue = it
         }
 
-        //In meters (zero denoting infinity) as this is more intuitive than the dioptres used by
-        //the camera API. Unlike the settings above this has no UI element, so it can only be
-        //locked to an explicit value and the autofocus stays enabled if there is none.
+        //Meters (0 = infinity); no UI element, so only an explicit value locks it
         lockedSettings?.get("focus_distance")?.takeIf(String::isNotEmpty)?.toFloatOrNull()?.let {
             if (it >= 0.0f)
                 lockedFocusDistance = it
@@ -600,8 +591,7 @@ class CameraInput : Serializable, AnalyzingOpenGLRenderer.ExposureStatisticsList
         lockedSettingsChar?.let { chars ->
             for (pair in chars) {
                 // User might not provide the default value
-                // Setting names are matched case-insensitively: all later lookups use the
-                // lowercase canonical names, so the keys are folded here
+                // Keys are folded to lowercase, all later lookups use the lowercase names
                 if (!pair.contains("=")) {
                     this.lockedSettings?.set(key = pair.trim().lowercase(), value = "")
                 } else {
@@ -615,8 +605,7 @@ class CameraInput : Serializable, AnalyzingOpenGLRenderer.ExposureStatisticsList
     @androidx.annotation.OptIn(androidx.camera.camera2.interop.ExperimentalCamera2Interop::class)
     override fun newExposureStatistics(minRGB: Double, maxRGB: Double, meanLuma: Double) {
         if (cameraSettingState.value.autoExposure) {
-            //Auto exposure only ever adjusts ISO and shutter speed, so locked settings need to be
-            //excluded from its strategy. If both are locked, there is nothing left to adjust.
+            //Locked ISO or shutter speed are excluded from the auto exposure strategy
             val isoLocked = lockedSettings?.containsKey("iso") == true
             val shutterLocked = lockedSettings?.containsKey("shutter_speed") == true
             if (isoLocked && shutterLocked)

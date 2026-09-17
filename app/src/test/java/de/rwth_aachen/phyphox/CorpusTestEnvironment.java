@@ -36,19 +36,15 @@ import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-//Shared plumbing for the corpus conformance tests (see phyphox-docs/corpus/README.md, section
-//"The app test suites"): locates the conformance corpus in a phyphox-docs checkout next to this
-//repository, sets up a Robolectric environment that looks like a fully equipped device (the
-//parser refuses experiments whose sensors/permissions are missing, which would wrongly fail
-//valid corpus files on the JVM), and runs files through the real loading path.
+//Shared plumbing for the corpus conformance tests (phyphox-docs/corpus/README.md, "The app test
+//suites"): finds the corpus next to this repository and loads files on a simulated device that
+//has every sensor and permission, since the parser refuses experiments whose sensors are missing.
 abstract class CorpusTestEnvironment {
 
-    //Sentinel parameter used by the parameterized tests when no corpus checkout is present, so
-    //the suite reports a visible skip instead of failing on an empty parameter list.
+    //Parameter sentinel: a missing corpus checkout reports a skip instead of an empty parameter list.
     static final String CORPUS_MISSING = "corpus missing";
 
-    //The corpus sits in a phyphox-docs checkout next to this repository. The tests' working
-    //directory is somewhere inside the repository (usually the app module), so walk up.
+    //A phyphox-docs checkout next to this repository, found by walking up from the working directory.
     static File findCorpus() {
         File dir = new File(System.getProperty("user.dir")).getAbsoluteFile();
         for (int i = 0; i < 8 && dir != null; i++) {
@@ -60,8 +56,7 @@ abstract class CorpusTestEnvironment {
         return null;
     }
 
-    //The shared fixtures live in the same phyphox-docs checkout as the corpus, one directory
-    //per set (views/, network/, containers/ ...).
+    //Fixture sets (views/, network/, containers/ ...) sit in the same phyphox-docs checkout.
     static File findFixtures(String set) {
         File dir = new File(System.getProperty("user.dir")).getAbsoluteFile();
         for (int i = 0; i < 8 && dir != null; i++) {
@@ -89,9 +84,8 @@ abstract class CorpusTestEnvironment {
         return result;
     }
 
-    //Minimal reader for corpus/invalid/expected.yml: per top-level "<file>.phyphox:" entry,
-    //extract the "parser: rejects|accepts" classification. Deliberately not a full YAML parser -
-    //the file's documented shape is flat, and this avoids a test-only dependency.
+    //The "parser: rejects|accepts" entry per file in corpus/invalid/expected.yml. Deliberately not a
+    //full YAML parser - the file's documented shape is flat.
     static java.util.Map<String, String> parserClassification(File corpus) throws IOException {
         java.util.Map<String, String> result = new java.util.LinkedHashMap<>();
         Pattern fileEntry = Pattern.compile("^([^\\s:#]+\\.phyphox):");
@@ -110,17 +104,8 @@ abstract class CorpusTestEnvironment {
         return result;
     }
 
-    //Minimal reader for the expected.yml next to a file in valid/ or generated/, which records
-    //what each platform's loading path does with a file exercising a construct the spec marks
-    //as platform-limited:
-    //
-    //  bluetooth-address.phyphox:
-    //    parser:
-    //      android: accepts
-    //      ios: rejects
-    //
-    //Returns the Android expectation ("accepts" or "rejects"), or null if the file has no
-    //entry - the default, in which case it simply has to load like every other valid file.
+    //The "parser: android: accepts|rejects" entry for the file in the nearest expected.yml of valid/
+    //or generated/, or null if it has none (it then has to load like every other valid file).
     static String androidExpectation(File corpus, String relativePath) throws IOException {
         String corpusPath = corpus.getAbsolutePath();
         File dir = new File(corpus, relativePath).getParentFile();
@@ -136,8 +121,6 @@ abstract class CorpusTestEnvironment {
         return null;
     }
 
-    //Per top-level "<file>.phyphox:" entry, the "android:" line nested under "parser:". Like
-    //parserClassification above, this is deliberately not a full YAML parser.
     private static java.util.Map<String, String> platformClassification(File expectedYml) throws IOException {
         java.util.Map<String, String> result = new java.util.LinkedHashMap<>();
         Pattern fileEntry = Pattern.compile("^([^\\s:#]+\\.phyphox):");
@@ -156,8 +139,7 @@ abstract class CorpusTestEnvironment {
         return result;
     }
 
-    //The version attribute of the root phyphox element as {major, minor}, or null if the file
-    //does not declare one (which the parser allows).
+    //The root element's version attribute as {major, minor}, or null if absent (which the parser allows).
     static int[] declaredVersion(File file) throws IOException {
         String content = new String(Files.readAllBytes(file.toPath()), StandardCharsets.UTF_8);
         Matcher m = Pattern.compile("<phyphox\\b[^>]*\\bversion\\s*=\\s*\"(\\d+)\\.(\\d+)\"",
@@ -179,8 +161,7 @@ abstract class CorpusTestEnvironment {
         return version[0] < supported[0] || (version[0] == supported[0] && version[1] <= supported[1]);
     }
 
-    //An Experiment activity backed by a simulated device that has every sensor and capability
-    //the corpus needs, so that only actual parse errors can fail a file.
+    //A simulated device with every sensor and capability the corpus needs, so only parse errors can fail a file.
     static Experiment fullyEquippedActivity() {
         Application application = ApplicationProvider.getApplicationContext();
 
@@ -213,9 +194,7 @@ abstract class CorpusTestEnvironment {
         };
         for (int type : sensorTypes)
             Shadows.shadowOf(sensorManager).addSensor(makeSensor(type, "simulated sensor type " + type));
-        //Vendor-specific sensors for the type="custom" corpus fixtures: one matched by
-        //typeFilter (rear-light-sensor.phyphox), one matched by nameFilter
-        //("ICP10101 Temperature.phyphox").
+        //Vendor-specific sensors for the type="custom" fixtures: one matched by typeFilter, one by nameFilter.
         Shadows.shadowOf(sensorManager).addSensor(makeSensor(65545, "simulated rear light sensor"));
         Shadows.shadowOf(sensorManager).addSensor(makeSensor(65537, "ICP10101 Temperature"));
 
@@ -227,8 +206,7 @@ abstract class CorpusTestEnvironment {
         shadowCharacteristics.set(CameraCharacteristics.REQUEST_AVAILABLE_CAPABILITIES, new int[]{
                 CameraMetadata.REQUEST_AVAILABLE_CAPABILITIES_BACKWARD_COMPATIBLE,
                 CameraMetadata.REQUEST_AVAILABLE_CAPABILITIES_DEPTH_OUTPUT});
-        //Characteristics every real camera reports and the app dereferences without a null
-        //check when it collects camera and depth metadata.
+        //Dereferenced without a null check when the app collects camera and depth metadata.
         shadowCharacteristics.set(CameraCharacteristics.INFO_SUPPORTED_HARDWARE_LEVEL,
                 CameraMetadata.INFO_SUPPORTED_HARDWARE_LEVEL_FULL);
         shadowCharacteristics.set(CameraCharacteristics.SCALER_STREAM_CONFIGURATION_MAP,
@@ -239,14 +217,11 @@ abstract class CorpusTestEnvironment {
         shadowCharacteristics.set(CameraCharacteristics.CONTROL_AE_AVAILABLE_TARGET_FPS_RANGES,
                 new Range[]{new Range<>(15, 30)});
         Shadows.shadowOf(cameraManager).addCamera("0", characteristics);
-        //The app enumerates the cameras when the experiment list loads and caches the result;
-        //the depth input and the device metadata read that cache and dereference it without a
-        //null check, so a test device has to fill it just like the app does.
+        //The depth input and the device metadata read this cache without a null check.
         CameraHelper.updateCameraList(cameraManager);
 
-        //The parser takes the hosting Experiment activity as its context. It only uses the
-        //activity as a Context and for its sensorManager field, so an attached but not started
-        //activity is sufficient - running onCreate would start loading an experiment itself.
+        //Attached but not started: the parser uses the activity only as a Context and for sensorManager,
+        //and onCreate would start loading an experiment itself.
         Experiment activity = Robolectric.buildActivity(Experiment.class).get();
         if (activity.getBaseContext() == null)
             Shadows.shadowOf(activity).callAttach(new Intent());
@@ -266,8 +241,7 @@ abstract class CorpusTestEnvironment {
         return sensor;
     }
 
-    //Run a file through the real loading path, the way loadXMLAsyncTask does once the stream
-    //is open.
+    //The real loading path, as loadXMLAsyncTask runs it once the stream is open.
     static PhyphoxExperiment load(File file, Experiment activity) throws IOException {
         try (InputStream inputStream = new FileInputStream(file)) {
             return load(inputStream, activity);

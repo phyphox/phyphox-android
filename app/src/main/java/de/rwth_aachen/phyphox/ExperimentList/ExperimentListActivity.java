@@ -32,7 +32,6 @@ import android.hardware.camera2.CameraCharacteristics;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
-import android.provider.Settings;
 import android.text.Html;
 import android.text.SpannableStringBuilder;
 import android.text.Spanned;
@@ -56,7 +55,6 @@ import android.widget.Toast;
 import androidx.activity.EdgeToEdge;
 import androidx.activity.OnBackPressedCallback;
 import androidx.annotation.NonNull;
-import androidx.annotation.RequiresApi;
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.view.ContextThemeWrapper;
@@ -141,17 +139,10 @@ public class ExperimentListActivity extends AppCompatActivity {
     private boolean isSelectionMode = false;
     private View.OnClickListener originalFABListener;
 
-    //Intercepts the back action when it should only dismiss an overlay (selection mode or the
-    //new experiment menu) instead of leaving the activity. It is kept disabled otherwise, so
-    //the system can play predictive back animations.
-    private OnBackPressedCallback backCallback = null;
+    private OnBackPressedCallback backCallback = null; //enabled only while an overlay is open, so predictive back works otherwise
 
-    //Set if this instance was launched by another app to view a phyphox file. In that case this
-    //activity only acts as a dispatcher that examines the file and hands it over to the
-    //Experiment activity, so it should not remain on the back stack below the experiment.
-    private boolean launchedToViewFile = false;
+    private boolean launchedToViewFile = false; //launched by another app to view a file: dispatch to Experiment and leave the back stack
 
-    //Local network permission handling for loading an experiment from a local address
     private static final int LOCAL_NETWORK_LOAD_REQUEST_CODE = 5;
     private Intent lastNetworkLoadIntent = null; //current load from a network scheme; only such a load may offer the local network permission
     private Intent lastNetworkLoadRetryIntent = null; //the load to repeat once the permission has been granted
@@ -224,10 +215,7 @@ public class ExperimentListActivity extends AppCompatActivity {
         backCallback.setEnabled(isSelectionMode || newExperimentDialogOpen);
     }
 
-    //If this activity was only launched to pass a phyphox file from another app to the
-    //Experiment activity, it should be removed from the back stack once the experiment has been
-    //opened. Otherwise the user would navigate back through an unexpected experiment list (in
-    //the other app's task) instead of returning to the app the file came from.
+    //Back from the experiment should return to the app the file came from, not to a list in its task
     private void finishIfViewIntentDispatcher() {
         if (launchedToViewFile)
             finish();
@@ -237,9 +225,7 @@ public class ExperimentListActivity extends AppCompatActivity {
     protected void onNewIntent(Intent intent) {
         super.onNewIntent(intent);
         setIntent(intent);
-        //A reused instance is an experiment list the user already had open, so it should stay
-        //around when dispatching a file to the Experiment activity - unless it sits on top of
-        //another app's task.
+        //A reused instance stays around unless it sits on top of another app's task
         launchedToViewFile = Intent.ACTION_VIEW.equals(intent.getAction()) && intent.getScheme() != null && !isTaskRoot();
         handleIntent(intent);
     }
@@ -270,7 +256,7 @@ public class ExperimentListActivity extends AppCompatActivity {
             if(grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
                 Toast.makeText(this,getString(R.string.bt_permission_granted), Toast.LENGTH_SHORT).show();
             } else {
-                showSettingsRedirectDialog(this);
+                Helper.showAppSettingsDialog(this, R.string.bl_scan_permission_required_title, R.string.bt_scan_permission_needed);
             }
             return;
         }
@@ -279,42 +265,13 @@ public class ExperimentListActivity extends AppCompatActivity {
                 if (lastNetworkLoadRetryIntent != null)
                     handleIntent(lastNetworkLoadRetryIntent); //retry the load that needed the permission
             } else {
-                showLocalNetworkSettingsRedirectDialog(this);
+                Helper.showAppSettingsDialog(this, R.string.localNetworkPermission, R.string.localNetworkPermissionMessage);
             }
             return;
         }
         if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
             this.recreate();
         }
-    }
-
-    private void showLocalNetworkSettingsRedirectDialog(Activity activity){
-        AlertDialog.Builder builder = new AlertDialog.Builder(activity);
-        builder.setTitle(getString(R.string.localNetworkPermission));
-        builder.setMessage(getString(R.string.localNetworkPermissionMessage));
-        builder.setPositiveButton(getString(R.string.gotoSetting), (dialog, which) -> {
-            Intent intent = new Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS);
-            Uri uri = Uri.fromParts("package", activity.getPackageName(), null);
-            intent.setData(uri);
-            activity.startActivityForResult(intent, 1);
-        });
-        builder.setNegativeButton(getString(R.string.cancel), null);
-        builder.create().show();
-    }
-
-    private void  showSettingsRedirectDialog(Activity activity){
-        AlertDialog.Builder builder = new AlertDialog.Builder(activity);
-        builder.setTitle(getString(R.string.bl_scan_permission_required_title));
-        builder.setMessage(getString(R.string.bt_scan_permission_needed));
-        builder.setPositiveButton(getString(R.string.gotoSetting), (dialog, which) -> {
-            Intent intent = new Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS);
-            Uri uri = Uri.fromParts("package", activity.getPackageName(), null);
-            intent.setData(uri);
-            activity.startActivityForResult(intent, 1);
-        });
-        builder.setNegativeButton(getString(R.string.cancel), null);
-        AlertDialog dialog = builder.create();
-        dialog.show();
     }
 
     private void setUpOnClickListener(){
@@ -460,10 +417,7 @@ public class ExperimentListActivity extends AppCompatActivity {
             for (int i = 0; i < pInfo.requestedPermissions.length; i++) {
                 sb.append(pInfo.requestedPermissions[i].startsWith("android.permission.") ? pInfo.requestedPermissions[i].substring(19) : pInfo.requestedPermissions[i]);
                 sb.append(": ");
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN)
-                    sb.append((pInfo.requestedPermissionsFlags[i] & PackageInfo.REQUESTED_PERMISSION_GRANTED) == 0 ? "no" : "yes");
-                else
-                    sb.append("API < 16");
+                sb.append((pInfo.requestedPermissionsFlags[i] & PackageInfo.REQUESTED_PERMISSION_GRANTED) == 0 ? "no" : "yes");
                 sb.append("<br />");
             }
         } else {
@@ -530,8 +484,28 @@ public class ExperimentListActivity extends AppCompatActivity {
                 sb.append("- Name: ");
                 sb.append(sensor.getName());
                 sb.append("<br />");
+                sb.append("- String type: ");
+                sb.append(sensor.getStringType());
+                sb.append("<br />");
                 sb.append("- Reporting Mode: ");
                 sb.append(sensor.getReportingMode());
+                switch (sensor.getReportingMode()) {
+                    case Sensor.REPORTING_MODE_CONTINUOUS: sb.append(" (continuous)"); break;
+                    case Sensor.REPORTING_MODE_ON_CHANGE: sb.append(" (on change)"); break;
+                    case Sensor.REPORTING_MODE_ONE_SHOT: sb.append(" (one shot)"); break;
+                    case Sensor.REPORTING_MODE_SPECIAL_TRIGGER: sb.append(" (special trigger)"); break;
+                }
+                sb.append("<br />");
+                sb.append("- Wake-up: ");
+                sb.append(sensor.isWakeUpSensor() ? "yes" : "no");
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
+                    sb.append("<br />");
+                    sb.append("- Dynamic: ");
+                    sb.append(sensor.isDynamicSensor() ? "yes" : "no");
+                    sb.append("<br />");
+                    sb.append("- Additional info: ");
+                    sb.append(sensor.isAdditionalInfoSupported() ? "yes" : "no");
+                }
                 sb.append("<br />");
                 sb.append("- Range: ");
                 sb.append(sensor.getMaximumRange());
@@ -546,6 +520,11 @@ public class ExperimentListActivity extends AppCompatActivity {
                 sb.append("- Min delay: ");
                 sb.append(sensor.getMinDelay());
                 sb.append(" µs");
+                if (sensor.getMinDelay() > 0) {
+                    sb.append(" (");
+                    sb.append(String.format(Locale.US, "%.1f", 1e6 / sensor.getMinDelay()));
+                    sb.append(" Hz)");
+                }
                 sb.append("<br />");
                 sb.append("- Max delay: ");
                 sb.append(sensor.getMaxDelay());
@@ -560,6 +539,12 @@ public class ExperimentListActivity extends AppCompatActivity {
                 sb.append("<br />");
                 sb.append("- Version: ");
                 sb.append(sensor.getVersion());
+                sb.append("<br />");
+                sb.append("- FIFO: ");
+                sb.append(sensor.getFifoReservedEventCount());
+                sb.append(" reserved / ");
+                sb.append(sensor.getFifoMaxEventCount());
+                sb.append(" max events");
                 sb.append("<br /><br />");
             }
         }
@@ -687,9 +672,7 @@ public class ExperimentListActivity extends AppCompatActivity {
 
         popupWindow = new PopupWindow(hintView, ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT);
 
-        if (Build.VERSION.SDK_INT >= 21) {
-            popupWindow.setElevation(4.0f);
-        }
+        popupWindow.setElevation(4.0f);
 
         popupWindow.setOutsideTouchable(false);
         popupWindow.setTouchable(false);
@@ -735,19 +718,12 @@ public class ExperimentListActivity extends AppCompatActivity {
     public void showError(String error) {
         if (progress != null)
             progress.dismiss();
-        //A failed load from a network address while the local network permission is missing may
-        //well be caused by exactly that - a hostname that resolves to a local address is not
-        //recognized by the up-front check in handleIntent. Explain and offer to grant.
+        //A hostname resolving to a local address escapes the up-front check in handleIntent, so offer the permission here
         if (lastNetworkLoadIntent != null && Helper.needsLocalNetworkPermission(this)) {
             final Intent retryIntent = lastNetworkLoadIntent;
             lastNetworkLoadIntent = null; //offer this once per load attempt
             lastNetworkLoadRetryIntent = retryIntent;
-            new AlertDialog.Builder(this)
-                    .setTitle(getString(R.string.localNetworkPermission))
-                    .setMessage(error + "\n\n" + getString(R.string.localNetworkLoadMessage))
-                    .setPositiveButton(getString(R.string.ok), (d, w) -> ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.ACCESS_LOCAL_NETWORK}, LOCAL_NETWORK_LOAD_REQUEST_CODE))
-                    .setNegativeButton(getString(R.string.cancel), null)
-                    .show();
+            Helper.requestLocalNetworkPermission(this, R.string.localNetworkPermission, error + "\n\n" + getString(R.string.localNetworkLoadMessage), LOCAL_NETWORK_LOAD_REQUEST_CODE, null);
             return;
         }
         Toast.makeText(this, error, Toast.LENGTH_LONG).show();
@@ -822,7 +798,6 @@ public class ExperimentListActivity extends AppCompatActivity {
         }
     }
 
-    @RequiresApi(api = Build.VERSION_CODES.JELLY_BEAN_MR2)
     public void loadExperimentFromBluetoothDevice(final BluetoothDevice device) {
         final ExperimentListActivity parent = this;
         if (bluetoothExperimentLoader == null) {
@@ -913,13 +888,9 @@ public class ExperimentListActivity extends AppCompatActivity {
             return;
         lastNetworkLoadIntent = null; //only a load from a network scheme (set below) may offer the local network permission
 
-        //phyphox://asset=<url-encoded path> opens an experiment bundled with the app (see
-        //transferring-experiments.md in phyphox-docs) - no server involved, so it is dispatched
-        //here, before the network branch below, as the same intent the experiment list itself
-        //uses to open a bundled experiment. The path is taken from the raw URI string: Uri's
-        //host/authority accessors normalize their case, which would corrupt the case-sensitive
-        //asset path. Any other phyphox:// URL keeps the https-rewrite behavior of
-        //PhyphoxFile.openXMLInputStream. Mirrored on iOS - the two must stay in step.
+        //phyphox://asset=<url-encoded path> opens a bundled experiment (transferring-experiments.md in phyphox-docs;
+        //mirrored on iOS). Raw URI string, because Uri's host accessors fold the case of the case-sensitive path.
+        //Any other phyphox:// URL takes the https rewrite in PhyphoxFile.openXMLInputStream.
         String dataString = intent.getDataString();
         if (scheme.equals("phyphox") && dataString != null && dataString.startsWith("phyphox://asset=")) {
             String path = Uri.decode(dataString.substring("phyphox://asset=".length()));
@@ -978,14 +949,11 @@ public class ExperimentListActivity extends AppCompatActivity {
         } else if (scheme.equals(ContentResolver.SCHEME_CONTENT) || scheme.equals("phyphox") || scheme.equals("http") || scheme.equals("https")) {
             if (!scheme.equals(ContentResolver.SCHEME_CONTENT)) {
                 lastNetworkLoadIntent = intent;
-                //Loading from the local network needs the local network permission. If the address
-                //already looks local (literal private IP, .local, ...), ask before the first
-                //attempt; other local addresses are caught when the load fails (see showError).
+                //Ask for the local network permission up front if the address looks local; other cases are caught in showError
                 if (Helper.needsLocalNetworkPermission(this) && intent.getData() != null && Helper.isLikelyLocalNetworkAddress(intent.getData().toString())) {
                     lastNetworkLoadRetryIntent = intent;
                     ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.ACCESS_LOCAL_NETWORK}, LOCAL_NETWORK_LOAD_REQUEST_CODE);
-                    //If the permission is granted, the permission callback restarts the load with the same intent
-                    return;
+                    return; //the permission callback restarts the load
                 }
             }
             progress = ProgressDialog.show(this, res.getString(R.string.loadingTitle), res.getString(R.string.loadingText), true);
@@ -1002,13 +970,8 @@ public class ExperimentListActivity extends AppCompatActivity {
         Animation labelIn = AnimationUtils.loadAnimation(getBaseContext(), R.anim.experiment_list_label_in);
         Animation fadeDark = AnimationUtils.loadAnimation(getBaseContext(), R.anim.experiment_list_fade_dark);
 
-        //The animations only move these views around, they do not bring them into existence: the
-        //layout declares them invisible and something has to undo that. They used to be drawn
-        //anyway, because a view with a running or filled-after animation is drawn and hit-tested
-        //regardless of its visibility, which made the menu look and feel right while it stayed
-        //absent from the accessibility tree - so TalkBack could not reach "add experiment from QR
-        //code", "for Bluetooth device" or "simple experiment" at all, and those are the only ways
-        //to get an experiment in that is not bundled with the app.
+        //An animated view is drawn and hit-tested regardless of visibility, but stays out of the accessibility tree
+        //while INVISIBLE, so the visibility has to be set for real
         setNewExperimentMenuVisible(true);
 
         newExperimentButton.startAnimation(rotate45In);
@@ -1038,10 +1001,8 @@ public class ExperimentListActivity extends AppCompatActivity {
         Animation labelOut = AnimationUtils.loadAnimation(getBaseContext(), R.anim.experiment_list_label_out);
         Animation fadeTransparent = AnimationUtils.loadAnimation(getBaseContext(), R.anim.experiment_list_fade_transparent);
 
-        //Hiding them has to wait for the animation to finish, or it cuts the exit short. The same
-        //Animation object drives three views, so this arrives up to three times - setting the same
-        //visibility again is harmless. The check is not: the menu can be reopened while the exit
-        //is still running, and this must not then hide a menu that is on its way back in.
+        //Hide after the exit animation; it arrives up to three times (one Animation, three views) and must
+        //not hide a menu that was reopened while the exit was still running
         fabOut.setAnimationListener(new Animation.AnimationListener() {
             @Override
             public void onAnimationStart(Animation animation) {
@@ -1077,9 +1038,7 @@ public class ExperimentListActivity extends AppCompatActivity {
 
     }
 
-    //Visible or invisible for real, rather than leaving it to the animation. INVISIBLE and not
-    //GONE: the sub-FABs are positioned relative to each other and to the main button, so removing
-    //them from the layout would move what is left.
+    //INVISIBLE, not GONE: the sub-FABs are positioned relative to each other and to the main button
     private void setNewExperimentMenuVisible(boolean visible) {
         int visibility = visible ? View.VISIBLE : View.INVISIBLE;
         newExperimentSimple.setVisibility(visibility);
@@ -1125,7 +1084,6 @@ public class ExperimentListActivity extends AppCompatActivity {
         });
     }
 
-    @RequiresApi(api = Build.VERSION_CODES.JELLY_BEAN_MR2)
     protected void showBluetoothExperimentReadError(String msg, final BluetoothDevice device) {
         final AlertDialog.Builder builder = new AlertDialog.Builder(this);
         builder.setMessage(msg)
@@ -1261,7 +1219,6 @@ public class ExperimentListActivity extends AppCompatActivity {
         }
     }
 
-    @RequiresApi(api = Build.VERSION_CODES.JELLY_BEAN_MR2)
     @SuppressLint("MissingPermission")
     //TODO: The permission is actually checked when entering the entire BLE dialog and I do not see how we could reach this part of the code if it failed. However, I cannot rule out some other mechanism of revoking permissions during an app switch or from the notifications bar (?), so a cleaner implementation might be good idea
     public void openBluetoothExperiments(final BluetoothDevice device, final Set<UUID> uuids, boolean phyphoxService) {
@@ -1362,8 +1319,7 @@ public class ExperimentListActivity extends AppCompatActivity {
         dialog.show();
     }
 
-    //Scan for supported Bluetooth devices (or devices offering an experiment for download) and
-    //open the choice of experiments for the device picked by the user.
+    //Scan for supported Bluetooth devices (or devices offering an experiment) and open the choice for the picked one
     private void startBluetoothScan() {
         Set<String> bluetoothNameKeySet = experimentRepository.getBluetoothDeviceNameList().keySet();
         Set<UUID> bluetoothUUIDKeySet = experimentRepository.getBluetoothDeviceUUIDList().keySet();
@@ -1503,14 +1459,8 @@ public class ExperimentListActivity extends AppCompatActivity {
         builder.setMessage(res.getString(R.string.confirmDelete))
                 .setTitle(R.string.confirmDeleteTitle)
                 .setPositiveButton(R.string.delete, (dialog, id) -> {
-                    for (ExperimentShortInfo info : selected) {
-                        long crc32 = Helper.getCRC32(new File(getFilesDir(), info.xmlFile));
-                        File resFolder = new File(getFilesDir(), Long.toHexString(crc32).toLowerCase());
-                        deleteFile(info.xmlFile);
-                        if (resFolder.isDirectory()) {
-                            Helper.deleteRecursive(resFolder);
-                        }
-                    }
+                    for (ExperimentShortInfo info : selected)
+                        ExperimentRepository.deleteExperiment(this, info.xmlFile);
                     exitSelectionMode();
                     experimentRepository.loadAndShowMainExperimentList(this);
                 })

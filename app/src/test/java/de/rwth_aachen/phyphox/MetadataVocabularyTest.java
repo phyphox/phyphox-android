@@ -9,11 +9,9 @@ import org.junit.runner.RunWith;
 import org.robolectric.RobolectricTestRunner;
 import org.robolectric.annotation.Config;
 
-//Every identifier built from Metadata.sensorsWithMetadata() must be one Metadata accepts: the
-//remote interface, the CSV export and the xlsx export all walk that list to collect per-sensor
-//metadata, and an identifier outside the vocabulary throws in the middle of their work - which
-//cost a whole /meta response and left an unterminated row in an exported xlsx before the three
-//call sites were given this one list to walk.
+//Every identifier from Metadata.sensorsWithMetadata() must be one Metadata accepts: the remote
+//interface, the CSV export and the xlsx export all walk that list, and an identifier outside the
+//vocabulary throws in the middle of their work.
 @RunWith(RobolectricTestRunner.class)
 @Config(sdk = 35)
 public class MetadataVocabularyTest {

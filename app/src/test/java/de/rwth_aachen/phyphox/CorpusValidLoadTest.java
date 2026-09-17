@@ -16,12 +16,9 @@ import java.util.Collections;
 import java.util.List;
 
 // phyphox-test: corpus-valid-load
-//Every file in phyphox-docs' corpus/valid and corpus/generated whose declared format version is
-//at most PhyphoxFile.phyphoxFileVersion must load through the real loading path without error.
-//Files declaring a newer version are skipped, not failed - they exist for future format
-//versions. A file with an entry in its directory's expected.yml exercises a construct with a
-//deliberate platform difference: if that entry maps android to "rejects", the refusal is
-//asserted instead of the load. Contract: phyphox-docs/corpus/README.md, "The app test suites".
+//Every file in corpus/valid and corpus/generated declaring a format version at most
+//PhyphoxFile.phyphoxFileVersion must load; newer files are skipped. An expected.yml entry mapping
+//android to "rejects" asserts the refusal instead. Contract: phyphox-docs/corpus/README.md.
 @RunWith(ParameterizedRobolectricTestRunner.class)
 @Config(sdk = 35)
 public class CorpusValidLoadTest {
@@ -65,8 +62,7 @@ public class CorpusValidLoadTest {
         PhyphoxExperiment experiment = CorpusTestEnvironment.load(file, activity);
 
         if ("rejects".equals(expectation))
-            //A recorded platform difference: the refusal is contract, so assert it rather than
-            //excusing the file from the corpus.
+            //A recorded platform difference is contract: assert the refusal.
             assertFalse(relativePath + " loaded although expected.yml maps android to \"rejects\"",
                     experiment.loaded);
         else

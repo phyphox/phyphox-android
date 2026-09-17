@@ -239,7 +239,9 @@ public class NetworkService {
             return ret;
         }
 
-        public void requestFinished(HttpTaskResult result) {
+        //Callbacks read the response back through getResults(), so storing it and running them
+        //must be one step or two requests finishing together both read the later response
+        public synchronized void requestFinished(HttpTaskResult result) {
             data = result.data;
             for (RequestCallback callback : result.requestCallbacks) {
                 callback.requestFinished(result.result);
@@ -286,7 +288,9 @@ public class NetworkService {
             return ret;
         }
 
-        public void requestFinished(HttpTaskResult result) {
+        //Callbacks read the response back through getResults(), so storing it and running them
+        //must be one step or two requests finishing together both read the later response
+        public synchronized void requestFinished(HttpTaskResult result) {
             data = result.data;
             for (RequestCallback callback : result.requestCallbacks) {
                 callback.requestFinished(result.result);

@@ -33,6 +33,7 @@ import java.util.Vector;
 import de.rwth_aachen.phyphox.ExperimentList.model.ExperimentListEnvironment;
 import de.rwth_aachen.phyphox.ExperimentList.model.ExperimentLoadInfoData;
 import de.rwth_aachen.phyphox.ExperimentList.model.ExperimentShortInfo;
+import de.rwth_aachen.phyphox.helper.DebugSwitches;
 import de.rwth_aachen.phyphox.helper.baseColorDrawable.BaseColorDrawable;
 import de.rwth_aachen.phyphox.helper.baseColorDrawable.BitmapIcon;
 import de.rwth_aachen.phyphox.Bluetooth.Bluetooth;
@@ -166,10 +167,8 @@ public class AssetExperimentLoader {
             boolean isLink = false;
             String link = null;
 
-            //Content of the current candidate translation block. Exactly one translation block
-            //applies - the best-rated one, first wins on ties (translation-block-selection in
-            //phyphox-docs) - so a block's content is collected here and only applied over the base
-            //strings after parsing, when no better block can follow anymore.
+            //Candidate translation block, applied after parsing: exactly one block wins (best rating,
+            //first on ties; translation-block-selection in phyphox-docs), blocks are never combined
             String trTitle = null;
             String trFullDescription = null;
             String trCategory = null;
@@ -205,9 +204,6 @@ public class AssetExperimentLoader {
                                 String thisLocale = xpp.getAttributeValue(null, "locale");
                                 int thisLaguageRating = Helper.getLanguageRating(environment.resources, thisLocale);
                                 if (translationDepth < 0 && thisLaguageRating > languageRating) {
-                                    //This block beats the running maximum and becomes the new
-                                    //candidate, replacing the previous candidate entirely - blocks
-                                    //are never combined. The last candidate is the selected block.
                                     languageRating = thisLaguageRating;
                                     translationDepth = xpp.getDepth(); //Remember depth of the translation block
                                     trTitle = null;
@@ -379,9 +375,7 @@ public class AssetExperimentLoader {
                                 if (uuid != null) {
                                    shortInfo.bluetoothDeviceUUIDs.add(uuid);
                                 }
-                                if (Build.VERSION.SDK_INT < Build.VERSION_CODES.JELLY_BEAN_MR2) {
-                                    shortInfo.unavailableSensor = R.string.bluetooth;
-                                } else if (!Bluetooth.isSupported(environment.context)) {
+                                if (!Bluetooth.isSupported(environment.context)) {
                                     shortInfo.unavailableSensor = R.string.bluetooth;
                                 }
                                 if (!customColor)
@@ -429,7 +423,7 @@ public class AssetExperimentLoader {
                 eventType = xpp.next(); //Next event in the file...
             }
 
-            //Apply the selected translation block (the last candidate) over the base strings
+            //Apply the selected translation block over the base strings
             if (trTitle != null)
                 shortInfo.title = trTitle;
             if (trFullDescription != null) {
@@ -471,6 +465,10 @@ public class AssetExperimentLoader {
             shortInfo.isAsset = data.isAsset;
             shortInfo.isLink = isLink ? link : null;
             shortInfo.categoryName = category;
+
+            //Shell-only switch for the store screenshot emulators, which lack most sensors (see DebugSwitches)
+            if (DebugSwitches.assumeSensors())
+                shortInfo.unavailableSensor = -1;
 
         } catch (XmlPullParserException e) { //XML Pull Parser is unhappy... Abort and notify user.
             return invalidExperiment(data.experimentXML, "Error loading " + data.experimentXML + " (XML Exception)", data.isTemp, data.isAsset, environment);

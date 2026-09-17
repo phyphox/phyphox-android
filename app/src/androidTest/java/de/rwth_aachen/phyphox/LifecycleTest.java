@@ -22,10 +22,8 @@ import java.net.HttpURLConnection;
 import java.net.URL;
 
 // phyphox-test: lifecycle
-//What happens to a running experiment when the system moves it around: rotation mid-run, going
-//to the background and coming back, a second experiment opened over it, and starts and stops in
-//quick succession. The remote API is the observer - it reports whether the measurement is
-//running and how much data there is, which is what "still running" has to mean.
+//A running experiment under rotation, backgrounding, a second experiment and quick start/stop,
+//observed through the remote API.
 @RunWith(AndroidJUnit4.class)
 public class LifecycleTest {
 
@@ -85,8 +83,7 @@ public class LifecycleTest {
         }
     }
 
-    //A start or stop asked for over the API is handed to the experiment's own loop, which
-    //applies it on its next pass - so the answer to "is it measuring" follows a moment later.
+    //A remote start/stop is applied by the experiment's own loop on its next pass
     private void awaitMeasuring(boolean expected) throws Exception {
         long deadline = System.currentTimeMillis() + 10000;
         while (measuring() != expected && System.currentTimeMillis() < deadline)
@@ -136,9 +133,7 @@ public class LifecycleTest {
         device().pressHome();
         Thread.sleep(3000);
 
-        //Leaving the screen ends the measurement on purpose: phyphox shuts its inputs down when
-        //the experiment is no longer in front, and the remote server goes with them. What this
-        //pins is that it happens cleanly - the app comes back, serves again, and runs again.
+        //Leaving the screen ends the measurement on purpose; pinned is that the app comes back, serves and runs again
         FixtureExperiment.bringToForeground();
         Thread.sleep(2000);
         awaitApi();
@@ -159,9 +154,7 @@ public class LifecycleTest {
         assertTrue("the first experiment is not the one being served",
                 api("/config").getString("title").contains("value"));
 
-        //The first experiment is closed before the second opens. Two experiment screens alive at
-        //once means two remote servers competing for one port, which is a different question
-        //(and the reason the T1 sweep restarts the app between experiments).
+        //The first experiment is closed before the second opens: two alive at once means two servers on one port
         FixtureExperiment.close(FixtureExperiment.activity());
         Thread.sleep(1500);
 

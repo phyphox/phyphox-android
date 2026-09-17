@@ -11,12 +11,9 @@ import org.robolectric.annotation.Config;
 import java.io.ByteArrayInputStream;
 import java.nio.charset.StandardCharsets;
 
-//The timer module's offset1970 output is the Unix timestamp that experiment time zero maps to,
-//so that experiment time plus offset is a real timestamp. Before the first start there is no
-//recorded start yet and the experiment time is exactly zero, which makes the current time the
-//only answer that keeps that promise - the app used to answer 1970 there
-//(timer-offset1970-prestart, decided 2026-08-24; iOS falls back to Date() for the same reason).
-//The golden vectors cannot pin a wall-clock value, hence this test.
+//offset1970 is the Unix timestamp experiment time zero maps to. Before the first start experiment
+//time is zero, so the current time is the only correct answer (timer-offset1970-prestart; iOS
+//falls back to Date() as well).
 @RunWith(RobolectricTestRunner.class)
 @Config(sdk = 35)
 public class TimerOffsetTest {

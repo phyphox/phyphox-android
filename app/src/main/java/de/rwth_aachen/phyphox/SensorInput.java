@@ -4,12 +4,12 @@ import android.hardware.Sensor;
 import android.hardware.SensorEvent;
 import android.hardware.SensorEventListener;
 import android.hardware.SensorManager;
-import android.os.Build;
 import android.os.SystemClock;
 import android.util.Log;
 
 import java.io.Serializable;
 import java.security.InvalidParameterException;
+import java.util.List;
 import java.util.Vector;
 import java.util.concurrent.locks.Lock;
 
@@ -84,8 +84,33 @@ public class SensorInput implements SensorEventListener, Serializable {
         }
     }
 
+    //Sensor types that Android offers in a calibrated and an uncalibrated version
+    public static int uncalibratedVersion(int type) {
+        switch (type) {
+            case Sensor.TYPE_MAGNETIC_FIELD: return Sensor.TYPE_MAGNETIC_FIELD_UNCALIBRATED;
+            case Sensor.TYPE_GYROSCOPE: return Sensor.TYPE_GYROSCOPE_UNCALIBRATED;
+            case Sensor.TYPE_ACCELEROMETER: return Sensor.TYPE_ACCELEROMETER_UNCALIBRATED;
+        }
+        return -1;
+    }
+
+    //Maps an uncalibrated type back to its calibrated version, any other type to itself
+    public static int calibratedVersion(int type) {
+        switch (type) {
+            case Sensor.TYPE_MAGNETIC_FIELD_UNCALIBRATED: return Sensor.TYPE_MAGNETIC_FIELD;
+            case Sensor.TYPE_GYROSCOPE_UNCALIBRATED: return Sensor.TYPE_GYROSCOPE;
+            case Sensor.TYPE_ACCELEROMETER_UNCALIBRATED: return Sensor.TYPE_ACCELEROMETER;
+        }
+        return type;
+    }
+
+    public static boolean hasUncalibratedVersion(SensorManager sensorManager, int type) {
+        int uncalibrated = uncalibratedVersion(calibratedVersion(type));
+        return uncalibrated >= 0 && sensorManager.getDefaultSensor(uncalibrated) != null;
+    }
+
     public static int resolveSensorString(String type) {
-        //Enumerated values are matched case-insensitively (see rules.yml, enum-case-insensitive)
+        //case-insensitive (rules.yml, enum-case-insensitive)
         SensorName name = de.rwth_aachen.phyphox.helper.Helper.enumFromStringIgnoreCase(SensorName.class, type);
         if (name == null)
             return -2;
@@ -152,7 +177,7 @@ public class SensorInput implements SensorEventListener, Serializable {
         if (this.type < -1)
             throw new SensorException("Unknown sensor.");
 
-        //Enumerated values are matched case-insensitively (see rules.yml, enum-case-insensitive)
+        //case-insensitive (rules.yml, enum-case-insensitive)
         this.sensorName = de.rwth_aachen.phyphox.helper.Helper.enumFromStringIgnoreCase(SensorName.class, type);
     }
 
@@ -160,10 +185,19 @@ public class SensorInput implements SensorEventListener, Serializable {
 
         Sensor sensor = null;
         vendorSensor = false;
+        int defaultType = -1;
         if (type >= 0)
-            sensor = sensorManager.getDefaultSensor(type);
+            defaultType = type;
         else if (type == -1 && sensorTypeFilter >= 0 && sensorNameFilter == null)
-            sensor = sensorManager.getDefaultSensor(sensorTypeFilter);
+            defaultType = sensorTypeFilter;
+        if (defaultType >= 0) {
+            sensor = sensorManager.getDefaultSensor(defaultType);
+            if (sensor == null) {
+                List<Sensor> ofType = sensorManager.getSensorList(defaultType);
+                if (!ofType.isEmpty())
+                    sensor = ofType.get(0);
+            }
+        }
 
         if (sensor != null) {
             return sensor;
@@ -222,12 +256,14 @@ public class SensorInput implements SensorEventListener, Serializable {
     public static int getDescriptionRes(int type) {
         switch (type) {
             case Sensor.TYPE_ACCELEROMETER:
+            case Sensor.TYPE_ACCELEROMETER_UNCALIBRATED:
                 return R.string.sensorAccelerometer;
             case Sensor.TYPE_LINEAR_ACCELERATION:
                 return R.string.sensorLinearAcceleration;
             case Sensor.TYPE_GRAVITY:
                 return R.string.sensorGravity;
             case Sensor.TYPE_GYROSCOPE:
+            case Sensor.TYPE_GYROSCOPE_UNCALIBRATED:
                 return R.string.sensorGyroscope;
             case Sensor.TYPE_MAGNETIC_FIELD:
                 return R.string.sensorMagneticField;
@@ -270,6 +306,12 @@ public class SensorInput implements SensorEventListener, Serializable {
                 return "µT";
             case Sensor.TYPE_MAGNETIC_FIELD_UNCALIBRATED:
                 return "µT";
+            case Sensor.TYPE_GRAVITY:
+                return "m/s²";
+            case Sensor.TYPE_ACCELEROMETER_UNCALIBRATED:
+                return "m/s²";
+            case Sensor.TYPE_GYROSCOPE_UNCALIBRATED:
+                return "rad/s";
             case Sensor.TYPE_PRESSURE:
                 return "hPa";
             case Sensor.TYPE_AMBIENT_TEMPERATURE:
@@ -284,12 +326,12 @@ public class SensorInput implements SensorEventListener, Serializable {
 
     //Start the data acquisition by registering a listener for this sensor.
     public void start() {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN_MR2 && (type == Sensor.TYPE_MAGNETIC_FIELD || type == Sensor.TYPE_MAGNETIC_FIELD_UNCALIBRATED)) {
-            if (calibrated)
-                this.type = Sensor.TYPE_MAGNETIC_FIELD;
-            else
-                this.type = Sensor.TYPE_MAGNETIC_FIELD_UNCALIBRATED;
-        }
+        //Pick the calibrated or uncalibrated version; the uncalibrated one only if the device has it
+        int calibratedType = calibratedVersion(type);
+        if (!calibrated && hasUncalibratedVersion(sensorManager, calibratedType))
+            this.type = uncalibratedVersion(calibratedType);
+        else
+            this.type = calibratedType;
 
         sensor = findSensor();
 
@@ -390,12 +432,7 @@ public class SensorInput implements SensorEventListener, Serializable {
     }
 
     public void updateGeneratedRate() {
-        long now;
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN_MR1) {
-            now = SystemClock.elapsedRealtimeNanos();
-        } else {
-            now = SystemClock.elapsedRealtime() * 1000000L;
-        }
+        long now = SystemClock.elapsedRealtimeNanos();
         if (rateStrategy == SensorRateStrategy.generate && lastReading > 0) {
             while (lastReading + 2*period <= now) { //In case we did not get a sensor event in the last 200ms + 2*period, we fill it up here. This just ensures that the user gets data even with sensor types that do not update without a change.
                 appendToBuffers(lastReading + period, genX, genY, genZ, genAccuracy);
@@ -409,23 +446,31 @@ public class SensorInput implements SensorEventListener, Serializable {
         //From here only listen to "this" sensor
         if (event.sensor.getType() == sensor.getType()) {
 
-            Double accuracy = Double.NaN;
-            if (type == Sensor.TYPE_MAGNETIC_FIELD_UNCALIBRATED) {
+            //Accuracy: 0 for uncalibrated raw data, otherwise the status Android reports for every sensor type (-1 unreliable, 1 low, 2 medium, 3 high)
+            double accuracy;
+            if (type != calibratedVersion(type)) {
                 accuracy = 0.0;
-            } else if (type == Sensor.TYPE_MAGNETIC_FIELD) {
+            } else {
                 switch (event.accuracy) {
                     case SensorManager.SENSOR_STATUS_NO_CONTACT:
                     case SensorManager.SENSOR_STATUS_UNRELIABLE:
                         accuracy = -1.0;
+                        break;
                     case SensorManager.SENSOR_STATUS_ACCURACY_LOW:
                         accuracy = 1.0;
+                        break;
                     case SensorManager.SENSOR_STATUS_ACCURACY_MEDIUM:
                         accuracy = 2.0;
+                        break;
                     case SensorManager.SENSOR_STATUS_ACCURACY_HIGH:
                         accuracy = 3.0;
+                        break;
+                    default:
+                        accuracy = Double.NaN;
                 }
             }
 
+            //Uncalibrated sensors deliver six values, values[0..2] being the uncalibrated reading and values[3..5] the bias estimate; only the reading is used
             if (rateStrategy == SensorRateStrategy.generate) {
                 if (lastReading == 0) { //First value
                     genX = event.values[0];
@@ -458,7 +503,7 @@ public class SensorInput implements SensorEventListener, Serializable {
                             avgZ += event.values[2];
                     }
 
-                    avgAccuracy = Math.min(accuracy, avgAccuracy);
+                    avgAccuracy = aquisitions == 0 ? accuracy : Math.min(accuracy, avgAccuracy); //Worst accuracy within the averaging period
                     aquisitions++;
                 } else {
                     //No averaging. Just keep the last result

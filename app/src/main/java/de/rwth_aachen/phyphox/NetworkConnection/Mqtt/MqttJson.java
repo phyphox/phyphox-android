@@ -24,7 +24,7 @@ public class MqttJson extends MqttService {
         this.password = password;
         this.context = context;
         this.clientID = "phyphox_" + String.format("%06x", (System.nanoTime() & 0xffffff));
-        //persistence now selects at-least-once delivery (QoS 1) instead of the former QoS 2
+        //persistence selects at-least-once delivery (QoS 1)
         this.qos = persistence ? 1 : 0;
     }
 

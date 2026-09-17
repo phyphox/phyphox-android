@@ -227,7 +227,7 @@ public class SpectroscopyAnalyzer extends AnalyzingModule {
         }
 
         if (minContribution < 0) {
-            // No pixel contributed to any spectrum column (e.g. entirely dark or clipped frame)
+            // no pixel contributed to any column (dark or clipped frame)
             result.pixelPosition = new double[0];
             result.luminance = new double[0];
         } else {

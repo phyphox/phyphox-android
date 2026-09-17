@@ -153,12 +153,7 @@ public class GpsInput implements Serializable {
 
     //This is called when we receive new data from a sensor. Append it to the right buffer
     public void onSensorChanged(Location event) {
-        long inT;
-
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN_MR1)
-            inT = event.getElapsedRealtimeNanos();
-        else
-            inT = event.getTime() * 1000000L;
+        long inT = event.getElapsedRealtimeNanos();
 
         double newT = experimentTimeReference.getExperimentTimeFromEvent(inT);
 

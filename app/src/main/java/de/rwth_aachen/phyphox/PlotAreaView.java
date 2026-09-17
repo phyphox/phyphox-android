@@ -51,9 +51,7 @@ class CurveData implements Serializable {
     int ibCount, ibUsedCount;
     transient IntBuffer ib;
 
-    //Only used for mapXY if interpolateMapColors is false: Each data point is drawn as a
-    //homogeneously colored cell centered on the data point. Its four vertices all carry the data
-    //point's z value, so the interpolation across the cell is constant (i.e. flat shading).
+    //Only used for mapXY without interpolateMapColors: one flat-shaded cell per data point
     int vboCellX, vboCellY, vboCellZ;
     transient FloatBuffer cellX, cellY, cellZ;
     int cellCount;
@@ -204,6 +202,10 @@ class GraphSetup implements Serializable {
             b = (float)minY - (h - plotBoundT - plotBoundH) / (float) plotBoundH * ((float)maxY - (float)minY);
             t = (float)maxY + (plotBoundT) / (float) plotBoundH * ((float)maxY - (float)minY);
         }
+
+        //The double ranges above differ, but the float versions may not; orthoM throws on equal bounds
+        if (l == r || b == t)
+            return;
 
         if (style.contains(GraphView.Style.mapXY) && maxZ != minZ) {
             float zminOnX, zmaxOnX, zmin, zmax;
@@ -984,7 +986,6 @@ class PlotRenderer extends Thread implements TextureView.SurfaceTextureListener 
             GLES20.glDrawElements(GLES20.GL_TRIANGLE_STRIP, dataSet.ibUsedCount, GLES20.GL_UNSIGNED_INT, 0);
             GLES20.glBindBuffer(GLES20.GL_ELEMENT_ARRAY_BUFFER, 0);
         } else {
-            //Homogeneously colored cells, see doUpdateBuffers
             if (dataSet.vboCellX == 0 || dataSet.vboCellY == 0 || dataSet.vboCellZ == 0)
                 return;
             if (dataSet.cellCount < 1)
@@ -1074,6 +1075,8 @@ class PlotRenderer extends Thread implements TextureView.SurfaceTextureListener 
         }
 
         GLES20.glUseProgram(0);
+
+        GLES20.glDisable(GLES20.GL_SCISSOR_TEST); //The emulator's gfxstream crops the presented frame to a scissor left enabled at swap
 
     }
 
@@ -1170,11 +1173,8 @@ class PlotRenderer extends Thread implements TextureView.SurfaceTextureListener 
         }
 
         if (!graphSetup.interpolateMapColors) {
-            //Without color interpolation each data point is drawn as a homogeneously colored cell
-            //centered on the data point. As each cell has its own four vertices sharing the same z
-            //value, this results in flat shading with the unmodified map shaders. The cell corners
-            //sit at the midpoints between neighboring data points (with even spacing assumed to
-            //extend the outermost cells).
+            //Flat shading with the unmodified map shaders: each cell has its own four vertices sharing one z value,
+            //corners at the midpoints between neighboring data points
             for (int iSet = 0; iSet < graphSetup.dataSets.size()-1; iSet++) {
                 CurveData data = graphSetup.dataSets.get(iSet);
                 if (data.style != GraphView.Style.mapXY || data.mapWidth <= 0)
@@ -1254,7 +1254,6 @@ class PlotRenderer extends Thread implements TextureView.SurfaceTextureListener 
                             GLES20.glBufferData(GLES20.GL_ARRAY_BUFFER, 4 * cells * 4, data.cellZ, GLES20.GL_DYNAMIC_DRAW);
                             GLES20.glBindBuffer(GLES20.GL_ARRAY_BUFFER, 0);
 
-                            //Two triangles per cell
                             data.ibUsedCount = 6 * cells;
                             if (data.ib == null || data.ib.capacity() < data.ibUsedCount) {
                                 data.ib = ByteBuffer.allocateDirect(data.ibUsedCount * 4).order(ByteOrder.nativeOrder()).asIntBuffer();
@@ -1279,12 +1278,8 @@ class PlotRenderer extends Thread implements TextureView.SurfaceTextureListener 
     private void doUpdateGrid() {
         nGridLines = 0;
 
-        //The tic arrays are replaced wholesale by the UI thread whenever the graph's range
-        //changes (GraphSetup.setTics), while this runs on the renderer thread. Reading a field
-        //more than once therefore mixes two generations: sizing the buffer from one array and
-        //filling it from a longer one overflows it, and the exception takes the whole app down
-        //from the renderer thread (BufferOverflowException, caught in the T1 sweep). One
-        //snapshot per pass - the arrays themselves are never modified after they are published.
+        //One snapshot per pass: the UI thread replaces the arrays wholesale (GraphSetup.setTics), and reading
+        //the field twice could size the buffer from one generation and fill it from a longer one
         GraphView.Tic[] xTics = graphSetup.xTics;
         GraphView.Tic[] yTics = graphSetup.yTics;
         if (xTics == null || yTics == null)
@@ -1372,9 +1367,7 @@ class PlotRenderer extends Thread implements TextureView.SurfaceTextureListener 
 
     private void doUpdateTimeRanges() {
         nTimeRanges = 0;
-        //The lists are replaced wholesale on the UI thread whenever the time reference changes
-        //(a start or a pause), so they are picked up once here: reading graphSetup again while
-        //filling the buffer could see a longer list than the one it was allocated for.
+        //One snapshot per pass: the UI thread replaces the lists wholesale on start/pause
         final List<Double> trStarts = graphSetup.trStarts;
         final List<Double> trStops = graphSetup.trStops;
         final List<Double> systemTimeReferenceGap = graphSetup.systemTimeReferenceGap;
@@ -1383,8 +1376,6 @@ class PlotRenderer extends Thread implements TextureView.SurfaceTextureListener 
         if (!(graphSetup.timeOnX || graphSetup.timeOnY))
             return;
 
-        //Each range contributes one quad (four vertices of two floats) per time axis, so a graph
-        //with time on both axes needs twice the space.
         int quadsPerRange = (graphSetup.timeOnX ? 1 : 0) + (graphSetup.timeOnY ? 1 : 0);
         FloatBuffer timeRangesData = ByteBuffer.allocateDirect(trStarts.size() * quadsPerRange * 4 * 2 * 4).order(ByteOrder.nativeOrder()).asFloatBuffer();
         for (int i = 0; i < trStarts.size() && i < trStops.size(); i++) {

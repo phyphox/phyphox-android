@@ -32,14 +32,8 @@ import de.rwth_aachen.phyphox.ExperimentList.model.Const;
 import de.rwth_aachen.phyphox.SettingsActivity.SettingsFragment;
 
 // phyphox-test: view-snapshots
-//Golden images of the non-graph view elements, rendered from phyphox-docs' view fixtures
-//(fixtures/views/, found in the checkout next to this repository). One golden per fixture,
-//element and configuration; the contract - which configurations, which locale, where the
-//goldens live - is fixtures/views/README.md, "The snapshot contract".
-//
-//The graph fixtures are not here: their OpenGL renderer needs a real surface, which is the
-//graph-snapshots row on an emulator.
-//
+//Golden images of the non-graph view elements rendered from phyphox-docs' fixtures/views/, per the
+//snapshot contract in fixtures/views/README.md (graphs need a GL surface: graph-snapshots row).
 //Record after an intentional UI change, then review the images:
 //    ./gradlew testRegularDebugUnitTest --tests '*ViewSnapshotTest*' -Pphyphox.goldens=record
 @RunWith(ParameterizedRobolectricTestRunner.class)
@@ -47,7 +41,6 @@ import de.rwth_aachen.phyphox.SettingsActivity.SettingsFragment;
 @Config(sdk = 35, qualifiers = "en-rUS")
 public class ViewSnapshotTest {
 
-    //The non-graph fixtures. Every element of every view of each file gets a golden.
     private static final String[] FIXTURES = {
             "values.phyphox",
             "edits.phyphox",
@@ -56,10 +49,8 @@ public class ViewSnapshotTest {
             "info-separator-image.phyphox",
     };
 
-    //The configuration matrix of the snapshot contract: both explicit themes at both widths,
-    //the large font setting at phone width, and one forced-RTL smoke pass. Theme is a phyphox
-    //setting rather than the system's, and it resolves to the night/notnight resource
-    //configuration - which is what the elements actually read.
+    //The configuration matrix of the snapshot contract. Theme is a phyphox setting, not the system's;
+    //it resolves to the night/notnight resource configuration, which is what the elements read.
     static class Configuration {
         final String name;
         final String qualifiers;
@@ -96,19 +87,12 @@ public class ViewSnapshotTest {
             new Configuration("dark-tablet", "en-rUS-sw600dp-w800dp-h1280dp-normal-port-night-mdpi", 1.0f, 800, SettingsFragment.DARK_MODE_ON),
             new Configuration("light-phone-large-font", "en-rUS-w411dp-h891dp-normal-port-notnight-mdpi", 1.3f, 411, SettingsFragment.DARK_MODE_OFF),
             new Configuration("dark-phone-large-font", "en-rUS-w411dp-h891dp-normal-port-night-mdpi", 1.3f, 411, SettingsFragment.DARK_MODE_ON),
-            //The RTL pass of the snapshot contract. It currently pins an UNMIRRORED layout, and
-            //that is correct: RTL is not implemented yet, because no RTL translation is finished
-            //(maintainer, 2026-08-25). The app therefore does not declare android:supportsRtl,
-            //and without it the platform ignores layout direction entirely - forcing the
-            //direction on the element, as this configuration does, changes nothing. When an RTL
-            //language lands and the flag is set, these goldens change in one visible step, which
-            //is exactly what they are for.
+            //Pins an UNMIRRORED layout on purpose: without android:supportsRtl the platform ignores layout
+            //direction. When an RTL translation lands and the flag is set, these goldens change in one step.
             new Configuration("rtl-phone", "en-rUS-ldrtl-w411dp-h891dp-normal-port-notnight-mdpi", 1.0f, 411, SettingsFragment.DARK_MODE_OFF, true),
     };
 
-    //The follow-system setting resolves to whatever the system says. That resolution is worth
-    //pinning, but not worth doubling the whole matrix (snapshot contract), so it rides on one
-    //fixture.
+    //The follow-system setting rides on one fixture rather than doubling the matrix (snapshot contract).
     private static final String SPOT_CHECK_FIXTURE = "values.phyphox";
     private static final Configuration[] SPOT_CHECKS = {
             new Configuration("system-light-phone", "en-rUS-w411dp-h891dp-normal-port-notnight-mdpi", 1.0f, 411, SettingsFragment.DARK_MODE_SYSTEM),
@@ -144,17 +128,12 @@ public class ViewSnapshotTest {
         assumeTrue("No phyphox-docs checkout found next to this repository - fixtures skipped.",
                 !ViewFixtures.MISSING.equals(fixture));
 
-        //The goldens are recorded in en_US with English resources: value formatting is
-        //locale-dependent, so a German machine would otherwise record 1.234,57 where the runner
-        //expects 1,234.57 (snapshot contract).
+        //Value formatting is locale-dependent; the goldens are recorded in en_US (snapshot contract).
         Locale.setDefault(Locale.US);
         RuntimeEnvironment.setQualifiers(configuration.qualifiers);
         RuntimeEnvironment.setFontScale(configuration.fontScale);
 
-        //The theme is a phyphox setting rather than the system's: the app reads it when the
-        //collection opens and hands it to AppCompat, which is what the experiment activity then
-        //renders with (ExperimentListActivity.onCreate). The snapshot suite opens the experiment
-        //directly, so it applies the setting the same way.
+        //The theme is applied the way ExperimentListActivity.onCreate does before it opens an experiment.
         androidx.preference.PreferenceManager
                 .getDefaultSharedPreferences(RuntimeEnvironment.getApplication())
                 .edit()
@@ -172,9 +151,7 @@ public class ViewSnapshotTest {
 
             List<String> findings = new ArrayList<>();
             String stem = fixture.replace(".phyphox", "");
-            //Several elements of a fixture can carry the same label, or none at all (the
-            //separators): the second one and its successors get a counted suffix so every
-            //element keeps a golden of its own.
+            //Elements can share a label or have none (separators); repeats get a counted suffix.
             java.util.Map<String, Integer> seen = new java.util.HashMap<>();
             for (ExpView view : activity.experiment.experimentViews) {
                 for (ExpView.expViewElement element : view.elements) {
@@ -203,7 +180,6 @@ public class ViewSnapshotTest {
         }
     }
 
-    //The colour the elements are drawn on: the window background of the running experiment.
     private static int windowBackground(Experiment activity) {
         android.util.TypedValue value = new android.util.TypedValue();
         if (activity.getTheme().resolveAttribute(android.R.attr.colorBackground, value, true))
@@ -211,8 +187,7 @@ public class ViewSnapshotTest {
         return android.graphics.Color.BLACK;
     }
 
-    //Open the fixture in the real experiment activity: it builds the pages through the fragments
-    //the app uses, so the elements are laid out exactly as a user would see them.
+    //The real experiment activity lays the elements out exactly as a user would see them.
     private ActivityController<Experiment> launch() throws IOException {
         File source = new File(ViewFixtures.directory(), fixture);
         File target = new File(RuntimeEnvironment.getApplication().getFilesDir(), fixture);
@@ -250,7 +225,6 @@ public class ViewSnapshotTest {
                 : controller.get().experiment.message));
     }
 
-    //Where the view fixtures are, sibling-checkout style like the conformance corpus.
     static final class ViewFixtures {
         static final String MISSING = "fixtures missing";
 

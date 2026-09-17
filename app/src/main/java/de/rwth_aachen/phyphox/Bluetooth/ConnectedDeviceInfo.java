@@ -9,8 +9,6 @@ public class ConnectedDeviceInfo {
     public static final int SIGNAL_LOW = -90;
     public static final int NO_SIGNAL = -98;
 
-    //Single mapping of an RSSI value to the signal strength icon, used by the scan dialog and
-    //the connected-device info bar alike
     public static int getSignalStrengthDrawable(int rssi) {
         if (rssi > SIGNAL_FULL)
             return R.drawable.bluetooth_signal_4;

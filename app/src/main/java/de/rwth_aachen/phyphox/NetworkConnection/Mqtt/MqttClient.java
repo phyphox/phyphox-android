@@ -19,18 +19,9 @@ import javax.net.ssl.SSLSocket;
 import javax.net.ssl.SSLSocketFactory;
 
 /**
- * A minimal, dependency-free MQTT 3.1.1 client covering exactly what phyphox needs: connect (plain
- * or TLS, with optional username/password), publish (QoS 0 and 1), subscribe to a single topic,
- * keep the connection alive, and reconnect if it drops. It replaces the Eclipse Paho client and the
- * hannesa2 "paho.mqtt.android" fork, which wrapped the (archived) Paho Android Service.
- *
- * QoS 2 is intentionally not implemented: phyphox does not need exactly-once delivery. The former
- * "persistence" mode used QoS 2, but at-least-once (QoS 1) together with phyphox's own message
- * buffer covers the reliability case. See network-mqtts-unofficial in phyphox-docs.
- *
- * Threading: every socket write goes through a single-threaded executor, so writes never interleave.
- * A dedicated reader thread does the blocking reads. When an incoming packet needs a response (a
- * QoS 1 PUBLISH must be answered with a PUBACK) that write is posted back onto the writer executor.
+ * Minimal dependency-free MQTT 3.1.1 client: plain/TLS connect, publish (QoS 0 and 1, no QoS 2),
+ * one subscription, keep-alive, reconnect. All socket writes go through a single-threaded
+ * executor (never interleave); a dedicated reader thread does the blocking reads.
  */
 public class MqttClient {
 
@@ -142,10 +133,7 @@ public class MqttClient {
                 s = sslSocketFactory.createSocket();
                 s.connect(new InetSocketAddress(host, port), CONNECT_TIMEOUT_MS);
                 ((SSLSocket) s).startHandshake();
-                //startHandshake validates the certificate chain but not the host name, so without
-                //this check a publicly trusted certificate for a different host would be accepted.
-                //Off for a pinned custom CA (certificate attribute), where the pin itself is the
-                //trust anchor - see network-mqtts-unofficial in phyphox-docs.
+                //startHandshake validates the chain but not the host name; off for a pinned custom CA
                 if (verifyHostname) {
                     if (!HttpsURLConnection.getDefaultHostnameVerifier()
                             .verify(host, ((SSLSocket) s).getSession()))

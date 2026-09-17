@@ -64,7 +64,6 @@ import com.google.android.material.switchmaterial.SwitchMaterial;
 import com.google.android.material.textfield.MaterialAutoCompleteTextView;
 import com.google.android.material.textfield.TextInputLayout;
 
-import java.io.File;
 import java.io.InputStream;
 import java.io.Serializable;
 import java.math.BigDecimal;
@@ -139,7 +138,7 @@ public class ExpView implements Serializable{
         DataBuffer visibilityBuffer = null;
         //Constructor takes the label, any buffer name that should be used an a reference to the resources
         protected expViewElement(String label, String visibility,  String valueOutput, Vector<String> inputs, Resources res) {
-            this.label = label;
+            this.label = label == null ? "" : label; //Empty string as on iOS: the remote interface writes every label into its view list
             this.visibility = visibility;
             this.labelSize = res.getDimension(R.dimen.label_font);
             this.valueOutput = valueOutput;
@@ -155,7 +154,7 @@ public class ExpView implements Serializable{
 
         // Same as the above Constructor, only change is that it accepts output vector
         protected expViewElement(String label, String visibility ,Vector<String> valueOutputs, Vector<String> inputs, Resources res) {
-            this.label = label;
+            this.label = label == null ? "" : label;
             this.visibility = visibility;
             this.labelSize = res.getDimension(R.dimen.label_font);
             this.outputs = valueOutputs;
@@ -291,25 +290,23 @@ public class ExpView implements Serializable{
         }
 
         //This is called when the analysis process is finished and the element is allowed to write to the buffers
-        //An input element's default belongs in its buffer, not only on its face: an element
-        //showing a value the buffer does not contain leaves every analysis reading that buffer
-        //with NaN. So an EMPTY buffer is seeded with what the element displays - at load, after
-        //a clear, and at the start of any analysis cycle, since handleInputViews calls the write
-        //hook every pass - and never over a value somebody set, because a buffer holding one is
-        //not empty.
-        //
-        //Deliberately independent of the element's widget: handleInputViews runs for every view,
-        //but a view the pager has not reached has no views built, and seeding only for the
-        //element on screen is the bug iOS was fixed for. Empty means empty rather than NaN, so a
-        //buffer an analysis filled with NaN is left alone.
-        protected boolean seedIfEmpty(PhyphoxExperiment experiment, String name, double value) {
+        //Seeds the default into an EMPTY buffer or replaces a trailing NaN, unclamped, as iOS does. Must not
+        //depend on the widget. Returns whether this counts as user input: seeding does, replacing a NaN does not.
+        protected boolean applyDefault(PhyphoxExperiment experiment, String name, double value) {
             if (name == null)
                 return false;
             DataBuffer buffer = experiment.getBuffer(name);
-            if (buffer == null || buffer.getFilledSize() != 0)
+            if (buffer == null)
                 return false;
-            buffer.append(value);
-            return true;
+            if (buffer.getFilledSize() == 0) {
+                buffer.append(value);
+                return true;
+            }
+            if (Double.isNaN(buffer.value)) {
+                buffer.clear(false);
+                buffer.append(value);
+            }
+            return false;
         }
 
         protected boolean onMayWriteToBuffers(PhyphoxExperiment experiment) {
@@ -366,9 +363,18 @@ public class ExpView implements Serializable{
             }
         }
 
-        //Called when the user wants to leave this element's exclusive mode (for example via
-        //back navigation). Elements may intercept this to ask the user how to proceed first
-        //(see graphElement, which asks how a temporary zoom should be applied).
+        //The input buffer's current value, or def if it has none or holds NaN, which no input control can show.
+        //createView runs again when the pager resumes the fragment, so a control starts from the buffer.
+        protected double bufferValueOrDefault(PhyphoxExperiment experiment, double def) {
+            if (experiment == null || inputs.size() == 0)
+                return def;
+            DataBuffer buffer = experiment.getBuffer(inputs.get(0));
+            if (buffer == null || buffer.getFilledSize() == 0 || Double.isNaN(buffer.value))
+                return def;
+            return buffer.value;
+        }
+
+        //Leave exclusive mode on the user's request; elements may intercept this to ask first (see graphElement)
         protected void requestLeaveExclusive() {
             if (parent != null)
                 parent.leaveExclusive();
@@ -959,7 +965,7 @@ public class ExpView implements Serializable{
         private Double max = Double.POSITIVE_INFINITY;
         private boolean focused = false; //Is the element currently focused? (Updates should be blocked while the element has focus and the user is working on its content)
 
-        private boolean triggered = true;
+        private boolean triggered = false; //Set by user interaction only; seeding the default is left to applyDefault()
         private boolean editable = true;
 
         public String label;
@@ -1132,7 +1138,6 @@ public class ExpView implements Serializable{
             //Add the row to the main linear layout passed to this function
             root_ll.addView(rootView);
 
-            //Handle text changes and focus changes and indicate the status to the user through chaning background colors
             final Drawable originalBackground = et.getBackground();
             final ColorDrawable overlay = new ColorDrawable(Color.TRANSPARENT);
             final LayerDrawable combinedBackground = new LayerDrawable(new Drawable[]{originalBackground, overlay});
@@ -1240,10 +1245,10 @@ public class ExpView implements Serializable{
 
         void setValue(double v) {
             if (!focused) {
-                if (Double.isNaN(v)) { //If the buffer holds NaN, resort to the default value (probably the user has not entered anything yet)
+                //A NaN is only shown as the default; the buffer gets it from applyDefault() on the next write pass
+                if (Double.isNaN(v))
                     currentValue = defaultValue;
-                    triggered = true;
-                } else
+                else
                     currentValue = v;
                 if (et != null) {
                     if (decimal)
@@ -1258,8 +1263,10 @@ public class ExpView implements Serializable{
         //If triggered, write the data to the output buffers
         //Always return zero as the analysis process does not receive the values directly
         protected boolean onMayWriteToBuffers(PhyphoxExperiment experiment) {
+            boolean seeded = inputs.size() > 0
+                    && applyDefault(experiment, inputs.get(0), defaultValue);
             if (!triggered)
-                return false;
+                return seeded;
             triggered = false;
             experiment.getBuffer(inputs.get(0)).clear(false);
             experiment.getBuffer(inputs.get(0)).append(getValue());
@@ -1408,7 +1415,7 @@ public class ExpView implements Serializable{
         }
 
         public void requestFinished(NetworkService.ServiceResult result) {
-            if (parent == null)
+            if (parent == null || parent.getActivity() == null)
                 return;
             parent.getActivity().runOnUiThread(new Runnable() {
                 @Override
@@ -1597,7 +1604,6 @@ public class ExpView implements Serializable{
 
         final String warningText;
 
-        // Picker feature
         String pickLabel = null;
         private Vector<DataOutput> outputs = null;
         private Double[] newPickData = null;
@@ -1910,8 +1916,7 @@ public class ExpView implements Serializable{
         }
 
         @Override
-        //Leaving exclusive mode of a graph may require user input on how to apply a temporary
-        //zoom, so show the same dialog as when tapping the maximized graph.
+        //A temporary zoom needs the user's decision, so show the same dialog as tapping the maximized graph
         protected void requestLeaveExclusive() {
             if (parent == null)
                 return;
@@ -2130,10 +2135,7 @@ public class ExpView implements Serializable{
             String rescale = "";
             String scaleX = "";
             if (followX && !Double.isNaN(minX) && !Double.isNaN(maxX)) {
-                //The graph follows the data: Keep the window width given by the minX and maxX
-                //attributes, but anchor its end at the newest x value of the data, mirroring
-                //the behavior of GraphView.rescale() in the app. Before any data arrives (or
-                //after the data has been cleared) the initial range from the attributes is used.
+                //Keep the window width from minX/maxX but anchor its end at the newest x value, like GraphView.rescale()
                 scaleX += "\"min\":" + minX + ", \"max\":" + maxX + ", ";
                 rescale += "if (elementData["+htmlID+"][\"datasets\"][0][\"data\"].length > 0) {";
                 rescale += "elementData["+htmlID+"][\"graph\"].options.scales.xAxes[0].ticks.max = maxX;";
@@ -2702,11 +2704,7 @@ public class ExpView implements Serializable{
                     R.color.phyphox_white_100)));
 
 
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN_MR1) {
-                autoCompleteTvCameraSelection.setText(options[0], false);
-            } else {
-                autoCompleteTvCameraSelection.setText(options[0]);
-            }
+            autoCompleteTvCameraSelection.setText(options[0], false);
 
             autoCompleteTvCameraSelection.setOnItemClickListener((adapterView, view, i, l) -> cv.setCamera(camOptions.get(i).key));
 
@@ -2836,30 +2834,14 @@ public class ExpView implements Serializable{
         protected void createView(LinearLayout ll, Context c, Resources res, ExpViewFragment parent, PhyphoxExperiment experiment){
             super.createView(ll, c, res, parent, experiment);
 
-            //The src comes from the experiment file, which is not trustworthy: refuse any path
-            //traversal so it cannot reach outside the resource folder.
-            boolean srcIsSafe = Helper.isSafeResourceName(src);
-            //Externally loaded experiments deliver their images in a res folder alongside the
-            //XML file, so try this one first...
-            if (srcIsSafe && experiment.resourceFolder != null && !experiment.resourceFolder.startsWith("ASSET")) {
-                File srcFile = new File(experiment.resourceFolder, src);
-                Bitmap bmp = BitmapFactory.decodeFile(srcFile.getAbsolutePath());
+            try (InputStream is = Helper.openResource(c, experiment.resourceFolder, src)) {
+                Bitmap bmp = is == null ? null : BitmapFactory.decodeStream(is);
                 if (bmp != null)
                     drawable = new BitmapDrawable(bmp);
-            }
-            //...and fall back to the internal images bundled with phyphox (at the moment only
-            //hue.png). This is the regular source for experiments loaded from the assets, but
-            //it also allows external experiment files to reuse the bundled images.
-            if (srcIsSafe && drawable == null) {
-                String assetPath = "experiments/res/" + src;
-                try {
-                    InputStream is = res.getAssets().open(assetPath);
-                    Bitmap bmp = BitmapFactory.decodeStream(is);
-                    if (bmp != null)
-                        drawable = new BitmapDrawable(bmp);
-                } catch (Exception e) {
-                    Log.e("imageView", "Failed to open image from asset: " + assetPath);
-                }
+                else
+                    Log.e("imageView", "Failed to open image: " + src);
+            } catch (Exception e) {
+                Log.e("imageView", "Failed to open image: " + src);
             }
             if (drawable != null) {
                 applyFilter(Helper.isDarkTheme(res) ? darkFilter : lightFilter);
@@ -3090,7 +3072,8 @@ public class ExpView implements Serializable{
 
         double defaultValue;
 
-        private boolean triggered = true;
+        private boolean triggered = false; //Set by user interaction only, see applyDefault()
+        private boolean followingBuffer = false;
 
         SwitchMaterial switchView;
 
@@ -3138,13 +3121,15 @@ public class ExpView implements Serializable{
             row.addView(labelView);
             row.addView(switchViewRow);
 
-            boolean isSwitchedOn = this.defaultValue != 0.0;
-            switchView.setChecked(isSwitchedOn);
+            switchView.setChecked(bufferValueOrDefault(experiment, defaultValue) != 0.0);
 
+            //setChecked() fires this too; followingBuffer keeps a buffer-driven move from counting as user input
             switchView.setOnCheckedChangeListener((compoundButton, b) -> {
-                compoundButton.setChecked(b);
-                triggered = true;
+                if (!followingBuffer)
+                    triggered = true;
             });
+
+            triggered = false; //a freshly built widget is not a user action
 
             rootView = row;
             rootView.setFocusableInTouchMode(true);
@@ -3164,15 +3149,23 @@ public class ExpView implements Serializable{
             if (switchView == null)
                 return;
 
-            boolean checked = (int) experiment.getBuffer(inputs.get(0)).value != 0;
-            if (checked != switchView.isChecked() && !triggered)
+            DataBuffer buffer = experiment.getBuffer(inputs.get(0));
+            if (buffer == null || buffer.getFilledSize() == 0)
+                return; //an empty buffer is nothing to follow yet, not a zero
+
+            //A switch cannot show NaN; the default stands in until applyDefault() has seeded the buffer
+            boolean checked = Double.isNaN(buffer.value) ? defaultValue != 0.0 : (int) buffer.value != 0;
+            if (checked != switchView.isChecked() && !triggered) {
+                followingBuffer = true;
                 switchView.setChecked(checked);
+                followingBuffer = false;
+            }
         }
 
         @Override
         protected boolean onMayWriteToBuffers(PhyphoxExperiment experiment) {
             boolean seeded = inputs.size() > 0
-                    && seedIfEmpty(experiment, inputs.get(0), defaultValue);
+                    && applyDefault(experiment, inputs.get(0), defaultValue);
             if(!triggered || switchView == null){
                 return seeded;
             }
@@ -3183,14 +3176,7 @@ public class ExpView implements Serializable{
             return  true;
         }
 
-        //No clear() here on purpose. It used to set triggered, which wrote the switch's own
-        //position back into the buffer the moment the data was cleared - so a toggle the user
-        //had flipped stayed flipped through the trash. Clearing is how a user deliberately
-        //returns an experiment to its starting state (maintainer, 2026-08-29), and a setting
-        //meant to SURVIVE it is what clearGroup is for; if clearing kept whatever the controls
-        //showed, that attribute would answer a question nobody asked. So the emptied buffer is
-        //seeded with the default like any other, and onMayReadFromBuffers moves the switch to
-        //match - the control follows the data, which is what iOS does.
+        //No clear() on purpose: the switch follows the reseeded buffer, as on iOS
 
         @Override
         protected String createViewHTML() {
@@ -3241,7 +3227,7 @@ public class ExpView implements Serializable{
 
         MaterialAutoCompleteTextView autoCompleteTextView;
 
-        private boolean triggered = true;
+        private boolean triggered = false; //Set by user interaction only, see applyDefault()
         private int currentIndex = 0;
 
         protected class Mapping {
@@ -3335,13 +3321,11 @@ public class ExpView implements Serializable{
                                             R.color.phyphox_white_100)));
 
 
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN_MR1) {
-                autoCompleteTextView.setText(options[0], false);
-            } else {
-                autoCompleteTextView.setText(options[0]);
-            }
+            autoCompleteTextView.setText(options[0], false);
 
-            setFromValue(defaultValue);
+            setFromValue(bufferValueOrDefault(experiment, defaultValue));
+
+            triggered = false; //a freshly built widget is not a user action
 
             autoCompleteTextView.setOnItemClickListener((adapterView, view, position, id) -> {
                 triggered = true;
@@ -3383,9 +3367,12 @@ public class ExpView implements Serializable{
             super.onMayReadFromBuffers(experiment);
             if (!needsUpdate || triggered || autoCompleteTextView == null)
                 return;
+            DataBuffer buffer = experiment.getBuffer(inputs.get(0));
+            if (buffer == null || buffer.getFilledSize() == 0)
+                return; //an empty buffer is nothing to follow yet, not a zero
             needsUpdate = false;
-            double x = experiment.getBuffer(inputs.get(0)).value;
-
+            //A menu cannot show NaN; the default stands in until applyDefault() has seeded the buffer
+            double x = Double.isNaN(buffer.value) ? defaultValue : buffer.value;
 
             setFromValue(x);
         }
@@ -3393,7 +3380,7 @@ public class ExpView implements Serializable{
         @Override
         protected boolean onMayWriteToBuffers(PhyphoxExperiment experiment) {
             boolean seeded = inputs.size() > 0
-                    && seedIfEmpty(experiment, inputs.get(0), defaultValue);
+                    && applyDefault(experiment, inputs.get(0), defaultValue);
             if (!triggered || autoCompleteTextView == null)
                 return seeded;
             triggered = false;
@@ -3586,10 +3573,7 @@ public class ExpView implements Serializable{
                 View rangeSliderView = inflater.inflate(R.layout.range_slider, null);
                 rangeSlider = rangeSliderView.findViewById(R.id.sliderView);
                 rangeSlider.setLabelBehavior(LabelFormatter.LABEL_GONE);
-                //The label bubble is gone, but the formatter is also what an accessibility
-                //service reads out ("Range start, ..."). Without it TalkBack announces the
-                //internal step index - "4" for a slider showing 20 - because the slider works in
-                //step units below (see the note there).
+                //The formatter is also what TalkBack announces, so it has to undo the step conversion
                 rangeSlider.setLabelFormatter(value -> numberFormatter(getSteppedValue(value)));
                 rangeSlider.setLayoutParams(getTableRowParams(0.9f));
                 if(stepSize != 0.0) {
@@ -3626,8 +3610,7 @@ public class ExpView implements Serializable{
                     slider.setValueTo((float)maxValue);
                 }
                 slider.setLabelBehavior(LabelFormatter.LABEL_GONE);
-                //Same as for the range slider above: this formatter is what a screen reader
-                //announces, so it has to undo the step conversion.
+                //Same as for the range slider above: what TalkBack announces
                 slider.setLabelFormatter(value -> numberFormatter(getSteppedValue(value)));
                 slider.setValue((float)defaultValue);
                 slider.setLayoutParams(getTableRowParams(0.9f));
@@ -3680,33 +3663,21 @@ public class ExpView implements Serializable{
             return Math.min(Math.max(steppedVal, minValue), maxValue);
         }
 
-        //The value the slider SHOWS for a configured one: onto the step grid and inside the
-        //range, which is what onMayReadFromBuffers does to position the handle and what
-        //getSteppedValue undoes when the handle is read back. Seeding the raw attribute instead
-        //would put a value in the buffer that the slider never displays.
+        //Stepped and clamped, so the seeded buffer never holds a value the slider does not display
         private double displayedValueFor(double configured) {
             if (stepSize == 0.0)
                 return Math.min(Math.max(configured, minValue), maxValue);
             return getSteppedValue(Math.round(configured / stepSize) - Math.floor(minValue / stepSize));
         }
 
-        //What the slider shows is what its buffers hold. The handle has to be somewhere, and a
-        //slider displaying a value its buffer does not contain leaves every analysis reading
-        //that buffer with NaN - so an empty buffer is seeded with what is on screen: default for
-        //a plain slider, minValue and maxValue for the two handles of a range one.
-        //
-        //Seeded whenever the buffer is EMPTY - at load, after a clear, and at the start of any
-        //analysis cycle - and never over a value somebody set, because a buffer holding one is
-        //not empty. handleInputViews runs this for every view rather than the visible one, and
-        //it reads the configured attributes rather than the widget, so it does not need the
-        //slider to have been laid out.
+        //Seeds empty buffers from the attributes, so it works before the widget has been laid out
         private boolean seedEmptyBuffers(PhyphoxExperiment experiment) {
             if (inputs.size() == 0)
                 return false;
-            boolean seeded = seedIfEmpty(experiment, inputs.get(0),
+            boolean seeded = applyDefault(experiment, inputs.get(0),
                     displayedValueFor(type == SliderType.Range ? minValue : defaultValue));
             if (type == SliderType.Range && inputs.size() > 1)
-                seeded |= seedIfEmpty(experiment, inputs.get(1), displayedValueFor(maxValue));
+                seeded |= applyDefault(experiment, inputs.get(1), displayedValueFor(maxValue));
             return seeded;
         }
 
@@ -3752,6 +3723,9 @@ public class ExpView implements Serializable{
         protected void onMayReadFromBuffers(PhyphoxExperiment experiment) {
             super.onMayReadFromBuffers(experiment);
             if (!needsUpdate || triggered)
+                return;
+            //The read pass also runs for pages the pager has not built yet
+            if (type == SliderType.Range ? rangeSlider == null : slider == null)
                 return;
             needsUpdate = false;
             if (inputs.size() == 0)

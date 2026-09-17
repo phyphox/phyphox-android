@@ -29,7 +29,7 @@ public class MqttTlsJson extends MqttService {
         this.tls = true;
         this.certificateFileName = certificateFileName; //optional: null uses the system trust store
         this.resourceFolder = resourceFolder;
-        //persistence now selects at-least-once delivery (QoS 1) instead of the former QoS 2
+        //persistence selects at-least-once delivery (QoS 1)
         this.qos = persistence ? 1 : 0;
     }
 

@@ -7,16 +7,11 @@ import de.rwth_aachen.phyphox.DataBuffer;
 // The class holds public static functions which convert double values to a byte array that can be written to a characteristic.
 public class ConversionsOutput {
 
-    //A single value-to-bytes conversion function. Serializable so the conversion objects stay
-    //serializable like they were when they wrapped a reflected Method.
     public interface DoubleToByteArray extends Serializable {
         byte[] apply(double data);
     }
 
-    //Resolves a conversion function named in an experiment file to a conversion object. The name is
-    //matched case-insensitively (see the enum-case-insensitive rule in phyphox-docs). Returns null
-    //if there is no such function, so the caller can reject the file. The accepted names are the
-    //file-format contract and must not change; this replaced a reflection lookup by method name.
+    //The accepted names are part of the file-format contract (case-insensitive); null if unknown
     public static OutputConversion getConversion(String name) {
         if (name == null)
             return null;

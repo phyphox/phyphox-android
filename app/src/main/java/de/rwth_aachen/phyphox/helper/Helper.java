@@ -9,6 +9,8 @@ import android.content.Context;
 import android.content.ContextWrapper;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.net.Uri;
+import android.provider.Settings;
 import android.content.pm.ActivityInfo;
 import android.content.pm.PackageManager;
 import android.content.res.Configuration;
@@ -37,6 +39,7 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.view.Window;
 
+import androidx.appcompat.app.AlertDialog;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
 
@@ -147,10 +150,29 @@ public abstract class Helper {
         return score;
     }
 
-    //A resource name (an image element's src) comes from the experiment file, which is not
-    //trustworthy. Refuse any path traversal so a malicious file cannot reach outside its
-    //resource folder - relevant especially for the /res endpoint, which serves the resolved
-    //file over the network. Matches the guard in the iOS app (Experiment.resolveResource).
+    //Opens a resource named by a view element or a network block: the folder delivered with the experiment first,
+    //then the images bundled in the assets, which external experiments may reuse. Null if unsafe or absent.
+    public static InputStream openResource(Context context, String resourceFolder, String src) {
+        if (!isSafeResourceName(src))
+            return null;
+        if (resourceFolder != null && !resourceFolder.startsWith("ASSET")) {
+            File file = new File(resourceFolder, src);
+            if (file.isFile()) {
+                try {
+                    return new FileInputStream(file);
+                } catch (IOException e) {
+                    return null;
+                }
+            }
+        }
+        try {
+            return context.getAssets().open("experiments/res/" + src);
+        } catch (IOException e) {
+            return null;
+        }
+    }
+
+    //Resource names come from the untrusted experiment file and reach the /res endpoint: refuse path traversal (as iOS Experiment.resolveResource)
     public static boolean isSafeResourceName(String src) {
         if (src == null || src.isEmpty())
             return false;
@@ -161,39 +183,91 @@ public abstract class Helper {
         return true;
     }
 
-    //Does the app need to ask for the local network permission before touching the local network?
-    //(The permission exists from SDK 37 on; below that there is nothing to request.)
+    //ACCESS_LOCAL_NETWORK exists from SDK 37 on
     public static boolean needsLocalNetworkPermission(android.content.Context context) {
         return android.os.Build.VERSION.SDK_INT >= 37 &&
                 androidx.core.content.ContextCompat.checkSelfPermission(context, android.Manifest.permission.ACCESS_LOCAL_NETWORK) != android.content.pm.PackageManager.PERMISSION_GRANTED;
     }
 
-    //Fast heuristic for "this address is on the local network", used to request the local network
-    //permission BEFORE the first connection attempt. Deliberately without any DNS resolution (this
-    //must not block): it recognizes literal private/link-local/loopback IPs, mDNS names (.local)
-    //and localhost. A hostname that merely resolves to a LAN address is not recognized - those
-    //cases are handled by requesting the permission after a failed connection attempt instead.
+    //Explains why ACCESS_LOCAL_NETWORK is needed, then requests it. With an onDeclined action the dialog is not
+    //cancelable, so the user has to take one of the two paths.
+    public static void requestLocalNetworkPermission(Activity activity, int titleRes, String message, int requestCode, Runnable onDeclined) {
+        AlertDialog.Builder builder = new AlertDialog.Builder(activity)
+                .setTitle(activity.getString(titleRes))
+                .setMessage(message)
+                .setPositiveButton(activity.getString(R.string.ok), (d, w) -> ActivityCompat.requestPermissions(activity, new String[]{Manifest.permission.ACCESS_LOCAL_NETWORK}, requestCode));
+        if (onDeclined != null)
+            builder.setNegativeButton(activity.getString(R.string.cancel), (d, w) -> onDeclined.run()).setCancelable(false);
+        else
+            builder.setNegativeButton(activity.getString(R.string.cancel), null);
+        builder.show();
+    }
+
+    //After a denied permission: offer to open the app's system settings page
+    public static void showAppSettingsDialog(Activity activity, int titleRes, int messageRes) {
+        new AlertDialog.Builder(activity)
+                .setTitle(activity.getString(titleRes))
+                .setMessage(activity.getString(messageRes))
+                .setPositiveButton(activity.getString(R.string.gotoSetting), (dialog, which) -> {
+                    Intent intent = new Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS);
+                    intent.setData(Uri.fromParts("package", activity.getPackageName(), null));
+                    activity.startActivityForResult(intent, 1);
+                })
+                .setNegativeButton(activity.getString(R.string.cancel), null)
+                .show();
+    }
+
+    public static class HostPort {
+        public final String host;
+        public final int port;
+        HostPort(String host, int port) {
+            this.host = host;
+            this.port = port;
+        }
+    }
+
+    //Host and port of "[scheme://]host[:port][/path]". IPv6 literals may be bracketed; a bare one (several
+    //colons, no brackets) is taken as host without port. An absent or unparseable port is the default.
+    public static HostPort splitHostPort(String address, int defaultPort) {
+        String hostPort = address;
+        int schemeIdx = hostPort.indexOf("://");
+        if (schemeIdx >= 0)
+            hostPort = hostPort.substring(schemeIdx + 3);
+        int slash = hostPort.indexOf('/');
+        if (slash >= 0)
+            hostPort = hostPort.substring(0, slash);
+        String host = hostPort;
+        String portString = null;
+        if (hostPort.startsWith("[")) {
+            int end = hostPort.indexOf(']');
+            if (end > 0) {
+                host = hostPort.substring(1, end);
+                if (hostPort.startsWith(":", end + 1))
+                    portString = hostPort.substring(end + 2);
+            }
+        } else {
+            int colon = hostPort.indexOf(':');
+            if (colon >= 0 && hostPort.indexOf(':', colon + 1) < 0) {
+                host = hostPort.substring(0, colon);
+                portString = hostPort.substring(colon + 1);
+            }
+        }
+        int port = defaultPort;
+        if (portString != null) {
+            try {
+                port = Integer.parseInt(portString);
+            } catch (NumberFormatException e) {
+                port = defaultPort;
+            }
+        }
+        return new HostPort(host, port);
+    }
+
+    //Heuristic without DNS (must not block): hostnames that merely resolve to a LAN address are caught after a failed attempt
     public static boolean isLikelyLocalNetworkAddress(String address) {
         if (address == null || address.isEmpty())
             return false;
-        //Reduce a URL or host:port to the bare host
-        String host = address;
-        int schemeIdx = host.indexOf("://");
-        if (schemeIdx >= 0)
-            host = host.substring(schemeIdx + 3);
-        int slash = host.indexOf('/');
-        if (slash >= 0)
-            host = host.substring(0, slash);
-        if (host.startsWith("[")) { //bracketed IPv6 literal
-            int end = host.indexOf(']');
-            if (end > 0)
-                host = host.substring(1, end);
-        } else {
-            int colon = host.indexOf(':');
-            if (colon >= 0 && host.indexOf(':', colon + 1) < 0) //single colon: host:port (multiple colons: bare IPv6)
-                host = host.substring(0, colon);
-        }
-        host = host.toLowerCase();
+        String host = splitHostPort(address, 0).host.toLowerCase();
 
         if (host.equals("localhost") || host.endsWith(".local"))
             return true;
@@ -223,10 +297,7 @@ public abstract class Helper {
                 || (b[0] == 169 && b[1] == 254);
     }
 
-    //Enumerated attribute values in the phyphox file format are matched case-insensitively (see
-    //the enum-case-insensitive rule in phyphox-docs). This resolves an enum constant by name
-    //ignoring case, returning null if there is no match (so the caller can reject the value).
-    //Works for camelCase enum constants too, unlike Enum.valueOf on a lowercased string.
+    //Case-insensitive match (enum-case-insensitive in phyphox-docs), null if none; handles camelCase constants unlike Enum.valueOf on lowercased input
     public static <E extends Enum<E>> E enumFromStringIgnoreCase(Class<E> enumClass, String value) {
         if (value == null)
             return null;
@@ -259,10 +330,7 @@ public abstract class Helper {
             XPath xpath = XPathFactory.newInstance().newXPath();
             NodeList nodes = (NodeList) xpath.evaluate(tag, doc, XPathConstants.NODESET);
 
-            //Set the first match and drop any further ones: the tags handled here hold a single
-            //value (state-title), so several of them are leftovers of an old writer bug that
-            //appended instead of replaced. Renaming heals such a file - the duplicate would
-            //otherwise keep it unloadable on iOS.
+            //Single-value tags (state-title): keep the first match only; an old writer bug appended duplicates, which keep the file unloadable on iOS
             List<Node> matches = new ArrayList<>();
             for (int i = 0; i < nodes.getLength(); i++)
                 matches.add(nodes.item(i));
@@ -678,9 +746,7 @@ public abstract class Helper {
         return voltage * 1e-3;
     }
 
-    //Battery current in amperes, positive when charging and negative when discharging (as
-    // defined by the Android API, but note that some devices do not follow this convention and
-    // report an inverted sign). NaN if unavailable.
+    //Battery current in amperes, positive when charging per Android API (some devices invert the sign), NaN if unavailable
     public static double getBatteryCurrent(Context context) {
         if (context == null) return Double.NaN;
 
@@ -696,14 +762,14 @@ public abstract class Helper {
     //Battery temperature in degrees Celsius, NaN if unavailable
     public static double getBatteryTemperature(Context context) {
         if (context == null) return Double.NaN;
-
         Intent batteryStatus = context.registerReceiver(null, new IntentFilter(Intent.ACTION_BATTERY_CHANGED));
-        if (batteryStatus == null) return Double.NaN;
+        return batteryStatus == null ? Double.NaN : batteryTemperature(batteryStatus);
+    }
 
-        int temperature = batteryStatus.getIntExtra(BatteryManager.EXTRA_TEMPERATURE, Integer.MIN_VALUE); //in tenths of a degree Celsius
-        if (temperature == Integer.MIN_VALUE) return Double.NaN;
-
-        return temperature * 0.1;
+    //Degrees Celsius from an ACTION_BATTERY_CHANGED intent, NaN if it carries none
+    public static double batteryTemperature(Intent batteryStatus) {
+        int temperature = batteryStatus.getIntExtra(BatteryManager.EXTRA_TEMPERATURE, Integer.MIN_VALUE); //tenths of a degree
+        return temperature == Integer.MIN_VALUE ? Double.NaN : temperature * 0.1;
     }
 
     public static int getWifiReceptionStrength(Context context){

@@ -19,15 +19,12 @@ import javax.xml.parsers.DocumentBuilderFactory;
 
 import org.w3c.dom.Document;
 
-//An export set holds as many rows as its LONGEST column, with the shorter columns padded with
-//NaN (ruled 2026-08-25, export-set-row-count). Sizing by the first column instead truncated
-//every longer column, and an empty first container dropped the whole set - motion_stopwatch
-//exported zero rows for its "All" set although one of its two containers had data.
+//An export set holds as many rows as its longest column, shorter columns padded with NaN
+//(phyphox-docs ruling export-set-row-count).
 @RunWith(RobolectricTestRunner.class)
 @Config(sdk = 35)
 public class ExportRowCountTest {
 
-    //The first container stays empty, the second fills: the case that used to export nothing.
     private static final String EXPERIMENT =
             "<phyphox version=\"1.20\">"
                     + "<title>Export row count</title>"
@@ -110,7 +107,6 @@ public class ExportRowCountTest {
                 activity.getCacheDir(), false, "rowcount", activity);
 
         try (ZipFile archive = new ZipFile(file)) {
-            //Sheet 1 is the first export set; a header row plus one row per value.
             Document sheet = DocumentBuilderFactory.newInstance().newDocumentBuilder()
                     .parse(new ByteArrayInputStream(readAll(archive, "xl/worksheets/sheet1.xml")));
             assertEquals("Header plus one row per value of the longest column",
@@ -118,7 +114,6 @@ public class ExportRowCountTest {
         }
     }
 
-    //The file the ruling came from, so the fix cannot silently regress on the real thing.
     @Test
     public void theShippedMotionStopwatchExportsItsIntervals() throws Exception {
         File asset = new File("src/main/assets/experiments/motion_stopwatch.phyphox");
@@ -131,8 +126,6 @@ public class ExportRowCountTest {
         PhyphoxExperiment experiment = CorpusTestEnvironment.load(asset, activity);
         assertTrue(experiment.message, experiment.loaded);
 
-        //"All" maps tlist (empty until something is timed) and dtlist (initialized), so the set
-        //used to export nothing at all.
         DataBuffer intervals = experiment.getBuffer("dtlist");
         experiment.dataLock.lock();
         try {

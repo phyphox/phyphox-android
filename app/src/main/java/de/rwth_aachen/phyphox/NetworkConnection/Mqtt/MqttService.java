@@ -11,16 +11,12 @@ import java.util.List;
 import javax.net.ssl.SSLSocketFactory;
 
 import de.rwth_aachen.phyphox.NetworkConnection.NetworkService;
+import de.rwth_aachen.phyphox.helper.Helper;
 
 /**
- * Base class for the MQTT network services. It drives a from-scratch {@link MqttClient} (MQTT
- * 3.1.1, no external dependency) - see network-mqtts-unofficial in phyphox-docs. The concrete
- * subclasses only choose the payload format (JSON or CSV) and whether TLS and authentication are
- * used.
- *
- * The former QoS-2 "persistence" mode is gone: persistence="true" now publishes with QoS 1
- * (at-least-once) while connected, and there is no more offline message buffering. Plain publishes
- * use QoS 0.
+ * Base class for the MQTT network services, driving {@link MqttClient}. Subclasses only choose the
+ * payload format (JSON/CSV) and whether TLS and authentication are used. persistence="true" means
+ * QoS 1 while connected (no offline buffering); plain publishes use QoS 0.
  */
 public abstract class MqttService extends NetworkService.Service {
     private final List<byte[]> data = new ArrayList<>();
@@ -50,33 +46,14 @@ public abstract class MqttService extends NetworkService.Service {
                 return; // do not connect with a different trust model than the experiment intended
             }
         }
-        // The address is kept scheme-normalised for the metadata id (kept identical to the previous
-        // implementation), while host and port for the socket are parsed out of it separately.
+        // scheme-normalised address feeds the metadata id; host and port are parsed out separately
         if (address.contains("://"))
             this.address = address;
         else
             this.address = "tcp://" + address;
 
-        String hostPort = address;
-        int schemeIdx = hostPort.indexOf("://");
-        if (schemeIdx >= 0)
-            hostPort = hostPort.substring(schemeIdx + 3);
-        String host;
-        int port;
-        int colon = hostPort.lastIndexOf(':');
-        if (colon >= 0) {
-            host = hostPort.substring(0, colon);
-            try {
-                port = Integer.parseInt(hostPort.substring(colon + 1));
-            } catch (NumberFormatException e) {
-                port = tls ? 8883 : 1883;
-            }
-        } else {
-            host = hostPort;
-            port = tls ? 8883 : 1883;
-        }
-
-        client = new MqttClient(host, port, clientID, username, password, true, 60, sslSocketFactory,
+        Helper.HostPort hostPort = Helper.splitHostPort(address, tls ? 8883 : 1883);
+        client = new MqttClient(hostPort.host, hostPort.port, clientID, username, password, true, 60, sslSocketFactory,
                 tls && certificateFileName == null, receiveTopic, new MqttClient.Listener() {
             @Override
             public void onMessage(String topic, byte[] payload) {

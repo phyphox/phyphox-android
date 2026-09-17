@@ -6,16 +6,11 @@ import java.io.Serializable;
 // The class holds public static functions which convert values from a string to a byte array.
 public class ConversionsConfig {
 
-    //A single string-to-bytes conversion function. Serializable so the conversion objects stay
-    //serializable like they were when they wrapped a reflected Method.
     public interface StringToByteArray extends Serializable {
         byte[] apply(String data);
     }
 
-    //Resolves a conversion function named in an experiment file to a conversion object. The name is
-    //matched case-insensitively (see the enum-case-insensitive rule in phyphox-docs). Returns null
-    //if there is no such function, so the caller can reject the file. The accepted names are the
-    //file-format contract and must not change; this replaced a reflection lookup by method name.
+    //The accepted names are part of the file-format contract (case-insensitive); null if unknown
     public static ConfigConversion getConversion(String name) {
         if (name == null)
             return null;
@@ -140,7 +135,7 @@ public class ConversionsConfig {
     }
 
     public static byte[] singleByte (String data) {
-        //Parse as int and truncate, so both signed (-128..127) and unsigned (128..255) notations work
+        //int parse + truncate so signed (-128..127) and unsigned (128..255) notations both work
         return new byte[]{(byte) Integer.parseInt(data)};
     }
 

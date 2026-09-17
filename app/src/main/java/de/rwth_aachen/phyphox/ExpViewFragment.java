@@ -5,7 +5,6 @@ import android.animation.LayoutTransition;
 import android.content.Context;
 import android.content.pm.ActivityInfo;
 import android.content.res.Configuration;
-import android.os.Build;
 import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -53,8 +52,6 @@ public class ExpViewFragment extends Fragment {
         return hasExclusive;
     }
 
-    //Let the activity update its back handling, which has to intercept the back action to
-    //leave the exclusive mode
     private void notifyExclusiveChanged() {
         if (getActivity() instanceof Experiment)
             ((Experiment) getActivity()).updateBackCallbackState();
@@ -70,10 +67,8 @@ public class ExpViewFragment extends Fragment {
         layoutTransition.setDuration(150);
         layoutTransition.setStartDelay(LayoutTransition.DISAPPEARING, 0);
         layoutTransition.setStartDelay(LayoutTransition.CHANGE_DISAPPEARING, 0);
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN) {
-            layoutTransition.enableTransitionType(LayoutTransition.CHANGING);
-            layoutTransition.setStartDelay(LayoutTransition.CHANGING, 0);
-        }
+        layoutTransition.enableTransitionType(LayoutTransition.CHANGING);
+        layoutTransition.setStartDelay(LayoutTransition.CHANGING, 0);
         LinearLayout ll = (LinearLayout)root.findViewById(R.id.experimentView);
         ll.setLayoutTransition(layoutTransition);
         for (ExpView.expViewElement element : ((Experiment) getActivity()).experiment.experimentViews.elementAt(index).elements) {
@@ -86,9 +81,7 @@ public class ExpViewFragment extends Fragment {
         ll.setLayoutTransition(null);
     }
 
-    //Leave exclusive mode on behalf of the user (for example via back navigation), giving the
-    //maximized element the chance to intercept, i.e. a graph asking how a temporary zoom should
-    //be applied. Tapping the maximized element goes through the same logic via its click listener.
+    //Leave exclusive mode (e.g. via back), letting the maximized element intercept (a graph asks how to apply a temporary zoom)
     public void requestLeaveExclusive() {
         if (!hasExclusive)
             return;

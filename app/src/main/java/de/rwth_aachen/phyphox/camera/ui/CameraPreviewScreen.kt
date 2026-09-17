@@ -482,7 +482,7 @@ class CameraPreviewScreen(
 
     public fun updateTransformation(outWidth: Int, outHeight: Int) {
         cameraInput.analyzingOpenGLRenderer?.let {
-            //Use the size of the transformed camera image (camWidth/camHeight, which includes any crop from the surface texture's transform matrix) instead of the native buffer size, so the preview aspect ratio exactly matches what the analyzing renderers see
+            //camWidth/camHeight include the transform matrix crop, so the preview aspect ratio matches what the analyzing renderers see
             if (it.camWidth == 0 || it.camHeight == 0 || outWidth == 0 || outHeight == 0) return
             val rotation = (context.getSystemService(Context.WINDOW_SERVICE) as WindowManager).defaultDisplay.rotation
             transformation = Matrix()

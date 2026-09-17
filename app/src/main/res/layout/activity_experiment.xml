@@ -54,7 +54,7 @@
         android:paddingRight="@dimen/activity_horizontal_padding"
         android:visibility="invisible"/>
 
-    <androidx.viewpager.widget.ViewPager
+    <de.rwth_aachen.phyphox.helper.SafeViewPager
         android:layout_below="@id/tab_layout"
         android:id="@+id/view_pager"
         android:layout_width="match_parent"

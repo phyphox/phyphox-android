@@ -1,0 +1,11 @@
+New spectroscopy experiment
+New stroboscope experiment
+Redesigned tone generator with up to three tones, waveforms and panning
+Replace old Excel export format "xls" with "xlsx", removing the old limit of 65535 lines
+New languages: Gujarati, Korean and Tamil
+Select data when clearing
+New setting to change the default filename
+Full screen views of graphs and camera previews move controls to the right when in landscape
+Improved edit boxes
+
+Full changelog at https://phyphpox.org/changelog

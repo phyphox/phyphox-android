@@ -26,15 +26,9 @@ import java.util.Locale;
 import java.util.Map;
 
 // phyphox-test: analysis-golden-vectors
-//Every pair under phyphox-docs' corpus/analysis/vectors: a miniature experiment whose input
-//data arrives through container init values, and a statement of what the output buffers must
-//hold after a given number of analysis cycles. The experiment is loaded through the real parser
-//and never started - the timer case relies on the experiment time being exactly zero - and the
-//app's own analysis driver is stepped once per cycle, so the cycle counter, the per-module
-//cycles gating and the block-level requireFill gate are the production ones.
-//Contract: phyphox-docs/corpus/analysis/README.md, "The runner contract".
-//A mismatch is a finding to report back, not something to code around: either the reference
-//expectation or this implementation is wrong, and which one is a docs decision.
+//Runs every pair under phyphox-docs' corpus/analysis/vectors through the real parser and the
+//app's own analysis driver, never started. Contract: phyphox-docs/corpus/analysis/README.md,
+//"The runner contract". A mismatch is a finding to report, not something to code around.
 @RunWith(ParameterizedRobolectricTestRunner.class)
 @Config(sdk = 35)
 public class AnalysisGoldenVectorTest {
@@ -58,8 +52,7 @@ public class AnalysisGoldenVectorTest {
         for (String file : CorpusTestEnvironment.listPhyphoxFiles(corpus, new File(corpus, VECTORS)))
             parameters.add(new Object[]{file});
         if (parameters.isEmpty()) {
-            //A phyphox-docs checkout from before the vectors existed. Skip visibly rather than
-            //handing the runner an empty parameter list, which it cannot start with at all.
+            //an older phyphox-docs checkout; skip visibly, the runner cannot start with an empty list
             System.err.println("NOTICE: The phyphox-docs checkout next to this repository carries no " + VECTORS + " - skipping the analysis golden vectors (analysis-golden-vectors).");
             return Collections.singletonList(new Object[]{CorpusTestEnvironment.CORPUS_MISSING});
         }
@@ -86,8 +79,7 @@ public class AnalysisGoldenVectorTest {
         PhyphoxExperiment experiment = CorpusTestEnvironment.load(file, activity);
         assertTrue(relativePath + " failed to load: " + experiment.message, experiment.loaded);
 
-        //The expectations, indexed by the 1-based count of executed cycles they apply after.
-        Map<Integer, JSONObject> afterCycle = new LinkedHashMap<>();
+        Map<Integer, JSONObject> afterCycle = new LinkedHashMap<>(); //keyed by 1-based executed cycle count
         JSONArray expects = expected.getJSONArray("expect");
         for (int i = 0; i < expects.length(); i++)
             afterCycle.put(expects.getJSONObject(i).getInt("after_cycle"),
@@ -114,16 +106,8 @@ public class AnalysisGoldenVectorTest {
                     + String.join("; ", findings));
     }
 
-    //One analysis pass, driven through the app's own analysis driver rather than a
-    //restatement of it: processAnalysis applies the module loop in document order, the cycle
-    //counter its cycles attributes are matched against, and the block-level requireFill gate.
-    //The first pass is the non-measuring one the app runs when an experiment is opened, every
-    //further pass a measuring one - that is the 0, 1, 2, ... sequence the app produces.
-    //
-    //newUserInput is set because these experiments are never started, so their clock never
-    //moves and the periodic-analysis gate (experimentTime - lastAnalysis <= sleep, with the
-    //vectors' sleep of 0) would skip every measuring pass. A pending user input is the app's
-    //own reason to analyse although the clock has not moved, and it gates nothing else.
+    //the app's own driver: the first pass non-measuring as on opening, then measuring ones.
+    //newUserInput bypasses the periodic gate, which would skip every pass of a never-started clock.
     private static void runAnalysisPass(PhyphoxExperiment experiment, boolean first) {
         experiment.newUserInput = true;
         experiment.processAnalysis(!first);
@@ -152,9 +136,7 @@ public class AnalysisGoldenVectorTest {
         }
     }
 
-    //{abs, rel}, taking whatever the object overrides and the fallback for the rest. The
-    //generated files carry the numbers as JSON numbers or as strings ("1e-05"), so read them
-    //through getDouble, which accepts both.
+    //{abs, rel}; getDouble accepts the numbers as JSON numbers or as strings ("1e-05")
     private static double[] tolerance(JSONObject spec, double[] fallback) throws JSONException {
         return new double[]{
                 spec.has("abs") ? spec.getDouble("abs") : fallback[0],

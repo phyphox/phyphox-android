@@ -47,31 +47,19 @@ import de.rwth_aachen.phyphox.ExperimentList.ExperimentListActivity;
 import de.rwth_aachen.phyphox.helper.Helper;
 
 // phyphox-test: save-to-collection
-//Saving an experiment that came from outside into the user's own collection - the one flow the
-//automation switches deliberately decline (debug.phyphox.autoConfirm counts the offer as
-//declined), so it needs the real UI to say yes. It is also where the container forms are more
-//than a way of opening something: the resource an archive delivers has to survive the move into
-//the collection, into the per-experiment folder named by the hex CRC32 of the experiment file,
-//or the experiment reopens without its image.
-//
-//The archives are phyphox-docs' container fixtures (fixtures/containers/), the same ones the T0
-//intake test uses, and they arrive here the way a file manager hands one over: a VIEW intent on
-//a file, which the collection sniffs and unpacks.
-//
-//Hermetic: everything this saves is removed again afterwards, and leftovers from an interrupted
-//run are cleared before it starts - the collection refuses to save an experiment it already has,
-//which would make a rerun fail for the wrong reason.
+//Saving an experiment that came from outside into the collection - the one flow autoConfirm
+//declines, so the real UI has to say yes - including the resource an archive delivers, which
+//has to reach the per-experiment folder named by the hex CRC32 of the experiment file.
 @RunWith(AndroidJUnit4.class)
 public class SaveToCollectionTest {
 
-    //Both fixture experiments declare this category, which is how a leftover is recognised.
+    //how a leftover of this suite is recognised
     private static final String FIXTURE_MARKER = "<category>Container fixtures</category>";
 
     private Set<String> before;
 
     @Before
     public void clearSwitchesAndLeftovers() throws Exception {
-        //The offer is what this suite is about, so the switch that declines it must be off.
         UiDevice.getInstance(getInstrumentation())
                 .executeShellCommand("setprop debug.phyphox.autoConfirm '\"\"'");
         FixtureExperiment.suppressHints();
@@ -94,8 +82,7 @@ public class SaveToCollectionTest {
         return new HashSet<>(Arrays.asList(names == null ? new String[0] : names));
     }
 
-    //Everything this suite could have left behind: the saved experiment files themselves,
-    //recognised by the fixture category, and the resource folders named after their CRC32.
+    //Leftovers of an earlier run: the collection refuses to save an experiment it already has.
     private void removeSavedFixtures() {
         File filesDir = app().getFilesDir();
         File[] entries = filesDir.listFiles();
@@ -133,8 +120,7 @@ public class SaveToCollectionTest {
         return UiDevice.getInstance(getInstrumentation());
     }
 
-    //Hands a container to the collection the way a file manager does: a VIEW intent on the file.
-    //The component is set explicitly, which is also what the app itself does with file uris.
+    //A VIEW intent on the file, the way a file manager hands one over.
     private void openContainer(String fixture) throws IOException {
         assumeTrue("no phyphox-docs checkout was present at build time",
                 FixtureExperiment.available(fixture));
@@ -154,7 +140,6 @@ public class SaveToCollectionTest {
         app().startActivity(intent);
     }
 
-    //The files the collection gained, waited for: saving runs off the main thread.
     private List<File> awaitNewExperiments(int expected) {
         long deadline = System.currentTimeMillis() + 20000;
         List<File> added = new ArrayList<>();
@@ -177,8 +162,7 @@ public class SaveToCollectionTest {
                 + expected + ": " + added);
     }
 
-    //Closes whatever experiment is open and returns to the collection, waiting until it is
-    //really gone - otherwise the next lookup would find the experiment that is still on screen.
+    //Waits until the experiment is really gone, or the next lookup finds the one still on screen.
     private Experiment backToCollection() {
         Experiment open = FixtureExperiment.activity();
         FixtureExperiment.close(open);
@@ -189,14 +173,8 @@ public class SaveToCollectionTest {
         return open;
     }
 
-    //Opens a saved experiment the way the user does: find its entry in the collection and tap it.
-    //A save that writes the file but never registers or refreshes the entry fails here, which is
-    //the point of going through the list rather than opening anything by intent.
-    //
-    //Both halves have to be retried rather than done once. The collection rebuilds its list in
-    //onResume, so an entry found a moment earlier can go stale under the tap (that is a
-    //StaleObjectException, and it is what made this flaky in CI), and a tap that lands during the
-    //rebuild is swallowed without opening anything.
+    //Through the collection's list, so a save that never registers its entry fails here. Retried:
+    //the list rebuilds in onResume, so an entry can go stale under the tap and a tap can be swallowed.
     private Experiment openFromCollection(String title) {
         FixtureExperiment.suppressHints();
         Experiment previous = backToCollection();
@@ -225,9 +203,7 @@ public class SaveToCollectionTest {
                 : "the collection does not list \"" + title + "\" after saving it");
     }
 
-    //A loaded experiment activity that is not the one we came from, or null within the timeout.
-    //Identity rather than title: reopening a saved experiment gives it the same title as the one
-    //that was just closed.
+    //By identity, not title: a reopened experiment has the same title as the one just closed.
     private Experiment awaitOpened(Experiment previous, long millis) {
         long deadline = System.currentTimeMillis() + millis;
         while (System.currentTimeMillis() < deadline) {
@@ -246,7 +222,7 @@ public class SaveToCollectionTest {
             list.setAsVerticalList();
             list.scrollTextIntoView(title);
         } catch (UiObjectNotFoundException e) {
-            //Nothing to scroll, or the entry is not there (yet) - the caller's deadline decides
+            //nothing to scroll, or not there yet - the caller's deadline decides
         }
     }
 
@@ -258,9 +234,7 @@ public class SaveToCollectionTest {
         }
     }
 
-    //The drawable an image element ended up with, or null if it has none. The fixture image is
-    //not among the images bundled with phyphox, so anything here can only have come from the
-    //experiment's own resource folder.
+    //The fixture image is not bundled with phyphox, so any drawable came from the resource folder.
     private static Drawable imageDrawable(PhyphoxExperiment experiment) {
         for (ExpView view : experiment.experimentViews)
             for (ExpView.expViewElement element : view.elements)
@@ -273,8 +247,7 @@ public class SaveToCollectionTest {
     public void aBundledResourceSurvivesTheMoveIntoTheCollection() throws Exception {
         openContainer("with-resource.zip");
 
-        //A single experiment in an archive opens straight away, and because it came from outside
-        //the collection, it offers to be kept.
+        //A single experiment opens straight away and, coming from outside, offers to be kept.
         Experiment opened = FixtureExperiment.awaitLoaded();
         long crc32 = opened.experiment.crc32;
         UiObject2 offer = device().wait(Until.findObject(By.textContains("experiment collection")),
@@ -287,22 +260,16 @@ public class SaveToCollectionTest {
 
         assertEquals("the collection did not gain the experiment", 1, awaitNewExperiments(1).size());
 
-        //The image travels with it, into the folder named after the CRC32 of the experiment file.
         File resourceFolder = new File(app().getFilesDir(), Long.toHexString(crc32).toLowerCase());
         assertTrue("the bundled resource was not extracted into " + resourceFolder,
                 new File(resourceFolder, "pic.png").isFile());
 
-        //Reopened by tapping its entry in the collection, the experiment is local - no second
-        //offer - and its image element has its picture.
         Experiment reopened = openFromCollection("Container fixture with resource");
         assertEquals("Container fixture with resource", reopened.experiment.title);
         assertTrue("a saved experiment still counts as external", reopened.experiment.isLocal);
         assertEquals("the saved experiment lost its resource folder", resourceFolder.getPath(),
                 new File(reopened.experiment.resourceFolder).getPath());
 
-        //The fixture image is not among the pictures bundled with phyphox, so an image element
-        //that has one at all can only have taken it out of the saved resource folder - and it is
-        //pixel for pixel the one the archive delivered.
         Drawable drawable = imageDrawable(reopened.experiment);
         assertNotNull("the image element of the reopened experiment has no image", drawable);
         assertTrue("the image element did not end up with a bitmap",
@@ -317,8 +284,7 @@ public class SaveToCollectionTest {
     public void bothExperimentsOfAContainerCanBeSavedAtOnce() throws Exception {
         openContainer("two-experiments.zip");
 
-        //Several experiments are offered in a chooser rather than opened, and the chooser can
-        //take all of them into the collection at once.
+        //Several experiments go to a chooser, which can save all of them at once.
         UiObject2 chooser = device().wait(Until.findObject(By.text("Save all")), 20000);
         assertNotNull("a container of several experiments offered no way to save them", chooser);
         chooser.click();

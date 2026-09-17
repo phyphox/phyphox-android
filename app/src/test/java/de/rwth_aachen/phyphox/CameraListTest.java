@@ -25,16 +25,13 @@ import java.lang.reflect.Field;
 import de.rwth_aachen.phyphox.camera.depth.DepthInput;
 import de.rwth_aachen.phyphox.camera.helper.CameraHelper;
 
-//CameraHelper caches the device's camera characteristics, and the depth input and the device
-//metadata read that cache. The experiment list fills it when it loads, but nothing guarantees
-//that a caller came that way - the remote interface's /meta does not - so the cache must be
-//readable before anyone enumerated, and fillable on demand.
+//CameraHelper's camera cache is filled by the experiment list, but not every reader comes that way
+//(the remote interface's /meta does not): it must be readable before enumeration and fillable on demand.
 @RunWith(RobolectricTestRunner.class)
 @Config(sdk = 35)
 public class CameraListTest {
 
-    //The cached list is app state, which Robolectric does not reset between test methods, so
-    //start each of them from the state a freshly started app is in: nothing enumerated yet.
+    //The cache is app state that Robolectric does not reset between test methods.
     @Before
     public void forgetEnumeratedCameras() throws Exception {
         Field field = CameraHelper.class.getDeclaredField("cameraList");
@@ -42,8 +39,7 @@ public class CameraListTest {
         field.set(CameraHelper.INSTANCE, null);
     }
 
-    //A camera manager with one back camera that reports depth output, added to the shadow but
-    //deliberately not enumerated into CameraHelper.
+    //One back camera with depth output, added to the shadow but not enumerated into CameraHelper.
     private CameraManager cameraManagerWithDepthCamera() {
         Application application = ApplicationProvider.getApplicationContext();
         CameraManager cameraManager = (CameraManager) application.getSystemService(Context.CAMERA_SERVICE);
@@ -63,8 +59,7 @@ public class CameraListTest {
 
         assertTrue("An unenumerated camera list reads as empty, never as null",
                 CameraHelper.getCameraList().isEmpty());
-        //The readers must cope with that instead of throwing - this is what turned every /meta
-        //request into a 500 when the list had not been filled.
+        //The readers must cope with an unfilled list instead of throwing.
         assertFalse(DepthInput.isAvailable());
         assertEquals(0, DepthInput.countCameras(CameraCharacteristics.LENS_FACING_BACK));
         assertEquals("[]", CameraHelper.getCamera2FormattedCaps(false));
@@ -79,8 +74,7 @@ public class CameraListTest {
     public void camerasWithoutCharacteristicsAreSkipped() {
         Application application = ApplicationProvider.getApplicationContext();
         CameraManager cameraManager = (CameraManager) application.getSystemService(Context.CAMERA_SERVICE);
-        //A camera that reports nothing at all. Real hardware always reports more, but the scans
-        //run over whatever the device lists, and /meta must survive a device that is stingy.
+        //A camera that reports nothing at all; /meta must survive it.
         Shadows.shadowOf(cameraManager).addCamera("0", ShadowCameraCharacteristics.newCameraCharacteristics());
         CameraHelper.updateCameraList(cameraManager);
 

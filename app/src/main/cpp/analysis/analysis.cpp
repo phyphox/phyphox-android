@@ -48,9 +48,7 @@ extern "C" {
         jfloat *a = env->GetFloatArrayElements(x, 0);
         jfloat *b = env->GetFloatArrayElements(y, 0);
 
-        //FFTW's transforms are unnormalized: R2HC followed by HC2R scales the data by n, so
-        //the spectral product is divided by n exactly once. The result then is the raw
-        //correlation sum without any further normalization (see the crosscorrelation docs).
+        //R2HC followed by HC2R scales by n, so divide once; the result is the raw correlation sum
         float norm = (float)n;
 
         fftwf_plan pa, pb, pr;
@@ -58,10 +56,8 @@ extern "C" {
         pb = fftwf_plan_r2r_1d(n, b, b, FFTW_R2HC, FFTW_ESTIMATE);
         fftwf_execute(pa);
         fftwf_execute(pb);
-        //Halfcomplex layout for even n: real parts at [0..n/2], imaginary parts at [n-1..n/2+1].
-        //Bins 0 and n/2 are purely real and handled outside the loop - the loop must start at 1:
-        //at i = 0 it would read a[n] and b[n] out of bounds and corrupt bin 0 with the result,
-        //which offsets every value of the inverse transform.
+        //Halfcomplex layout: real parts at [0..n/2], imaginary at [n-1..n/2+1]. Bins 0 and n/2 are purely
+        //real and handled outside the loop, which must start at 1 (i = 0 would read a[n] and corrupt bin 0)
         float c, d, e, f;
         a[0] = a[0]*b[0]/norm;
         a[n/2] = a[n/2]*b[n/2]/norm;

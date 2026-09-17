@@ -25,11 +25,8 @@ import java.nio.charset.StandardCharsets;
 
 import de.rwth_aachen.phyphox.camera.helper.CameraHelper;
 
-//The /meta endpoint against a real RemoteServer instance. It answers device and per-sensor
-//metadata, and asking Metadata for an identifier outside its vocabulary throws - which the
-//handler does not catch, so a single bad identifier turns the whole response into jlhttp's
-//HTML 500. That is what happened when "custom" left the vocabulary while the handler still
-//iterated every SensorName. Not a test-matrix row; a regression test for RemoteServer.handleMeta.
+///meta against a real RemoteServer: a sensor identifier outside Metadata's vocabulary throws
+//inside the handler and turns the whole response into jlhttp's HTML 500.
 @RunWith(RobolectricTestRunner.class)
 @Config(sdk = 35)
 public class RemoteServerMetaTest {
@@ -50,10 +47,8 @@ public class RemoteServerMetaTest {
     @Before
     public void startServer() {
         Experiment activity = CorpusTestEnvironment.fullyEquippedActivity();
-        //The camera capability report in /meta reads characteristics that Robolectric's
-        //simulated camera cannot provide (the framework asserts on the vendor key lists), so
-        //this test runs against a device without cameras - the report is then simply empty.
-        //The sensor half of /meta, which is what broke, does not depend on it.
+        //Robolectric's simulated camera lacks the characteristics the /meta camera report reads,
+        //so run without cameras; the sensor half does not depend on it.
         CameraManager cameraManager = (CameraManager) activity.getSystemService(Context.CAMERA_SERVICE);
         Shadows.shadowOf(cameraManager).removeCamera("0");
         CameraHelper.updateCameraList(cameraManager);
@@ -74,8 +69,7 @@ public class RemoteServerMetaTest {
     @Test
     public void answersMetadataJson() throws Exception {
         HttpURLConnection connection = (HttpURLConnection) new URL(base + "/meta").openConnection();
-        //No keep-alive, see RemoteServerSetTest: a pooled connection could outlive its server.
-        connection.setRequestProperty("Connection", "close");
+        connection.setRequestProperty("Connection", "close"); //a pooled connection could outlive its server
         int status = connection.getResponseCode();
         InputStream in = status < 400 ? connection.getInputStream() : connection.getErrorStream();
         ByteArrayOutputStream os = new ByteArrayOutputStream();
@@ -96,7 +90,6 @@ public class RemoteServerMetaTest {
         assertTrue("/meta must report the accelerometer", sensors.has("accelerometer"));
         assertTrue("A sensor entry must carry the sensor's name",
                 sensors.getJSONObject("accelerometer").has("Name"));
-        //"custom" is selected by nameFilter, so per-sensor metadata for it does not exist.
         assertFalse("/meta must not report a \"custom\" sensor", sensors.has("custom"));
     }
 }

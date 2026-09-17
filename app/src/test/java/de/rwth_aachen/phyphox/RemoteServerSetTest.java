@@ -20,11 +20,8 @@ import java.net.HttpURLConnection;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
 
-//The /set endpoint (bulk JSON buffer write, remote API 1.1.0) against a real RemoteServer
-//instance served over HTTP, mirroring the set.* probes of phyphox-docs'
-//tools/contract_test.py plus assertions on the written buffer contents, which the contract
-//test cannot see. This is not a test-matrix row (those only cover the file format so far),
-//just a regression test for RemoteServer.handleSet.
+///set (remote API 1.1.0) against a real RemoteServer, mirroring the set.* probes of
+//phyphox-docs' tools/contract_test.py plus the buffer contents the contract test cannot see.
 @RunWith(RobolectricTestRunner.class)
 @Config(sdk = 35)
 public class RemoteServerSetTest {
@@ -68,9 +65,7 @@ public class RemoteServerSetTest {
     private HttpResult request(String method, String contentType, String body) throws Exception {
         HttpURLConnection connection = (HttpURLConnection) new URL(base + "/set").openConnection();
         connection.setRequestMethod(method);
-        //No keep-alive: jlhttp's stop() closes the listening socket but lets in-flight
-        //connection threads finish, and the JVM pools connections per host:port - a pooled
-        //connection would let a later test talk to an earlier test's server instance.
+        //no keep-alive: a pooled connection would let a later test reach an earlier test's server
         connection.setRequestProperty("Connection", "close");
         if (body != null) {
             connection.setRequestProperty("Content-Type", contentType);
@@ -108,8 +103,7 @@ public class RemoteServerSetTest {
     }
 
     private void assertBuffer(String name, double... expected) {
-        //The server writes on its executor thread under dataLock; reading under the same lock
-        //establishes the happens-before edge that makes the write visible here.
+        //the server writes under dataLock on another thread; reading under it makes the write visible
         experiment.dataLock.lock();
         try {
             DataBuffer db = experiment.getBuffer(name);
@@ -148,7 +142,6 @@ public class RemoteServerSetTest {
 
     @Test
     public void bufferSizeSemanticsApply() throws Exception {
-        //abc has size 3: the buffer keeps its newest three values
         assertTrue(resultOf(post("{\"buffers\": {\"abc\": [1, 2, 3, 4, 5]}}")));
         assertBuffer("abc", 3, 4, 5);
     }
@@ -164,14 +157,14 @@ public class RemoteServerSetTest {
     public void emptyBuffersObjectIsANoOp() throws Exception {
         assertTrue(resultOf(post("{\"buffers\": {\"abc\": [1]}}")));
         assertTrue(resultOf(post("{\"buffers\": {}}")));
-        assertBuffer("abc", 1); //untouched
+        assertBuffer("abc", 1);
     }
 
     @Test
     public void unknownBufferRejectsAtomically() throws Exception {
         assertTrue(resultOf(post("{\"buffers\": {\"abc\": [9]}}")));
         assertFalse(resultOf(post("{\"buffers\": {\"abc\": [1], \"nosuchbuffer___\": [1]}}")));
-        assertBuffer("abc", 9); //the known buffer must not have been written
+        assertBuffer("abc", 9);
     }
 
     @Test
@@ -186,7 +179,7 @@ public class RemoteServerSetTest {
     @Test
     public void invalidModeRejects() throws Exception {
         assertFalse(resultOf(post("{\"buffers\": {\"abc\": [1]}, \"mode\": \"sideways\"}")));
-        assertBuffer("abc"); //nothing written
+        assertBuffer("abc");
     }
 
     @Test

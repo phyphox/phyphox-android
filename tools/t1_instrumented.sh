@@ -6,9 +6,11 @@
 #     tools/t1_instrumented.sh .                 # everything except the language sweep
 #     tools/t1_instrumented.sh . translations    # only the language sweep
 #     tools/t1_instrumented.sh . all             # both, in one run
+#     tools/t1_instrumented.sh . chrome tablet   # the same, labelled "tablet" in the summary
 #
 # The first argument is the app checkout (CI runs from the workspace that holds it next to
-# phyphox-docs). The second selects which suites to run, and exists because the language sweep is
+# phyphox-docs). The third is an optional label for the run's summary tables (see below). The
+# second selects which suites to run, and exists because the language sweep is
 # 222 of the 492 seconds the whole set took: walking every enabled language means restarting the
 # app once per language, which nothing else does. Splitting it into its own job takes it off the
 # critical path of the T1 workflow, at the price of a second emulator and a second install.
@@ -21,6 +23,7 @@ set -u
 
 APP=${1:-.}
 SUITES=${2:-chrome}
+LABEL=${3:-}
 RUNNER=de.rwth_aachen.phyphox.test/androidx.test.runner.AndroidJUnitRunner
 PACKAGE=de.rwth_aachen.phyphox
 LANGUAGE_SUITE=de.rwth_aachen.phyphox.TranslationsUiTest
@@ -41,8 +44,10 @@ FIXTURE_SERVER=$!
 
 rc=0
 
-# The output goes to the job log AND to a file, and the verdict is read from the file
-# afterwards: piping it into grep would swallow everything a reader needs when something fails.
+# The raw protocol (-r) goes to a file, and the verdict is read from the file afterwards; what
+# reaches the job log is one line per test from tools/instrument_progress.py, which also appends a
+# table per test class to the step summary when GitHub provides one. The table's title carries
+# the label so that the phone and the tablet run read apart on the summary page.
 # The language sweep can be narrowed with the convention both platforms share (test-matrix row
 # translations-ui). Android has no environment inside the app process, so whichever of the two
 # variables is set here is forwarded as an instrumentation argument under the same name:
@@ -59,24 +64,27 @@ fi
 
 run_suite() {
     log=$1
-    shift
-    adb shell am instrument -w "$@" $LANGUAGE_ARGS $RUNNER 2>&1 | tee "$log"
+    title=$2
+    shift 2
+    adb shell am instrument -r -w "$@" $LANGUAGE_ARGS $RUNNER 2>&1 \
+        | python3 "$APP/tools/instrument_progress.py" "$title${LABEL:+, $LABEL}" "$log"
     grep -q "^OK" "$log" || rc=1
 }
 
 if [ "$SUITES" != "translations" ]; then
     adb shell pm revoke $PACKAGE android.permission.RECORD_AUDIO
-    run_suite instrumented-$SUITES-permission-denied.txt -e class $PERMISSION_SUITE
+    run_suite instrumented-$SUITES-permission-denied.txt "Permission flow, microphone denied" -e class $PERMISSION_SUITE
 fi
 
 adb shell pm grant $PACKAGE android.permission.RECORD_AUDIO
 adb shell pm grant $PACKAGE android.permission.CAMERA
 adb shell pm grant $PACKAGE android.permission.ACCESS_FINE_LOCATION
 
+LANGUAGE_TITLE="Languages${PHYPHOX_TEST_LANGUAGE_SHARD:+, shard $PHYPHOX_TEST_LANGUAGE_SHARD}"
 case $SUITES in
-    chrome)       run_suite instrumented-$SUITES-suites.txt -e notClass "$PERMISSION_SUITE,$LANGUAGE_SUITE" ;;
-    translations) run_suite instrumented-$SUITES-suites.txt -e class "$LANGUAGE_SUITE" ;;
-    all)          run_suite instrumented-$SUITES-suites.txt -e notClass "$PERMISSION_SUITE" ;;
+    chrome)       run_suite instrumented-$SUITES-suites.txt "Chrome and view suites" -e notClass "$PERMISSION_SUITE,$LANGUAGE_SUITE" ;;
+    translations) run_suite instrumented-$SUITES-suites.txt "$LANGUAGE_TITLE" -e class "$LANGUAGE_SUITE" ;;
+    all)          run_suite instrumented-$SUITES-suites.txt "Chrome, view and language suites" -e notClass "$PERMISSION_SUITE" ;;
 esac
 
 kill $FIXTURE_SERVER 2>/dev/null

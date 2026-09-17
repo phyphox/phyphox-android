@@ -18,8 +18,7 @@ import javax.xml.parsers.DocumentBuilderFactory;
 
 public class XlsxWriterTest {
 
-    //Writes a small workbook and returns all zip entries as parsed XML documents.
-    // Parsing implicitly checks that every part is well-formed XML.
+    //writes a small workbook and returns every zip entry parsed as XML, which also checks it is well-formed
     private Map<String, Document> writeAndParse(XlsxWriterTestContent content) throws Exception {
         ByteArrayOutputStream os = new ByteArrayOutputStream();
         XlsxWriter xlsx = new XlsxWriter(os);

@@ -23,17 +23,9 @@ import java.net.HttpURLConnection;
 import java.net.URL;
 
 // phyphox-test: switch-bypassed-ui
-//Everything the host-controlled switches bypass has to work without them - a switch that hides a
-//broken user path is worse than no switch at all. So this suite runs with debug.phyphox.remote
-//and debug.phyphox.autoConfirm explicitly cleared, and drives the real UI:
-//
-//  - the menu toggle brings the remote server up, confirmation dialog and all;
-//  - opening a network experiment shows the privacy notice, which is informational: its single
-//    OK dismisses it, and a decline control turning up here would be a finding (nothing
-//    sensitive is recorded by opening an experiment, and a connection before the start has
-//    nothing to transmit);
-//  - a downloaded experiment offers to be saved to the collection, and the offer works both
-//    ways.
+//The user paths the host-controlled switches bypass, run with debug.phyphox.remote and autoConfirm
+//cleared: the remote toggle's dialog, the network privacy notice (informational, only OK), and the
+//save-to-collection offer both ways.
 @RunWith(AndroidJUnit4.class)
 public class SwitchBypassedUiTest {
 
@@ -41,7 +33,6 @@ public class SwitchBypassedUiTest {
 
     @Before
     public void clearSwitches() throws Exception {
-        //The point of this suite: nothing here may depend on them.
         shell("setprop debug.phyphox.remote '\"\"'");
         shell("setprop debug.phyphox.remotePort '\"\"'");
         shell("setprop debug.phyphox.autoConfirm '\"\"'");
@@ -49,8 +40,7 @@ public class SwitchBypassedUiTest {
 
     @After
     public void closeWhateverIsOpen() {
-        //Not "am force-stop": the instrumentation runs inside the app's process, so stopping the
-        //app kills the test run with it ("Process crashed", no results).
+        //Not "am force-stop": the instrumentation runs inside the app's process
         FixtureExperiment.close(FixtureExperiment.activity());
     }
 
@@ -95,8 +85,6 @@ public class SwitchBypassedUiTest {
             assertNotNull("the menu has no remote access item", remoteItem);
             remoteItem.click();
 
-            //The toggle explains itself before it does anything - that dialog is part of the
-            //user path this suite protects.
             UiObject2 warning = device().wait(Until.findObject(By.text("Security warning!")), 5000);
             assertNotNull("the remote access toggle asked nothing before opening the server",
                     warning);
@@ -119,8 +107,7 @@ public class SwitchBypassedUiTest {
             UiObject2 notice = device().wait(Until.findObject(By.text("Privacy warning")), 10000);
             assertNotNull("opening a network experiment showed no privacy notice", notice);
 
-            //Informational means exactly one way out. A decline control would mean the notice
-            //gates something, which is a different contract than the one that was ruled.
+            //Informational: exactly one way out, a decline control would be a finding
             assertFalse("the privacy notice offers a decline - that is a finding, not a feature",
                     device().hasObject(By.text("Cancel")));
 

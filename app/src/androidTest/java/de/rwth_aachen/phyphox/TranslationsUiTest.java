@@ -33,15 +33,9 @@ import java.util.List;
 import java.util.Locale;
 
 // phyphox-test: translations-ui
-//Every language the build enables gets its screens rendered: the collection, an experiment, and
-//the experiment's menu. What this looks for is text that does not fit - a label cut off with an
-//ellipsis is how a translation regression shows up long before anyone reports it.
-//
-//Rendering is asserted (a language whose screens do not come up is a failure); the truncations
-//themselves are reported under the tag phyphoxI18n, the way accessibility-smoke reports its
-//findings, until they are triaged and the row escalates to failing on new ones.
-//
-//    adb logcat -s phyphoxI18n
+//Renders the collection, an experiment and its menu in every enabled language and reports labels
+//cut off with an ellipsis under logcat tag phyphoxI18n; only a language whose screens do not
+//come up fails (until the findings are triaged and the row escalates).
 @RunWith(AndroidJUnit4.class)
 public class TranslationsUiTest {
 
@@ -62,7 +56,6 @@ public class TranslationsUiTest {
         FixtureExperiment.close(FixtureExperiment.activity());
     }
 
-    //The app's own per-app language, which is what a user picks in the settings.
     private void setLanguage(String tag) {
         getInstrumentation().runOnMainSync(() -> AppCompatDelegate.setApplicationLocales(
                 tag == null ? LocaleListCompat.getEmptyLocaleList()
@@ -87,7 +80,6 @@ public class TranslationsUiTest {
         return holder[0];
     }
 
-    //Text that had to be cut to fit, and views whose text is wider than they are.
     private List<String> truncations(View root, String screen, String language) {
         List<String> findings = new ArrayList<>();
         collect(root, screen, language, findings);
@@ -115,9 +107,7 @@ public class TranslationsUiTest {
         }
     }
 
-    //A label is what must fit: a title, a button, a menu entry. The collection's experiment
-    //summaries (expInfo) are one-line teasers of a paragraph and are cut on purpose in every
-    //language, English included - flagging those would bury the regressions this looks for.
+    //expInfo is a one-line teaser of a paragraph, cut on purpose in every language.
     private boolean isLabel(TextView text) {
         if (text.getId() == R.id.expInfo)
             return false;
@@ -133,21 +123,9 @@ public class TranslationsUiTest {
         device().wait(Until.hasObject(By.pkg(context.getPackageName()).depth(0)), 10000);
     }
 
-    //Which languages this run covers, as language tags, sorted.
-    //
-    //The sweep is the longest thing in T1, so it can be split across jobs - by a convention both
-    //platforms share, or the shards would not be comparable (test-matrix row translations-ui):
-    //sort the build's language set, then either take an explicit subset or every n-th entry.
-    //Sorting is done on the language TAG rather than on Android's resource qualifier, because the
-    //tag is the form iOS can produce the same order from.
-    //
-    //Android has no environment to read - an instrumented test runs in the app's process, which
-    //does not inherit the shell's - so the two names arrive as instrumentation arguments:
-    //
-    //    adb shell am instrument -e PHYPHOX_TEST_LANGUAGE_SHARD 1/2 ...
-    //    adb shell am instrument -e PHYPHOX_TEST_LANGUAGES de,fr ...
-    //
-    //An actual environment variable is honoured too, for a runner that can set one.
+    //Shard convention shared with iOS (test-matrix row translations-ui): sort by language TAG, then
+    //take an explicit subset (PHYPHOX_TEST_LANGUAGES) or every n-th (PHYPHOX_TEST_LANGUAGE_SHARD i/n).
+    //Passed as instrumentation arguments, since the app's process does not inherit the shell's env.
     static List<String> languagesUnderTest(String[] enabledQualifiers, String subsetSpec,
                                            String shardSpec) {
         List<String> all = new ArrayList<>();
@@ -161,7 +139,6 @@ public class TranslationsUiTest {
                 String tag = code.trim();
                 if (tag.isEmpty())
                     continue;
-                //A typo must not quietly remove coverage, so an unknown code fails the run.
                 if (!all.contains(tag))
                     throw new AssertionError("PHYPHOX_TEST_LANGUAGES names \"" + tag
                             + "\", which this build does not enable. Enabled: " + all);
@@ -205,22 +182,18 @@ public class TranslationsUiTest {
         try {
             value = InstrumentationRegistry.getArguments().getString(name);
         } catch (Exception e) {
-            //No instrumentation arguments available - fall through to the environment
+            //no instrumentation arguments - fall through to the environment
         }
         return value != null ? value : System.getenv(name);
     }
 
-    //The selection convention itself, which is what has to match iOS. Pure logic, so it costs
-    //nothing to run alongside the sweep, and it is the part a shard split gets wrong silently.
     @Test
     public void languageSelectionFollowsTheSharedConvention() {
         String[] enabled = {"de", "b+zh+Hans", "fr", "pt-rBR", "el"};
 
-        //Sorted by language tag, which is the order both platforms can produce.
         assertEquals("[de, el, fr, pt-BR, zh-Hans]",
                 languagesUnderTest(enabled, null, null).toString());
 
-        //Round-robin, so the shards cost about the same, and together they cover everything once.
         List<String> first = languagesUnderTest(enabled, null, "1/2");
         List<String> second = languagesUnderTest(enabled, null, "2/2");
         assertEquals("[de, fr, zh-Hans]", first.toString());
@@ -233,11 +206,10 @@ public class TranslationsUiTest {
         //An explicit subset wins over a shard and keeps the order it was given.
         assertEquals("[fr, de]", languagesUnderTest(enabled, "fr, de", "1/2").toString());
 
-        //A typo must fail rather than quietly shrink the coverage.
         assertRefused(() -> languagesUnderTest(enabled, "de,xx", null), "xx");
         assertRefused(() -> languagesUnderTest(enabled, "  ", "9"), "i/n");
         assertRefused(() -> languagesUnderTest(enabled, null, "3/2"), "within 1..n");
-        //Round-robin means shard i is empty only once i is past the end of the list.
+        //shard i is empty only once i is past the end of the list
         assertEquals("[de]", languagesUnderTest(enabled, null, "1/99").toString());
         assertRefused(() -> languagesUnderTest(enabled, null, "99/99"), "empty");
     }
@@ -278,8 +250,7 @@ public class TranslationsUiTest {
                     truncations(collectionActivity.getWindow().getDecorView(), "collection",
                             language)));
 
-            //A shipped experiment, whose title, description and menu are translated - the
-            //fixtures are English on purpose and would prove nothing here.
+            //a shipped experiment: the fixtures are English on purpose
             Experiment experiment = FixtureExperiment.launchAsset("accelerometer.phyphox");
             Thread.sleep(1000);
             if (experiment == null || !experiment.experiment.loaded) {
@@ -289,7 +260,6 @@ public class TranslationsUiTest {
             getInstrumentation().runOnMainSync(() -> findings.addAll(
                     truncations(experiment.getWindow().getDecorView(), "experiment", language)));
 
-            //And the menu, where the longest strings live.
             openOverflow();
             Thread.sleep(800);
             Activity menuOwner = resumedActivity();
@@ -310,8 +280,6 @@ public class TranslationsUiTest {
     }
 
     private void openOverflow() {
-        //The overflow's description is itself translated, so it is found by position: the last
-        //button of the action bar.
         getInstrumentation().runOnMainSync(() -> {
             Activity activity = resumedActivityOnMainThread();
             if (activity != null)

@@ -28,20 +28,14 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 // phyphox-test: translations-build
-//Language handling follows the build: every locale the build enables (BuildConfig.LOCALE_ARRAY)
-//must actually resolve its resources, and the enabled set is compared against the canonical list
-//in phyphox-docs (languages.yml).
-//
-//Deviations from that list are WARNINGS, never failures - that is the ruled mechanism (area P of
-//the test plan): during development a locale is enabled for testing or a new translation lands
-//before the list is updated, and both should stay visible without breaking the build. The hard
-//enforcement lives at T2, against the built artifact.
+//Every locale the build enables (BuildConfig.LOCALE_ARRAY) must resolve its resources; the enabled
+//set is compared with phyphox-docs' languages.yml. Deviations are warnings, not failures, by
+//decision (test plan area P): the hard enforcement is T2, against the built artifact.
 @RunWith(RobolectricTestRunner.class)
 @Config(sdk = 35)
 public class TranslationsBuildTest {
 
-    //Android's resource qualifiers spell some languages differently from BCP-47, which is what
-    //the canonical list uses (its header names exactly these).
+    //Android resource qualifiers spell some languages differently from the BCP-47 of the canonical list.
     private static String normalize(String qualifier) {
         switch (qualifier) {
             case "zh-rCN":
@@ -55,7 +49,6 @@ public class TranslationsBuildTest {
         }
     }
 
-    //A locale as Android wants it for a resource lookup.
     private static Locale localeOf(String qualifier) {
         if (qualifier.startsWith("b+"))
             return Locale.forLanguageTag(qualifier.substring(2).replace('+', '-'));
@@ -76,8 +69,7 @@ public class TranslationsBuildTest {
             configuration.setLocale(localeOf(qualifier));
             Resources resources = context.createConfigurationContext(configuration).getResources();
 
-            //Any string the app always needs; an unresolvable locale throws or falls back to an
-            //empty resource table, and both show up here.
+            //An unresolvable locale throws or falls back to an empty resource table; both show up here.
             String text = resources.getString(R.string.app_name);
             if (text == null || text.isEmpty())
                 findings.add(qualifier + ": resources do not resolve");
@@ -104,8 +96,7 @@ public class TranslationsBuildTest {
         Set<String> missing = new TreeSet<>(canonical);
         missing.removeAll(enabled);
 
-        //Warnings, by decision: development drift is harmless and stays visible. The release
-        //gate is the T2 check against the built artifact.
+        //Warnings by decision; the release gate is T2.
         if (!extra.isEmpty())
             System.out.println("WARNING [translations-build]: enabled but not in the canonical "
                     + "list (testing locales, or a new translation the list does not know yet): "
@@ -135,8 +126,7 @@ public class TranslationsBuildTest {
         if (list == null)
             return null;
 
-        //A flat "languages:" list of scalars - read without a YAML dependency in the test source
-        //set, the way the corpus expectations are read.
+        //A flat "languages:" list of scalars, read without a YAML dependency.
         Set<String> languages = new TreeSet<>();
         boolean inList = false;
         Pattern entry = Pattern.compile("^\\s*-\\s*([A-Za-z0-9-]+)\\s*$");
