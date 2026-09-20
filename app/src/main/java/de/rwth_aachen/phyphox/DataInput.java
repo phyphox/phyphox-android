@@ -7,8 +7,8 @@ import java.util.Iterator;
 // inputs. This allows analysis modules to access constant values as if they were buffers.
 
 public class DataInput implements Serializable {
-    boolean isBuffer = false;
-    boolean isEmpty = false;
+    public boolean isBuffer = false;
+    public boolean isEmpty = false;
     double value = Double.NaN;
     public DataBuffer buffer = null;
     public boolean keep = false;

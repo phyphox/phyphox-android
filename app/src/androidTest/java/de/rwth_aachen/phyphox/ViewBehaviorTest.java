@@ -33,6 +33,8 @@ import java.net.ConnectException;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.util.Arrays;
+import de.rwth_aachen.phyphox.ExperimentView.ExpView;
+import de.rwth_aachen.phyphox.ExperimentView.ExpViewElement;
 
 // phyphox-test: view-behavior
 //What the interactive view elements do to their buffers, read back through the remote API.
@@ -125,7 +127,7 @@ public class ViewBehaviorTest {
 
     private <T extends View> T findViewOf(Experiment activity, String label, Class<T> type) {
         for (ExpView view : activity.experiment.experimentViews)
-            for (ExpView.expViewElement element : view.elements)
+            for (ExpViewElement element : view.elements)
                 if (label.equals(element.label) && element.rootView != null) {
                     T found = descendant(element.rootView, type);
                     if (found != null)
@@ -137,7 +139,7 @@ public class ViewBehaviorTest {
     private String laidOutLabels(Experiment activity) {
         StringBuilder labels = new StringBuilder();
         for (ExpView view : activity.experiment.experimentViews)
-            for (ExpView.expViewElement element : view.elements)
+            for (ExpViewElement element : view.elements)
                 if (element.rootView != null)
                     labels.append(labels.length() == 0 ? "" : ", ").append(element.label);
         return labels.length() == 0 ? "(none - no page has been laid out)" : labels.toString();

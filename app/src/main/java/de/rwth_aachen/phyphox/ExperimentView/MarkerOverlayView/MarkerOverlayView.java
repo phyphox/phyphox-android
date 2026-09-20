@@ -1,4 +1,4 @@
-package de.rwth_aachen.phyphox;
+package de.rwth_aachen.phyphox.ExperimentView.MarkerOverlayView;
 
 import android.content.Context;
 import android.graphics.Canvas;
@@ -9,16 +9,17 @@ import android.util.AttributeSet;
 import android.util.TypedValue;
 import android.view.View;
 
+import de.rwth_aachen.phyphox.ExperimentView.GraphView.GraphSetup;
 import de.rwth_aachen.phyphox.helper.RGB;
 
 public class MarkerOverlayView extends View {
 
-    class LineAnnotation {
+    public class LineAnnotation {
         String label;
         float xy;
         boolean vertical;
         int color;
-        LineAnnotation(String label, float xy, boolean vertical, int color) {
+        public LineAnnotation(String label, float xy, boolean vertical, int color) {
             this.label = label;
             this.xy = xy;
             this.vertical = vertical;

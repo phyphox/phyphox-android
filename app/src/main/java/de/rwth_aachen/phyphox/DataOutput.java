@@ -9,7 +9,7 @@ import java.util.Iterator;
 public class DataOutput implements Serializable {
     public DataBuffer buffer = null;
     boolean append;
-    String label; //lets view elements map user actions to specific outputs (e.g. calibration points in graphs)
+    public String label; //lets view elements map user actions to specific outputs (e.g. calibration points in graphs)
 
     //Get value
     public double getValue() {

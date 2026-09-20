@@ -55,6 +55,8 @@ import java.util.Vector;
 import de.rwth_aachen.phyphox.helper.FileNameFormat;
 import de.rwth_aachen.phyphox.helper.DebugSwitches;
 import de.rwth_aachen.phyphox.helper.Helper;
+import de.rwth_aachen.phyphox.ExperimentView.ExpView;
+import de.rwth_aachen.phyphox.ExperimentView.ExpViewElement;
 
 //RemoteServer implements a web interface to remote control the experiment and receive the data
 
@@ -181,7 +183,7 @@ public class RemoteServer {
             sb.append("\", \"elements\":[\n");
             for (int j = 0; j < view.elements.size(); j++) {
                 //For each element within this view
-                ExpView.expViewElement element = view.elements.get(j);
+                ExpViewElement element = view.elements.get(j);
 
                 //Store the mapping of htmlID to the experiment view hierarchy
                 htmlID2View.add(i);

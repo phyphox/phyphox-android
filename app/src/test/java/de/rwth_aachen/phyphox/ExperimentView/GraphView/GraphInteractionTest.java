@@ -1,4 +1,4 @@
-package de.rwth_aachen.phyphox;
+package de.rwth_aachen.phyphox.ExperimentView.GraphView;
 
 import static com.google.common.truth.Truth.assertThat;
 
@@ -25,6 +25,7 @@ import java.nio.ByteOrder;
 import java.nio.FloatBuffer;
 import java.util.ArrayList;
 import java.util.List;
+import de.rwth_aachen.phyphox.FloatBufferRepresentation;
 
 // phyphox-test: graph-interaction
 //The touch handling of GraphView without a GL surface: picking a point (tap, drag for a second

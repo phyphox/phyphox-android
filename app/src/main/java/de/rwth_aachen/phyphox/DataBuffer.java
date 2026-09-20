@@ -17,10 +17,6 @@ import java.util.Set;
 //Databuffer class
 //Each databuffer can be identified by a name (mapped in phyphoxExperiment class)
 
-interface BufferNotification {
-    void notifyUpdate(boolean clear, boolean reset); //Notify that a buffer has changed. Also notify if the buffer has been cleared (for example during
-}
-
 public class DataBuffer implements Serializable {
     public String name; //The key name
     public String clearGroup; // If set, this buffer is excluded from a clear by the user unless the user specifically selects to delete this group
@@ -581,36 +577,5 @@ public class DataBuffer implements Serializable {
                 return 1;
             return Double.compare(a, b);
         }
-    }
-}
-
-class FloatBufferRepresentation {
-    FloatBuffer data;
-    int size;
-    int offset;
-    transient public final Object lock = new Object();
-
-    FloatBufferRepresentation(FloatBuffer data, int offset, int size) {
-        this.data = data;
-        this.size = size;
-        this.offset = offset;
-    }
-}
-
-class ExperimentTimeReferenceSet {
-    int index;
-    int count;
-    int referenceIndex;
-    double experimentTime;
-    long systemTime;
-    boolean isPaused;
-
-    ExperimentTimeReferenceSet(int index, int count, double experimentTime, long systemTime, int referenceIndex, boolean isPaused) {
-        this.index = index;
-        this.count = count;
-        this.experimentTime = experimentTime;
-        this.systemTime = systemTime;
-        this.referenceIndex = referenceIndex;
-        this.isPaused = isPaused;
     }
 }

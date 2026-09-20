@@ -14,7 +14,7 @@ import android.view.WindowManager;
 import android.widget.FrameLayout;
 import android.widget.Toast;
 
-import de.rwth_aachen.phyphox.MarkerOverlayView;
+import de.rwth_aachen.phyphox.ExperimentView.MarkerOverlayView.MarkerOverlayView;
 
 public class DepthPreview extends FrameLayout implements TextureView.SurfaceTextureListener {
     DepthInput depthInput = null;

@@ -15,6 +15,9 @@ import android.widget.TextView;
 
 import androidx.annotation.NonNull;
 import androidx.fragment.app.Fragment;
+import de.rwth_aachen.phyphox.ExperimentView.ExpView;
+import de.rwth_aachen.phyphox.ExperimentView.ExpViewElement;
+import de.rwth_aachen.phyphox.ExperimentView.GraphElement;
 
 public class ExpViewFragment extends Fragment {
     private static final String ARG_INDEX = "index";
@@ -31,9 +34,9 @@ public class ExpViewFragment extends Fragment {
 
     //Apply zoom to all graphs on the current page.
     public void applyZoom(double min, double max, boolean follow, String unit, String buffer, boolean yAxis, boolean absoluteTime) {
-        for (ExpView.expViewElement element : ((Experiment) getActivity()).experiment.experimentViews.elementAt(index).elements) {
-            if (element.getClass() == ExpView.graphElement.class) {
-                ExpView.graphElement ge = (ExpView.graphElement)element;
+        for (ExpViewElement element : ((Experiment) getActivity()).experiment.experimentViews.elementAt(index).elements) {
+            if (element.getClass() == GraphElement.class) {
+                GraphElement ge = (GraphElement)element;
                 ge.applyZoom(min, max, follow, unit, buffer, yAxis, absoluteTime);
             }
         }
@@ -57,7 +60,7 @@ public class ExpViewFragment extends Fragment {
             ((Experiment) getActivity()).updateBackCallbackState();
     }
 
-    public void requestExclusive(ExpView.expViewElement caller) {
+    public void requestExclusive(ExpViewElement caller) {
         if (root == null)
             return;
         hasExclusive = true;
@@ -71,7 +74,7 @@ public class ExpViewFragment extends Fragment {
         layoutTransition.setStartDelay(LayoutTransition.CHANGING, 0);
         LinearLayout ll = (LinearLayout)root.findViewById(R.id.experimentView);
         ll.setLayoutTransition(layoutTransition);
-        for (ExpView.expViewElement element : ((Experiment) getActivity()).experiment.experimentViews.elementAt(index).elements) {
+        for (ExpViewElement element : ((Experiment) getActivity()).experiment.experimentViews.elementAt(index).elements) {
             if (element == caller) {
                 element.maximize();
             } else {
@@ -86,7 +89,7 @@ public class ExpViewFragment extends Fragment {
         if (!hasExclusive)
             return;
         if (getActivity() instanceof Experiment && ((Experiment) getActivity()).experiment != null && ((Experiment) getActivity()).experiment.experimentViews.size() > index) {
-            for (ExpView.expViewElement element : ((Experiment) getActivity()).experiment.experimentViews.elementAt(index).elements) {
+            for (ExpViewElement element : ((Experiment) getActivity()).experiment.experimentViews.elementAt(index).elements) {
                 if (element.state == ExpView.State.maximized) {
                     element.requestLeaveExclusive();
                     return;
@@ -110,7 +113,7 @@ public class ExpViewFragment extends Fragment {
         layoutTransition.setStartDelay(LayoutTransition.CHANGING, 0);
         LinearLayout ll = (LinearLayout)root.findViewById(R.id.experimentView);
         ll.setLayoutTransition(layoutTransition);
-        for (ExpView.expViewElement element : ((Experiment) getActivity()).experiment.experimentViews.elementAt(index).elements) {
+        for (ExpViewElement element : ((Experiment) getActivity()).experiment.experimentViews.elementAt(index).elements) {
             element.restore();
         }
         ll.setLayoutTransition(null);
@@ -142,7 +145,7 @@ public class ExpViewFragment extends Fragment {
             return;
         LinearLayout ll = (LinearLayout)root.findViewById(R.id.experimentView);
         if (((Experiment)getActivity()).experiment != null && ((Experiment)getActivity()).experiment.experimentViews.size() > index) {
-            for (ExpView.expViewElement element : ((Experiment) getActivity()).experiment.experimentViews.elementAt(index).elements) {
+            for (ExpViewElement element : ((Experiment) getActivity()).experiment.experimentViews.elementAt(index).elements) {
                 element.destroyView();
             }
         }
@@ -152,7 +155,7 @@ public class ExpViewFragment extends Fragment {
         hasExclusive = false;
 
         if (((Experiment)getActivity()).experiment != null && ((Experiment)getActivity()).experiment.experimentViews.size() > index) {
-            for (ExpView.expViewElement element : ((Experiment) getActivity()).experiment.experimentViews.elementAt(index).elements) {
+            for (ExpViewElement element : ((Experiment) getActivity()).experiment.experimentViews.elementAt(index).elements) {
                 element.createView(ll, getContext(), getResources(), this, ((Experiment) getActivity()).experiment);
             }
         }
@@ -206,7 +209,7 @@ public class ExpViewFragment extends Fragment {
             return;
         }
         if (((Experiment)getActivity()).experiment != null && ((Experiment)getActivity()).experiment.experimentViews.size() > index) {
-            for (ExpView.expViewElement element : ((Experiment) getActivity()).experiment.experimentViews.elementAt(index).elements) {
+            for (ExpViewElement element : ((Experiment) getActivity()).experiment.experimentViews.elementAt(index).elements) {
                 element.destroyView();
             }
         }
@@ -222,7 +225,7 @@ public class ExpViewFragment extends Fragment {
         ll.removeAllViews();
 
         if (((Experiment)getActivity()).experiment != null && ((Experiment)getActivity()).experiment.experimentViews.size() > index) {
-            for (ExpView.expViewElement element : ((Experiment) getActivity()).experiment.experimentViews.elementAt(index).elements) {
+            for (ExpViewElement element : ((Experiment) getActivity()).experiment.experimentViews.elementAt(index).elements) {
                 element.onFragmentStop(((Experiment) getActivity()).experiment);
             }
         }

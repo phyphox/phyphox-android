@@ -30,6 +30,8 @@ import java.util.Locale;
 
 import de.rwth_aachen.phyphox.ExperimentList.model.Const;
 import de.rwth_aachen.phyphox.SettingsActivity.SettingsFragment;
+import de.rwth_aachen.phyphox.ExperimentView.ExpView;
+import de.rwth_aachen.phyphox.ExperimentView.ExpViewElement;
 
 // phyphox-test: view-snapshots
 //Golden images of the non-graph view elements rendered from phyphox-docs' fixtures/views/, per the
@@ -154,7 +156,7 @@ public class ViewSnapshotTest {
             //Elements can share a label or have none (separators); repeats get a counted suffix.
             java.util.Map<String, Integer> seen = new java.util.HashMap<>();
             for (ExpView view : activity.experiment.experimentViews) {
-                for (ExpView.expViewElement element : view.elements) {
+                for (ExpViewElement element : view.elements) {
                     View rootView = element.rootView;
                     if (rootView == null)
                         continue;

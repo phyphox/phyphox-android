@@ -1,4 +1,4 @@
-package de.rwth_aachen.phyphox;
+package de.rwth_aachen.phyphox.ExperimentView.GraphView;
 
 import static com.google.common.truth.Truth.assertThat;
 
@@ -26,6 +26,7 @@ import java.nio.FloatBuffer;
 import java.util.List;
 
 import de.rwth_aachen.phyphox.helper.Helper;
+import de.rwth_aachen.phyphox.FloatBufferRepresentation;
 
 // phyphox-test: graph-tic-labels
 //The tic labels of a fixed -2..10 / -1..6 axis pair, whose outer tics sit right on the plot border: x labels are
@@ -50,8 +51,8 @@ public class GraphTicLabelTest {
         graph = new GraphView(context, new PlotAreaView(context), new PlotRenderer(context));
         graph.setCurves(1);
         graph.setLabel("x", "y", null, null, null, null, null);
-        graph.setScaleModeX(GraphView.scaleMode.fixed, -2, GraphView.scaleMode.fixed, 10);
-        graph.setScaleModeY(GraphView.scaleMode.fixed, -1, GraphView.scaleMode.fixed, 6);
+        graph.setScaleModeX(GraphView.ScaleMode.fixed, -2, GraphView.ScaleMode.fixed, 10);
+        graph.setScaleModeY(GraphView.ScaleMode.fixed, -1, GraphView.ScaleMode.fixed, 6);
         parent.addView(graph);
         graph.setPointInfoListener(new GraphView.PointInfo() {
             @Override

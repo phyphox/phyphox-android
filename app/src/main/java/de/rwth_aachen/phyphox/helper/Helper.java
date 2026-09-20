@@ -75,10 +75,11 @@ import javax.xml.xpath.XPath;
 import javax.xml.xpath.XPathConstants;
 import javax.xml.xpath.XPathFactory;
 
-import de.rwth_aachen.phyphox.InteractiveGraphView;
-import de.rwth_aachen.phyphox.PlotAreaView;
+import de.rwth_aachen.phyphox.ExperimentView.GraphView.InteractiveGraphView;
+import de.rwth_aachen.phyphox.ExperimentView.GraphView.PlotAreaView;
 import de.rwth_aachen.phyphox.R;
 import de.rwth_aachen.phyphox.SettingsActivity.SettingsFragment;
+import de.rwth_aachen.phyphox.ExperimentView.GraphView.GraphView;
 
 public abstract class Helper {
 

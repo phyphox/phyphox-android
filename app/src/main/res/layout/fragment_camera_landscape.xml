@@ -98,7 +98,7 @@
             android:layout_height="match_parent"
             />
 
-        <de.rwth_aachen.phyphox.MarkerOverlayView
+        <de.rwth_aachen.phyphox.ExperimentView.MarkerOverlayView.MarkerOverlayView
             android:id="@+id/cam_overlay_view"
             android:layout_width="match_parent"
             android:layout_height="match_parent"

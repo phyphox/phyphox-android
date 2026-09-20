@@ -80,7 +80,7 @@ public class DataExport implements Serializable {
         Double[][] data;
 
         //constructor with name for this set
-        ExportSet(String name) {
+        public ExportSet(String name) {
             this.name = name;
         }
 
@@ -419,7 +419,7 @@ public class DataExport implements Serializable {
     };
 
     //The constructor just has to store a reference to the experiment
-    DataExport(PhyphoxExperiment experiment) {
+    public DataExport(PhyphoxExperiment experiment) {
         this.experiment = experiment;
     }
 

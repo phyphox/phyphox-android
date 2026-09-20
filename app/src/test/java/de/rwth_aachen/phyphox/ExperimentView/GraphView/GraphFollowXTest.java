@@ -1,4 +1,4 @@
-package de.rwth_aachen.phyphox;
+package de.rwth_aachen.phyphox.ExperimentView.GraphView;
 
 import static com.google.common.truth.Truth.assertThat;
 
@@ -21,6 +21,7 @@ import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.nio.FloatBuffer;
 import java.util.List;
+import de.rwth_aachen.phyphox.FloatBufferRepresentation;
 
 // phyphox-test: graph-follow-x
 //A graph with followX shows the newest data from the first frame on: the minX..maxX attributes only set the
@@ -59,8 +60,8 @@ public class GraphFollowXTest {
         parent.layout(0, 0, WIDTH, HEIGHT);
 
         //followX="true" scaleMinX="fixed" scaleMaxX="fixed" minX="-5" maxX="0", as the follow-x fixture has it
-        graph.setScaleModeX(GraphView.scaleMode.fixed, -5, GraphView.scaleMode.fixed, 0);
-        graph.setScaleModeY(GraphView.scaleMode.auto, 0, GraphView.scaleMode.auto, 0);
+        graph.setScaleModeX(GraphView.ScaleMode.fixed, -5, GraphView.ScaleMode.fixed, 0);
+        graph.setScaleModeY(GraphView.ScaleMode.auto, 0, GraphView.ScaleMode.auto, 0);
         graph.setFollowX(true);
     }
 
@@ -114,7 +115,7 @@ public class GraphFollowXTest {
 
     @Test
     public void theWindowWidthComesFromTheAttributes() {
-        graph.setScaleModeX(GraphView.scaleMode.fixed, 0, GraphView.scaleMode.fixed, 2);
+        graph.setScaleModeX(GraphView.ScaleMode.fixed, 0, GraphView.ScaleMode.fixed, 2);
         graph.setFollowX(true);
         show(values(0, 1, 2, 3, 4, 5, 6, 7, 8), 0, 8, values(1, 3, 5, 7, 9, 11, 13, 15, 17), 1, 17);
         draw();

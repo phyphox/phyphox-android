@@ -121,6 +121,7 @@ import de.rwth_aachen.phyphox.helper.DecimalTextWatcher;
 import de.rwth_aachen.phyphox.helper.DebugSwitches;
 import de.rwth_aachen.phyphox.helper.Helper;
 import de.rwth_aachen.phyphox.NetworkConnection.NetworkConnection;
+import de.rwth_aachen.phyphox.ExperimentView.ExpViewElement;
 
 // Experiments are performed in this activity, which reacts to various intents.
 // The intent has to provide a *.phyphox file which defines the experiment
@@ -608,7 +609,7 @@ public class Experiment extends AppCompatActivity implements View.OnClickListene
             @Override
             public void onPageSelected(int position) {
                 for (int i = 0; i < experiment.experimentViews.size(); i++) {
-                    for (ExpView.expViewElement eve : experiment.experimentViews.elementAt(i).elements) {
+                    for (ExpViewElement eve : experiment.experimentViews.elementAt(i).elements) {
                         eve.onViewSelected(i == position);
                     }
                 }

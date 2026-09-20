@@ -30,6 +30,8 @@ import java.util.Locale;
 import java.util.Map;
 
 import de.rwth_aachen.phyphox.SettingsActivity.SettingsFragment;
+import de.rwth_aachen.phyphox.ExperimentView.ExpView;
+import de.rwth_aachen.phyphox.ExperimentView.ExpViewElement;
 
 // phyphox-test: graph-snapshots
 //Golden images of the OpenGL graphs (a TextureView never reaches a Robolectric canvas, so these run on
@@ -89,7 +91,7 @@ public class GraphSnapshotTest {
             Map<String, Integer> seen = new HashMap<>();
 
             for (ExpView view : activity.experiment.experimentViews) {
-                for (ExpView.expViewElement element : view.elements) {
+                for (ExpViewElement element : view.elements) {
                     View rootView = element.rootView;
                     if (rootView == null || findTexture(rootView) == null)
                         continue;

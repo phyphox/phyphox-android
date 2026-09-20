@@ -1,4 +1,4 @@
-package de.rwth_aachen.phyphox;
+package de.rwth_aachen.phyphox.ExperimentView.GraphView;
 
 import android.content.Context;
 import android.content.res.Configuration;
@@ -27,6 +27,9 @@ import java.util.Locale;
 import java.util.TimeZone;
 import java.util.Vector;
 
+import de.rwth_aachen.phyphox.ExperimentTimeReferenceSet;
+import de.rwth_aachen.phyphox.FloatBufferRepresentation;
+import de.rwth_aachen.phyphox.R;
 import de.rwth_aachen.phyphox.helper.Helper;
 
 //The graphView class implements an Android view which displays a data graph
@@ -132,16 +135,16 @@ public class GraphView extends View {
 
     public boolean previouslyKept = false; //Keeps track if the user has kept his zoom when he left the interactive mode the last time
 
-    public enum scaleMode {
+    public enum ScaleMode {
         auto, extend, fixed
     }
 
-    scaleMode scaleMinX = scaleMode.auto;
-    scaleMode scaleMaxX = scaleMode.auto;
-    scaleMode scaleMinY = scaleMode.auto;
-    scaleMode scaleMaxY = scaleMode.auto;
-    scaleMode scaleMinZ = scaleMode.auto;
-    scaleMode scaleMaxZ = scaleMode.auto;
+    ScaleMode scaleMinX = ScaleMode.auto;
+    ScaleMode scaleMaxX = ScaleMode.auto;
+    ScaleMode scaleMinY = ScaleMode.auto;
+    ScaleMode scaleMaxY = ScaleMode.auto;
+    ScaleMode scaleMinZ = ScaleMode.auto;
+    ScaleMode scaleMaxZ = ScaleMode.auto;
 
     double minX = 0.;
     double maxX = 0.;
@@ -155,13 +158,13 @@ public class GraphView extends View {
     private TouchMode touchMode = TouchMode.off;
     public boolean isSpectroscopyCalibrated = false;
     public class ZoomState implements Serializable {
-        double minX = Double.NaN;
-        double maxX = Double.NaN;
-        double minY = Double.NaN;
-        double maxY = Double.NaN;
-        double minZ = Double.NaN;
-        double maxZ = Double.NaN;
-        boolean follows = false;
+        public double minX = Double.NaN;
+        public double maxX = Double.NaN;
+        public double minY = Double.NaN;
+        public double maxY = Double.NaN;
+        public double minZ = Double.NaN;
+        public double maxZ = Double.NaN;
+        public boolean follows = false;
     }
 
     public ZoomState zoomState = new ZoomState();
@@ -181,7 +184,7 @@ public class GraphView extends View {
 
     PlotAreaView plotAreaView;
     PlotRenderer plotRenderer;
-    GraphSetup graphSetup;
+    public GraphSetup graphSetup;
 
     private boolean processingGesture = false;
     private boolean gestureOnZScale = false;
@@ -745,42 +748,42 @@ public class GraphView extends View {
         this.aspectRatio = aspectRatio;
     }
 
-    public void setScaleModeX(scaleMode minMode, double minV, scaleMode maxMode, double maxV) {
+    public void setScaleModeX(ScaleMode minMode, double minV, ScaleMode maxMode, double maxV) {
         scaleMinX = minMode;
         scaleMaxX = maxMode;
         minX = minV;
         maxX = maxV;
-        if (minMode == scaleMode.fixed)
+        if (minMode == ScaleMode.fixed)
             minX = minV;
         else
             minX = Double.POSITIVE_INFINITY;
-        if (maxMode == scaleMode.fixed)
+        if (maxMode == ScaleMode.fixed)
             maxX = maxV;
         else
             maxX = Double.NEGATIVE_INFINITY;
     }
 
-    public void setScaleModeY(scaleMode minMode, double minV, scaleMode maxMode, double maxV) {
+    public void setScaleModeY(ScaleMode minMode, double minV, ScaleMode maxMode, double maxV) {
         scaleMinY = minMode;
         scaleMaxY = maxMode;
-        if (minMode == scaleMode.fixed)
+        if (minMode == ScaleMode.fixed)
             minY = minV;
         else
             minY = Double.POSITIVE_INFINITY;
-        if (maxMode == scaleMode.fixed)
+        if (maxMode == ScaleMode.fixed)
             maxY = maxV;
         else
             maxY = Double.NEGATIVE_INFINITY;
     }
 
-    public void setScaleModeZ(scaleMode minMode, double minV, scaleMode maxMode, double maxV) {
+    public void setScaleModeZ(ScaleMode minMode, double minV, ScaleMode maxMode, double maxV) {
         scaleMinZ = minMode;
         scaleMaxZ = maxMode;
-        if (minMode == scaleMode.fixed)
+        if (minMode == ScaleMode.fixed)
             minZ = minV;
         else
             minZ = Double.POSITIVE_INFINITY;
-        if (maxMode == scaleMode.fixed)
+        if (maxMode == ScaleMode.fixed)
             maxZ = maxV;
         else
             maxZ = Double.NEGATIVE_INFINITY;
@@ -790,8 +793,8 @@ public class GraphView extends View {
         this.followX = followX;
         zoomState.follows = followX;
         if (followX) {
-            this.scaleMinX = scaleMode.fixed;
-            this.scaleMaxX = scaleMode.fixed;
+            this.scaleMinX = ScaleMode.fixed;
+            this.scaleMaxX = ScaleMode.fixed;
             zoomState.minX = minX;
             zoomState.maxX = maxX;
         }
@@ -835,17 +838,17 @@ public class GraphView extends View {
         if (timeOnY && !absoluteTime && linearTime && graphSetup.systemTimeReferenceGap.size() > 0)
             dataMaxY -= graphSetup.systemTimeReferenceGap.get(graphSetup.systemTimeReferenceGap.size()-1);
 
-        if (scaleMinX == scaleMode.auto || (scaleMinX == scaleMode.extend && minX > dataMinX))
+        if (scaleMinX == ScaleMode.auto || (scaleMinX == ScaleMode.extend && minX > dataMinX))
             minX = dataMinX;
-        if (scaleMaxX == scaleMode.auto || (scaleMaxX == scaleMode.extend && maxX < dataMaxX))
+        if (scaleMaxX == ScaleMode.auto || (scaleMaxX == ScaleMode.extend && maxX < dataMaxX))
             maxX = dataMaxX;
-        if (scaleMinY == scaleMode.auto || (scaleMinY == scaleMode.extend && minY > dataMinY))
+        if (scaleMinY == ScaleMode.auto || (scaleMinY == ScaleMode.extend && minY > dataMinY))
             minY = dataMinY;
-        if (scaleMaxY == scaleMode.auto || (scaleMaxY == scaleMode.extend && maxY < dataMaxY))
+        if (scaleMaxY == ScaleMode.auto || (scaleMaxY == ScaleMode.extend && maxY < dataMaxY))
             maxY = dataMaxY;
-        if (scaleMinZ == scaleMode.auto || (scaleMinZ == scaleMode.extend && minZ > dataMinZ))
+        if (scaleMinZ == ScaleMode.auto || (scaleMinZ == ScaleMode.extend && minZ > dataMinZ))
             minZ = dataMinZ;
-        if (scaleMaxZ == scaleMode.auto || (scaleMaxZ == scaleMode.extend && maxZ < dataMaxZ))
+        if (scaleMaxZ == ScaleMode.auto || (scaleMaxZ == ScaleMode.extend && maxZ < dataMaxZ))
             maxZ = dataMaxZ;
 
         if (!Double.isNaN(zoomState.minX) && !Double.isNaN(zoomState.maxX)) {
@@ -1492,27 +1495,27 @@ public class GraphView extends View {
         //zoomed or followed range are shown exactly as set.
         if (!logX && !zScale && !timeOnX) {
             double extraX = (workingMaxX - workingMinX) * 0.05;
-            if (Double.isNaN(zoomState.minX) && scaleMinX != scaleMode.fixed)
+            if (Double.isNaN(zoomState.minX) && scaleMinX != ScaleMode.fixed)
                 workingMinX -= extraX;
-            if (Double.isNaN(zoomState.maxX) && scaleMaxX != scaleMode.fixed)
+            if (Double.isNaN(zoomState.maxX) && scaleMaxX != ScaleMode.fixed)
                 workingMaxX += extraX;
         }
         if (!logY && !zScale && !timeOnY) {
             double extraY = (workingMaxY - workingMinY) * 0.05;
-            if (Double.isNaN(zoomState.minY) && scaleMinY != scaleMode.fixed)
+            if (Double.isNaN(zoomState.minY) && scaleMinY != ScaleMode.fixed)
                 workingMinY -= extraY;
-            if (Double.isNaN(zoomState.maxY) && scaleMaxY != scaleMode.fixed)
+            if (Double.isNaN(zoomState.maxY) && scaleMaxY != ScaleMode.fixed)
                 workingMaxY += extraY;
         }
 
         //Time axis should auto-extend to the actually measured time range
-        if (timeOnX && !linearTime && Double.isNaN(zoomState.minX) && Double.isNaN(zoomState.maxX) && scaleMinX == scaleMode.auto && scaleMaxX == scaleMode.auto) {
+        if (timeOnX && !linearTime && Double.isNaN(zoomState.minX) && Double.isNaN(zoomState.maxX) && scaleMinX == ScaleMode.auto && scaleMaxX == ScaleMode.auto) {
             if (graphSetup.trStarts != null && graphSetup.trStarts.size() > 0 && graphSetup.trStarts.get(0) < workingMinX)
                 workingMinX = graphSetup.trStarts.get(0);
             if (graphSetup.trStops != null && graphSetup.trStops.size() > 0 && graphSetup.trStops.get(graphSetup.trStops.size()-1) > workingMaxX)
                 workingMaxX = graphSetup.trStops.get(graphSetup.trStops.size()-1);
         }
-        if (timeOnY && !linearTime && Double.isNaN(zoomState.minY) && Double.isNaN(zoomState.maxY) && scaleMinY == scaleMode.auto && scaleMaxY == scaleMode.auto) {
+        if (timeOnY && !linearTime && Double.isNaN(zoomState.minY) && Double.isNaN(zoomState.maxY) && scaleMinY == ScaleMode.auto && scaleMaxY == ScaleMode.auto) {
             if (graphSetup.trStarts != null && graphSetup.trStarts.size() > 0 && graphSetup.trStarts.get(0) < workingMinY)
                 workingMinY = graphSetup.trStarts.get(0);
             if (graphSetup.trStops != null && graphSetup.trStops.size() > 0 && graphSetup.trStops.get(graphSetup.trStops.size()-1) > workingMaxY)

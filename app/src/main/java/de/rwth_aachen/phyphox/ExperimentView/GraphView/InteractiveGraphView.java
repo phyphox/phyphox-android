@@ -1,4 +1,4 @@
-package de.rwth_aachen.phyphox;
+package de.rwth_aachen.phyphox.ExperimentView.GraphView;
 
 import android.app.Activity;
 import android.content.Context;
@@ -42,6 +42,11 @@ import androidx.core.widget.ImageViewCompat;
 
 import java.util.Vector;
 
+import de.rwth_aachen.phyphox.DataExport;
+import de.rwth_aachen.phyphox.DataOutput;
+import de.rwth_aachen.phyphox.ExpViewFragment;
+import de.rwth_aachen.phyphox.ExperimentView.MarkerOverlayView.MarkerOverlayView;
+import de.rwth_aachen.phyphox.R;
 import de.rwth_aachen.phyphox.helper.Helper;
 
 public class InteractiveGraphView extends RelativeLayout implements GraphView.PointInfo {
@@ -102,7 +107,7 @@ public class InteractiveGraphView extends RelativeLayout implements GraphView.Po
     final int markerMax = 2;
     Marker marker[] = new Marker[markerMax];
     public PopupWindow popupWindowInfo = null;
-    TextView popupWindowText = null;
+    public TextView popupWindowText = null;
     MarkerOverlayView markerOverlayView;
 
     public InteractiveGraphView(Context context) {

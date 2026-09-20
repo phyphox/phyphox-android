@@ -45,6 +45,9 @@ import java.util.TreeSet;
 
 import de.rwth_aachen.phyphox.ExperimentList.ExperimentListActivity;
 import de.rwth_aachen.phyphox.helper.Helper;
+import de.rwth_aachen.phyphox.ExperimentView.ExpView;
+import de.rwth_aachen.phyphox.ExperimentView.ExpViewElement;
+import de.rwth_aachen.phyphox.ExperimentView.ImageElement;
 
 // phyphox-test: save-to-collection
 //Saving an experiment that came from outside into the collection - the one flow autoConfirm
@@ -237,9 +240,9 @@ public class SaveToCollectionTest {
     //The fixture image is not bundled with phyphox, so any drawable came from the resource folder.
     private static Drawable imageDrawable(PhyphoxExperiment experiment) {
         for (ExpView view : experiment.experimentViews)
-            for (ExpView.expViewElement element : view.elements)
-                if (element instanceof ExpView.imageElement)
-                    return ((ExpView.imageElement) element).drawable;
+            for (ExpViewElement element : view.elements)
+                if (element instanceof ImageElement)
+                    return ((ImageElement) element).drawable;
         throw new AssertionError("the experiment has no image element");
     }
 

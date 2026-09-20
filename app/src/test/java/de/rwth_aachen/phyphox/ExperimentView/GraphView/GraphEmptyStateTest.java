@@ -1,4 +1,4 @@
-package de.rwth_aachen.phyphox;
+package de.rwth_aachen.phyphox.ExperimentView.GraphView;
 
 import static com.google.common.truth.Truth.assertThat;
 
@@ -23,6 +23,7 @@ import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.nio.FloatBuffer;
 import java.util.List;
+import de.rwth_aachen.phyphox.FloatBufferRepresentation;
 
 // phyphox-test: graph-empty-state
 //An empty plot area says why it is empty: "No data" while nothing has been measured, "No valid data"
@@ -250,8 +251,8 @@ public class GraphEmptyStateTest {
 
     @Test
     public void fixedRangeAwayFromTheDataIsNoDataInRange() {
-        graph.setScaleModeX(GraphView.scaleMode.fixed, 100, GraphView.scaleMode.fixed, 200);
-        graph.setScaleModeY(GraphView.scaleMode.fixed, 0, GraphView.scaleMode.fixed, 20);
+        graph.setScaleModeX(GraphView.ScaleMode.fixed, 100, GraphView.ScaleMode.fixed, 200);
+        graph.setScaleModeY(GraphView.ScaleMode.fixed, 0, GraphView.ScaleMode.fixed, 20);
         showLine();
         draw();
         assertThat(graph.dataStatus).isEqualTo(GraphView.DataStatus.noDataInRange);
@@ -324,7 +325,7 @@ public class GraphEmptyStateTest {
     @Test
     public void theOpenedRangeDoesNotStickToAnExtendAxis() {
         //an extend axis starting at 3..3 with all values at 3 shows the opened range...
-        graph.setScaleModeX(GraphView.scaleMode.extend, 3, GraphView.scaleMode.extend, 3);
+        graph.setScaleModeX(GraphView.ScaleMode.extend, 3, GraphView.ScaleMode.extend, 3);
         show(values(3, 3, 3), 3, 3, values(1, 2, 3), 1, 3);
         draw();
         assertThat(graph.graphSetup.maxX).isGreaterThan(graph.graphSetup.minX);
@@ -348,7 +349,7 @@ public class GraphEmptyStateTest {
     @Test
     public void onlyDataDeterminedEndsGetHeadroom() {
         //fixed min 0, auto max: the data up to 17 gets one 5 % pad, the fixed end none
-        graph.setScaleModeY(GraphView.scaleMode.fixed, 0, GraphView.scaleMode.auto, 0);
+        graph.setScaleModeY(GraphView.ScaleMode.fixed, 0, GraphView.ScaleMode.auto, 0);
         showLine();
         draw();
         assertThat(graph.graphSetup.minY).isWithin(1e-6).of(0);
@@ -360,8 +361,8 @@ public class GraphEmptyStateTest {
 
     @Test
     public void aFullyFixedRangeIsShownExactly() {
-        graph.setScaleModeX(GraphView.scaleMode.fixed, -2, GraphView.scaleMode.fixed, 10);
-        graph.setScaleModeY(GraphView.scaleMode.fixed, -1, GraphView.scaleMode.fixed, 6);
+        graph.setScaleModeX(GraphView.ScaleMode.fixed, -2, GraphView.ScaleMode.fixed, 10);
+        graph.setScaleModeY(GraphView.ScaleMode.fixed, -1, GraphView.ScaleMode.fixed, 6);
         showLine();
         draw();
         assertThat(graph.graphSetup.minX).isWithin(1e-6).of(-2);

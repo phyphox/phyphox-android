@@ -30,6 +30,10 @@ import java.net.ConnectException;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.util.regex.Pattern;
+import de.rwth_aachen.phyphox.ExperimentView.ExpView;
+import de.rwth_aachen.phyphox.ExperimentView.ExpViewElement;
+import de.rwth_aachen.phyphox.ExperimentView.GraphView.GraphSetup;
+import de.rwth_aachen.phyphox.ExperimentView.GraphView.InteractiveGraphView;
 
 // phyphox-test: graph-interaction
 //The maximized graph's tools on fixtures/views/graphs-interaction.phyphox: expanding a graph,
@@ -112,11 +116,11 @@ public class GraphInteractionUiTest {
 
     // -------------------------------------------------------------- the views
 
-    private ExpView.expViewElement elementOf(String label) throws InterruptedException {
+    private ExpViewElement elementOf(String label) throws InterruptedException {
         long deadline = System.currentTimeMillis() + 5000;
         while (true) {
             for (ExpView view : activity.experiment.experimentViews)
-                for (ExpView.expViewElement element : view.elements)
+                for (ExpViewElement element : view.elements)
                     if (label.equals(element.label) && element.rootView != null)
                         return element;
             if (System.currentTimeMillis() >= deadline)

@@ -57,6 +57,8 @@ import de.rwth_aachen.phyphox.Bluetooth.BluetoothOutput;
 import de.rwth_aachen.phyphox.camera.CameraInput;
 import de.rwth_aachen.phyphox.camera.depth.DepthInput;
 import de.rwth_aachen.phyphox.NetworkConnection.NetworkConnection;
+import de.rwth_aachen.phyphox.ExperimentView.ExpView;
+import de.rwth_aachen.phyphox.ExperimentView.ExpViewElement;
 
 //This class holds all the information that makes up an experiment
 //There are also some functions that the experiment should perform
@@ -69,7 +71,7 @@ public class PhyphoxExperiment implements Serializable, ExperimentTimeReference.
     public boolean isLink = false; //an entry pointing at a web page: no views, never run (see Experiment.openLinkEntry)
     byte[] source = null; //This holds the original source file
     Set<String> resources = new ArraySet<>();
-    String resourceFolder = null;
+    public String resourceFolder = null;
     long crc32 = 0;
     String message = ""; //Holds error messages
     String title = ""; //The title of this experiment
@@ -155,7 +157,7 @@ public class PhyphoxExperiment implements Serializable, ExperimentTimeReference.
     //Parameters for flash light
     public FlashlightOutput flashlightOutput = null;
     //Network connections
-    List<NetworkConnection> networkConnections = new ArrayList<>();
+    public List<NetworkConnection> networkConnections = new ArrayList<>();
 
     public DataExport exporter; //An instance of the DataExport class for exporting functionality (see DataExport.java)
 
@@ -167,7 +169,7 @@ public class PhyphoxExperiment implements Serializable, ExperimentTimeReference.
 
     public void onExperimentTimeReferenceUpdated(ExperimentTimeReference experimentTimeReference) {
         for (ExpView ev : experimentViews) {
-            for (ExpView.expViewElement eve : ev.elements) {
+            for (ExpViewElement eve : ev.elements) {
                 eve.onTimeReferenceUpdate(experimentTimeReference);
             }
         }
@@ -219,7 +221,7 @@ public class PhyphoxExperiment implements Serializable, ExperimentTimeReference.
         if (dataLock.tryLock()) {
             try {
                 for (ExpView ev : experimentViews) {
-                        for (ExpView.expViewElement eve : ev.elements) {
+                        for (ExpViewElement eve : ev.elements) {
                             try {
                                 if (eve.onMayWriteToBuffers(this)) //The element may now write to its buffers if it wants to do it on its own...
                                     newUserInput = true;
@@ -405,7 +407,7 @@ public class PhyphoxExperiment implements Serializable, ExperimentTimeReference.
             if (dataLock.tryLock(10, TimeUnit.MILLISECONDS)) {
                 try {
                     for (ExpView experimentView : experimentViews) {
-                        for (ExpView.expViewElement eve : experimentView.elements) {
+                        for (ExpViewElement eve : experimentView.elements) {
                             eve.onMayReadFromBuffers(this); //Notify each view, that it should update from the buffers
                         }
                     }
@@ -421,7 +423,7 @@ public class PhyphoxExperiment implements Serializable, ExperimentTimeReference.
 
         newData = false;
         //Finally call dataComplete on every view to notify them that the data has been sent - heavy operation can now be done by the views while the buffers have been unlocked again
-        for (ExpView.expViewElement eve : experimentViews.elementAt(currentView).elements) {
+        for (ExpViewElement eve : experimentViews.elementAt(currentView).elements) {
             try {
                 eve.dataComplete();
             } catch (Exception e) {
