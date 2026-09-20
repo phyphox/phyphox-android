@@ -27,6 +27,7 @@ import java.util.List;
 
 import de.rwth_aachen.phyphox.helper.Helper;
 
+// phyphox-test: graph-tic-labels
 //The tic labels of a fixed -2..10 / -1..6 axis pair, whose outer tics sit right on the plot border: x labels are
 //centred on their tic (the first frame used to draw them left-aligned), and a label at the border is moved inside
 //the view instead of being clipped by it.
