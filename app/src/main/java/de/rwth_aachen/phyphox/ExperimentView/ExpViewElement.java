@@ -179,6 +179,12 @@ public abstract class ExpViewElement implements Serializable, BufferNotification
         return "function() {}";
     }
 
+    //Elements that the remote interface builds itself from a configuration (currently the graph)
+    //return it here as a JSON object string; it is embedded as "graph" in the view layout.
+    public String getWebGraphConfig() {
+        return null;
+    }
+
     //This returns the key name of the output dataBuffer. Called by the main loop to figure out
     //where to store user input
     protected String getValueOutput() {

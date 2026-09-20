@@ -8,9 +8,14 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.LinearLayout;
 
+import org.json.JSONArray;
+import org.json.JSONException;
+import org.json.JSONObject;
+
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
 import java.util.Vector;
 
 import de.rwth_aachen.phyphox.DataBuffer;
@@ -94,8 +99,6 @@ public class GraphElement extends ExpViewElement implements Serializable {
 
     GraphView.ZoomState zoomState = null;
 
-    final String warningText;
-
     String pickLabel = null;
     private Vector<DataOutput> outputs = null;
     private Double[] newPickData = null;
@@ -123,8 +126,6 @@ public class GraphElement extends ExpViewElement implements Serializable {
             timeReferencesX =  new ArrayList[nCurves];
             timeReferencesY =  new ArrayList[nCurves];
         }
-
-        warningText = res.getString(R.string.remoteColorMapWarning).replace("'", "\\'");
     }
 
     public void setPickConfig(String pickLabel, Vector<DataOutput> outputs) {
@@ -429,18 +430,119 @@ public class GraphElement extends ExpViewElement implements Serializable {
     }
 
     @Override
-    //Create the HTML markup. We use the flot library to plot in JavaScript, so there is not
-    //as much to do here as one might expect
-    //<div>
-    //<span>Label</span>
-    //<div>graph</div>
-    //</div>
+    //The remote interface builds the graph itself from the configuration returned by
+    //getWebGraphConfig(), so there is no markup to generate here.
     protected String createViewHTML(){
-        return "<div style=\"font-size:"+this.labelSize/.4+"%;\" class=\"graphElement\" id=\"element"+htmlID+"\">" +
-                "<span class=\"label\" onclick=\"toggleExclusive("+htmlID+");\">"+this.label+"</span>" +
-                (this.style.get(0) == GraphView.Style.mapXY ? "<div class=\"warningIcon\" onclick=\"alert('"+warningText+"')\"></div>" : "")+
-                "<div class=\"graphBox\"><div class=\"graphRatio\" style=\"padding-top: "+100.0/this.aspectRatio+"%\"></div><div class=\"graph\"><canvas></canvas></div></div>" +
-                "</div>";
+        return "";
+    }
+
+    private static String hexColor(int rgb) {
+        return String.format(Locale.US, "#%06x", rgb & 0xffffff);
+    }
+
+    //JSONObject.put drops a key for a null value, but the contract says every key is present
+    private static Object jsonString(String s) {
+        return s == null ? JSONObject.NULL : s;
+    }
+
+    @Override
+    //Everything the remote interface needs to know about this graph as JSON: the datasets with
+    //their buffers and styles, axis labels, ranges and the data picker outputs. The interface
+    //(phyphox-webinterface, index.html) turns this into a Chart.js chart. The structure is
+    //documented in the webinterface's readme.md and must stay in step with iOS.
+    public String getWebGraphConfig() {
+        try {
+            JSONObject cfg = new JSONObject();
+            cfg.put("aspectRatio", aspectRatio);
+            cfg.put("labelX", jsonString(labelX));
+            cfg.put("labelY", jsonString(labelY));
+            cfg.put("labelZ", jsonString(labelZ));
+            cfg.put("unitX", jsonString(unitX));
+            cfg.put("unitY", jsonString(unitY));
+            cfg.put("unitZ", jsonString(unitZ));
+            cfg.put("unitYX", jsonString(unitYX));
+            cfg.put("logX", logX);
+            cfg.put("logY", logY);
+            cfg.put("logZ", logZ);
+            cfg.put("xPrecision", xPrecision);
+            cfg.put("yPrecision", yPrecision);
+            cfg.put("zPrecision", zPrecision);
+            cfg.put("suppressScientificNotation", suppressScientificNotation);
+            cfg.put("timeOnX", timeOnX);
+            cfg.put("timeOnY", timeOnY);
+            cfg.put("systemTime", absoluteTime);
+            cfg.put("linearTime", linearTime);
+            cfg.put("scaleMinX", scaleMinX.name());
+            cfg.put("scaleMaxX", scaleMaxX.name());
+            cfg.put("scaleMinY", scaleMinY.name());
+            cfg.put("scaleMaxY", scaleMaxY.name());
+            cfg.put("scaleMinZ", scaleMinZ.name());
+            cfg.put("scaleMaxZ", scaleMaxZ.name());
+            cfg.put("minX", Double.isNaN(minX) ? JSONObject.NULL : minX);
+            cfg.put("maxX", Double.isNaN(maxX) ? JSONObject.NULL : maxX);
+            cfg.put("minY", Double.isNaN(minY) ? JSONObject.NULL : minY);
+            cfg.put("maxY", Double.isNaN(maxY) ? JSONObject.NULL : maxY);
+            cfg.put("minZ", Double.isNaN(minZ) ? JSONObject.NULL : minZ);
+            cfg.put("maxZ", Double.isNaN(maxZ) ? JSONObject.NULL : maxZ);
+            cfg.put("followX", followX);
+            cfg.put("partialUpdate", partialUpdate);
+            cfg.put("mapWidth", mapWidth.get(0));
+            cfg.put("showColorScale", showColorScale);
+            cfg.put("interpolateMapColors", interpolateMapColors);
+            JSONArray scale = new JSONArray();
+            for (Integer c : colorScale)
+                scale.put(hexColor(c));
+            if (scale.length() > 1)
+                cfg.put("colorScale", scale);
+
+            //inputs holds (y, x) pairs per curve; a z input is a separate curve of style mapZ that
+            //follows its dataset (see PhyphoxFile)
+            JSONArray datasets = new JSONArray();
+            JSONObject last = null;
+            for (int i = 0; i < inputs.size(); i += 2) {
+                int curve = i / 2;
+                GraphView.Style s = curve < style.size() ? style.get(curve) : GraphView.Style.lines;
+                if (s == GraphView.Style.mapZ) {
+                    if (last != null)
+                        last.put("z", inputs.get(i));
+                    continue;
+                }
+                JSONObject ds = new JSONObject();
+                ds.put("y", inputs.get(i));
+                ds.put("x", i + 1 < inputs.size() && inputs.get(i + 1) != null ? inputs.get(i + 1) : JSONObject.NULL);
+                ds.put("z", JSONObject.NULL);
+                ds.put("style", s == GraphView.Style.mapXY ? "map" : s.name());
+                ds.put("lineWidth", curve < lineWidth.size() ? lineWidth.get(curve) : 1.0);
+                ds.put("color", hexColor((curve < color.size() ? color.get(curve) : color.get(0)).intColor()));
+                datasets.put(ds);
+                last = ds;
+            }
+            cfg.put("datasets", datasets);
+
+            cfg.put("pickLabel", jsonString(pickLabel));
+            //Outputs come in (value, assigned value) pairs cycling through the x, y and z axes
+            JSONArray picks = new JSONArray();
+            if (outputs != null) {
+                final String[] axes = {"x", "y", "z"};
+                for (int i = 0; i < outputs.size(); i += 2) {
+                    DataOutput out = outputs.get(i);
+                    if (out == null || out.buffer == null)
+                        continue;
+                    DataOutput cal = i + 1 < outputs.size() ? outputs.get(i + 1) : null;
+                    JSONObject pick = new JSONObject();
+                    pick.put("axis", axes[(i / 2) % 3]);
+                    pick.put("buffer", out.buffer.name);
+                    pick.put("label", jsonString(out.label));
+                    pick.put("calBuffer", cal != null && cal.buffer != null ? cal.buffer.name : JSONObject.NULL);
+                    pick.put("calLabel", cal != null && cal.buffer != null ? jsonString(cal.label) : JSONObject.NULL);
+                    picks.put(pick);
+                }
+            }
+            cfg.put("pickOutputs", picks);
+            return cfg.toString();
+        } catch (JSONException e) {
+            return null;
+        }
     }
 
     @Override
@@ -577,24 +679,6 @@ public class GraphElement extends ExpViewElement implements Serializable {
     }
 
     @Override
-    //Return a javascript function which stores the x data array for later use
-    public String setDataHTML() {
-        StringBuilder sb = new StringBuilder();
-        sb.append("function (data) {");
-
-        sb.append("     elementData[" + htmlID + "][\"datasets\"] = [];");
-        for (int i = 0; i < inputs.size(); i++) {
-            if (inputs.get(i) == null)
-                continue;
-            sb.append("if (!data.hasOwnProperty(\""+inputs.get(i).replace("\"", "\\\"")+"\"))");
-            sb.append("    return;");
-            sb.append("elementData["+htmlID+"][\"datasets\"]["+i+"] = data[\""+inputs.get(i).replace("\"", "\\\"")+"\"];");
-        }
-        sb.append("}");
-        return sb.toString();
-    }
-
-    @Override
     //Data complete, let's send it to the graphView
     //Also clear the data afterwards to avoid sending it multiple times if it is not updated for
     //some reason
@@ -615,281 +699,6 @@ public class GraphElement extends ExpViewElement implements Serializable {
             pickDataChangedExternally = false;
             interactiveGV.updatePickData(currentPickData);
         }
-    }
-
-    @Override
-    //This looks pretty ugly and indeed needs a clean-up...
-    //This function returns a javascript function which updates the flot chart.
-    //So we have to set-up some JSON objects to define the graph, put it into the JavaScript
-    //function (which has to setup some JSON itself) and return the whole nightmare. There
-    //certainly is a way to beautify this, but it's not too obvious...
-    public String dataCompleteHTML() {
-        String rescale = "";
-        String scaleX = "";
-        if (followX && !Double.isNaN(minX) && !Double.isNaN(maxX)) {
-            //Keep the window width from minX/maxX but anchor its end at the newest x value, like GraphView.rescale()
-            scaleX += "\"min\":" + minX + ", \"max\":" + maxX + ", ";
-            rescale += "if (elementData["+htmlID+"][\"datasets\"][0][\"data\"].length > 0) {";
-            rescale += "elementData["+htmlID+"][\"graph\"].options.scales.xAxes[0].ticks.max = maxX;";
-            rescale += "elementData["+htmlID+"][\"graph\"].options.scales.xAxes[0].ticks.min = maxX - " + (maxX - minX) + ";";
-            rescale += "}";
-        } else {
-            if (scaleMinX == GraphView.ScaleMode.fixed && !Double.isNaN(minX))
-                scaleX += "\"min\":" + minX + ", ";
-            else
-                rescale += "elementData["+htmlID+"][\"graph\"].options.scales.xAxes[0].ticks.min = minX;";
-            if (scaleMaxX == GraphView.ScaleMode.fixed && !Double.isNaN(maxX))
-                scaleX += "\"max\":" + maxX + ", ";
-            else
-                rescale += "elementData["+htmlID+"][\"graph\"].options.scales.xAxes[0].ticks.max = maxX;";
-        }
-        String scaleY = "";
-        if (scaleMinY == GraphView.ScaleMode.fixed && !Double.isNaN(minY))
-            scaleY += "\"min\":" + minY + ", ";
-        else
-            rescale += "elementData["+htmlID+"][\"graph\"].options.scales.yAxes[0].ticks.min = minY;";
-        if (scaleMaxY == GraphView.ScaleMode.fixed && !Double.isNaN(maxY))
-            scaleY += "\"max\":" + maxY + ", ";
-        else
-            rescale += "elementData["+htmlID+"][\"graph\"].options.scales.yAxes[0].ticks.max = maxY;";
-
-        String scaleZ = "";
-        String colorScale = "[";
-        if (this.style.get(0) == GraphView.Style.mapXY) {
-            if (scaleMinZ == GraphView.ScaleMode.fixed && !Double.isNaN(minZ))
-                scaleZ += "minZ = " + minZ + ";";
-            if (scaleMaxZ == GraphView.ScaleMode.fixed && !Double.isNaN(maxZ))
-                scaleZ += "maxZ = " + maxZ + ";";
-            scaleZ += "elementData["+htmlID+"][\"graph\"].logZ = " + (this.logZ ? "true" : "false") + ";";
-            scaleZ += "elementData["+htmlID+"][\"graph\"].minZ = minZ;";
-            scaleZ += "elementData["+htmlID+"][\"graph\"].maxZ = maxZ;";
-
-            boolean first = true;
-            for (Integer color : this.gv.graphSetup.colorScale) {
-                if (first)
-                    first = false;
-                else
-                    colorScale += ",";
-                colorScale += (color & 0xffffffffL);
-            }
-        }
-        colorScale += "]";
-
-        final String type = this.style.get(0) == GraphView.Style.mapXY ? "colormap" : "scatter";
-
-        String styleDetection = "switch (i/2) {";
-        String graphSetup = "[";
-        for (int i = 0; i < inputs.size(); i+=2) {
-
-            graphSetup +=   "{"+
-                                "type: \"" + type +"\"," +
-                                "showLine: "+ (style.get(i/2) == GraphView.Style.dots || style.get(i/2) == GraphView.Style.mapXY ? "false" : "true") +"," +
-                                "fill: "+(style.get(i/2) == GraphView.Style.vbars || style.get(i/2) == GraphView.Style.hbars ? "\"origin\"" : "false")+"," +
-                                "pointRadius: "+ (style.get(i/2) == GraphView.Style.dots ? 2.0*lineWidth.get(i/2) : 0) +"*scaleFactor," +
-                                "pointHitRadius: "+ (4.0*lineWidth.get(i/2)) +"*scaleFactor," +
-                                "pointHoverRadius: "+ (4.0*lineWidth.get(i/2)) +"*scaleFactor," +
-                                "lineTension: 0," +
-                                "borderCapStyle: \"butt\"," +
-                                "borderJoinStyle: \"round\"," +
-                                "spanGaps: false," +
-                                "borderColor: adjustableColor(\"#" + String.format("%08x", color.get(i/2).intColor()).substring(2) + "\")," +
-                                "backgroundColor: adjustableColor(\"#" + String.format("%08x", color.get(i/2).intColor()).substring(2) + "\")," +
-                                "borderWidth: " + (style.get(i/2) == GraphView.Style.vbars || style.get(i/2) == GraphView.Style.hbars ? 0.0 : lineWidth.get(i/2)) +
-                                "*scaleFactor," +
-                                "xAxisID: \"xaxis\"," +
-                                "yAxisID: \"yaxis\"" +
-                            "},";
-
-            styleDetection += "case " + (i/2) + ": type = \"" + style.get(i/2) + "\"; lineWidth = " + lineWidth.get(i / 2) + "*scaleFactor; break;";
-        }
-        styleDetection += "}";
-        graphSetup += "],";
-
-        return "function () {" +
-                    "if (elementData["+htmlID+"][\"datasets\"].length < 1)" +
-                        "return;" +
-                    "var changed = false;" +
-                    "for (var i = 0; i < elementData["+htmlID+"][\"datasets\"].length; i++) {" +
-                        "if (elementData["+htmlID+"][\"datasets\"][i][\"changed\"])" +
-                            "changed = true;" +
-                    "}" +
-                    "if (!changed)" +
-                        "return;" +
-                    "var d = [];" +
-                    "var minX = Number.POSITIVE_INFINITY; " +
-                    "var maxX = Number.NEGATIVE_INFINITY; " +
-                    "var minY = Number.POSITIVE_INFINITY; " +
-                    "var maxY = Number.NEGATIVE_INFINITY; " +
-                    "var minZ = Number.POSITIVE_INFINITY; " +
-                    "var maxZ = Number.NEGATIVE_INFINITY; " +
-                    "for (var i = 0; i < elementData["+htmlID+"][\"datasets\"].length; i+=2) {" +
-                        "d[i/2] = [];" +
-                        "var xIndexed = ((i+1 >= elementData["+htmlID+"][\"datasets\"].length) || elementData["+htmlID+"][\"datasets\"][i+1][\"data\"].length == 0);" +
-                        "var type;" +
-                        "var lineWidth;" +
-                        styleDetection +
-                        "if (type == \""+ GraphView.Style.mapZ+"\" || (type == \""+ GraphView.Style.mapXY+"\" && elementData["+htmlID+"][\"datasets\"].length < i+2)) {" +
-                            "continue;" +
-                        "}" +
-                        "var lastX = false;" +
-                        "var lastY = false;" +
-                        "var nElements = elementData["+htmlID+"][\"datasets\"][i][\"data\"].length;" +
-                        "if (!xIndexed)" +
-                        "   nElements = Math.min(nElements, elementData[" + htmlID + "][\"datasets\"][i+1][\"data\"].length);" +
-                        "if (type == \""+ GraphView.Style.mapXY+"\")" +
-                            "nElements = Math.min(nElements, elementData[" + htmlID + "][\"datasets\"][i+2][\"data\"].length);" +
-                        "for (j = 0; j < nElements; j++) {" +
-                            "var x = xIndexed ? j : elementData["+htmlID+"][\"datasets\"][i+1][\"data\"][j];"+
-                            "var y = elementData[" + htmlID + "][\"datasets\"][i][\"data\"][j];" +
-                            "if (x < minX)" +
-                            "    minX = x;" +
-                            "if (x > maxX)" +
-                            "    maxX = x;" +
-                            "if (y < minY)" +
-                            "    minY = y;" +
-                            "if (y > maxY)" +
-                            "    maxY = y;" +
-                            "if (type == \""+ GraphView.Style.vbars+"\") {" +
-                                "if (lastX !== false && lastY !== false) {"+
-                                    "var offset = (x-lastX)*(1.0-lineWidth)/2.;" +
-                                    "d[i/2][j*3+0] = {x: lastX+offset, y: lastY};" +
-                                    "d[i/2][j*3+1] = {x: x-offset, y: lastY};" +
-                                    "d[i/2][j*3+2] = {x: NaN, y: NaN};" +
-                                "}"+
-                            "} else if (type == \""+ GraphView.Style.hbars+"\") {" +
-                                "if (lastX !== false && lastY !== false) {"+
-                                    "var offset = (y-lastX)*(1.0-lineWidth)/2.;" +
-                                    "d[i/2][j*3+0] = {x: lastX, y: lastY+offset};" +
-                                    "d[i/2][j*3+1] = {x: lastX, y: y-offset};" +
-                                    "d[i/2][j*3+2] = {x: NaN, y: NaN};" +
-                                "}"+
-                            "} else if (type == \""+ GraphView.Style.mapXY+"\") {" +
-                                "var z = elementData[" + htmlID + "][\"datasets\"][i+2][\"data\"][j];" +
-                                "if (z < minZ)" +
-                                "    minZ = z;" +
-                                "if (z > maxZ)" +
-                                "    maxZ = z;" +
-                                "d[i/2][j] = {x: x, y: y, z: z};" +
-                            "} else {" +
-                                "d[i/2][j] = {x: x, y: y};" +
-                            "}" +
-                            "lastX = x;" +
-                            "lastY = y;" +
-                        "}" +
-
-                    "}" +
-                    "if (minX > maxX) {" +
-                        "minX = 0;" +
-                        "maxX = 1;" +
-                    "}" +
-                    "if (minY > maxY) {" +
-                        "minY = 0;" +
-                        "maxY = 1;" +
-                    "}" +
-                    "if (minZ > maxZ) {" +
-                        "minZ = 0;" +
-                        "maxZ = 1;" +
-                    "}" +
-
-                    "if (!elementData["+htmlID+"][\"graph\"]) {" +
-                        "var ctx = document.getElementById(\"element"+htmlID+"\").getElementsByClassName(\"graph\")[0].getElementsByTagName(\"canvas\")[0];" +
-                        "elementData["+htmlID+"][\"graph\"] = new Chart(ctx, {" +
-                            "type: \"" + type + "\"," +
-                            "mapwidth: "+this.mapWidth.get(0)+"," +
-                            "colorscale: " + colorScale + "," +
-                            "data: {datasets: "+
-                                graphSetup +
-                            "}," +
-                            "options: {" +
-                                "responsive: true, " +
-                                "maintainAspectRatio: false, " +
-                                "animation: false," +
-                                "legend: false," +
-                                "tooltips: {" +
-                                "    titleFontSize: 15*scaleFactor," +
-                                "    bodyFontSize: 15*scaleFactor," +
-                                "    mode: \"nearest\"," +
-                                "    intersect: " + (this.style.get(0) == GraphView.Style.mapXY ? "false" : "true") + "," +
-                                    "callbacks: {" +
-                                    "   title: function() {}," +
-                                    "   label: function(tooltipItem, data) {" +
-                                    "       var lines = [];" +
-                                    "       lines.push(data.datasets[tooltipItem.datasetIndex].data[tooltipItem.index].x + \""+this.unitX + "\");" +
-                                    "       lines.push(data.datasets[tooltipItem.datasetIndex].data[tooltipItem.index].y + \""+this.unitY + "\");" +
-                                    (this.style.get(0) == GraphView.Style.mapXY ? "lines.push(data.datasets[tooltipItem.datasetIndex].data[tooltipItem.index].z + \""+this.unitZ + "\");" : "") +
-                                    "       return lines;" +
-                                    "   }" +
-                                    "}" +
-                                "}," +
-                                "hover: {" +
-                                "    mode: \"nearest\"," +
-                                "    intersect: " + (this.style.get(0) == GraphView.Style.mapXY ? "false" : "true") + "," +
-                                "}, " +
-                                "scales: {" +
-                                    "xAxes: [{" +
-                                        "id: \"xaxis\"," +
-                                        "type: \""+(logX && !(this.style.get(0) == GraphView.Style.mapXY) ? "logarithmic" : "linear")+"\"," +
-                                        "position: \"bottom\"," +
-                                        "gridLines: {" +
-                                            "color: adjustableColor(\"#"+gridColor+"\")," +
-                                            "zeroLineColor: adjustableColor(\"#"+gridColor+"\")," +
-                                            "tickMarkLength: 0," +
-                                        "}," +
-                                        "scaleLabel: {" +
-                                            "display: true," +
-                                            "labelString: \""+this.labelX+(this.unitX != null && !this.unitX.isEmpty() ? " (" + this.unitX + ")" : "")+"\"," +
-                                            "fontColor: adjustableColor(\"#ffffff\")," +
-                                            "fontSize: 15*scaleFactor," +
-                                            "padding: 0, "+
-                                        "}," +
-                                        "ticks: {" +
-                                            "fontColor: adjustableColor(\"#ffffff\")," +
-                                            "fontSize: 15*scaleFactor," +
-                                            "padding: 3*scaleFactor, "+
-                                            "autoSkip: true," +
-                                            "maxTicksLimit: 10," +
-                                            "maxRotation: 0," +
-                                            scaleX+
-                                        "}," +
-                                        "afterBuildTicks: filterEdgeTicks" +
-                                    "}]," +
-                                    "yAxes: [{" +
-                                        "id: \"yaxis\"," +
-                                        "type: \""+(logX && !(this.style.get(0) == GraphView.Style.mapXY) ? "logarithmic" : "linear")+"\"," +
-                                        "position: \"bottom\"," +
-                                        "gridLines: {" +
-                                            "color: adjustableColor(\"#"+gridColor+"\")," +
-                                            "zeroLineColor: adjustableColor(\"#"+gridColor+"\")," +
-                                            "tickMarkLength: 0," +
-                                        "}," +
-                                        "scaleLabel: {" +
-                                            "display: true," +
-                                            "labelString: \""+this.labelY+(this.unitY != null && !this.unitY.isEmpty() ? " (" + this.unitY + ")" : "")+"\"," +
-                                            "fontColor: adjustableColor(\"#ffffff\")," +
-                                            "fontSize: 15*scaleFactor," +
-                                            "padding: 3*scaleFactor, "+
-                                        "}," +
-                                        "ticks: {" +
-                                            "fontColor: adjustableColor(\"#ffffff\")," +
-                                            "fontSize: 15*scaleFactor," +
-                                            "padding: 3*scaleFactor, "+
-                                            "autoSkip: true," +
-                                            "maxTicksLimit: 7," +
-                                            scaleY+
-                                        "}," +
-                                        "afterBuildTicks: filterEdgeTicks" +
-                                "   }]," +
-                                "}" +
-                            "}" +
-                        "});" +
-                    "}" +
-                    "for (var i = 0; i < elementData["+htmlID+"][\"datasets\"].length; i+=2) {" +
-                        "elementData["+htmlID+"][\"graph\"].data.datasets[i/2].data = d[i/2];" +
-                    "}" +
-                    scaleZ +
-                    rescale +
-                    "elementData["+htmlID+"][\"graph\"].update();" +
-                "}";
     }
 
     @Override

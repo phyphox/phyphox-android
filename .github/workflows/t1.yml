@@ -67,6 +67,59 @@ jobs:
           path: logcat-remote-contract*.txt
           if-no-files-found: ignore
 
+  # The web interface's browser tests against the interface the app actually serves: the mock
+  # server only provides the fixture experiment, which the emulator fetches from the host.
+  webinterface-served:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          path: phyphox-android
+          submodules: recursive
+      - uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: 21
+          cache: gradle
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - name: Enable KVM
+        run: |
+          echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
+          sudo udevadm control --reload-rules
+          sudo udevadm trigger --name-match=kvm
+      - name: Install the test's dependencies
+        run: cd phyphox-android/app/src/main/assets/remote/test && npm ci
+      # phyphox-test: webinterface-served-t1
+      - name: Web interface tests against the app
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: ${{ env.API_LEVEL }}
+          arch: ${{ env.EMULATOR_ARCH }}
+          target: ${{ env.EMULATOR_TARGET }}
+          ram-size: 4096M
+          script: |
+            cd phyphox-android && ./gradlew installRegularDebug && cd ..
+            node phyphox-android/app/src/main/assets/remote/test/mock_server.js 8081 > mock-server.log 2>&1 &
+            adb shell setprop debug.phyphox.remote 1
+            adb shell setprop debug.phyphox.remotePort 8080
+            adb shell am start -a android.intent.action.VIEW -d "phyphox://10.0.2.2:8081/fixtures/webgraphs.phyphox"
+            adb forward tcp:8080 tcp:8080
+            for i in $(seq 1 30); do curl -sf http://127.0.0.1:8080/config > /dev/null && break; sleep 1; done
+            sh phyphox-android/tools/t1_ci_run.sh webinterface-served env PHYPHOX_URL=http://127.0.0.1:8080/ npm --prefix phyphox-android/app/src/main/assets/remote/test test
+            adb shell setprop debug.phyphox.remote '""' || true
+      - name: Keep the device log
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: t1-webinterface-served-logs
+          path: |
+            logcat-webinterface-served*.txt
+            mock-server.log
+          if-no-files-found: ignore
+
   experiments-e2e:
     runs-on: ubuntu-latest
     timeout-minutes: 90

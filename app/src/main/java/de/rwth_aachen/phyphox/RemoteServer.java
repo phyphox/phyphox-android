@@ -216,6 +216,13 @@ public class RemoteServer {
                 sb.append("\",\"dataCompleteFunction\":");
                 sb.append(element.dataCompleteHTML());
 
+                //Graphs are built by the web interface from this configuration (see phyphox-webinterface readme.md)
+                String graphConfig = element.getWebGraphConfig();
+                if (graphConfig != null) {
+                    sb.append(",\"graph\":");
+                    sb.append(graphConfig);
+                }
+
                 if(element.visibility != null ){
                     sb.append(",\"visibilityInput\":");
                     sb.append("\"");
@@ -264,6 +271,36 @@ public class RemoteServer {
         sb.append("];");
     }
 
+    //The translated strings the web interface's graph tools use; keys as expected by index.html
+    protected String buildGraphStringsJson() {
+        try {
+            JSONObject strings = new JSONObject();
+            strings.put("panAndZoom", context.getString(R.string.graph_tools_pan_and_zoom));
+            strings.put("pick", context.getString(R.string.graph_tools_pick));
+            strings.put("resetZoom", context.getString(R.string.graph_tools_reset));
+            strings.put("follow", context.getString(R.string.graph_tools_follow));
+            strings.put("linearFit", context.getString(R.string.graph_tools_linear_fit));
+            strings.put("logX", context.getString(R.string.graph_tools_log_x));
+            strings.put("logY", context.getString(R.string.graph_tools_log_y));
+            strings.put("systemTime", context.getString(R.string.graph_tools_system_time));
+            strings.put("point", context.getString(R.string.graph_point_label));
+            strings.put("difference", context.getString(R.string.graph_difference_label));
+            strings.put("slope", context.getString(R.string.graph_slope_label));
+            strings.put("fit", context.getString(R.string.graph_fit_label));
+            strings.put("noData", context.getString(R.string.graph_no_data));
+            strings.put("noValidData", context.getString(R.string.graph_no_valid_data));
+            strings.put("noDataInRange", context.getString(R.string.graph_no_data_in_range));
+            strings.put("ok", context.getString(R.string.ok));
+            strings.put("cancel", context.getString(R.string.cancel));
+            strings.put("invalidValue", context.getString(R.string.invalidValue));
+            strings.put("zoomHint", context.getString(R.string.remoteGraphZoomHint));
+            strings.put("colorMapWarning", context.getString(R.string.remoteColorMapWarning));
+            return strings.toString();
+        } catch (JSONException e) {
+            return "{}";
+        }
+    }
+
     //Constructs the HTML file and replaces some placeholder.
     //This is where the experiment views place their HTML code.
     protected void buildIndexHTML () {
@@ -301,6 +338,8 @@ public class RemoteServer {
                     sb.append(line.replace("<!-- [[toggleBrightModeTranslation]] -->", context.getString(R.string.toggleBrightMode)));
                 } else if (line.contains("<!-- [[fontSizeTranslation]] -->")) {
                     sb.append(line.replace("<!-- [[fontSizeTranslation]] -->", context.getString(R.string.fontSize)));
+                } else if (line.contains("<!-- [[graphStrings]] -->")) { //Localized strings of the graph tools
+                    sb.append("graphStrings = Object.assign(graphStrings, ").append(buildGraphStringsJson()).append(");");
                 } else if (line.contains("<!-- [[viewLayout]] -->")) {
                     buildViewsJson(sb);
                 } else if (line.contains("<!-- [[viewOptions]] -->")) {

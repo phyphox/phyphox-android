@@ -28,3 +28,20 @@ jobs:
           cache: gradle
       - name: Unit tests
         run: cd phyphox-android && ./gradlew testRegularDebugUnitTest
+
+  # The remote web interface (the phyphox-webinterface submodule) in a headless browser against
+  # its mock server: no phone involved, so it runs at T0. The same suite runs against the app in t1.yml.
+  webinterface:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          path: phyphox-android
+          submodules: recursive
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      # phyphox-test: webinterface-graphs-t0
+      - name: Web interface tests against the mock server
+        run: cd phyphox-android/app/src/main/assets/remote/test && npm ci && npm test
