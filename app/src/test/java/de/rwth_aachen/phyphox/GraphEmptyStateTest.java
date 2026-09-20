@@ -343,6 +343,48 @@ public class GraphEmptyStateTest {
         assertThat(graph.graphSetup.xTics.length).isGreaterThan(1);
     }
 
+    // ------------------------------------------------------------ headroom
+
+    @Test
+    public void onlyDataDeterminedEndsGetHeadroom() {
+        //fixed min 0, auto max: the data up to 17 gets one 5 % pad, the fixed end none
+        graph.setScaleModeY(GraphView.scaleMode.fixed, 0, GraphView.scaleMode.auto, 0);
+        showLine();
+        draw();
+        assertThat(graph.graphSetup.minY).isWithin(1e-6).of(0);
+        assertThat(graph.graphSetup.maxY).isWithin(1e-6).of(17 + 17 * 0.05);
+        //x is auto at both ends
+        assertThat(graph.graphSetup.minX).isWithin(1e-6).of(-8 * 0.05);
+        assertThat(graph.graphSetup.maxX).isWithin(1e-6).of(8 + 8 * 0.05);
+    }
+
+    @Test
+    public void aFullyFixedRangeIsShownExactly() {
+        graph.setScaleModeX(GraphView.scaleMode.fixed, -2, GraphView.scaleMode.fixed, 10);
+        graph.setScaleModeY(GraphView.scaleMode.fixed, -1, GraphView.scaleMode.fixed, 6);
+        showLine();
+        draw();
+        assertThat(graph.graphSetup.minX).isWithin(1e-6).of(-2);
+        assertThat(graph.graphSetup.maxX).isWithin(1e-6).of(10);
+        assertThat(graph.graphSetup.minY).isWithin(1e-6).of(-1);
+        assertThat(graph.graphSetup.maxY).isWithin(1e-6).of(6);
+    }
+
+    @Test
+    public void aZoomedRangeIsShownExactly() {
+        showLine();
+        graph.zoomState.minX = 2;
+        graph.zoomState.maxX = 6;
+        graph.zoomState.minY = 3;
+        graph.zoomState.maxY = 9;
+        draw();
+        assertThat(graph.graphSetup.minX).isWithin(1e-6).of(2);
+        assertThat(graph.graphSetup.maxX).isWithin(1e-6).of(6);
+        assertThat(graph.graphSetup.minY).isWithin(1e-6).of(3);
+        assertThat(graph.graphSetup.maxY).isWithin(1e-6).of(9);
+        assertThat(graph.dataStatus).isEqualTo(GraphView.DataStatus.ok);
+    }
+
     @Test
     public void nonPositiveValuesOnALogAxisCountAsOutOfRangeNotInvalid() {
         graph.setLogScale(true, false, false);

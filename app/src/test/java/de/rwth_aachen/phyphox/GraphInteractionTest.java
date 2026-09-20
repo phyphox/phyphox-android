@@ -316,13 +316,16 @@ public class GraphInteractionTest {
 
         drag(plotCenterX() + shift / 2, plotCenterY(), plotCenterX() - shift / 2, plotCenterY());
 
-        //dragging the content to the left brings larger x into view, by what the shift means in the
-        //drawn range (which onDraw pads beyond the data)
-        assertThat(graph.zoomState.minX).isWithin(1e-3).of(graph.viewXToDataX(graph.dataXToViewX(graph.minX) + shift));
-        assertThat(graph.zoomState.maxX).isWithin(1e-3).of(graph.viewXToDataX(graph.dataXToViewX(graph.maxX) + shift));
-        assertThat(graph.zoomState.maxX - graph.zoomState.minX).isWithin(1e-3).of(width);
-        assertThat(graph.zoomState.minY).isWithin(1e-3).of(graph.minY);
-        assertThat(graph.zoomState.maxY).isWithin(1e-3).of(graph.maxY);
+        //dragging the content to the left brings larger x into view: the drawn range (data plus the
+        //headroom onDraw adds) shifted by what the drag means in it, so the first move does not jump
+        double drawnMinX = graph.graphSetup.minX;
+        double drawnMaxX = graph.graphSetup.maxX;
+        assertThat(graph.zoomState.minX).isWithin(1e-3).of(graph.viewXToDataX(graph.dataXToViewX(drawnMinX) + shift));
+        assertThat(graph.zoomState.maxX).isWithin(1e-3).of(graph.viewXToDataX(graph.dataXToViewX(drawnMaxX) + shift));
+        assertThat(graph.zoomState.maxX - graph.zoomState.minX).isWithin(1e-3).of(drawnMaxX - drawnMinX);
+        assertThat(graph.zoomState.maxX - graph.zoomState.minX).isWithin(1e-3).of(width * 1.1);
+        assertThat(graph.zoomState.minY).isWithin(1e-3).of(graph.graphSetup.minY);
+        assertThat(graph.zoomState.maxY).isWithin(1e-3).of(graph.graphSetup.maxY);
         assertThat(graph.zoomState.follows).isFalse();
     }
 
@@ -342,7 +345,7 @@ public class GraphInteractionTest {
         showLine();
         graph.setTouchMode(GraphView.TouchMode.zoom);
         double width = graph.maxX - graph.minX;
-        double height = graph.maxY - graph.minY;
+        double drawnHeight = graph.graphSetup.maxY - graph.graphSetup.minY; //the gesture starts from the drawn range, headroom included
 
         pinch(plotCenterX(), plotCenterY(), 200, 2);
 
@@ -354,7 +357,7 @@ public class GraphInteractionTest {
         assertThat(zoomedWidth).isGreaterThan(0.4 * drawnWidth);
         double focus = graph.viewXToDataX(plotCenterX());
         assertThat((graph.zoomState.minX + graph.zoomState.maxX) / 2).isWithin(0.05 * width).of(focus);
-        assertThat(graph.zoomState.maxY - graph.zoomState.minY).isWithin(1e-3).of(height);
+        assertThat(graph.zoomState.maxY - graph.zoomState.minY).isWithin(1e-3).of(drawnHeight);
     }
 
     @Test

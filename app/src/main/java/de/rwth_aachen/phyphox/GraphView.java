@@ -223,16 +223,17 @@ public class GraphView extends View {
             scaleYStartSpan = Math.abs(scaleGestureDetector.getCurrentSpanY());
 
 
-            final double cminY = Double.isNaN(zoomState.minY) ? minY : zoomState.minY;
-            final double cmaxY = Double.isNaN(zoomState.maxY) ? maxY : zoomState.maxY;
+            //Start from the displayed range (graphSetup, incl. headroom) unless zoomed, so the first move does not jump
+            final double cminY = Double.isNaN(zoomState.minY) ? graphSetup.minY : zoomState.minY;
+            final double cmaxY = Double.isNaN(zoomState.maxY) ? graphSetup.maxY : zoomState.maxY;
             final double cminX;
             final double cmaxX;
             if (gestureOnZScale) {
-                cminX = Double.isNaN(zoomState.minZ) ? minZ : zoomState.minZ;
-                cmaxX = Double.isNaN(zoomState.maxZ) ? maxZ : zoomState.maxZ;
+                cminX = Double.isNaN(zoomState.minZ) ? graphSetup.minZ : zoomState.minZ;
+                cmaxX = Double.isNaN(zoomState.maxZ) ? graphSetup.maxZ : zoomState.maxZ;
             } else {
-                cminX = Double.isNaN(zoomState.minX) ? minX : zoomState.minX;
-                cmaxX = Double.isNaN(zoomState.maxX) ? maxX : zoomState.maxX;
+                cminX = Double.isNaN(zoomState.minX) ? graphSetup.minX : zoomState.minX;
+                cmaxX = Double.isNaN(zoomState.maxX) ? graphSetup.maxX : zoomState.maxX;
             }
 
 
@@ -604,14 +605,15 @@ public class GraphView extends View {
                     break;
 
                 if (Double.isNaN(panXOrigin)) {
+                    //Start from the displayed range (graphSetup, incl. headroom) unless zoomed, so the first move does not jump
                     if (gestureOnZScale) {
-                        panXOrigin = Double.isNaN(zoomState.minZ) ? minZ : zoomState.minZ;
-                        panWOrigin = (Double.isNaN(zoomState.maxZ) ? maxZ : zoomState.maxZ) - (Double.isNaN(zoomState.minZ) ? minZ : zoomState.minZ);
+                        panXOrigin = Double.isNaN(zoomState.minZ) ? graphSetup.minZ : zoomState.minZ;
+                        panWOrigin = (Double.isNaN(zoomState.maxZ) ? graphSetup.maxZ : zoomState.maxZ) - panXOrigin;
                     } else {
-                        panXOrigin = Double.isNaN(zoomState.minX) ? minX : zoomState.minX;
-                        panYOrigin = Double.isNaN(zoomState.minY) ? minY : zoomState.minY;
-                        panWOrigin = (Double.isNaN(zoomState.maxX) ? maxX : zoomState.maxX) - (Double.isNaN(zoomState.minX) ? minX : zoomState.minX);
-                        panHOrigin = (Double.isNaN(zoomState.maxY) ? maxY : zoomState.maxY) - (Double.isNaN(zoomState.minY) ? minY : zoomState.minY);
+                        panXOrigin = Double.isNaN(zoomState.minX) ? graphSetup.minX : zoomState.minX;
+                        panYOrigin = Double.isNaN(zoomState.minY) ? graphSetup.minY : zoomState.minY;
+                        panWOrigin = (Double.isNaN(zoomState.maxX) ? graphSetup.maxX : zoomState.maxX) - panXOrigin;
+                        panHOrigin = (Double.isNaN(zoomState.maxY) ? graphSetup.maxY : zoomState.maxY) - panYOrigin;
                     }
                 }
 
@@ -1485,18 +1487,21 @@ public class GraphView extends View {
                 zScale = true;
         }
 
-        //Stretch x slightly to give a little headroom
+        //Headroom: 5 % of the range at each end that comes from the data (auto/extend and not zoomed). A fixed end and a
+        //zoomed or followed range are shown exactly as set.
         if (!logX && !zScale && !timeOnX) {
             double extraX = (workingMaxX - workingMinX) * 0.05;
-            workingMaxX += extraX;
-            workingMinX -= extraX;
+            if (Double.isNaN(zoomState.minX) && scaleMinX != scaleMode.fixed)
+                workingMinX -= extraX;
+            if (Double.isNaN(zoomState.maxX) && scaleMaxX != scaleMode.fixed)
+                workingMaxX += extraX;
         }
-
-        //Stretch y slightly to give a little headroom
         if (!logY && !zScale && !timeOnY) {
             double extraY = (workingMaxY - workingMinY) * 0.05;
-            workingMaxY += extraY;
-            workingMinY -= extraY;
+            if (Double.isNaN(zoomState.minY) && scaleMinY != scaleMode.fixed)
+                workingMinY -= extraY;
+            if (Double.isNaN(zoomState.maxY) && scaleMaxY != scaleMode.fixed)
+                workingMaxY += extraY;
         }
 
         //Time axis should auto-extend to the actually measured time range
