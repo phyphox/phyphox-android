@@ -126,6 +126,9 @@
     <string name="graph_slope_label">Slope</string>
     <string name="graph_difference_label">Difference</string>
     <string name="graph_fit_label">Linear fit: y = a x + b</string>
+    <string name="graph_no_data">No data</string>
+    <string name="graph_no_valid_data">No valid data</string>
+    <string name="graph_no_data_in_range">No data in range</string>
     <!-- Spectroscopy camera UI -->
     <string name="spectrum_orientation">Orientation</string>
     <string name="which_spectrum_orientation">What is your device\'s orientation in regard to the spectrum?</string>

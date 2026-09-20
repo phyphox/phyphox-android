@@ -6,6 +6,7 @@ import android.content.res.Resources;
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Paint;
+import android.graphics.RectF;
 import android.util.Log;
 import android.view.MotionEvent;
 import android.view.ScaleGestureDetector;
@@ -163,6 +164,17 @@ public class GraphView extends View {
     }
 
     public ZoomState zoomState = new ZoomState();
+
+    //Why the plot area is empty, shown as a small note instead of leaving it blank
+    public enum DataStatus {
+        ok, noData, noValidData, noDataInRange
+    }
+
+    DataStatus dataStatus = DataStatus.noData;
+    double nearestVX = Double.NaN; //View coordinates of the valid point closest to the plot area, set when dataStatus is noDataInRange
+    double nearestVY = Double.NaN;
+    double arrowAngle = Double.NaN; //Screen angle in degrees of the arrow drawn next to "No data in range", NaN when no arrow was drawn
+    RectF arrowRect = null; //Square around that arrow's centre, sized to contain it at any angle
 
     Paint paint; //Anti-Aliased paint used all over this class
 
@@ -1298,6 +1310,142 @@ public class GraphView extends View {
         return 0.0;
     }
 
+    //Symmetric range around a single value v: 5 % of its magnitude, one unit if v is zero, a factor of 1.05 on a log axis
+    private static double[] openZeroRange(double v, boolean log) {
+        if (log && v > 0)
+            return new double[]{v / 1.05, v * 1.05};
+        double half = v == 0 ? 1.0 : Math.abs(v) * 0.05;
+        return new double[]{v - half, v + half};
+    }
+
+    //Decimals needed to show v exactly, capped at four
+    private static int singleValuePrecision(double v) {
+        for (int p = 0; p < 4; p++) {
+            double scaled = v * Math.pow(10, p);
+            if (Math.abs(scaled - Math.round(scaled)) < 1e-6)
+                return p;
+        }
+        return 4;
+    }
+
+    private static boolean isInvalid(float v) {
+        return Float.isNaN(v) || Float.isInfinite(v) || v < -3.3e38f; //DataBuffer tags NaN and infinities as -3.4e38f for the shaders
+    }
+
+    //Classify the data against the current plot range. Requires the bounds set on graphSetup for this frame.
+    //Scans newest points first and stops at the first visible one, so a graph that shows data pays almost nothing.
+    private void updateDataStatus() {
+        boolean anyData = false;
+        boolean anyValid = false;
+        double nearestD = Double.POSITIVE_INFINITY;
+        nearestVX = Double.NaN;
+        nearestVY = Double.NaN;
+        arrowAngle = Double.NaN;
+        arrowRect = null;
+        final double l = graphSetup.plotBoundL;
+        final double r = graphSetup.plotBoundL + graphSetup.plotBoundW;
+        final double t = graphSetup.plotBoundT;
+        final double b = graphSetup.plotBoundT + graphSetup.plotBoundH;
+
+        FloatBufferRepresentation lastValidX = null; //Curves without their own x data share the x of the next curve, like PlotRenderer.drawFrame
+        for (int i = graphY.length - 1; i >= 0; i--) {
+            if (graphX[i] != null)
+                lastValidX = graphX[i];
+            if (style[i] == Style.mapZ)
+                continue;
+            final FloatBufferRepresentation fbY = graphY[i];
+            final FloatBufferRepresentation fbX = lastValidX;
+            if (fbY == null)
+                continue;
+            if (fbY.size > 0 || (fbX != null && fbX.size > 0))
+                anyData = true;
+            if (fbX == null || fbX.data == null || fbY.data == null)
+                continue;
+            synchronized (fbY.lock) {
+                synchronized (fbX.lock) {
+                    int n = Math.min(fbX.size, fbY.size);
+                    for (int j = n - 1; j >= 0; j--) {
+                        float xf = fbX.data.get(fbX.offset + j);
+                        float yf = fbY.data.get(fbY.offset + j);
+                        if (isInvalid(xf) || isInvalid(yf))
+                            continue;
+                        anyValid = true;
+                        double x = xf;
+                        double y = yf;
+                        if (timeOnX)
+                            x += offsetFromExperimentTime(x);
+                        if (timeOnY)
+                            y += offsetFromExperimentTime(y);
+                        if (x >= graphSetup.minX && x <= graphSetup.maxX && y >= graphSetup.minY && y <= graphSetup.maxY) {
+                            dataStatus = DataStatus.ok;
+                            return;
+                        }
+                        //Not visible. Remember it if it is the one closest to the plot area, so an arrow can point there.
+                        double vx = (logX && x <= 0) ? l - 1e6 : dataXToViewX(x);
+                        double vy = (logY && y <= 0) ? b + 1e6 : dataYToViewY(y);
+                        if (Double.isNaN(vx) || Double.isNaN(vy))
+                            continue;
+                        double dx = vx < l ? l - vx : Math.max(vx - r, 0);
+                        double dy = vy < t ? t - vy : Math.max(vy - b, 0);
+                        double d = dx * dx + dy * dy;
+                        if (d < nearestD) {
+                            nearestD = d;
+                            nearestVX = vx;
+                            nearestVY = vy;
+                        }
+                    }
+                }
+            }
+        }
+
+        if (!anyData)
+            dataStatus = DataStatus.noData;
+        else if (!anyValid)
+            dataStatus = DataStatus.noValidData;
+        else
+            dataStatus = DataStatus.noDataInRange;
+    }
+
+    //Centered note in the plot area; for data outside the range an arrow next to it points towards the nearest point
+    private void drawDataStatus(Canvas canvas, Resources res, int graphL, int graphT, int graphW, int graphH) {
+        String text = switch (dataStatus) {
+            case noValidData -> res.getString(R.string.graph_no_valid_data);
+            case noDataInRange -> res.getString(R.string.graph_no_data_in_range);
+            default -> res.getString(R.string.graph_no_data);
+        };
+        float textSize = paint.getTextSize();
+        float cx = graphL + graphW / 2.f;
+        float cy = graphT + graphH / 2.f;
+        boolean arrow = dataStatus == DataStatus.noDataInRange && !Double.isNaN(nearestVX) && !Double.isNaN(nearestVY);
+        float arrowLength = arrow ? textSize * 1.2f : 0.f;
+        float gap = arrow ? textSize * 0.5f : 0.f;
+
+        canvas.save();
+        canvas.clipRect(graphL, graphT, graphL + graphW, graphT + graphH);
+        paint.setStyle(Paint.Style.FILL);
+        paint.setAlpha(160);
+        paint.setTextAlign(Paint.Align.CENTER);
+        float textWidth = paint.measureText(text);
+        float textCenterX = cx - (gap + arrowLength) / 2.f;
+        canvas.drawText(text, textCenterX, cy + textSize * 0.35f, paint);
+        if (arrow) {
+            float ax = textCenterX + textWidth / 2.f + gap + arrowLength / 2.f;
+            float half = arrowLength / 2.f;
+            float head = arrowLength * 0.35f;
+            paint.setStyle(Paint.Style.STROKE);
+            paint.setStrokeWidth(textSize * 0.1f);
+            paint.setStrokeCap(Paint.Cap.ROUND);
+            arrowAngle = Math.toDegrees(Math.atan2(nearestVY - cy, nearestVX - cx));
+            arrowRect = new RectF(ax - half, cy - half, ax + half, cy + half);
+            canvas.rotate((float) arrowAngle, ax, cy);
+            canvas.drawLine(ax - half, cy, ax + half, cy, paint);
+            canvas.drawLine(ax + half, cy, ax + half - head, cy - head, paint);
+            canvas.drawLine(ax + half, cy, ax + half - head, cy + head, paint);
+        }
+        paint.setAlpha(255);
+        canvas.restore();
+    }
+
     @Override
     //Draw the graph!
     protected void onDraw(Canvas canvas) {
@@ -1337,20 +1485,16 @@ public class GraphView extends View {
                 zScale = true;
         }
 
-        //Stretch x slightly to give a little headroom... Also force a range if it is zero
+        //Stretch x slightly to give a little headroom
         if (!logX && !zScale && !timeOnX) {
             double extraX = (workingMaxX - workingMinX) * 0.05;
-            if (extraX == 0)
-                extraX = workingMaxX * 0.05;
             workingMaxX += extraX;
             workingMinX -= extraX;
         }
 
-        //Stretch y slightly to give a little headroom... Also force a range if it is zero
+        //Stretch y slightly to give a little headroom
         if (!logY && !zScale && !timeOnY) {
             double extraY = (workingMaxY - workingMinY) * 0.05;
-            if (extraY == 0)
-                extraY = workingMaxY * 0.05;
             workingMaxY += extraY;
             workingMinY -= extraY;
         }
@@ -1367,6 +1511,24 @@ public class GraphView extends View {
                 workingMinY = graphSetup.trStarts.get(0);
             if (graphSetup.trStops != null && graphSetup.trStops.size() > 0 && graphSetup.trStops.get(graphSetup.trStops.size()-1) > workingMaxY)
                 workingMaxY = graphSetup.trStops.get(graphSetup.trStops.size()-1);
+        }
+
+        //All values on an axis identical (or a fixed range with min = max) leaves a zero range and nothing could be drawn.
+        //Open it up around the value so the point is visible and mark it with a single tic at that value. This only
+        //touches the working range of this frame, so auto/extend ranges keep following the data.
+        Tic singleTicX = null;
+        Tic singleTicY = null;
+        if (Double.isFinite(workingMinX) && workingMinX == workingMaxX) {
+            singleTicX = new Tic(workingMinX, singleValuePrecision(workingMinX));
+            double[] range = openZeroRange(workingMinX, logX);
+            workingMinX = range[0];
+            workingMaxX = range[1];
+        }
+        if (Double.isFinite(workingMinY) && workingMinY == workingMaxY) {
+            singleTicY = new Tic(workingMinY, singleValuePrecision(workingMinY));
+            double[] range = openZeroRange(workingMinY, logY);
+            workingMinY = range[0];
+            workingMaxY = range[1];
         }
 
         //On log scales zero is a problem. We just set a minimum which works for most plots.
@@ -1392,8 +1554,8 @@ public class GraphView extends View {
         int maxZTics = maxZRegularTics;
 
         //Generate the tics
-        Tic[] xTics = getTics(workingMinX, workingMaxX, maxXTics, logX, timeOnX, systemTimeOffsetX);
-        Tic[] yTics = getTics(workingMinY, workingMaxY, maxYTics, logY, timeOnY, systemTimeOffsetY);
+        Tic[] xTics = singleTicX != null ? new Tic[]{singleTicX} : getTics(workingMinX, workingMaxX, maxXTics, logX, timeOnX, systemTimeOffsetX);
+        Tic[] yTics = singleTicY != null ? new Tic[]{singleTicY} : getTics(workingMinY, workingMaxY, maxYTics, logY, timeOnY, systemTimeOffsetY);
         Tic[] zTics = null;
         if (zScale)
             zTics = getTics(workingMinZ, workingMaxZ, maxZTics, logZ, false, 0);
@@ -1496,6 +1658,10 @@ public class GraphView extends View {
         canvas.drawRect(graphL + 1, graphT+1, w - 1, h - graphB - 1, paint);
         if (zScale)
             canvas.drawRect(graphL + 1, 1, w - 1, zScaleH - 1, paint);
+
+        updateDataStatus();
+        if (dataStatus != DataStatus.ok)
+            drawDataStatus(canvas, res, graphL, graphT, graphW, graphH);
 
         //Update the marker if a datapoint has been selected
         for (int i = 0; i < maxPicked; i++) {
