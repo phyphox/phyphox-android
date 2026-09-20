@@ -6,6 +6,7 @@ import android.content.res.Resources;
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Paint;
+import android.graphics.Rect;
 import android.graphics.RectF;
 import android.util.Log;
 import android.view.MotionEvent;
@@ -1612,31 +1613,37 @@ public class GraphView extends View {
         graphSetup.setZAxisBounds(graphL, 0, graphW, zScaleH);
         graphSetup.setTics(xTics, yTics, zTics, plotRenderer);
         plotRenderer.notifyUpdateTimeRanges();
-        if (zTics != null)
-            for (int i = 0; i < zTics.length; i++)
 
-        //Labels for the tics
+        //Labels for the tics. A tic can sit on the plot border (fixed ranges, zoom), so labels are kept within the
+        //plot's width and the view's height instead of being clipped there.
+        Rect textBounds = new Rect();
         paint.setTextAlign(Paint.Align.CENTER);
         for (Tic tic : xTics) {
             if (tic.value < workingMinX || tic.value > workingMaxX)
                 continue;
-            double x = dataXToViewX(tic.value);
-            canvas.drawText(formatTic(tic, xPrecision, timeOnX, systemTimeOffsetX), (float)x, h-graphB+(float)(res.getDimensionPixelSize(R.dimen.graph_font)*1.1), paint);
+            String text = formatTic(tic, xPrecision, timeOnX, systemTimeOffsetX);
+            float halfWidth = paint.measureText(text) / 2.f;
+            float x = (float) Math.max(graphL + halfWidth, Math.min(dataXToViewX(tic.value), w - halfWidth));
+            canvas.drawText(text, x, h-graphB+(float)(res.getDimensionPixelSize(R.dimen.graph_font)*1.1), paint);
         }
         paint.setTextAlign(Paint.Align.RIGHT);
         for (Tic tic : yTics) {
             if (tic.value < workingMinY || tic.value > workingMaxY)
                 continue;
-            double y = dataYToViewY(tic.value);
-            canvas.drawText(formatTic(tic, yPrecision, timeOnY, systemTimeOffsetY), graphL-(float)(res.getDimensionPixelSize(R.dimen.graph_font)*0.2), (float)(y+(res.getDimensionPixelSize(R.dimen.graph_font)*0.4)), paint);
+            String text = formatTic(tic, yPrecision, timeOnY, systemTimeOffsetY);
+            paint.getTextBounds(text, 0, text.length(), textBounds);
+            float y = (float) Math.max(graphT - textBounds.top, Math.min(dataYToViewY(tic.value) + res.getDimensionPixelSize(R.dimen.graph_font)*0.4, h - graphB - textBounds.bottom));
+            canvas.drawText(text, graphL-(float)(res.getDimensionPixelSize(R.dimen.graph_font)*0.2), y, paint);
         }
         if (zScale) {
             paint.setTextAlign(Paint.Align.CENTER);
             for (Tic tic : zTics) {
                 if (tic.value < workingMinZ || tic.value > workingMaxZ)
                     continue;
-                double x = dataZToViewX(tic.value);
-                canvas.drawText(formatTic(tic, zPrecision, false, 0), (float)x, zScaleH+(float)(res.getDimensionPixelSize(R.dimen.graph_font)*1.1), paint);
+                String text = formatTic(tic, zPrecision, false, 0);
+                float halfWidth = paint.measureText(text) / 2.f;
+                float x = (float) Math.max(graphL + halfWidth, Math.min(dataZToViewX(tic.value), w - halfWidth));
+                canvas.drawText(text, x, zScaleH+(float)(res.getDimensionPixelSize(R.dimen.graph_font)*1.1), paint);
             }
         }
 
