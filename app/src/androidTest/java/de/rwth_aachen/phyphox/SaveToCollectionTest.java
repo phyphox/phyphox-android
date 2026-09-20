@@ -165,6 +165,13 @@ public class SaveToCollectionTest {
                 + expected + ": " + added);
     }
 
+    private boolean awaitFile(File file, long millis) {
+        long deadline = System.currentTimeMillis() + millis;
+        while (!file.isFile() && System.currentTimeMillis() < deadline)
+            settle(200);
+        return file.isFile();
+    }
+
     //Waits until the experiment is really gone, or the next lookup finds the one still on screen.
     private Experiment backToCollection() {
         Experiment open = FixtureExperiment.activity();
@@ -263,9 +270,10 @@ public class SaveToCollectionTest {
 
         assertEquals("the collection did not gain the experiment", 1, awaitNewExperiments(1).size());
 
+        //The copy task writes the experiment file first and the resources after it
         File resourceFolder = new File(app().getFilesDir(), Long.toHexString(crc32).toLowerCase());
         assertTrue("the bundled resource was not extracted into " + resourceFolder,
-                new File(resourceFolder, "pic.png").isFile());
+                awaitFile(new File(resourceFolder, "pic.png"), 20000));
 
         Experiment reopened = openFromCollection("Container fixture with resource");
         assertEquals("Container fixture with resource", reopened.experiment.title);
