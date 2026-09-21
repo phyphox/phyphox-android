@@ -550,6 +550,38 @@ public class ExperimentListActivity extends AppCompatActivity {
         }
         sb.append("<br /><br />");
 
+        //Repeat the lookup the experiment list performs, so a report shows what the availability check saw
+        sb.append("<b>Sensor lookup</b><br /><br />");
+        SensorManager appSensorManager = (SensorManager) getApplicationContext().getSystemService(SENSOR_SERVICE);
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
+            sb.append("- Device id (application / activity): ");
+            sb.append(getApplicationContext().getDeviceId());
+            sb.append(" / ");
+            sb.append(getDeviceId());
+            sb.append("<br />");
+        }
+        for (SensorInput.SensorName name : SensorInput.SensorName.values()) {
+            if (name == SensorInput.SensorName.custom)
+                continue;
+            sb.append("- ");
+            sb.append(name.name());
+            sb.append(": ");
+            try {
+                SensorInput testSensor = new SensorInput(name, null, -1, false, 0, SensorInput.SensorRateStrategy.auto, 0, false, null, null, null);
+                testSensor.attachSensorManager(appSensorManager);
+                sb.append(testSensor.sensor != null ? testSensor.sensor.getName() : "not found");
+                if (sensorManager != null && sensorManager != appSensorManager) {
+                    testSensor.attachSensorManager(sensorManager);
+                    sb.append(" / ");
+                    sb.append(testSensor.sensor != null ? testSensor.sensor.getName() : "not found");
+                }
+            } catch (SensorInput.SensorException e) {
+                sb.append(e.getMessage());
+            }
+            sb.append("<br />");
+        }
+        sb.append("<br /><br />");
+
         sb.append("<b>Cameras</b><br /><br />");
         sb.append("<b>Depth sensors</b><br />");
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
