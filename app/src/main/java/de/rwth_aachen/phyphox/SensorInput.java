@@ -348,10 +348,13 @@ public class SensorInput implements SensorEventListener, Serializable {
         this.strideCount = 0;
         lastOneTooFast = false;
 
+        boolean registered;
         if (rateStrategy == SensorRateStrategy.request || rateStrategy == SensorRateStrategy.auto)
-            this.sensorManager.registerListener(this, sensor, (int)(period / 1000));
+            registered = this.sensorManager.registerListener(this, sensor, (int)(period / 1000));
         else
-            this.sensorManager.registerListener(this, sensor, SensorManager.SENSOR_DELAY_FASTEST);
+            registered = this.sensorManager.registerListener(this, sensor, SensorManager.SENSOR_DELAY_FASTEST);
+        if (!registered)
+            Log.w("SensorInput", "The sensor service refused a listener for " + sensor.getName() + " (type " + sensor.getType() + ").");
     }
 
     //Stop the data acquisition by unregistering the listener for this sensor

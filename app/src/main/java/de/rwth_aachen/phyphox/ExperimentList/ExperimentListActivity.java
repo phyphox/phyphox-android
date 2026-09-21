@@ -27,6 +27,8 @@ import android.content.res.Resources;
 import android.content.res.ColorStateList;
 import android.graphics.Typeface;
 import android.hardware.Sensor;
+import android.hardware.SensorEvent;
+import android.hardware.SensorEventListener;
 import android.hardware.SensorManager;
 import android.hardware.camera2.CameraCharacteristics;
 import android.net.Uri;
@@ -146,6 +148,36 @@ public class ExperimentListActivity extends AppCompatActivity {
     private static final int LOCAL_NETWORK_LOAD_REQUEST_CODE = 5;
     private Intent lastNetworkLoadIntent = null; //current load from a network scheme; only such a load may offer the local network permission
     private Intent lastNetworkLoadRetryIntent = null; //the load to repeat once the permission has been granted
+
+    //The permission a sensor's HAL entry demands for registration (hidden API, null for none)
+    private static String getRequiredPermission(Sensor sensor) {
+        try {
+            Object permission = Sensor.class.getMethod("getRequiredPermission").invoke(sensor);
+            return (permission == null || permission.toString().isEmpty()) ? "none" : permission.toString();
+        } catch (Exception e) {
+            return "n/a";
+        }
+    }
+
+    //Whether the sensor service accepts a listener for this sensor, which is where per-sensor permissions are enforced
+    private static boolean canRegister(SensorManager sensorManager, Sensor sensor) {
+        SensorEventListener listener = new SensorEventListener() {
+            @Override
+            public void onSensorChanged(SensorEvent event) {
+            }
+
+            @Override
+            public void onAccuracyChanged(Sensor sensor, int accuracy) {
+            }
+        };
+        try {
+            boolean registered = sensorManager.registerListener(listener, sensor, SensorManager.SENSOR_DELAY_NORMAL);
+            sensorManager.unregisterListener(listener);
+            return registered;
+        } catch (Exception e) {
+            return false;
+        }
+    }
 
     @Override
     //The onCreate block will setup some onClickListeners and display a do-not-damage-your-phone
@@ -545,6 +577,9 @@ public class ExperimentListActivity extends AppCompatActivity {
                 sb.append(" reserved / ");
                 sb.append(sensor.getFifoMaxEventCount());
                 sb.append(" max events");
+                sb.append("<br />");
+                sb.append("- Required permission: ");
+                sb.append(getRequiredPermission(sensor));
                 sb.append("<br /><br />");
             }
         }
@@ -570,6 +605,9 @@ public class ExperimentListActivity extends AppCompatActivity {
                 SensorInput testSensor = new SensorInput(name, null, -1, false, 0, SensorInput.SensorRateStrategy.auto, 0, false, null, null, null);
                 testSensor.attachSensorManager(appSensorManager);
                 sb.append(testSensor.sensor != null ? testSensor.sensor.getName() : "not found");
+                if (testSensor.sensor != null) {
+                    sb.append(canRegister(appSensorManager, testSensor.sensor) ? " (registers)" : " (registration refused)");
+                }
                 if (sensorManager != null && sensorManager != appSensorManager) {
                     testSensor.attachSensorManager(sensorManager);
                     sb.append(" / ");
