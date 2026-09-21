@@ -431,4 +431,8 @@
     <string name="localNetworkDeniedHint">Без разрешения на доступ к локальной сети подключение к устройствам в вашей локальной сети будет невозможно.</string>
     <string name="remoteServerPortInUseTitle">Не удалось включить удалённый доступ</string>
     <string name="remoteServerPortInUse">Не удалось включить удалённый доступ, так как порт уже занят другим приложением на этом устройстве. Закройте приложение, использующее этот порт, или укажите другой порт в настройках phyphox.</string>
+    <string name="savedToDownloadsError">Не удалось сохранить файл в папку «Загрузки»:</string>
+    <string name="calibrated_gyroscope">Используйте калиброванный гироскоп</string>
+    <string name="calibrated_accelerometer">Используйте калиброванный акселерометр</string>
+    <string name="bt_scan_failed">Не удалось запустить поиск Bluetooth-устройств. Обычно помогает выключить и снова включить Bluetooth. Код ошибки Android:</string>
 </resources>
