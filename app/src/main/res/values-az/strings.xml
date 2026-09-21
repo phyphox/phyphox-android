@@ -176,7 +176,7 @@
     <string name="pick_exportFormat">Verilənlərin formatını seçin.</string>
     <string name="noDrawableData">Təsvir ediləcək verilən yoxdur.</string>
     <string name="categoryNewExperiment">Sadə fərdi təcrübələr</string>
-    <string name="categoryRawSensor">Xam sensorlar</string>
+    <string name="categoryRawSensor">Sensorlar</string>
     <string name="experimentinfo_hint">Bu təcrübədən necə istifadə edəcəyinizi öyrənmək üçün təcrübə haqqında məlumata baxın.</string>
     <string name="start_hint">Təcrübəni başlatmaq üçün üçbucağa toxunun.</string>
     <string name="bluetooth">Bluetooth Low Energy</string>
