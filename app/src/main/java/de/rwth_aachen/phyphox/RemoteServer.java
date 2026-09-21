@@ -279,14 +279,12 @@ public class RemoteServer {
             strings.put("pick", context.getString(R.string.graph_tools_pick));
             strings.put("resetZoom", context.getString(R.string.graph_tools_reset));
             strings.put("follow", context.getString(R.string.graph_tools_follow));
-            strings.put("linearFit", context.getString(R.string.graph_tools_linear_fit));
             strings.put("logX", context.getString(R.string.graph_tools_log_x));
             strings.put("logY", context.getString(R.string.graph_tools_log_y));
             strings.put("systemTime", context.getString(R.string.graph_tools_system_time));
             strings.put("point", context.getString(R.string.graph_point_label));
             strings.put("difference", context.getString(R.string.graph_difference_label));
             strings.put("slope", context.getString(R.string.graph_slope_label));
-            strings.put("fit", context.getString(R.string.graph_fit_label));
             strings.put("noData", context.getString(R.string.graph_no_data));
             strings.put("noValidData", context.getString(R.string.graph_no_valid_data));
             strings.put("noDataInRange", context.getString(R.string.graph_no_data_in_range));
