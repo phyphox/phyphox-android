@@ -932,7 +932,7 @@ public class RemoteServer {
 
         //Measuring?
         sb.append("\", \"measuring\":");
-        sb.append(callActivity.measuring);
+        sb.append(callActivity.isMeasuring());
 
         //Timed run?
         sb.append(", \"timedRun\":");
@@ -940,7 +940,7 @@ public class RemoteServer {
 
         //Countdown state
         sb.append(", \"countDown\":");
-        sb.append(callActivity.millisUntilFinished);
+        sb.append(callActivity.countdownMillis());
         sb.append("\n}\n}\n");
 
         //Done. Build a string and return it as usual

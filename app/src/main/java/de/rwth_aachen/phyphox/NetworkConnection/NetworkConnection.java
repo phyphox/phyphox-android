@@ -352,15 +352,18 @@ public class NetworkConnection implements NetworkService.RequestCallback, Networ
                 final android.app.Activity activity = activityRef != null ? activityRef.get() : null;
                 if (activity != null && de.rwth_aachen.phyphox.helper.Helper.needsLocalNetworkPermission(activity)) {
                     displayErrorMessage("Network error: No connection to network service. " + activity.getResources().getString(R.string.localNetworkDeniedHint));
-                    if (!localNetworkPermissionRequested) {
-                        localNetworkPermissionRequested = true;
-                        mainHandler.post(new Runnable() {
-                            @Override
-                            public void run() {
-                                androidx.core.app.ActivityCompat.requestPermissions(activity, new String[]{android.Manifest.permission.ACCESS_LOCAL_NETWORK}, de.rwth_aachen.phyphox.Experiment.REQUEST_LOCAL_NETWORK_CONNECTIONS);
-                            }
-                        });
-                    }
+                    mainHandler.post(new Runnable() {
+                        @Override
+                        public void run() {
+                            //Android drops a request from a screen in the background (a run that goes on without
+                            //it), which must not use up the one attempt: a later failure on screen asks
+                            if (localNetworkPermissionRequested || !(activity instanceof androidx.lifecycle.LifecycleOwner)
+                                    || !((androidx.lifecycle.LifecycleOwner) activity).getLifecycle().getCurrentState().isAtLeast(androidx.lifecycle.Lifecycle.State.RESUMED))
+                                return;
+                            localNetworkPermissionRequested = true;
+                            androidx.core.app.ActivityCompat.requestPermissions(activity, new String[]{android.Manifest.permission.ACCESS_LOCAL_NETWORK}, de.rwth_aachen.phyphox.Experiment.REQUEST_LOCAL_NETWORK_CONNECTIONS);
+                        }
+                    });
                 } else {
                     displayErrorMessage("Network error: No connection to network service.");
                 }

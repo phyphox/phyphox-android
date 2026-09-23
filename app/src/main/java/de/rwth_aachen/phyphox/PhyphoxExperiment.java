@@ -475,6 +475,23 @@ public class PhyphoxExperiment implements Serializable, ExperimentTimeReference.
 
     }
 
+    //Closes the connections to network services, Bluetooth devices and the depth cameras when the experiment's
+    //screen goes away (or its run ends without one). Loading the experiment again reestablishes them.
+    public void closeConnections() {
+        if (!loaded)
+            return;
+        for (NetworkConnection networkConnection : networkConnections) {
+            networkConnection.disconnect();
+            networkConnection.specificAddress = null;
+        }
+        for (BluetoothInput bti : bluetoothInputs)
+            bti.closeConnection();
+        for (BluetoothOutput bto : bluetoothOutputs)
+            bto.closeConnection();
+        if (depthInput != null && Build.VERSION.SDK_INT >= Build.VERSION_CODES.M)
+            depthInput.stopCameras();
+    }
+
 
     //Helper to start all I/O of this experiment (i.e. when it should be started)
     public void startAllIO() throws Bluetooth.BluetoothException, DepthInput.DepthInputException {

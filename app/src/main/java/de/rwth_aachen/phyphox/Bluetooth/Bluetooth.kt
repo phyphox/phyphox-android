@@ -33,6 +33,7 @@ import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import java.io.Serializable
+import java.lang.ref.WeakReference
 import java.nio.ByteBuffer
 import java.util.UUID
 import java.util.Vector
@@ -153,6 +154,17 @@ open class Bluetooth(
     private var batteryCharacteristic: BluetoothGattCharacteristic? = null
 
     private val connectedDeviceInformation = ConnectedDeviceInfo()
+
+    //The experiment screen showing this device's battery and signal strength. Weak: a run may outlive its screen.
+    @Transient
+    @JvmField
+    var connectedDeviceDelegate: WeakReference<UpdateConnectedDeviceDelegate>? = null
+
+    //The experiment screen that carries out this device's commands, the one showing its run (not the activity that
+    // loaded it, which may be gone). Weak for the same reason.
+    @Transient
+    @JvmField
+    var commandDelegate: WeakReference<BluetoothCommandDelegate>? = null
 
     @Transient
     private var lastToastShown = 0L
@@ -552,7 +564,7 @@ open class Bluetooth(
     private fun updateConnectedDeviceInfo(rssi: Int) {
         connectedDeviceInformation.signalStrength = rssi
         mainHandler.post {
-            Experiment.updateConnectedDeviceDelegate?.updateConnectedDevice(arrayListOf(connectedDeviceInformation))
+            connectedDeviceDelegate?.get()?.updateConnectedDevice(arrayListOf(connectedDeviceInformation))
         }
     }
 
@@ -609,7 +621,7 @@ open class Bluetooth(
             Log.w(TAG, "Could not subscribe to the command characteristic")
     }
 
-    //A notification on the command characteristic. The activity carries the command out like a tap on
+    //A notification on the command characteristic. The screen carries the command out like a tap on
     // the corresponding button; an unknown command is ignored by contract so newer devices stay harmless.
     internal fun handleCommand(data: ByteArray) {
         val command = BluetoothCommand.decode(data)
@@ -617,7 +629,7 @@ open class Bluetooth(
             Log.d(TAG, "Ignoring unknown command from $deviceName: " + (data.firstOrNull()?.let { "0x%02x".format(it.toInt() and 0xff) } ?: "empty"))
             return
         }
-        (activity as? BluetoothCommandDelegate)?.onBluetoothCommand(command, this)
+        commandDelegate?.get()?.onBluetoothCommand(command, this)
     }
 
     /** Attributes of a characteristic as defined in the phyphox file */
