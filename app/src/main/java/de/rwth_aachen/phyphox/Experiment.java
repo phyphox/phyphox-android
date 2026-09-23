@@ -166,6 +166,8 @@ public class Experiment extends AppCompatActivity implements View.OnClickListene
     float titleDefaultTextSize = 0f; //Size of the title before it has been fitted to the toolbar
     int titleFittedForWidth = -1; //Toolbar width the title has last been fitted to
     boolean shutdown = false; //The activity should be stopped. Used to escape the measurement loop.
+    boolean viewsPaused = false; //The activity is stopped while the measurement continues in the background (see MeasurementService); the view loop rests until onRestart
+    boolean backgroundMeasurement = false; //Setting: keep a running measurement alive while the screen is not visible
     boolean beforeStart = true; //Experiment has not yet been started even once
     boolean menuHintDismissed = false; //Remember that the user has clicked away the hint to the menu
     boolean startHintDismissed = false; //Remember that the user has clicked away the hint to the start button
@@ -399,7 +401,15 @@ public class Experiment extends AppCompatActivity implements View.OnClickListene
         }
 
         stopRemoteServer(); //Remote server should stop when the app is not active
-        shutdownIO();
+        if (measuring && backgroundMeasurement && MeasurementService.isRunningFor(this) && !isFinishing()) {
+            //The run goes on under the foreground service (see MeasurementService): inputs, connections and the
+            //analysis thread stay as they are, only the view loop rests. The depth camera closes as the system
+            //would revoke it in the background anyway; onRestart reopens it.
+            viewsPaused = true;
+            if (experiment != null && experiment.depthInput != null && Build.VERSION.SDK_INT >= Build.VERSION_CODES.M)
+                experiment.depthInput.stopCameras();
+        } else
+            shutdownIO();
 
         if (popupWindow != null)
             popupWindow.dismiss();
@@ -414,6 +424,7 @@ public class Experiment extends AppCompatActivity implements View.OnClickListene
         super.onRestart();
 
         shutdown = false; //Deactivate shutdown variable
+        viewsPaused = false; //Back on screen: the view loop picks up a run that continued in the background
 
         if (experiment != null && experiment.depthInput != null && Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
             try {
@@ -429,6 +440,14 @@ public class Experiment extends AppCompatActivity implements View.OnClickListene
         //   be confusing otherwise.
 
         invalidateOptionsMenu();
+    }
+
+    @Override
+    //A run that continued in the background ends with the activity that owns it. Recreation (locale, dark
+    //mode, split screen) rebuilds the UI from app.experiment without the measuring state, so it stops the run as before.
+    protected void onDestroy() {
+        shutdownIO();
+        super.onDestroy();
     }
 
     @Override
@@ -863,6 +882,7 @@ public class Experiment extends AppCompatActivity implements View.OnClickListene
 
         settings =  PreferenceManager.getDefaultSharedPreferences(this);
         proximityLock = settings.getBoolean("proximityLock", false);
+        backgroundMeasurement = settings.getBoolean("backgroundMeasurement", false);
         if (proximityLock) {
             PowerManager powerManager = (PowerManager) getBaseContext().getSystemService(Context.POWER_SERVICE);
             if (powerManager.isWakeLockLevelSupported(PowerManager.PROXIMITY_SCREEN_OFF_WAKE_LOCK))
@@ -1645,7 +1665,7 @@ public class Experiment extends AppCompatActivity implements View.OnClickListene
                     Log.e("updateViews", "Unhandled exception.", e);
                 } finally {
                     //If we are not supposed to stop, let's do it again in a short while
-                    if (!shutdown) {
+                    if (!shutdown && !viewsPaused) {
                         if (measuring)
                             updateViewsHandler.postDelayed(this, 40);
                         else
@@ -1747,6 +1767,11 @@ public class Experiment extends AppCompatActivity implements View.OnClickListene
 
         //No more turning off during the measurement
         setKeepScreenOn(true);
+
+        //With the setting on, a foreground service keeps the run alive when the screen goes away. It has to
+        //start now, while the activity is visible, or Android refuses it the location and microphone types.
+        if (backgroundMeasurement)
+            MeasurementService.start(this, experiment);
 
         //Start the analysis "loop"
         Thread t = new Thread(updateData);
@@ -1895,6 +1920,7 @@ public class Experiment extends AppCompatActivity implements View.OnClickListene
     //Stop the measurement
     public void stopMeasurement() {
         measuring = false; //Set the state
+        MeasurementService.stop(this); //Ends the background run's service and notification; a no-op without them
 
         //Lift the restrictions, so the screen may turn off again and the user may rotate the device (unless remote server is active)
         if (!serverEnabled) {

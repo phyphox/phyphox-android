@@ -5,7 +5,13 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assume.assumeTrue;
 
+import android.app.Activity;
+import android.content.Context;
+import android.os.Build;
+
 import androidx.test.ext.junit.runners.AndroidJUnit4;
+import androidx.test.runner.lifecycle.ActivityLifecycleMonitorRegistry;
+import androidx.test.runner.lifecycle.Stage;
 import androidx.test.uiautomator.By;
 import androidx.test.uiautomator.UiDevice;
 import androidx.test.uiautomator.Until;
@@ -34,14 +40,49 @@ public class LifecycleTest {
     public void enableRemoteApi() throws Exception {
         shell("setprop debug.phyphox.remote 1");
         shell("setprop debug.phyphox.remotePort " + PORT);
+        setBackgroundMeasurement(false);
+        //The foreground service's notification (Android 13+); the run continues without it, but the test should look like a real device
+        if (Build.VERSION.SDK_INT >= 33)
+            shell("pm grant " + getInstrumentation().getTargetContext().getPackageName() + " android.permission.POST_NOTIFICATIONS");
     }
 
     @After
     public void cleanUp() throws Exception {
         FixtureExperiment.close(FixtureExperiment.activity());
+        setBackgroundMeasurement(false);
         device().setOrientationNatural();
         shell("setprop debug.phyphox.remote '\"\"'");
         shell("setprop debug.phyphox.remotePort '\"\"'");
+    }
+
+    //The "keep measuring in the background" setting, read when an experiment loads
+    private void setBackgroundMeasurement(boolean on) {
+        Context app = getInstrumentation().getTargetContext();
+        androidx.preference.PreferenceManager.getDefaultSharedPreferences(app)
+                .edit()
+                .putBoolean("backgroundMeasurement", on)
+                .commit();
+    }
+
+    //The live experiment activity in whatever lifecycle stage, so its state can be read while it is stopped in the
+    //background. Activities that earlier tests finished linger in the DESTROYED stage and must not be picked.
+    private Experiment experimentActivityInAnyStage() {
+        final Experiment[] holder = new Experiment[1];
+        getInstrumentation().runOnMainSync(() -> {
+            for (Stage stage : new Stage[]{Stage.RESUMED, Stage.PAUSED, Stage.STOPPED, Stage.RESTARTED, Stage.STARTED, Stage.CREATED})
+                for (Activity activity : ActivityLifecycleMonitorRegistry.getInstance().getActivitiesInStage(stage))
+                    if (activity instanceof Experiment && holder[0] == null)
+                        holder[0] = (Experiment) activity;
+        });
+        return holder[0];
+    }
+
+    private boolean activityMeasuring() {
+        Experiment activity = experimentActivityInAnyStage();
+        assertTrue("no experiment activity alive", activity != null);
+        final boolean[] holder = new boolean[1];
+        getInstrumentation().runOnMainSync(() -> holder[0] = activity.measuring);
+        return holder[0];
     }
 
     private UiDevice device() {
@@ -143,6 +184,31 @@ public class LifecycleTest {
         awaitMeasuring(true);
         api("/control?cmd=stop");
         awaitMeasuring(false);
+    }
+
+    @Test
+    public void withTheSettingOnTheRunContinuesInTheBackground() throws Exception {
+        assumeTrue(FixtureExperiment.available(FIXTURE));
+        setBackgroundMeasurement(true);
+        FixtureExperiment.launch(FIXTURE);
+        awaitApi();
+        api("/control?cmd=start");
+        awaitMeasuring(true);
+
+        device().pressHome();
+        Thread.sleep(3000);
+        //The remote server rests in the background, so the stopped activity is asked directly
+        assertTrue("the measurement stopped in the background", activityMeasuring());
+        assertTrue("the foreground service is not running", MeasurementService.isRunningFor(experimentActivityInAnyStage()));
+
+        FixtureExperiment.bringToForeground();
+        Thread.sleep(2000);
+        awaitApi();
+        assertTrue("the measurement did not survive the return to the foreground", measuring());
+
+        api("/control?cmd=stop");
+        awaitMeasuring(false);
+        assertEquals("the foreground service outlived the run", false, MeasurementService.isRunningFor(experimentActivityInAnyStage()));
     }
 
     @Test

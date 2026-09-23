@@ -79,6 +79,7 @@ fi
 adb shell pm grant $PACKAGE android.permission.RECORD_AUDIO
 adb shell pm grant $PACKAGE android.permission.CAMERA
 adb shell pm grant $PACKAGE android.permission.ACCESS_FINE_LOCATION
+adb shell pm grant $PACKAGE android.permission.POST_NOTIFICATIONS
 
 LANGUAGE_TITLE="Languages${PHYPHOX_TEST_LANGUAGE_SHARD:+, shard $PHYPHOX_TEST_LANGUAGE_SHARD}"
 case $SUITES in

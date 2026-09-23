@@ -86,6 +86,13 @@
             android:summary="@string/settingsProximityLockDetail"
             android:persistent="true"
             android:defaultValue="false" />
+        <androidx.preference.SwitchPreference
+            android:key="backgroundMeasurement"
+            android:title="@string/settingsBackgroundMeasurement"
+            android:icon="@drawable/play"
+            android:summary="@string/settingsBackgroundMeasurementDetail"
+            android:persistent="true"
+            android:defaultValue="false" />
 
     </androidx.preference.PreferenceCategory>
 

@@ -1,18 +1,23 @@
 package de.rwth_aachen.phyphox.SettingsActivity;
 
 
+import android.Manifest;
+import android.content.pm.PackageManager;
 import android.os.Build;
 import android.os.Bundle;
 import android.text.InputType;
 import android.widget.Toast;
 
 import androidx.appcompat.app.AppCompatDelegate;
+import androidx.core.app.ActivityCompat;
+import androidx.core.content.ContextCompat;
 import androidx.core.os.LocaleListCompat;
 import androidx.preference.EditTextPreference;
 import androidx.preference.ListPreference;
 import androidx.preference.PreferenceFragmentCompat;
 import androidx.preference.PreferenceManager;
 import androidx.preference.SeekBarPreference;
+import androidx.preference.SwitchPreference;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -39,6 +44,7 @@ public class SettingsFragment extends PreferenceFragmentCompat {
 
         setupPortEditText();
         setupFileNameFormatEditText();
+        setupBackgroundMeasurement();
         prepareLanguageList();
         updateCurrentLanguage();
         updateTheme();
@@ -54,6 +60,20 @@ public class SettingsFragment extends PreferenceFragmentCompat {
         lp.setSummaryProvider(preference -> {
             CharSequence entry = lp.getEntry();
             return (entry == null ? "" : entry + "\n\n") + getString(R.string.settingsUnitSystemDetail); //a blank line sets the choice apart
+        });
+    }
+
+    //Android 13+ shows the notification of a measurement running in the background only with this permission.
+    //Without it the run still continues, listed only in the system's task manager, so the switch stays on either way.
+    private void setupBackgroundMeasurement() {
+        SwitchPreference preference = findPreference("backgroundMeasurement");
+        if (preference == null)
+            return;
+        preference.setOnPreferenceChangeListener((pref, newValue) -> {
+            if (Boolean.TRUE.equals(newValue) && Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU
+                    && ContextCompat.checkSelfPermission(requireContext(), Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED)
+                ActivityCompat.requestPermissions(requireActivity(), new String[]{Manifest.permission.POST_NOTIFICATIONS}, 0);
+            return true;
         });
     }
 
