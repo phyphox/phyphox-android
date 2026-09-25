@@ -609,7 +609,7 @@ public class Experiment extends AppCompatActivity implements View.OnClickListene
             @Override
             public void onPageSelected(int position) {
                 for (int i = 0; i < experiment.experimentViews.size(); i++) {
-                    for (ExpViewElement eve : experiment.experimentViews.elementAt(i).elements) {
+                    for (ExpViewElement eve : experiment.experimentViews.elementAt(i).flatElements()) {
                         eve.onViewSelected(i == position);
                     }
                 }

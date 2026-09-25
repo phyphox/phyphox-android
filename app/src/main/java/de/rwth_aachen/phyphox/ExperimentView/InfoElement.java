@@ -87,7 +87,7 @@ public class InfoElement extends ExpViewElement implements Serializable {
     //  <p>text</p>
     //</div>
     protected String createViewHTML(){
-        String c = String.format("%08x", color.intColor()).substring(2);
+        String c = color.hexString(); //rrggbb, or rrggbbaa with an alpha byte
         return "<div style=\"" +
                     "font-size:"+this.labelSize*size/.4*0.85+"%;" +
                     "color:#"+c+";" +

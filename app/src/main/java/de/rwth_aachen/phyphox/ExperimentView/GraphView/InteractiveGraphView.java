@@ -54,6 +54,8 @@ public class InteractiveGraphView extends RelativeLayout implements GraphView.Po
     private boolean interactive = false;
     private boolean linearRegression = false;
     public GraphView graphView;
+    private PlotAreaView plotAreaView;
+    private boolean fixedPlotArea = false;
     private TextView graphLabel;
     private ImageView expandImage, collapseImage;
     private LinearLayoutCompat toolbar;
@@ -306,7 +308,7 @@ public class InteractiveGraphView extends RelativeLayout implements GraphView.Po
 
         selectItem(R.id.graph_tools_pan);
 
-        PlotAreaView plotAreaView = new PlotAreaView(context);
+        plotAreaView = new PlotAreaView(context);
         plotAreaView.setLayoutParams(new ViewGroup.LayoutParams(
                 ViewGroup.LayoutParams.MATCH_PARENT,
                 ViewGroup.LayoutParams.MATCH_PARENT));
@@ -563,6 +565,32 @@ public class InteractiveGraphView extends RelativeLayout implements GraphView.Po
         dialog.show();
     }
 
+    //Inside a stack (file format 1.21): no maximize icon and no touches (the stack intercepts them anyway)
+    public void setStatic(boolean isStatic) {
+        expandImage.setVisibility(isStatic ? GONE : VISIBLE);
+        setClickable(!isStatic);
+    }
+
+    //A transparent plot lets the stack's lower children show through the plot area and the margins
+    public void setTransparentPlot(boolean transparent) {
+        plotAreaView.setOpaque(!transparent);
+        plotRenderer.setTransparent(transparent);
+        graphView.setTransparentBackground(transparent);
+    }
+
+    //With a fixed plot area (plotLeft & co.) the fractions refer to the whole element: the label row above the frame
+    //goes away and GraphView draws the label in the plot's top margin if it fits
+    public void setFixedPlotArea(boolean fixed) {
+        fixedPlotArea = fixed;
+        graphLabel.setVisibility(fixed ? GONE : VISIBLE);
+        if (fixed) {
+            expandImage.setVisibility(GONE);
+            ViewGroup.MarginLayoutParams lp = (ViewGroup.MarginLayoutParams) graphFrame.getLayoutParams();
+            lp.topMargin = 0;
+            graphFrame.setLayoutParams(lp);
+        }
+    }
+
     public void prepareExclusive(boolean willBeExclusive) {
         graphView.overrideAspectRatio = willBeExclusive;
         graphView.requestLayout();
@@ -588,6 +616,7 @@ public class InteractiveGraphView extends RelativeLayout implements GraphView.Po
 
     public void setLabel(String label) {
         graphLabel.setText(label);
+        graphView.setTitle(fixedPlotArea ? label : null);
         float selectedTextSize = Helper.getUserSelectedGraphSetting(getContext(), Helper.GraphField.LABEL_SIZE);
         float textSizeAsDisplay = TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_PX,
                 selectedTextSize,

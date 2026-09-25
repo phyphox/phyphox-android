@@ -13,15 +13,29 @@ public class RGB implements Serializable {
     public static final double HUE_MAX = 360.0;
     int color;
 
+    //An opaque color from an RGB or ARGB int (the alpha byte is forced to ff, as every color was before file format 1.21)
     public RGB(int color) {
         this.color = color | 0xff000000;
+    }
+
+    //A color from an ARGB int, alpha included
+    public static RGB fromARGB(int argb) {
+        RGB rgb = new RGB(argb);
+        rgb.color = argb;
+        return rgb;
+    }
+
+    //The same color with another alpha byte (0..255)
+    public RGB withAlpha(int alpha) {
+        return fromARGB((alpha << 24) | (color & 0xffffff));
     }
 
     public static RGB fromRGB(int r, int g, int b) {
         return new RGB(0xffffff & ((r << 16) | (g << 8) | b));
     }
 
-    //Null unless a named phyphox color (case-insensitive) or a six-digit hex value with optional '#'; the caller reports the error
+    //Null unless a named phyphox color (case-insensitive) or a six-digit hex value with optional '#'; the caller reports the error.
+    //Eight digits (RRGGBBAA, file format 1.21, see phyphox-docs colors.md) carry an alpha byte; the file order differs from the AARRGGBB int.
     public static RGB fromPhyphoxStringStrict(String colorStr, Resources res) {
         if (colorStr == null)
             return null;
@@ -47,6 +61,10 @@ public class RGB implements Serializable {
         String hex = colorStr.startsWith("#") ? colorStr.substring(1) : colorStr;
         if (hex.length() == 6 && hex.matches("[0-9a-fA-F]+"))
             return new RGB(Integer.parseInt(hex, 16));
+        if (hex.length() == 8 && hex.matches("[0-9a-fA-F]+")) {
+            long rgba = Long.parseLong(hex, 16);
+            return fromARGB((int)(((rgba & 0xff) << 24) | (rgba >>> 8)));
+        }
         return null;
     }
 
@@ -105,8 +123,20 @@ public class RGB implements Serializable {
         return new RGB(0xFFFFFF & ((r << 16) | (g << 8) | b));
     }
 
+    //ARGB, as Android's Color ints
     public int intColor() {
         return color;
+    }
+
+    public int a() {
+        return (color >>> 24) & 0xff;
+    }
+
+    //The web notation: rrggbb, or rrggbbaa when the color is not opaque (the file's byte order, without '#')
+    public String hexString() {
+        if (a() == 0xff)
+            return String.format("%06x", color & 0xffffff);
+        return String.format("%06x%02x", color & 0xffffff, a());
     }
 
     public int b() {
@@ -171,10 +201,10 @@ public class RGB implements Serializable {
     }
 
     public RGB adjustedColorForLightTheme(Resources res) {
-        if (color == res.getColor(R.color.phyphox_primary))
+        if ((color | 0xff000000) == res.getColor(R.color.phyphox_primary))
             return this;
-        if (color == res.getColor(R.color.phyphox_black_60))
-            return new RGB(res.getColor(R.color.phyphox_white_100));
+        if ((color | 0xff000000) == res.getColor(R.color.phyphox_black_60))
+            return new RGB(res.getColor(R.color.phyphox_white_100)).withAlpha(a());
 
         double l = (2.0 - saturation()) * value() / 2.0;
         double s = l > 0 && l < 1 ? saturation() * value() / (l < 0.5 ? l * 2.0 : 2.0 - l * 2.0) : 0.0;
@@ -200,7 +230,7 @@ public class RGB implements Serializable {
             l = 1;
 
         double t = s * (l < 0.5 ? l : 1.0 - l);
-        return RGB.fromHSV(hue(), l > 0 ? 2 * t / (l+t) : 0.0, l+t);
+        return RGB.fromHSV(hue(), l > 0 ? 2 * t / (l+t) : 0.0, l+t).withAlpha(a()); //The alpha byte survives the adjustment (colors.md)
     }
 
     public RGB autoLightColor(Resources res) {

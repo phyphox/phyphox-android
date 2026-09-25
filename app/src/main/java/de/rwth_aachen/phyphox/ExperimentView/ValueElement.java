@@ -227,7 +227,7 @@ public class ValueElement extends ExpViewElement implements Serializable {
     //  <span>Label</span><span>Value</span>
     //</div>
     protected String createViewHTML(){
-        String c = String.format("%08x", color.intColor()).substring(2);
+        String c = color.hexString(); //rrggbb, or rrggbbaa with an alpha byte
         return "<div style=\"font-size:"+this.labelSize/.4+"%;color:#"+c+"\" class=\"valueElement adjustableColor\" id=\"element"+htmlID+"\">" +
                 "<span class=\"label\">"+this.label+"</span>" +
                 "<span class=\"value\"><span class=\"valueNumber\" style=\"font-size:" + (this.size*100.) + "%\"></span> <span class=\"valueUnit\">"+ this.unit + "</span></span>" +

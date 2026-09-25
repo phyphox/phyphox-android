@@ -34,7 +34,7 @@ public class ExpViewFragment extends Fragment {
 
     //Apply zoom to all graphs on the current page.
     public void applyZoom(double min, double max, boolean follow, String unit, String buffer, boolean yAxis, boolean absoluteTime) {
-        for (ExpViewElement element : ((Experiment) getActivity()).experiment.experimentViews.elementAt(index).elements) {
+        for (ExpViewElement element : ((Experiment) getActivity()).experiment.experimentViews.elementAt(index).flatElements()) {
             if (element.getClass() == GraphElement.class) {
                 GraphElement ge = (GraphElement)element;
                 ge.applyZoom(min, max, follow, unit, buffer, yAxis, absoluteTime);
@@ -74,9 +74,10 @@ public class ExpViewFragment extends Fragment {
         layoutTransition.setStartDelay(LayoutTransition.CHANGING, 0);
         LinearLayout ll = (LinearLayout)root.findViewById(R.id.experimentView);
         ll.setLayoutTransition(layoutTransition);
+        //The top-level element holding the caller stretches to the full height (groups pass this down to the leaf), all others hide
         for (ExpViewElement element : ((Experiment) getActivity()).experiment.experimentViews.elementAt(index).elements) {
-            if (element == caller) {
-                element.maximize();
+            if (element.contains(caller)) {
+                element.maximizePath(caller);
             } else {
                 element.hide();
             }
@@ -89,8 +90,8 @@ public class ExpViewFragment extends Fragment {
         if (!hasExclusive)
             return;
         if (getActivity() instanceof Experiment && ((Experiment) getActivity()).experiment != null && ((Experiment) getActivity()).experiment.experimentViews.size() > index) {
-            for (ExpViewElement element : ((Experiment) getActivity()).experiment.experimentViews.elementAt(index).elements) {
-                if (element.state == ExpView.State.maximized) {
+            for (ExpViewElement element : ((Experiment) getActivity()).experiment.experimentViews.elementAt(index).flatElements()) {
+                if (element.state == ExpView.State.maximized && element.getChildren() == null) { //the leaf, not a group on the path to it
                     element.requestLeaveExclusive();
                     return;
                 }

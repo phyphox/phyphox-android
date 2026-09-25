@@ -90,6 +90,12 @@ public class GraphView extends View {
     private double aspectRatio = 3.;
     public boolean overrideAspectRatio = false;
 
+    //Fixed plot area as fractions of the view (file format 1.21, graph.md "Fixing the plot area"); NaN = automatic
+    private double plotLeft = Double.NaN, plotTop = Double.NaN, plotRight = Double.NaN, plotBottom = Double.NaN;
+    private boolean fixedPlotArea = false;
+    private String title = null; //Drawn in the top margin when the plot area is fixed (the label row above the frame is gone then)
+    private boolean transparentBackground = false; //Inside a stack: no opaque fill of the margins
+
     private int historyLength; //If set to n > 1 the graph will also show the last n sets in a different color
     private int nCurves; //Tracks the number of entries in the history
 
@@ -746,6 +752,32 @@ public class GraphView extends View {
 
     public void setAspectRatio(double aspectRatio) {
         this.aspectRatio = aspectRatio;
+    }
+
+    //Any of the four set fixes the plot area; an unset edge defaults to the corresponding edge of the view
+    public void setPlotArea(double left, double top, double right, double bottom) {
+        plotLeft = left;
+        plotTop = top;
+        plotRight = right;
+        plotBottom = bottom;
+        fixedPlotArea = !(Double.isNaN(left) && Double.isNaN(top) && Double.isNaN(right) && Double.isNaN(bottom));
+    }
+
+    public boolean hasFixedPlotArea() {
+        return fixedPlotArea;
+    }
+
+    public void setTitle(String title) {
+        this.title = title;
+    }
+
+    public void setTransparentBackground(boolean transparent) {
+        this.transparentBackground = transparent;
+    }
+
+    //The plot area of the last frame in view coordinates: left, top, width, height
+    public int[] plotBounds() {
+        return new int[]{graphSetup.plotBoundL, graphSetup.plotBoundT, graphSetup.plotBoundW, graphSetup.plotBoundH};
     }
 
     public void setScaleModeX(ScaleMode minMode, double minV, ScaleMode maxMode, double maxV) {
@@ -1592,6 +1624,7 @@ public class GraphView extends View {
 
         int graphW = w-graphL;
         int graphH = h-graphB;
+        int graphR = w; //right edge of the plot area
 
         //Calculate space for z scale if necessary
         int zScaleH = 0;
@@ -1601,14 +1634,41 @@ public class GraphView extends View {
             graphH -= graphT;
         }
 
+        //A fixed plot area overrides the automatic layout: the fractions refer to the whole view, and labels, tics,
+        //the colour scale and the title are drawn in the margins that remain and dropped where they do not fit
+        boolean drawXTicLabels = true, drawYTicLabels = true, drawTitle = false;
+        boolean drawXLabel = labelX != null, drawYLabel = labelY != null;
+        int ticRowH = (int)(res.getDimensionPixelSize(R.dimen.graph_font)*1.3);
+        if (fixedPlotArea) {
+            int neededL = graphL - (labelY != null ? (int)(res.getDimensionPixelSize(R.dimen.graph_font)*1.2) : 0); //the y tic labels alone
+            graphL = (int)Math.round((Double.isNaN(plotLeft) ? 0. : plotLeft) * w);
+            graphT = (int)Math.round((Double.isNaN(plotTop) ? 0. : plotTop) * h);
+            graphR = (int)Math.round((Double.isNaN(plotRight) ? 1. : plotRight) * w);
+            int bottom = (int)Math.round((Double.isNaN(plotBottom) ? 1. : plotBottom) * h);
+            graphW = Math.max(graphR - graphL, 1);
+            graphH = Math.max(bottom - graphT, 1);
+            graphB = h - bottom;
+            drawXTicLabels = graphB >= ticRowH;
+            drawXLabel = labelX != null && graphB >= 2 * ticRowH;
+            drawYTicLabels = graphL >= neededL;
+            drawYLabel = labelY != null && graphL >= neededL + (int)(res.getDimensionPixelSize(R.dimen.graph_font)*1.2);
+            if (zScale && graphT < 3.5*zScaleH) {
+                zScale = false;
+                zScaleH = 0;
+            }
+            drawTitle = title != null && !title.isEmpty() && graphT - (zScale ? 3.5*zScaleH : 0) >= ticRowH;
+        }
+
         //The GL surface below only guarantees its content within the plot bounds, so fill the margins here
-        int labelColor = paint.getColor();
-        paint.setColor(res.getColor(Helper.isDarkTheme(res) ? R.color.phyphox_black_60 : R.color.phyphox_white_100));
-        canvas.drawRect(0, 0, graphL, h, paint);
-        canvas.drawRect(graphL, h-graphB, w, h, paint);
-        if (zScale)
-            canvas.drawRect(graphL, zScaleH, w, graphT, paint);
-        paint.setColor(labelColor);
+        if (!transparentBackground) {
+            int labelColor = paint.getColor();
+            paint.setColor(res.getColor(Helper.isDarkTheme(res) ? R.color.phyphox_black_60 : R.color.phyphox_white_100));
+            canvas.drawRect(0, 0, graphL, h, paint);
+            canvas.drawRect(graphL, h-graphB, w, h, paint);
+            canvas.drawRect(graphR, 0, w, h, paint);
+            canvas.drawRect(graphL, zScale ? zScaleH : 0, graphR, graphT, paint);
+            paint.setColor(labelColor);
+        }
 
         //Report axis ranges to graph
         graphSetup.setDataBounds((float)workingMinX, (float)workingMaxX, (float)workingMinY, (float)workingMaxY, (float)workingMinZ, (float)workingMaxZ);
@@ -1622,15 +1682,19 @@ public class GraphView extends View {
         Rect textBounds = new Rect();
         paint.setTextAlign(Paint.Align.CENTER);
         for (Tic tic : xTics) {
+            if (!drawXTicLabels)
+                break;
             if (tic.value < workingMinX || tic.value > workingMaxX)
                 continue;
             String text = formatTic(tic, xPrecision, timeOnX, systemTimeOffsetX);
             float halfWidth = paint.measureText(text) / 2.f;
-            float x = (float) Math.max(graphL + halfWidth, Math.min(dataXToViewX(tic.value), w - halfWidth));
+            float x = (float) Math.max(graphL + halfWidth, Math.min(dataXToViewX(tic.value), graphR - halfWidth));
             canvas.drawText(text, x, h-graphB+(float)(res.getDimensionPixelSize(R.dimen.graph_font)*1.1), paint);
         }
         paint.setTextAlign(Paint.Align.RIGHT);
         for (Tic tic : yTics) {
+            if (!drawYTicLabels)
+                break;
             if (tic.value < workingMinY || tic.value > workingMaxY)
                 continue;
             String text = formatTic(tic, yPrecision, timeOnY, systemTimeOffsetY);
@@ -1645,16 +1709,21 @@ public class GraphView extends View {
                     continue;
                 String text = formatTic(tic, zPrecision, false, 0);
                 float halfWidth = paint.measureText(text) / 2.f;
-                float x = (float) Math.max(graphL + halfWidth, Math.min(dataZToViewX(tic.value), w - halfWidth));
+                float x = (float) Math.max(graphL + halfWidth, Math.min(dataZToViewX(tic.value), graphR - halfWidth));
                 canvas.drawText(text, x, zScaleH+(float)(res.getDimensionPixelSize(R.dimen.graph_font)*1.1), paint);
             }
         }
 
         //Labels
         paint.setTextAlign(Paint.Align.CENTER);
-        if (labelX != null)
+        if (drawTitle) {
+            paint.setFakeBoldText(true);
+            canvas.drawText(title, graphL+graphW/2, graphT-(float)(res.getDimensionPixelSize(R.dimen.graph_font)*0.4), paint);
+            paint.setFakeBoldText(false);
+        }
+        if (drawXLabel)
             canvas.drawText(timeOnX && absoluteTime ? getLabelAndSystemTimeRangeX(workingMinX, workingMaxX, systemTimeOffsetX) : getLabelAndUnitX(), graphL+graphW/2, h-(int)(res.getDimensionPixelSize(R.dimen.graph_font)*0.3), paint);
-        if (labelY != null) {
+        if (drawYLabel) {
             canvas.save();
             canvas.rotate(-90, res.getDimensionPixelSize(R.dimen.graph_font), graphH / 2 + graphT);
             canvas.drawText(timeOnY && absoluteTime ? getLabelAndSystemTimeRangeY(workingMinY, workingMaxY, systemTimeOffsetY) : getLabelAndUnitY(), res.getDimensionPixelSize(R.dimen.graph_font), graphH / 2 + graphT, paint);
@@ -1670,9 +1739,9 @@ public class GraphView extends View {
         paint.setAlpha(255);
         paint.setStrokeCap(Paint.Cap.SQUARE);
         paint.setStyle(Paint.Style.STROKE);
-        canvas.drawRect(graphL + 1, graphT+1, w - 1, h - graphB - 1, paint);
+        canvas.drawRect(graphL + 1, graphT+1, graphR - 1, h - graphB - 1, paint);
         if (zScale)
-            canvas.drawRect(graphL + 1, 1, w - 1, zScaleH - 1, paint);
+            canvas.drawRect(graphL + 1, 1, graphR - 1, zScaleH - 1, paint);
 
         updateDataStatus();
         if (dataStatus != DataStatus.ok)

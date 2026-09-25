@@ -86,6 +86,12 @@ class PlotRenderer extends Thread implements TextureView.SurfaceTextureListener 
 
     int h, w;
     int bgColor;
+    private boolean transparent = false; //Clear to transparent instead of the theme background (graph inside a stack)
+
+    //Must be set before the surface exists; the clear colour and the EGL config are chosen when the GL thread starts
+    public void setTransparent(boolean transparent) {
+        this.transparent = transparent;
+    }
 
     private int glProgram, gridProgram, timeRangeProgram, mapProgram;
     private int positionXHandle, positionYHandle;
@@ -251,7 +257,7 @@ class PlotRenderer extends Thread implements TextureView.SurfaceTextureListener 
             "precision mediump float;" +
             "uniform sampler2D colorMap;" +
             "void main () {" +
-            "   gl_FragColor = vec4(texture2D(colorMap, vec2(gl_FragCoord.z,0.0)).rgb, 1.0);" +
+            "   gl_FragColor = texture2D(colorMap, vec2(gl_FragCoord.z,0.0));" + //RGBA: a colour stop may carry an alpha byte
             "}";
 
     private Context ctx;
@@ -394,7 +400,7 @@ class PlotRenderer extends Thread implements TextureView.SurfaceTextureListener 
                 EGL10.EGL_RED_SIZE, 4,
                 EGL10.EGL_GREEN_SIZE, 4,
                 EGL10.EGL_BLUE_SIZE, 4,
-                EGL10.EGL_ALPHA_SIZE, 1,
+                EGL10.EGL_ALPHA_SIZE, transparent ? 8 : 1,
                 EGL10.EGL_SURFACE_TYPE, EGL10.EGL_WINDOW_BIT | EGL10.EGL_PBUFFER_BIT,
                 EGL10.EGL_RENDERABLE_TYPE, EGL_OPENGL_ES2_BIT,
                 EGL10.EGL_NONE
@@ -500,7 +506,10 @@ class PlotRenderer extends Thread implements TextureView.SurfaceTextureListener 
 
     public void initScene() {
 
-        GLES20.glClearColor(((bgColor & 0xff0000) >> 16) / 255.f, ((bgColor & 0xff00) >> 8) / 255.f, (bgColor & 0xff) / 255.f, 1.0f);
+        if (transparent)
+            GLES20.glClearColor(0.f, 0.f, 0.f, 0.f);
+        else
+            GLES20.glClearColor(((bgColor & 0xff0000) >> 16) / 255.f, ((bgColor & 0xff00) >> 8) / 255.f, (bgColor & 0xff) / 255.f, 1.0f);
 
         int iVertexShader = loadShader(GLES20.GL_VERTEX_SHADER, vertexShader);
         int iFragmentShader = loadShader(GLES20.GL_FRAGMENT_SHADER, fragmentShader);
@@ -605,7 +614,9 @@ class PlotRenderer extends Thread implements TextureView.SurfaceTextureListener 
         GLES20.glUseProgram(0);
 
         GLES20.glEnable(GLES20.GL_BLEND);
-        GLES20.glBlendFunc(GLES20.GL_SRC_ALPHA, GLES20.GL_ONE_MINUS_SRC_ALPHA);
+        //Straight alpha for the colour, coverage for the alpha channel: on a transparent clear this yields the
+        //premultiplied result the TextureView composites, on an opaque background it is what it always was
+        GLES20.glBlendFuncSeparate(GLES20.GL_SRC_ALPHA, GLES20.GL_ONE_MINUS_SRC_ALPHA, GLES20.GL_ONE, GLES20.GL_ONE_MINUS_SRC_ALPHA);
 
         GLES20.glDisable(GLES20.GL_CULL_FACE);
         GLES20.glDisable(GLES20.GL_DEPTH_TEST);
@@ -629,7 +640,7 @@ class PlotRenderer extends Thread implements TextureView.SurfaceTextureListener 
 
         GLES20.glDisableVertexAttribArray(gridPositionHandle);
 
-        if (graphSetup.style.contains(GraphView.Style.mapXY)) {
+        if (graphSetup.style.contains(GraphView.Style.mapXY) && graphSetup.zaBoundH > 2) {
 
             GLES20.glScissor(graphSetup.zaBoundL+1, h-graphSetup.zaBoundH-graphSetup.zaBoundT-1, graphSetup.zaBoundW-2, graphSetup.zaBoundH-2);
 
@@ -812,23 +823,24 @@ class PlotRenderer extends Thread implements TextureView.SurfaceTextureListener 
             GLES20.glBindBuffer(GLES20.GL_ELEMENT_ARRAY_BUFFER, 0);
         }
 
-        //Draw scale
+        //Draw scale (only where GraphView reserved room for it; a fixed plot area may leave none)
+        if (graphSetup.zaBoundH > 2) {
+            GLES20.glScissor(graphSetup.zaBoundL+1, h-graphSetup.zaBoundH-graphSetup.zaBoundT-1, graphSetup.zaBoundW-2, graphSetup.zaBoundH-2);
 
-        GLES20.glScissor(graphSetup.zaBoundL+1, h-graphSetup.zaBoundH-graphSetup.zaBoundT-1, graphSetup.zaBoundW-2, graphSetup.zaBoundH-2);
+            GLES20.glUniformMatrix4fv(mapPositionMatrixHandle, 1, false, graphSetup.zScaleMatrix, 0);
+            GLES20.glUniform1i(mapLogXYZHandle, graphSetup.logZ ? 0x05 : 0x00);
 
-        GLES20.glUniformMatrix4fv(mapPositionMatrixHandle, 1, false, graphSetup.zScaleMatrix, 0);
-        GLES20.glUniform1i(mapLogXYZHandle, graphSetup.logZ ? 0x05 : 0x00);
+            GLES20.glBindBuffer(GLES20.GL_ARRAY_BUFFER, vboZScaleX);
+            GLES20.glVertexAttribPointer(mapPositionXHandle, 1, GLES20.GL_FLOAT, false, 0, 0);
 
-        GLES20.glBindBuffer(GLES20.GL_ARRAY_BUFFER, vboZScaleX);
-        GLES20.glVertexAttribPointer(mapPositionXHandle, 1, GLES20.GL_FLOAT, false, 0, 0);
+            GLES20.glBindBuffer(GLES20.GL_ARRAY_BUFFER, vboZScaleY);
+            GLES20.glVertexAttribPointer(mapPositionYHandle, 1, GLES20.GL_FLOAT, false, 0, 0);
 
-        GLES20.glBindBuffer(GLES20.GL_ARRAY_BUFFER, vboZScaleY);
-        GLES20.glVertexAttribPointer(mapPositionYHandle, 1, GLES20.GL_FLOAT, false, 0, 0);
+            GLES20.glBindBuffer(GLES20.GL_ARRAY_BUFFER, vboZScaleZ);
+            GLES20.glVertexAttribPointer(mapPositionZHandle, 1, GLES20.GL_FLOAT, false, 0, 0);
 
-        GLES20.glBindBuffer(GLES20.GL_ARRAY_BUFFER, vboZScaleZ);
-        GLES20.glVertexAttribPointer(mapPositionZHandle, 1, GLES20.GL_FLOAT, false, 0, 0);
-
-        GLES20.glDrawArrays(GLES20.GL_TRIANGLE_STRIP, 0, 4);
+            GLES20.glDrawArrays(GLES20.GL_TRIANGLE_STRIP, 0, 4);
+        }
 
         GLES20.glScissor(graphSetup.plotBoundL+1, h-graphSetup.plotBoundH-graphSetup.plotBoundT-1, graphSetup.plotBoundW-2, graphSetup.plotBoundH-2);
 
@@ -1150,14 +1162,14 @@ class PlotRenderer extends Thread implements TextureView.SurfaceTextureListener 
 
         if (graphSetup.colorScale.size() > 1) {
             int nSteps = graphSetup.colorScale.size();
-            ByteBuffer colorScaleTextureData = ByteBuffer.allocateDirect(nSteps * 3).order(ByteOrder.nativeOrder());
+            ByteBuffer colorScaleTextureData = ByteBuffer.allocateDirect(nSteps * 4).order(ByteOrder.nativeOrder());
             for (int i = 0; i < nSteps; i++) {
                 int c = graphSetup.colorScale.get(i);
-                colorScaleTextureData.put((byte)(c >> 16)).put((byte)(c >> 8)).put((byte)c);
+                colorScaleTextureData.put((byte)(c >> 16)).put((byte)(c >> 8)).put((byte)c).put((byte)(c >>> 24));
             }
             colorScaleTextureData.position(0);
             GLES20.glBindTexture(GLES20.GL_TEXTURE_2D, colorScaleTexture);
-            GLES20.glTexImage2D ( GLES20.GL_TEXTURE_2D, 0, GLES20.GL_RGB, nSteps,1,0, GLES20.GL_RGB, GLES20.GL_UNSIGNED_BYTE, colorScaleTextureData);
+            GLES20.glTexImage2D ( GLES20.GL_TEXTURE_2D, 0, GLES20.GL_RGBA, nSteps,1,0, GLES20.GL_RGBA, GLES20.GL_UNSIGNED_BYTE, colorScaleTextureData);
             GLES20.glTexParameteri(GLES20.GL_TEXTURE_2D, GLES20.GL_TEXTURE_MIN_FILTER, GLES20.GL_LINEAR);
             GLES20.glTexParameteri(GLES20.GL_TEXTURE_2D, GLES20.GL_TEXTURE_MAG_FILTER, GLES20.GL_LINEAR);
             GLES20.glTexParameteri(GLES20.GL_TEXTURE_2D, GLES20.GL_TEXTURE_WRAP_S, GLES20.GL_CLAMP_TO_EDGE);

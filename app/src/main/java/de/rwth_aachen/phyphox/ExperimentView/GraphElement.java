@@ -97,6 +97,9 @@ public class GraphElement extends ExpViewElement implements Serializable {
 
     boolean followX = false;
 
+    //Fixed plot area as fractions of the element's box (file format 1.21); NaN = laid out automatically around the labels
+    double plotLeft = Double.NaN, plotTop = Double.NaN, plotRight = Double.NaN, plotBottom = Double.NaN;
+
     GraphView.ZoomState zoomState = null;
 
     String pickLabel = null;
@@ -227,6 +230,19 @@ public class GraphElement extends ExpViewElement implements Serializable {
             gv.setScaleModeZ(minMode, minV, maxMode, maxV);
     }
 
+    public void setPlotArea(double left, double top, double right, double bottom) {
+        this.plotLeft = left;
+        this.plotTop = top;
+        this.plotRight = right;
+        this.plotBottom = bottom;
+        if (gv != null)
+            gv.setPlotArea(left, top, right, bottom);
+    }
+
+    public boolean hasFixedPlotArea() {
+        return !(Double.isNaN(plotLeft) && Double.isNaN(plotTop) && Double.isNaN(plotRight) && Double.isNaN(plotBottom));
+    }
+
     public void setFollowX(boolean followX) {
         this.followX = followX;
         if (followX) {
@@ -333,6 +349,11 @@ public class GraphElement extends ExpViewElement implements Serializable {
                 ViewGroup.LayoutParams.MATCH_PARENT,
                 ViewGroup.LayoutParams.WRAP_CONTENT);
         interactiveGV.setLayoutParams(lp);
+        //Inside a stack the graph is static (no maximize, zoom or picks) and its plot is transparent, so what lies below shows through
+        interactiveGV.setStatic(inStack);
+        interactiveGV.setTransparentPlot(inStack);
+        //With a fixed plot area the fractions refer to the whole element, so the label moves into the plot's top margin
+        interactiveGV.setFixedPlotArea(hasFixedPlotArea());
         interactiveGV.setLabel(this.label);
         interactiveGV.setShowColorScale(showColorScale);
 
@@ -376,6 +397,7 @@ public class GraphElement extends ExpViewElement implements Serializable {
         gv.setScaleModeY(scaleMinY, minY, scaleMaxY, maxY);
         gv.setScaleModeZ(scaleMinZ, minZ, scaleMaxZ, maxZ);
         gv.setFollowX(followX);
+        gv.setPlotArea(plotLeft, plotTop, plotRight, plotBottom);
         gv.setLabel(labelX, labelY, labelZ, unitX, unitY, unitZ, unitYX);
         gv.setTimeAxes(timeOnX, timeOnY);
         gv.setSuppressScientificNotation(suppressScientificNotation);
@@ -387,19 +409,21 @@ public class GraphElement extends ExpViewElement implements Serializable {
         interactiveGV.allowLogY = logY;
         gv.setPrecision(xPrecision, yPrecision, zPrecision);
 
-        interactiveGV.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                if (self.parent != null) {
-                    if (isExclusive) {
-                        self.requestLeaveExclusive();
-                    } else {
-                        interactiveGV.requestFocus();
-                        self.parent.requestExclusive(self);
+        if (!inStack) {
+            interactiveGV.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View view) {
+                    if (self.parent != null) {
+                        if (isExclusive) {
+                            self.requestLeaveExclusive();
+                        } else {
+                            interactiveGV.requestFocus();
+                            self.parent.requestExclusive(self);
+                        }
                     }
                 }
-            }
-        });
+            });
+        }
 
         //Add the wrapper layout to the linear layout given to this function
         rootView = interactiveGV;
@@ -436,8 +460,9 @@ public class GraphElement extends ExpViewElement implements Serializable {
         return "";
     }
 
-    private static String hexColor(int rgb) {
-        return String.format(Locale.US, "#%06x", rgb & 0xffffff);
+    //#rrggbb, or #rrggbbaa for a color with an alpha byte (file format 1.21)
+    private static String hexColor(int argb) {
+        return "#" + RGB.fromARGB(argb).hexString();
     }
 
     //JSONObject.put drops a key for a null value, but the contract says every key is present
@@ -485,6 +510,10 @@ public class GraphElement extends ExpViewElement implements Serializable {
             cfg.put("minZ", Double.isNaN(minZ) ? JSONObject.NULL : minZ);
             cfg.put("maxZ", Double.isNaN(maxZ) ? JSONObject.NULL : maxZ);
             cfg.put("followX", followX);
+            cfg.put("plotLeft", Double.isNaN(plotLeft) ? JSONObject.NULL : plotLeft);
+            cfg.put("plotTop", Double.isNaN(plotTop) ? JSONObject.NULL : plotTop);
+            cfg.put("plotRight", Double.isNaN(plotRight) ? JSONObject.NULL : plotRight);
+            cfg.put("plotBottom", Double.isNaN(plotBottom) ? JSONObject.NULL : plotBottom);
             cfg.put("partialUpdate", partialUpdate);
             cfg.put("mapWidth", mapWidth.get(0));
             cfg.put("showColorScale", showColorScale);
@@ -723,6 +752,8 @@ public class GraphElement extends ExpViewElement implements Serializable {
 
     @Override
     public void maximize() {
+        if (inStack)
+            return;
         super.maximize();
         if (rootView != null && interactiveGV != null && parent != null) {
             isExclusive = true;

@@ -184,7 +184,7 @@ public class GraphSetup implements Serializable {
                     newData.color[0] = ((color.get(i) & 0xff0000) >> 16)/255.f;
                     newData.color[1] = ((color.get(i) & 0xff00) >> 8)/255.f;
                     newData.color[2] = (color.get(i) & 0xff)/255.f;
-                    newData.color[3] = 1.f;
+                    newData.color[3] = ((color.get(i) >>> 24) & 0xff)/255.f; //the alpha byte of an RRGGBBAA color (file format 1.21); ff for every older color
                 } else {
                     newData.color[0] = 1.f;
                     newData.color[1] = 1.f;

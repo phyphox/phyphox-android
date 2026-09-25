@@ -62,7 +62,7 @@ public class SeparatorElement extends ExpViewElement implements Serializable {
     //  <p>text</p>
     //</div>
     protected String createViewHTML(){
-        String c = String.format("%08x", color.intColor()).substring(2);
+        String c = color.hexString(); //rrggbb, or rrggbbaa with an alpha byte
         return "<div style=\"font-size:"+this.labelSize/.4+"%;background: #"+c+";height: "+height+"em\" class=\"separatorElement adjustableColor\" id=\"element"+htmlID+"\">" +
                 "</div>";
     }

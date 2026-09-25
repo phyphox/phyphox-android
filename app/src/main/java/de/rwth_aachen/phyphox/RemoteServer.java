@@ -57,6 +57,8 @@ import de.rwth_aachen.phyphox.helper.DebugSwitches;
 import de.rwth_aachen.phyphox.helper.Helper;
 import de.rwth_aachen.phyphox.ExperimentView.ExpView;
 import de.rwth_aachen.phyphox.ExperimentView.ExpViewElement;
+import de.rwth_aachen.phyphox.ExperimentView.GroupElement;
+import de.rwth_aachen.phyphox.ExperimentView.TransformElement;
 
 //RemoteServer implements a web interface to remote control the experiment and receive the data
 
@@ -78,7 +80,7 @@ public class RemoteServer {
     static String indexHTML, styleCSS; //These strings will hold the html and css document when loaded from our resources
 
     private Vector<Integer> htmlID2View = new Vector<>(); //This maps htmlIDs to the view of the element
-    private Vector<Integer> htmlID2Element = new Vector<>(); //This maps htmlIDs to the view of the element
+    private Vector<ExpViewElement> htmlID2Element = new Vector<>(); //This maps htmlIDs to the element (leaves only, groups have no id)
 
     //buildStyleCSS loads the css file from the resources and replaces some placeholders
     protected void buildStyleCSS () {
@@ -156,6 +158,139 @@ public class RemoteServer {
 
     }
 
+    private int nextHtmlID = 0;
+
+    private static String jsString(String str) {
+        return "\"" + str.replace("\\", "\\\\").replace("\"", "\\\"") + "\"";
+    }
+
+    //The elements of a view or a group, comma separated. Groups (file format 1.21) nest: they are emitted with their
+    //type and their own elements array and get no id; leaves keep their shape and a global sequential index in
+    //document order (see phyphox-webinterface readme.md, "The view layout").
+    private void appendElements(StringBuilder sb, Vector<ExpViewElement> elements, int viewIndex, boolean inHorizontal) {
+        for (int j = 0; j < elements.size(); j++) {
+            if (j > 0)  //Add a colon if this is not the first item to separate the previous one.
+                sb.append(",");
+            appendElement(sb, elements.get(j), viewIndex, inHorizontal);
+        }
+    }
+
+    private void appendElement(StringBuilder sb, ExpViewElement element, int viewIndex, boolean inHorizontal) {
+        if (element instanceof GroupElement) {
+            GroupElement group = (GroupElement) element;
+            sb.append("{\"type\":\"");
+            sb.append(group.kind.name());
+            sb.append("\"");
+            if (inHorizontal)
+                sb.append(",\"weight\":").append(element.weight);
+            if (group.kind == GroupElement.Kind.grid) {
+                sb.append(",\"maxWidth\":").append(group.getMaxWidth());
+                sb.append(",\"fillLastRow\":").append(group.getFillLastRow());
+            }
+            if (group instanceof TransformElement) {
+                TransformElement transform = (TransformElement) group;
+                sb.append(",\"originX\":").append(transform.getOriginX());
+                sb.append(",\"originY\":").append(transform.getOriginY());
+                sb.append(",\"transformInputs\":[");
+                boolean first = true;
+                for (TransformElement.Binding binding : transform.getBindings()) {
+                    if (!first)
+                        sb.append(",");
+                    first = false;
+                    sb.append("{\"as\":\"").append(binding.as.name()).append("\"");
+                    if (binding.input.isBuffer)
+                        sb.append(",\"buffer\":").append(jsString(binding.input.buffer.name)).append(",\"value\":null");
+                    else
+                        sb.append(",\"buffer\":null,\"value\":").append(binding.input.getValue());
+                    sb.append(",\"min\":").append(binding.min);
+                    sb.append(",\"max\":").append(binding.max);
+                    sb.append(",\"mapMin\":").append(binding.mapMin);
+                    sb.append(",\"mapMax\":").append(binding.mapMax);
+                    sb.append(",\"clamp\":").append(binding.clamp);
+                    sb.append("}");
+                }
+                sb.append("]");
+            }
+            if (element.visibility != null)
+                sb.append(",\"visibilityInput\":").append(jsString(element.visibility));
+            sb.append(",\"elements\":[\n");
+            appendElements(sb, group.getChildren(), viewIndex, group.kind == GroupElement.Kind.horizontal);
+            sb.append("\n]}");
+            return;
+        }
+
+        int id = nextHtmlID++;
+
+        //Store the mapping of htmlID to the element
+        htmlID2View.add(viewIndex);
+        htmlID2Element.add(element);
+
+        //The element's label
+        sb.append("{\"label\":\"");
+        sb.append(element.label.replace("\"","\\\""));
+
+        //The id, we just created
+        sb.append("\",\"index\":\"");
+        sb.append(id);
+
+        //The update method
+        sb.append("\",\"updateMode\":\"");
+        sb.append(element.getUpdateMode());
+
+        //The label size
+        sb.append("\",\"labelSize\":\"");
+        sb.append(element.labelSize);
+
+        //The HTML markup for this element - on this occasion we notify the element about its id
+        sb.append("\",\"html\":\"");
+        sb.append(element.getViewHTML(id).replace("\"","\\\""));
+
+        //The Javascript function that handles data completion
+        sb.append("\",\"dataCompleteFunction\":");
+        sb.append(element.dataCompleteHTML());
+
+        if (inHorizontal)
+            sb.append(",\"weight\":").append(element.weight);
+
+        //Graphs are built by the web interface from this configuration (see phyphox-webinterface readme.md)
+        String graphConfig = element.getWebGraphConfig();
+        if (graphConfig != null) {
+            sb.append(",\"graph\":");
+            sb.append(graphConfig);
+        }
+
+        if(element.visibility != null ){
+            sb.append(",\"visibilityInput\":");
+            sb.append("\"");
+            sb.append(element.visibility.replace("\"", "\\\""));
+            sb.append("\"");
+        }
+
+        //If this element takes an x array, set the buffer and the JS function
+        if (element.inputs != null) {
+            sb.append(",\"dataInput\":[");
+            boolean first = true;
+            for (String input : element.inputs) {
+                if (first)
+                    first = false;
+                else
+                    sb.append(",");
+                if (input == null)
+                    sb.append("null");
+                else {
+                    sb.append("\"");
+                    sb.append(input.replace("\"", "\\\""));
+                    sb.append("\"");
+                }
+            }
+            sb.append("],\"dataInputFunction\":\n");
+            sb.append(element.setDataHTML());
+            sb.append("\n");
+        }
+
+        sb.append("}"); //The element is complete
+    }
+
     protected void buildViewsJson(StringBuilder sb) {
         //The viewLayout is a JSON object with our view setup. All the experiment views
         //and their view elements and their JavaScript functions and so on...
@@ -163,8 +298,7 @@ public class RemoteServer {
         //Beginning of the JSON block
         sb.append("var views = [");
 
-        int id = 0; //We will give each view a unique id to address them in JavaScript
-        //via a HTML id
+        nextHtmlID = 0; //We will give each leaf element a unique id to address them in JavaScript via a HTML id
         htmlID2View.clear();
         htmlID2Element.clear();
 
@@ -181,80 +315,7 @@ public class RemoteServer {
 
             //Now for its elements
             sb.append("\", \"elements\":[\n");
-            for (int j = 0; j < view.elements.size(); j++) {
-                //For each element within this view
-                ExpViewElement element = view.elements.get(j);
-
-                //Store the mapping of htmlID to the experiment view hierarchy
-                htmlID2View.add(i);
-                htmlID2Element.add(j);
-
-                if (j > 0)  //Add a colon if this is not the first item to separate the previous one.
-                    sb.append(",");
-
-                //The element's label
-                sb.append("{\"label\":\"");
-                sb.append(element.label.replace("\"","\\\""));
-
-                //The id, we just created
-                sb.append("\",\"index\":\"");
-                sb.append(id);
-
-                //The update method
-                sb.append("\",\"updateMode\":\"");
-                sb.append(element.getUpdateMode());
-
-                //The label size
-                sb.append("\",\"labelSize\":\"");
-                sb.append(element.labelSize);
-
-                //The HTML markup for this element - on this occasion we notify the element about its id
-                sb.append("\",\"html\":\"");
-                sb.append(element.getViewHTML(id).replace("\"","\\\""));
-
-                //The Javascript function that handles data completion
-                sb.append("\",\"dataCompleteFunction\":");
-                sb.append(element.dataCompleteHTML());
-
-                //Graphs are built by the web interface from this configuration (see phyphox-webinterface readme.md)
-                String graphConfig = element.getWebGraphConfig();
-                if (graphConfig != null) {
-                    sb.append(",\"graph\":");
-                    sb.append(graphConfig);
-                }
-
-                if(element.visibility != null ){
-                    sb.append(",\"visibilityInput\":");
-                    sb.append("\"");
-                    sb.append(element.visibility.replace("\"", "\\\""));
-                    sb.append("\"");
-                }
-
-                //If this element takes an x array, set the buffer and the JS function
-                if (element.inputs != null) {
-                    sb.append(",\"dataInput\":[");
-                    boolean first = true;
-                    for (String input : element.inputs) {
-                        if (first)
-                            first = false;
-                        else
-                            sb.append(",");
-                        if (input == null)
-                            sb.append("null");
-                        else {
-                            sb.append("\"");
-                            sb.append(input.replace("\"", "\\\""));
-                            sb.append("\"");
-                        }
-                    }
-                    sb.append("],\"dataInputFunction\":\n");
-                    sb.append(element.setDataHTML());
-                    sb.append("\n");
-                }
-
-                sb.append("}"); //The element is complete
-                id++;
-            }
+            appendElements(sb, view.elements, i, false);
             sb.append("\n]}"); //The view is complete
         }
         sb.append("\n];"); //The views are complete -> JSON object complete
@@ -928,7 +989,7 @@ public class RemoteServer {
                             //Deliberately false, not an error (control-trigger-out-of-range in phyphox-docs)
                             return respond(response, false);
                         }
-                        experiment.experimentViews.get(htmlID2View.get(htmlID)).elements.get(htmlID2Element.get(htmlID)).trigger();
+                        htmlID2Element.get(htmlID).trigger();
                         return respond(response, true);
                     }
                     return respond(response, false);

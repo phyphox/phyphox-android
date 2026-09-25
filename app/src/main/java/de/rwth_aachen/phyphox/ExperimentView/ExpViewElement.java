@@ -30,6 +30,9 @@ public abstract class ExpViewElement implements Serializable, BufferNotification
 
     protected int htmlID; //This holds a unique id, so the element can be referenced in the webinterface via an HTML ID
 
+    public double weight = 1.0; //Share of the row inside a horizontal group (file format 1.21, groups.md); read nowhere else
+    protected boolean inStack = false; //Inside a stack the element is not interactive (no maximize, zoom or picks) and draws no opaque background
+
     transient public View rootView; //Holds the root view of the element
     transient protected ExpViewFragment parent = null;
 
@@ -66,6 +69,21 @@ public abstract class ExpViewElement implements Serializable, BufferNotification
             this.inputs = new Vector<>();
             this.inputs.addAll(this.getValueOutputs());
         }
+    }
+
+    //The children of a view group (vertical, horizontal, grid, stack, transform), null for a leaf element
+    public Vector<ExpViewElement> getChildren() {
+        return null;
+    }
+
+    //Whether this element is, or contains, the given element
+    public boolean contains(ExpViewElement element) {
+        return element == this;
+    }
+
+    //Marks an element that sits inside a stack (directly or wrapped in a transform); groups pass it on to their children
+    public void setInStack(boolean inStack) {
+        this.inStack = inStack;
     }
 
     //Called when one of the input buffers is updated
@@ -258,6 +276,13 @@ public abstract class ExpViewElement implements Serializable, BufferNotification
             // the view as per the buffer value after it is restored..
             updateViewElementVisibility();
         }
+    }
+
+    //Exclusive mode for the given leaf: a leaf maximizes itself, a group (GroupElement) stretches to the
+    //full height and hides the children that do not lead to the leaf
+    public void maximizePath(ExpViewElement leaf) {
+        if (leaf == this)
+            maximize();
     }
 
     public void maximize() {

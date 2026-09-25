@@ -169,7 +169,7 @@ public class PhyphoxExperiment implements Serializable, ExperimentTimeReference.
 
     public void onExperimentTimeReferenceUpdated(ExperimentTimeReference experimentTimeReference) {
         for (ExpView ev : experimentViews) {
-            for (ExpViewElement eve : ev.elements) {
+            for (ExpViewElement eve : ev.flatElements()) {
                 eve.onTimeReferenceUpdate(experimentTimeReference);
             }
         }
@@ -221,7 +221,7 @@ public class PhyphoxExperiment implements Serializable, ExperimentTimeReference.
         if (dataLock.tryLock()) {
             try {
                 for (ExpView ev : experimentViews) {
-                        for (ExpViewElement eve : ev.elements) {
+                        for (ExpViewElement eve : ev.flatElements()) {
                             try {
                                 if (eve.onMayWriteToBuffers(this)) //The element may now write to its buffers if it wants to do it on its own...
                                     newUserInput = true;
@@ -407,7 +407,7 @@ public class PhyphoxExperiment implements Serializable, ExperimentTimeReference.
             if (dataLock.tryLock(10, TimeUnit.MILLISECONDS)) {
                 try {
                     for (ExpView experimentView : experimentViews) {
-                        for (ExpViewElement eve : experimentView.elements) {
+                        for (ExpViewElement eve : experimentView.flatElements()) {
                             eve.onMayReadFromBuffers(this); //Notify each view, that it should update from the buffers
                         }
                     }
@@ -423,7 +423,7 @@ public class PhyphoxExperiment implements Serializable, ExperimentTimeReference.
 
         newData = false;
         //Finally call dataComplete on every view to notify them that the data has been sent - heavy operation can now be done by the views while the buffers have been unlocked again
-        for (ExpViewElement eve : experimentViews.elementAt(currentView).elements) {
+        for (ExpViewElement eve : experimentViews.elementAt(currentView).flatElements()) {
             try {
                 eve.dataComplete();
             } catch (Exception e) {

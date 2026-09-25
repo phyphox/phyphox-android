@@ -1,6 +1,8 @@
 package de.rwth_aachen.phyphox.ExperimentView;
 
 import java.io.Serializable;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Vector;
 
 // ExpView implements experiment views, which are collections of displays and graphs that form a
@@ -30,5 +32,22 @@ public class ExpView implements Serializable {
     //Remember? We are in the ExpView class.
     //An experiment view has a name and holds a bunch of ExpViewElement instances
     public String name;
-    public Vector<ExpViewElement> elements = new Vector<>();
+    public Vector<ExpViewElement> elements = new Vector<>(); //The top-level elements; groups (GroupElement) hold their children themselves
+
+    //Every element of the view in document order, groups included and followed by their children.
+    //Callers that address elements individually (buffer updates, exclusive mode, the remote interface's
+    //element ids) walk this; createView/destroyView run on the top level only, groups recurse themselves.
+    public List<ExpViewElement> flatElements() {
+        List<ExpViewElement> result = new ArrayList<>();
+        collect(elements, result);
+        return result;
+    }
+
+    private static void collect(Vector<ExpViewElement> elements, List<ExpViewElement> into) {
+        for (ExpViewElement element : elements) {
+            into.add(element);
+            if (element.getChildren() != null)
+                collect(element.getChildren(), into);
+        }
+    }
 }

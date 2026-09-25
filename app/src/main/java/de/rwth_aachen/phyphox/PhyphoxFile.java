@@ -78,9 +78,12 @@ import de.rwth_aachen.phyphox.ExperimentView.DepthGuiElement;
 import de.rwth_aachen.phyphox.ExperimentView.DropDownElement;
 import de.rwth_aachen.phyphox.ExperimentView.EditElement;
 import de.rwth_aachen.phyphox.ExperimentView.ExpView;
+import de.rwth_aachen.phyphox.ExperimentView.ExpViewElement;
 import de.rwth_aachen.phyphox.ExperimentView.GraphElement;
 import de.rwth_aachen.phyphox.ExperimentView.GraphView.GraphView;
+import de.rwth_aachen.phyphox.ExperimentView.GroupElement;
 import de.rwth_aachen.phyphox.ExperimentView.ImageElement;
+import de.rwth_aachen.phyphox.ExperimentView.TransformElement;
 import de.rwth_aachen.phyphox.ExperimentView.InfoElement;
 import de.rwth_aachen.phyphox.ExperimentView.SeparatorElement;
 import de.rwth_aachen.phyphox.ExperimentView.SliderElement;
@@ -1560,7 +1563,7 @@ public abstract class PhyphoxFile {
                 case "view": //A view defines an arangement of elements displayed to the user
                     ExpView newView = new ExpView(); //Create a new view
                     newView.name = getTranslatedAttribute("label"); //Fill its name
-                    (new viewBlockParser(xpp, experiment, parent, newView)).process(); //And load its elements
+                    (new viewBlockParser(xpp, experiment, parent, newView.elements, viewBlockParser.Container.view)).process(); //And load its elements
                     if (newView.name != null && newView.elements.size() > 0) //We will only add it if it has a name and at least a single view
                         experiment.experimentViews.add(newView);
                     else {
@@ -1575,9 +1578,17 @@ public abstract class PhyphoxFile {
 
     }
 
-    //Blockparser for a single view block
+    //Blockparser for a single view block, also used for the children of a view group (file format 1.21)
     private static class viewBlockParser extends xmlBlockParser {
-        private ExpView newView;
+        //What the parsed elements belong to. It decides which tags are allowed (phyphox-docs views.yml, "Nesting"):
+        //a view, vertical, horizontal and grid take every element; a stack only elements that show data plus
+        //transform; a transform exactly one data-showing element (its input tags are read by transformBlockParser).
+        enum Container {
+            view, horizontal, stack, transform
+        }
+
+        private final Vector<ExpViewElement> target;
+        private final Container container;
 
         GraphView.ScaleMode parseScaleMode(String attribute) {
             String scaleStr = getStringAttribute(attribute);
@@ -1596,16 +1607,37 @@ public abstract class PhyphoxFile {
             return scale;
         }
 
-        //The viewBlockParser takes an additional argument, which is the expView instance it should fill
-        viewBlockParser(XmlPullParser xpp, PhyphoxExperiment experiment, Experiment parent, ExpView newView) {
+        //The viewBlockParser takes the vector it should fill and the kind of container it parses for
+        viewBlockParser(XmlPullParser xpp, PhyphoxExperiment experiment, Experiment parent, Vector<ExpViewElement> target, Container container) {
             super(xpp, experiment, parent);
-            this.newView = newView;
+            this.target = target;
+            this.container = container;
+        }
+
+        private boolean allowed(String tag) {
+            switch (container) {
+                case stack:
+                    return tag.equals("info") || tag.equals("separator") || tag.equals("value") || tag.equals("graph") || tag.equals("image") || tag.equals("transform");
+                case transform:
+                    return tag.equals("info") || tag.equals("separator") || tag.equals("value") || tag.equals("graph") || tag.equals("image");
+                default:
+                    return !tag.equals("transform");
+            }
+        }
+
+        //Adds a finished element; weight is only kept for the children of a horizontal group
+        private void add(double weight, ExpViewElement element) {
+            element.weight = weight;
+            target.add(element);
         }
 
         @Override
         protected void processStartTag(String tag) throws XmlPullParserException, phyphoxFileException, IOException {
+            if (!allowed(tag.toLowerCase()))
+                throw new phyphoxFileException("Unknown tag "+tag, xpp.getLineNumber());
             String label = getTranslatedAttribute("label");
             String visibility = getStringAttribute("visibility");
+            double weight = container == Container.horizontal ? getDoubleAttribute("weight", 1.0) : 1.0;
             double factor = getDoubleAttribute("factor", 1.);
             String unit = getTranslatedAttribute("unit");
             Vector<DataInput> inputs = new Vector<>();
@@ -1668,7 +1700,7 @@ public abstract class PhyphoxFile {
                     //A unit to represent direction for gps location
                     ve.setPositiveUnit(positiveUnit);
                     ve.setNegativeUnit(negativeUnit);
-                    newView.elements.add(ve);
+                    add(weight, ve);
                     break;
                 }
                 case "info": { //An info element just shows some text
@@ -1687,7 +1719,7 @@ public abstract class PhyphoxFile {
                     InfoElement infoe = new InfoElement(label, visibility,null, null, parent.getResources()); //No inputs, just the label and resources
                     infoe.setColor(color);
                     infoe.setFormatting(bold, italic, gravity, size);
-                    newView.elements.add(infoe);
+                    add(weight, infoe);
                     break;
                 }
                 case "separator": {
@@ -1697,7 +1729,7 @@ public abstract class PhyphoxFile {
                     float height = (float)getDoubleAttribute("height", 0.1);
                     separatore.setColor(c);
                     separatore.setHeight(height);
-                    newView.elements.add(separatore);
+                    add(weight, separatore);
                     break;
                 }
                 case "graph": { //A graph element displays a graph of an y array or two arrays x and y
@@ -1785,6 +1817,11 @@ public abstract class PhyphoxFile {
                     double maxZ = getDoubleAttribute("maxZ", 0.);
 
                     boolean followX = getBooleanAttribute("followX", false);
+                    //Fixed plot area as fractions of the element's box (file format 1.21, graph.md "Fixing the plot area"); NaN = automatic
+                    double plotLeft = getDoubleAttribute("plotLeft", Double.NaN);
+                    double plotTop = getDoubleAttribute("plotTop", Double.NaN);
+                    double plotRight = getDoubleAttribute("plotRight", Double.NaN);
+                    double plotBottom = getDoubleAttribute("plotBottom", Double.NaN);
 
                     //Allowed output configuration (inputs are collected in document order by the graphIoBlockParser)
                     ioBlockParser.ioMapping[] outputMapping = {
@@ -1910,6 +1947,7 @@ public abstract class PhyphoxFile {
                     ge.setScaleModeZ(scaleMinZ, minZ, scaleMaxZ, maxZ);
                     ge.setPartialUpdate(partialUpdate); //Will data only be appended? Will save bandwidth if we do not need to update the whole graph each time, especially on the web-interface
                     ge.setFollowX(followX);
+                    ge.setPlotArea(plotLeft, plotTop, plotRight, plotBottom);
                     ge.setHistoryLength(history); //If larger than 1 the previous n graphs remain visible in a different color
                     ge.setLabel(labelX, labelY, labelZ, unitX, unitY, unitZ, unitYX);  //x- and y- label and units
                     ge.setTimeAxes(timeOnX, timeOnY, systemTime, linearTime, hideTimeMarkers);
@@ -1969,7 +2007,7 @@ public abstract class PhyphoxFile {
                             ge.setStyle(GraphView.Style.mapZ, curveOfZ[i]);
                     }
 
-                    newView.elements.add(ge);
+                    add(weight, ge);
                     break;
                 }
                 case "edit": { //The edit element can take input from the user
@@ -1993,7 +2031,7 @@ public abstract class PhyphoxFile {
                     ie.setDecimal(decimal); //May the user enter a decimal point (non-integer values)?
                     ie.setDefaultValue(defaultValue); //Default value before the user entered anything
                     ie.setLimits(min, max);
-                    newView.elements.add(ie);
+                    add(weight, ie);
                     break;
                 }
                 case "button": { //The edit element can take input from the user
@@ -2056,7 +2094,7 @@ public abstract class PhyphoxFile {
                     }
 
                     be.setTriggers(triggers);
-                    newView.elements.add(be);
+                    add(weight, be);
                     break;
                 }
                 case "depth-gui": {
@@ -2064,7 +2102,7 @@ public abstract class PhyphoxFile {
                     double aspectRatio = getDoubleAttribute("aspectRatio", 2.5);
                     DepthGuiElement dge = new DepthGuiElement(label, visibility,null, null, parent.getResources()); //Two array inputs
                     dge.setAspectRatio(aspectRatio);
-                    newView.elements.add(dge);
+                    add(weight, dge);
                     break;
                 }
                 case "image": { // Shows an image
@@ -2095,7 +2133,7 @@ public abstract class PhyphoxFile {
 
                     img.setFilters(darkFilter, lightFilter);
 
-                    newView.elements.add(img);
+                    add(weight, img);
                     experiment.resources.add(src);
                     break;
                 }
@@ -2133,7 +2171,7 @@ public abstract class PhyphoxFile {
                     CameraElement cameraElement = new CameraElement(label, visibility, null, null, parent.getResources());
                     cameraElement.applyControlSettings(showCameraControls, exposureAdjustmentLevel);
                     cameraElement.setPreviewParameters(grayscale, markOverexposure, markUnderexposure);
-                    newView.elements.add(cameraElement);
+                    add(weight, cameraElement);
                     break;
                 }
                 case "toggle": {
@@ -2149,7 +2187,7 @@ public abstract class PhyphoxFile {
 
                     ToggleElement toggleElement = new ToggleElement(label, visibility, outputs.get(0).buffer.name, null, parent.getResources());
                     toggleElement.setDefaultValue(defaultValue);
-                    newView.elements.add(toggleElement);
+                    add(weight, toggleElement);
                     break;
 
                 }
@@ -2186,7 +2224,7 @@ public abstract class PhyphoxFile {
                     }
 
 
-                    newView.elements.add(dropDownElement);
+                    add(weight, dropDownElement);
                     break;
 
                 }
@@ -2237,7 +2275,36 @@ public abstract class PhyphoxFile {
                     sliderElement.setType(sliderType);
                     sliderElement.setShowValue(showValue);
 
-                    newView.elements.add(sliderElement);
+                    add(weight, sliderElement);
+                    break;
+                }
+                case "vertical":
+                case "horizontal":
+                case "grid":
+                case "stack": { //View groups arrange other view elements (file format 1.21, groups.md); label has no effect on them
+                    GroupElement.Kind kind = GroupElement.Kind.valueOf(tag.toLowerCase());
+                    GroupElement group = new GroupElement(kind, visibility, parent.getResources());
+                    if (kind == GroupElement.Kind.grid) {
+                        if (getStringAttribute("maxWidth") == null)
+                            throw new phyphoxFileException("A grid requires the maxWidth attribute.", xpp.getLineNumber());
+                        group.setGrid(getDoubleAttribute("maxWidth", 25.), getBooleanAttribute("fillLastRow", false));
+                    }
+                    Vector<ExpViewElement> children = new Vector<>();
+                    Container childContainer = kind == GroupElement.Kind.stack ? Container.stack : (kind == GroupElement.Kind.horizontal ? Container.horizontal : Container.view);
+                    (new viewBlockParser(xpp, experiment, parent, children, childContainer)).process();
+                    for (ExpViewElement child : children)
+                        group.addChild(child);
+                    add(weight, group);
+                    break;
+                }
+                case "transform": { //Only directly inside a stack (allowed() refuses it elsewhere): one wrapped element and input bindings
+                    TransformElement transform = new TransformElement(visibility, parent.getResources(), getDoubleAttribute("originX", 0.5), getDoubleAttribute("originY", 0.5));
+                    Vector<ExpViewElement> wrapped = new Vector<>();
+                    (new transformBlockParser(xpp, experiment, parent, wrapped, transform)).process();
+                    if (wrapped.size() != 1)
+                        throw new phyphoxFileException("A transform wraps exactly one view element.", xpp.getLineNumber());
+                    transform.addChild(wrapped.get(0));
+                    add(weight, transform);
                     break;
                 }
                 default: //Unknown tag...
@@ -2245,6 +2312,39 @@ public abstract class PhyphoxFile {
             }
         }
 
+    }
+
+    //The children of a transform: its input tags bind the properties, everything else is the one wrapped view element
+    private static class transformBlockParser extends viewBlockParser {
+        private final TransformElement transform;
+
+        transformBlockParser(XmlPullParser xpp, PhyphoxExperiment experiment, Experiment parent, Vector<ExpViewElement> target, TransformElement transform) {
+            super(xpp, experiment, parent, target, Container.transform);
+            this.transform = transform;
+        }
+
+        @Override
+        protected void processStartTag(String tag) throws XmlPullParserException, phyphoxFileException, IOException {
+            if (!tag.equalsIgnoreCase("input")) {
+                super.processStartTag(tag);
+                return;
+            }
+            TransformElement.Binding binding = new TransformElement.Binding();
+            String as = getStringAttribute("as");
+            if (as == null)
+                throw new phyphoxFileException("The input of a transform requires the as attribute.", xpp.getLineNumber());
+            //Enumerated values are matched case-insensitively (see rules.yml, enum-case-insensitive)
+            binding.as = Helper.enumFromStringIgnoreCase(TransformElement.Property.class, as);
+            if (binding.as == null)
+                throw new phyphoxFileException("Unknown transform property \"" + as + "\".", xpp.getLineNumber());
+            binding.min = getDoubleAttribute("min", 0.);
+            binding.max = getDoubleAttribute("max", 1.);
+            binding.mapMin = getDoubleAttribute("mapMin", 0.);
+            binding.mapMax = getDoubleAttribute("mapMax", 1.);
+            binding.clamp = getBooleanAttribute("clamp", false);
+            binding.input = getInputElement(); //a buffer name, or a constant with type="value"
+            transform.addBinding(binding);
+        }
     }
 
     //Blockparser for the input block
