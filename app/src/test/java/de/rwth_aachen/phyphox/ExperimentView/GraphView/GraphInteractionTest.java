@@ -102,6 +102,12 @@ public class GraphInteractionTest {
         show(values(0, 1, 2, 3, 4, 5, 6, 7, 8), 0, 8, values(1, 3, 5, 7, 9, 11, 13, 15, 17), 1, 17);
     }
 
+    //y = 2x + 1 on x = 100..900, the fixture's log graph
+    private void showLogLine() {
+        show(values(100, 200, 300, 400, 500, 600, 700, 800, 900), 100, 900,
+                values(201, 401, 601, 801, 1001, 1201, 1401, 1601, 1801), 201, 1801);
+    }
+
     //An element whose containers hold nothing yet: null buffers and NaN bounds, as the graph element passes them
     private void showEmpty() {
         show(nothing(), Double.NaN, Double.NaN, nothing(), Double.NaN, Double.NaN);
@@ -328,6 +334,41 @@ public class GraphInteractionTest {
         assertThat(graph.zoomState.minY).isWithin(1e-3).of(graph.graphSetup.minY);
         assertThat(graph.zoomState.maxY).isWithin(1e-3).of(graph.graphSetup.maxY);
         assertThat(graph.zoomState.follows).isFalse();
+    }
+
+    @Test
+    public void panningAfterTheLogScaleIsToggledOffMovesLinearValuesUnclamped() {
+        //the tools menu toggles the one flag the view scales, tics and zooms by (iOS 1.2.1 kept a second copy
+        //and clamped a toggled-off axis to ln(1e38), freezing pan and zoom on the audio spectrum)
+        graph.setLogScale(true, true, false);
+        showLogLine();
+        assertThat(graph.logX).isTrue();
+        assertThat(graph.graphSetup.logX).isTrue();
+        graph.setLogScale(false, false, false);
+        uploaded();
+        assertThat(graph.logY).isFalse();
+        assertThat(graph.graphSetup.logY).isFalse();
+        graph.setTouchMode(GraphView.TouchMode.zoom);
+
+        //the drawn range reads in linear units: the data plus the headroom onDraw adds
+        double drawnMinX = graph.graphSetup.minX;
+        double drawnMaxX = graph.graphSetup.maxX;
+        assertThat(drawnMinX).isWithin(1e-3).of(100 - 0.05 * 800);
+        assertThat(drawnMaxX).isWithin(1e-3).of(900 + 0.05 * 800);
+        assertThat(graph.graphSetup.minY).isWithin(1e-3).of(201 - 0.05 * 1600);
+        assertThat(graph.graphSetup.maxY).isWithin(1e-3).of(1801 + 0.05 * 1600);
+
+        //a drag over 40 % of the plot moves the range by what those pixels mean in it (40 % of the width, give or
+        //take the pixel the plot area's mapping is short of) and keeps the width, well past 87.5
+        float shift = 0.4f * graph.graphSetup.plotBoundW;
+        drag(plotCenterX() + shift / 2, plotCenterY(), plotCenterX() - shift / 2, plotCenterY());
+        double drawnWidth = drawnMaxX - drawnMinX;
+        assertThat(graph.zoomState.minX).isWithin(1e-3).of(graph.viewXToDataX(graph.dataXToViewX(drawnMinX) + shift));
+        assertThat(graph.zoomState.maxX).isWithin(1e-3).of(graph.viewXToDataX(graph.dataXToViewX(drawnMaxX) + shift));
+        assertThat((graph.zoomState.minX - drawnMinX) / drawnWidth).isWithin(0.01).of(0.4);
+        assertThat(graph.zoomState.maxX - graph.zoomState.minX).isWithin(1e-3).of(drawnWidth);
+        assertThat(graph.zoomState.minY).isWithin(1e-3).of(graph.graphSetup.minY);
+        assertThat(graph.zoomState.maxY).isWithin(1e-3).of(graph.graphSetup.maxY);
     }
 
     @Test

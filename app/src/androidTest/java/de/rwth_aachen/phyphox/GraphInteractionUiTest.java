@@ -38,8 +38,10 @@ import de.rwth_aachen.phyphox.ExperimentView.GraphView.InteractiveGraphView;
 // phyphox-test: graph-interaction
 //The maximized graph's tools on fixtures/views/graphs-interaction.phyphox: expanding a graph,
 //picking a point and committing it to its output buffers, dragging for the difference and slope
-//read-out, the linear fit, panning and the zoom reset - and the same gestures on a graph over
-//empty containers, which crashed 1.2.1. The touch geometry itself is GraphInteractionTest (T0).
+//read-out, the linear fit, panning and the zoom reset, the log-scale menu items on the log graph
+//(the checkmark follows the toggle, the axes read linear afterwards and pan unclamped) - and the
+//same gestures on a graph over empty containers, which crashed 1.2.1. The touch geometry itself
+//is GraphInteractionTest (T0).
 //UiAutomator, not Espresso: an open experiment redraws continuously and never idles.
 @RunWith(AndroidJUnit4.class)
 public class GraphInteractionUiTest {
@@ -238,6 +240,51 @@ public class GraphInteractionUiTest {
         return value[0];
     }
 
+    //{minX, maxX, minY, maxY} as the plot currently draws them (the zoomed range, or the data plus headroom),
+    //read back through the plot's edges since the setup's fields are not visible from here
+    private double[] drawnRange(InteractiveGraphView graph) {
+        final double[] value = new double[4];
+        getInstrumentation().runOnMainSync(() -> {
+            GraphSetup setup = graph.graphView.graphSetup;
+            value[0] = graph.graphView.viewXToDataX(setup.plotBoundL);
+            value[1] = graph.graphView.viewXToDataX(setup.plotBoundL + setup.plotBoundW - 1);
+            value[2] = graph.graphView.viewYToDataY(setup.plotBoundT + setup.plotBoundH - 1);
+            value[3] = graph.graphView.viewYToDataY(setup.plotBoundT);
+        });
+        return value;
+    }
+
+    private boolean[] logScale(InteractiveGraphView graph) {
+        final boolean[] value = new boolean[2];
+        getInstrumentation().runOnMainSync(() -> {
+            value[0] = graph.graphView.logX;
+            value[1] = graph.graphView.logY;
+        });
+        return value;
+    }
+
+    //Opens the tools menu and reads the checkmark of the item with this title: a checkable item renders a
+    //CheckBox next to its text (the menu is built from graphView.logX/logY, which iOS 1.2.1 got out of step)
+    private boolean menuItemChecked(InteractiveGraphView graph, int titleResource) throws Exception {
+        selectTool(graph, R.id.graph_tools_more);
+        String title = activity.getString(titleResource);
+        UiObject2 text = device().wait(Until.findObject(By.text(title)), 3000);
+        assertNotNull("menu item \"" + title + "\" not shown", text);
+        UiObject2 node = text;
+        Boolean checked = null;
+        for (int i = 0; i < 4 && node != null && checked == null; i++) {
+            UiObject2 box = node.findObject(By.checkable(true));
+            if (box != null)
+                checked = box.isChecked();
+            else
+                node = node.getParent();
+        }
+        assertNotNull("no checkable box next to \"" + title + "\"", checked);
+        device().pressBack();
+        Thread.sleep(500);
+        return checked;
+    }
+
     // --------------------------------------------------------------- the tests
 
     @Test
@@ -316,6 +363,46 @@ public class GraphInteractionUiTest {
 
         chooseFromMoreTools(graph, R.string.graph_tools_reset);
         assertTrue("reset did not restore the automatic range", Double.isNaN(zoomMinX(graph)));
+    }
+
+    @Test
+    public void theLogScaleMenuItemsToggleAndTheAxesReadLinearAfterwards() throws Exception {
+        InteractiveGraphView graph = maximize("log");
+        assertTrue("x starts logarithmic", logScale(graph)[0]);
+        assertTrue("y starts logarithmic", logScale(graph)[1]);
+        assertTrue("x item checked", menuItemChecked(graph, R.string.graph_tools_log_x));
+        assertTrue("y item checked", menuItemChecked(graph, R.string.graph_tools_log_y));
+
+        chooseFromMoreTools(graph, R.string.graph_tools_log_x);
+        chooseFromMoreTools(graph, R.string.graph_tools_log_y);
+        assertFalse("x toggled off", logScale(graph)[0]);
+        assertFalse("y toggled off", logScale(graph)[1]);
+        assertFalse("x item unchecked", menuItemChecked(graph, R.string.graph_tools_log_x));
+        assertFalse("y item unchecked", menuItemChecked(graph, R.string.graph_tools_log_y));
+
+        //the visible range reads in linear units: x = 100..900 and y = 201..1801 plus 5 % headroom each side
+        Thread.sleep(500);
+        double[] drawn = drawnRange(graph);
+        assertEquals("min x", 60, drawn[0], 5);
+        assertEquals("max x", 940, drawn[1], 5);
+        assertEquals("min y", 121, drawn[2], 10);
+        assertEquals("max y", 1881, drawn[3], 10);
+
+        //a 40 % pan moves the x range by 40 % of its width and keeps the width; a clamp to the log limit
+        //(ln(1e38) = 87.5) would show up here, the values being far above it
+        swipe(plotPoint(graph, 0.7f, 0.5f), plotPoint(graph, 0.3f, 0.5f));
+        double width = drawn[1] - drawn[0];
+        double[] panned = drawnRange(graph);
+        assertEquals("panned min x", drawn[0] + 0.4 * width, panned[0], 0.1 * width);
+        assertEquals("width kept", width, panned[1] - panned[0], 5);
+        assertFalse("the range did not move", Double.isNaN(zoomMinX(graph)));
+
+        chooseFromMoreTools(graph, R.string.graph_tools_reset);
+        assertTrue("reset did not restore the automatic range", Double.isNaN(zoomMinX(graph)));
+        tap(graph.findViewById(R.id.graph_collapse_image));
+        Thread.sleep(1000);
+        assertEquals(ExpView.State.normal, elementOf("log").state);
+        assertEquals(ExpView.State.normal, elementOf("line").state);
     }
 
     @Test
