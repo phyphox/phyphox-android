@@ -213,8 +213,7 @@ public class EditElement extends ExpViewElement implements Serializable {
         valueUnit.addView(unitView);
 
         //Add label and the horizontal linear layout (edit box and unit) to the row
-        row.addView(labelView);
-        row.addView(valueUnit);
+        arrangeLabelAndControl(row, labelView, valueUnit);
 
         rootView = row;
         rootView.setFocusableInTouchMode(true);
@@ -298,8 +297,8 @@ public class EditElement extends ExpViewElement implements Serializable {
         if (!decimal)
             restrictions += "step=\"1\" ";
 
-        return "<div style=\"font-size:"+this.labelSize/.4+"%;\" class=\"editElement\" id=\"element"+htmlID+"\">" +
-                "<span class=\"label\">"+this.label+"</span>" +
+        return "<div style=\"font-size:"+this.labelSize/.4+"%;\" class=\"editElement" + labelLayoutClass() + "\" id=\"element"+htmlID+"\">" +
+                labelHTML() +
                 "<input onchange=\"ajax('control?cmd=set&buffer="+valueOutput+"&value='+this.value/"+ factor + ")\" type=\"number\" class=\"value\" " + restrictions + " />" +
                 "<span class=\"unit\">"+this.unit+"</span>" +
                 "</div>";

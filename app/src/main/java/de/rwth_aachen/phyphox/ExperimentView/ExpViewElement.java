@@ -5,8 +5,11 @@ import static android.view.View.VISIBLE;
 
 import android.content.Context;
 import android.content.res.Resources;
+import android.view.Gravity;
 import android.view.View;
+import android.view.ViewGroup;
 import android.widget.LinearLayout;
+import android.widget.TextView;
 
 import java.io.Serializable;
 import java.util.Vector;
@@ -31,6 +34,7 @@ public abstract class ExpViewElement implements Serializable, BufferNotification
     protected int htmlID; //This holds a unique id, so the element can be referenced in the webinterface via an HTML ID
 
     public double weight = 1.0; //Share of the row inside a horizontal group (file format 1.21, groups.md); read nowhere else
+    public boolean verticalLayout = false; //Label above the control instead of left of it (file format 1.21, value/edit/toggle/dropdown/slider)
     protected boolean inStack = false; //Inside a stack the element is not interactive (no maximize, zoom or picks) and draws no opaque background
 
     transient public View rootView; //Holds the root view of the element
@@ -69,6 +73,48 @@ public abstract class ExpViewElement implements Serializable, BufferNotification
             this.inputs = new Vector<>();
             this.inputs.addAll(this.getValueOutputs());
         }
+    }
+
+    //Since file format 1.21 the label may be left out: the caption and its space are omitted and the control takes the row
+    public boolean hasLabel() {
+        return label != null && !label.isEmpty();
+    }
+
+    //Puts a label and its control into the row (a horizontal LinearLayout): label in the left half and control in
+    //the right half by default, label above the control with verticalLayout (both full width, left-aligned), or the
+    //control alone across the row when there is no label. The control's own layout params are expected to hold the
+    //left-half weight of the default case (groups.md, "Labels in narrow columns").
+    protected void arrangeLabelAndControl(LinearLayout row, TextView labelView, View control) {
+        if (!hasLabel()) {
+            control.setLayoutParams(new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT));
+            control.setPadding(0, control.getPaddingTop(), control.getPaddingRight(), control.getPaddingBottom());
+            row.addView(control);
+            return;
+        }
+        if (verticalLayout) {
+            row.setOrientation(LinearLayout.VERTICAL);
+            row.setGravity(Gravity.START);
+            labelView.setLayoutParams(new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT));
+            labelView.setGravity(Gravity.START | Gravity.CENTER_VERTICAL);
+            labelView.setPadding(0, labelView.getPaddingTop(), 0, labelView.getPaddingBottom());
+            control.setLayoutParams(new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT));
+            control.setPadding(0, control.getPaddingTop(), control.getPaddingRight(), control.getPaddingBottom());
+            row.addView(labelView);
+            row.addView(control);
+            return;
+        }
+        row.addView(labelView);
+        row.addView(control);
+    }
+
+    //The label span of the web markup, empty without a label; the page lets the control take the row then
+    protected String labelHTML() {
+        return hasLabel() ? "<span class=\"label\">" + label + "</span>" : "";
+    }
+
+    //The CSS classes that go with the label handling of the web markup
+    protected String labelLayoutClass() {
+        return hasLabel() && verticalLayout ? " verticalLayout" : "";
     }
 
     //The children of a view group (vertical, horizontal, grid, stack, transform), null for a leaf element

@@ -1638,6 +1638,10 @@ public abstract class PhyphoxFile {
             String label = getTranslatedAttribute("label");
             String visibility = getStringAttribute("visibility");
             double weight = container == Container.horizontal ? getDoubleAttribute("weight", 1.0) : 1.0;
+            //Attributes have to be read before the children are parsed; verticalLayout exists on value, edit, toggle, dropdown and slider
+            String lowerTag = tag.toLowerCase();
+            boolean verticalLayout = (lowerTag.equals("value") || lowerTag.equals("edit") || lowerTag.equals("toggle") || lowerTag.equals("dropdown") || lowerTag.equals("slider"))
+                    && getBooleanAttribute("verticalLayout", false);
             double factor = getDoubleAttribute("factor", 1.);
             String unit = getTranslatedAttribute("unit");
             Vector<DataInput> inputs = new Vector<>();
@@ -1667,6 +1671,7 @@ public abstract class PhyphoxFile {
                     Vector<String> inStrings = new Vector<>();
                     inStrings.add(inputs.get(0).buffer.name);
                     ValueElement ve = new ValueElement(label, visibility,null, inStrings, parent.getResources()); //Only a value input
+                    ve.verticalLayout = verticalLayout;
                     for (ioBlockParser.AdditionalTag at : ats) {
                         if (at.name.equals("input"))
                             continue;
@@ -2025,6 +2030,7 @@ public abstract class PhyphoxFile {
                     (new ioBlockParser(xpp, experiment, parent, null, outputs, null, outputMapping, null)).process(); //Load inputs and outputs
 
                     EditElement ie = new EditElement(label, visibility, outputs.get(0).buffer.name, null, parent.getResources()); //Ouput only
+                    ie.verticalLayout = verticalLayout;
                     ie.setUnit(unit); //A unit displayed next to the input box
                     ie.setFactor(factor); //A scaling factor. Mostly for matching units
                     ie.setSigned(signed); //May the entered number be negative?
@@ -2186,6 +2192,7 @@ public abstract class PhyphoxFile {
 
 
                     ToggleElement toggleElement = new ToggleElement(label, visibility, outputs.get(0).buffer.name, null, parent.getResources());
+                    toggleElement.verticalLayout = verticalLayout;
                     toggleElement.setDefaultValue(defaultValue);
                     add(weight, toggleElement);
                     break;
@@ -2203,6 +2210,7 @@ public abstract class PhyphoxFile {
                     (new ioBlockParser(xpp, experiment, parent, null, outputs, null, outputMapping, null, ats)).process(); //Load inputs and outputs
 
                     DropDownElement dropDownElement = new DropDownElement(label, visibility, outputs.get(0).buffer.name, null, parent.getResources());
+                    dropDownElement.verticalLayout = verticalLayout;
                     dropDownElement.setDefaultValue(defaultValue);
                     dropDownElement.setColor(color);
                     for(ioBlockParser.AdditionalTag at: ats){
@@ -2266,6 +2274,7 @@ public abstract class PhyphoxFile {
                     }
 
                     SliderElement sliderElement = new SliderElement(label, visibility, outStrings, null, parent.getResources());
+                    sliderElement.verticalLayout = verticalLayout;
                     sliderElement.setDefaultValue(defaultValue);
                     sliderElement.setColor(color);
                     sliderElement.setMinValue(minValue);
@@ -2287,7 +2296,16 @@ public abstract class PhyphoxFile {
                     if (kind == GroupElement.Kind.grid) {
                         if (getStringAttribute("maxWidth") == null)
                             throw new phyphoxFileException("A grid requires the maxWidth attribute.", xpp.getLineNumber());
-                        group.setGrid(getDoubleAttribute("maxWidth", 25.), getBooleanAttribute("fillLastRow", false));
+                        //maxWidthUnit: text (line heights, default) or screen (shorter side of the app window); enums match case-insensitively
+                        String widthUnit = getStringAttribute("maxWidthUnit");
+                        boolean screenUnit = false;
+                        if (widthUnit != null) {
+                            if (widthUnit.equalsIgnoreCase("screen"))
+                                screenUnit = true;
+                            else if (!widthUnit.equalsIgnoreCase("text"))
+                                throw new phyphoxFileException("Unknown value \"" + widthUnit + "\" for maxWidthUnit.", xpp.getLineNumber());
+                        }
+                        group.setGrid(getDoubleAttribute("maxWidth", 25.), screenUnit, getBooleanAttribute("fillLastRow", false));
                     }
                     Vector<ExpViewElement> children = new Vector<>();
                     Container childContainer = kind == GroupElement.Kind.stack ? Container.stack : (kind == GroupElement.Kind.horizontal ? Container.horizontal : Container.view);

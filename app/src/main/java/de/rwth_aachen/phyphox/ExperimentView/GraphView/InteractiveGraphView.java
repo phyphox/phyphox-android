@@ -56,6 +56,7 @@ public class InteractiveGraphView extends RelativeLayout implements GraphView.Po
     public GraphView graphView;
     private PlotAreaView plotAreaView;
     private boolean fixedPlotArea = false;
+    private boolean titleRow = true; //label and expand icon above the plot; gone inside a stack, with a fixed plot area or without a label
     private TextView graphLabel;
     private ImageView expandImage, collapseImage;
     private LinearLayoutCompat toolbar;
@@ -567,8 +568,20 @@ public class InteractiveGraphView extends RelativeLayout implements GraphView.Po
 
     //Inside a stack (file format 1.21): no maximize icon and no touches (the stack intercepts them anyway)
     public void setStatic(boolean isStatic) {
-        expandImage.setVisibility(isStatic ? GONE : VISIBLE);
+        if (isStatic)
+            hideTitleRow();
         setClickable(!isStatic);
+    }
+
+    //No title row (file format 1.21: a graph without a label has none; also inside a stack and with a fixed plot area)
+    private void hideTitleRow() {
+        titleRow = false;
+        graphLabel.setVisibility(GONE);
+        expandImage.setVisibility(GONE);
+        collapseImage.setVisibility(GONE);
+        ViewGroup.MarginLayoutParams lp = (ViewGroup.MarginLayoutParams) graphFrame.getLayoutParams();
+        lp.topMargin = 0;
+        graphFrame.setLayoutParams(lp);
     }
 
     //A transparent plot lets the stack's lower children show through the plot area and the margins
@@ -582,13 +595,8 @@ public class InteractiveGraphView extends RelativeLayout implements GraphView.Po
     //goes away and GraphView draws the label in the plot's top margin if it fits
     public void setFixedPlotArea(boolean fixed) {
         fixedPlotArea = fixed;
-        graphLabel.setVisibility(fixed ? GONE : VISIBLE);
-        if (fixed) {
-            expandImage.setVisibility(GONE);
-            ViewGroup.MarginLayoutParams lp = (ViewGroup.MarginLayoutParams) graphFrame.getLayoutParams();
-            lp.topMargin = 0;
-            graphFrame.setLayoutParams(lp);
-        }
+        if (fixed)
+            hideTitleRow();
     }
 
     public void prepareExclusive(boolean willBeExclusive) {
@@ -608,8 +616,10 @@ public class InteractiveGraphView extends RelativeLayout implements GraphView.Po
             graphView.setTouchMode(GraphView.TouchMode.pick);
 
         toolbar.setVisibility(interactive ? VISIBLE : GONE);
-        expandImage.setVisibility(interactive ? INVISIBLE : VISIBLE);
-        collapseImage.setVisibility(interactive ? VISIBLE : INVISIBLE);
+        if (titleRow) {
+            expandImage.setVisibility(interactive ? INVISIBLE : VISIBLE);
+            collapseImage.setVisibility(interactive ? VISIBLE : INVISIBLE);
+        }
 
         this.interactive = interactive;
     }
@@ -617,6 +627,8 @@ public class InteractiveGraphView extends RelativeLayout implements GraphView.Po
     public void setLabel(String label) {
         graphLabel.setText(label);
         graphView.setTitle(fixedPlotArea ? label : null);
+        if (label == null || label.isEmpty())
+            hideTitleRow();
         float selectedTextSize = Helper.getUserSelectedGraphSetting(getContext(), Helper.GraphField.LABEL_SIZE);
         float textSizeAsDisplay = TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_PX,
                 selectedTextSize,

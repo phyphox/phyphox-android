@@ -129,11 +129,10 @@ public class SliderElement extends ExpViewElement implements Serializable {
         maxValueLabel.setTextColor(color.autoLightColor(res).intColor());
         maxValueLabel.setText(numberFormatter(maxValue));
 
-        //Add label and value to the row
-        if (showValue) {
-            row.addView(labelView);
-            row.addView(valueTv);
-        }
+        //Add label and value to the row: label left of the value, above it with verticalLayout (label, value and
+        //slider in three rows), or the value alone without a label
+        if (showValue)
+            arrangeLabelAndControl(row, labelView, valueTv);
 
         secondRow.addView(minValueLabel);
 
@@ -349,11 +348,11 @@ public class SliderElement extends ExpViewElement implements Serializable {
 
     @Override
     protected String createViewHTML() {
-        String valueTag = showValue ? "<span class=\"label\">"+this.label+"</span>" +
+        String valueTag = showValue ? labelHTML() +
                 "<span class=\"value\" id=\"value"+htmlID+"\">"+defaultValue+"</span>" : "";
         return (type == SliderType.Range) ? getTwoSlidersVerticallyHTML() :
 
-             "<div style=\"font-size:"+this.labelSize/.4+"%;\" class=\"sliderElement\" id=\"element"+htmlID+"\">" +
+             "<div style=\"font-size:"+this.labelSize/.4+"%;\" class=\"sliderElement" + (showValue ? labelLayoutClass() : "") + "\" id=\"element"+htmlID+"\">" +
                      valueTag +
                     "<div class=\"sliderContainer\">" +
                         "<span class=\"minValue\" >"+minValue+"</span>" +
@@ -369,9 +368,9 @@ public class SliderElement extends ExpViewElement implements Serializable {
 
 
     private String getTwoSlidersVerticallyHTML(){
-        String valueTag = showValue ? "<span class=\"label\">"+this.label+"</span>" +
+        String valueTag = showValue ? labelHTML() +
                 "<span class=\"value\" id=\"value"+htmlID+"\">"+defaultValue+"</span>" : "" ;
-        return "<div style=\"font-size:"+this.labelSize/.4+"%;\" class=\"sliderElement\" id=\"element"+htmlID+"\">" +
+        return "<div style=\"font-size:"+this.labelSize/.4+"%;\" class=\"sliderElement" + (showValue ? labelLayoutClass() : "") + "\" id=\"element"+htmlID+"\">" +
                                         valueTag +
                                         "<div class=\"sliderContainer\">" +
                                         "<span class=\"minValue\" >"+minValue+"</span>" +

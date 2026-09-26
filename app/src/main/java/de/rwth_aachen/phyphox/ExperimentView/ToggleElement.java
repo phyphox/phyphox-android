@@ -67,8 +67,9 @@ public class ToggleElement extends  ExpViewElement implements  Serializable {
         switchViewRow.setLayoutParams(tableRow);
         switchViewRow.addView(switchView);
 
-        row.addView(labelView);
-        row.addView(switchViewRow);
+        arrangeLabelAndControl(row, labelView, switchViewRow);
+        if (!hasLabel() || verticalLayout)
+            switchView.setPadding(0, 0, 0, 0);
 
         switchView.setChecked(bufferValueOrDefault(experiment, defaultValue) != 0.0);
 
@@ -130,9 +131,9 @@ public class ToggleElement extends  ExpViewElement implements  Serializable {
     @Override
     protected String createViewHTML() {
 
-        return "<div style=\"font-size:"+this.labelSize/.4+"%;\" class=\"switchElement\" id=\"element"+htmlID+"\">" +
-                "<span class=\"label\">"+this.label+"</span>" +
-                "</span><input type=\"checkbox\" class=\"value\" id=\"radio"+htmlID+"\" ></input>" +
+        return "<div style=\"font-size:"+this.labelSize/.4+"%;\" class=\"switchElement" + labelLayoutClass() + "\" id=\"element"+htmlID+"\">" +
+                labelHTML() +
+                "<input type=\"checkbox\" class=\"value\" id=\"radio"+htmlID+"\" ></input>" +
                 "</div>";
     }
 

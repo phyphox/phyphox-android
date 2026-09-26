@@ -122,7 +122,7 @@ public class CameraElement extends ExpViewElement implements  Serializable {
     @Override
     //Create the HTML markup. We do not stream the video to the web interface, so this is just a placeholder and notification
     protected String createViewHTML(){
-        return "<div style=\"font-size: 105%;\" class=\"cameraElement\" id=\"element" + htmlID + "\"><span class=\"label\" onclick=\"toggleExclusive("+htmlID+");\">"+this.label+"</span><div class=\"warningIcon\" onclick=\"alert('"+ warningText + "')\"></div></div>";
+        return "<div style=\"font-size: 105%;\" class=\"cameraElement\" id=\"element" + htmlID + "\">" + (hasLabel() ? "<span class=\"label\" onclick=\"toggleExclusive("+htmlID+");\">"+this.label+"</span>" : "") + "<div class=\"warningIcon\" onclick=\"alert('"+ warningText + "')\"></div></div>";
     }
 
     @Override

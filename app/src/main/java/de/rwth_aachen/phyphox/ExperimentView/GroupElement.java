@@ -1,7 +1,10 @@
 package de.rwth_aachen.phyphox.ExperimentView;
 
+import android.app.Activity;
 import android.content.Context;
+import android.content.ContextWrapper;
 import android.content.res.Resources;
+import android.util.DisplayMetrics;
 import android.view.Gravity;
 import android.view.MotionEvent;
 import android.view.View;
@@ -33,7 +36,8 @@ public class GroupElement extends ExpViewElement implements Serializable {
     protected final Vector<ExpViewElement> children = new Vector<>();
 
     //grid only
-    private double maxWidth = 25; //in text line heights (info_element_font), like the separator's height
+    private double maxWidth = 25; //in text line heights (info_element_font) like the separator's height, or with maxWidthScreenUnit in multiples of the window's shorter side
+    private boolean maxWidthScreenUnit = false;
     private boolean fillLastRow = false;
 
     public GroupElement(Kind kind, String visibility, Resources res) {
@@ -41,9 +45,14 @@ public class GroupElement extends ExpViewElement implements Serializable {
         this.kind = kind;
     }
 
-    public void setGrid(double maxWidth, boolean fillLastRow) {
+    public void setGrid(double maxWidth, boolean screenUnit, boolean fillLastRow) {
         this.maxWidth = maxWidth;
+        this.maxWidthScreenUnit = screenUnit;
         this.fillLastRow = fillLastRow;
+    }
+
+    public boolean getMaxWidthScreenUnit() {
+        return maxWidthScreenUnit;
     }
 
     public double getMaxWidth() {
@@ -125,7 +134,7 @@ public class GroupElement extends ExpViewElement implements Serializable {
                 break;
             }
             case grid: {
-                GridGroupLayout g = new GridGroupLayout(c, (float) (maxWidth * res.getDimension(R.dimen.info_element_font)), fillLastRow);
+                GridGroupLayout g = new GridGroupLayout(c, maxWidth, maxWidthScreenUnit ? 0 : res.getDimension(R.dimen.info_element_font), fillLastRow);
                 createChildrenInto(g, c, res, parent, experiment, null);
                 container = g;
                 break;
@@ -243,17 +252,41 @@ public class GroupElement extends ExpViewElement implements Serializable {
     //(groups.md, "View-Element: grid"). Rows are as tall as their tallest child, shorter children
     //are centred vertically. With fillLastRow an incomplete last row is split among its children.
     public static class GridGroupLayout extends ViewGroup {
-        private final float maxWidthPx;
+        private final double maxWidth;
+        private final float unitPx; //pixels per unit of maxWidth, or 0 for the screen unit (the window's shorter side, read at every measure)
         private final boolean fillLastRow;
         private final List<int[]> frames = new ArrayList<>(); //per visible child: left, top, right, bottom
 
-        public GridGroupLayout(Context context, float maxWidthPx, boolean fillLastRow) {
+        public GridGroupLayout(Context context, double maxWidth, float unitPx, boolean fillLastRow) {
             super(context);
-            this.maxWidthPx = maxWidthPx;
+            this.maxWidth = maxWidth;
+            this.unitPx = unitPx;
             this.fillLastRow = fillLastRow;
         }
 
+        //The shorter side of the app's window (not the display: a split-screen window counts with its own size), from
+        //the decor view; before the window is laid out the display size stands in
+        private float shorterWindowSide() {
+            Context ctx = getContext();
+            while (ctx instanceof ContextWrapper) {
+                if (ctx instanceof Activity) {
+                    View decor = ((Activity) ctx).getWindow().getDecorView();
+                    if (decor.getWidth() > 0 && decor.getHeight() > 0)
+                        return Math.min(decor.getWidth(), decor.getHeight());
+                    break;
+                }
+                ctx = ((ContextWrapper) ctx).getBaseContext();
+            }
+            DisplayMetrics dm = getResources().getDisplayMetrics();
+            return Math.min(dm.widthPixels, dm.heightPixels);
+        }
+
+        public float maxWidthPx() {
+            return (float) (maxWidth * (unitPx > 0 ? unitPx : shorterWindowSide()));
+        }
+
         public int columnsFor(int width) {
+            float maxWidthPx = maxWidthPx();
             if (maxWidthPx <= 0)
                 return 1;
             return Math.max(1, (int) Math.ceil(width / maxWidthPx - 1e-6));

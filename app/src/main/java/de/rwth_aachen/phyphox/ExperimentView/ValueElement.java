@@ -211,9 +211,8 @@ public class ValueElement extends ExpViewElement implements Serializable {
         tv.setTextColor(color.autoLightColor(res).intColor());
 
 
-        //Add label and value to the row
-        row.addView(labelView);
-        row.addView(tv);
+        //Add label and value to the row (label left, above with verticalLayout, or the value alone without a label)
+        arrangeLabelAndControl(row, labelView, tv);
 
         //Add the row to the linear layout
         rootView = row;
@@ -228,8 +227,8 @@ public class ValueElement extends ExpViewElement implements Serializable {
     //</div>
     protected String createViewHTML(){
         String c = color.hexString(); //rrggbb, or rrggbbaa with an alpha byte
-        return "<div style=\"font-size:"+this.labelSize/.4+"%;color:#"+c+"\" class=\"valueElement adjustableColor\" id=\"element"+htmlID+"\">" +
-                "<span class=\"label\">"+this.label+"</span>" +
+        return "<div style=\"font-size:"+this.labelSize/.4+"%;color:#"+c+"\" class=\"valueElement adjustableColor" + labelLayoutClass() + "\" id=\"element"+htmlID+"\">" +
+                labelHTML() +
                 "<span class=\"value\"><span class=\"valueNumber\" style=\"font-size:" + (this.size*100.) + "%\"></span> <span class=\"valueUnit\">"+ this.unit + "</span></span>" +
                 "</div>";
     }

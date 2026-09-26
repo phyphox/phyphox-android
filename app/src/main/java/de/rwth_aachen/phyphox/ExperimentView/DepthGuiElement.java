@@ -111,6 +111,8 @@ public class DepthGuiElement extends ExpViewElement implements Serializable {
         titleLine.setLayoutParams(new LinearLayout.LayoutParams(
                 LinearLayout.LayoutParams.MATCH_PARENT,
                 LinearLayout.LayoutParams.WRAP_CONTENT));
+        if (!hasLabel())
+            titleLine.setVisibility(GONE); //file format 1.21: without a label there is no title row, the preview takes the space
         layout.addView(titleLine);
 
         expandImage = new ImageView(c);
@@ -287,7 +289,7 @@ public class DepthGuiElement extends ExpViewElement implements Serializable {
     @Override
     //Create the HTML markup. We do not stream the video to the web interface, so this is just a placeholder and notification
     protected String createViewHTML(){
-        return "<div style=\"font-size: 105%;\" class=\"graphElement\" id=\"element" + htmlID + "\"><span class=\"label\" onclick=\"toggleExclusive("+htmlID+");\">"+this.label+"</span><div class=\"warningIcon\" onclick=\"alert('"+ warningText + "')\"></div></div>";
+        return "<div style=\"font-size: 105%;\" class=\"graphElement\" id=\"element" + htmlID + "\">" + (hasLabel() ? "<span class=\"label\" onclick=\"toggleExclusive("+htmlID+");\">"+this.label+"</span>" : "") + "<div class=\"warningIcon\" onclick=\"alert('"+ warningText + "')\"></div></div>";
     }
 
     @Override

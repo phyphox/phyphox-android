@@ -141,8 +141,7 @@ public class DropDownElement extends ExpViewElement implements Serializable {
             currentIndex = position;
         });
 
-        row.addView(labelView);
-        row.addView(textInputLayout);
+        arrangeLabelAndControl(row, labelView, textInputLayout);
 
         rootView = row;
         rootView.setFocusableInTouchMode(true);
@@ -201,8 +200,8 @@ public class DropDownElement extends ExpViewElement implements Serializable {
     @Override
     protected String createViewHTML() {
 
-        return "<div style=\"font-size:"+this.labelSize/.4+"%;\" class=\"dropdownElement\" id=\"element"+htmlID+"\">" +
-                "<span class=\"label\">"+this.label+"</span>" +
+        return "<div style=\"font-size:"+this.labelSize/.4+"%;\" class=\"dropdownElement" + labelLayoutClass() + "\" id=\"element"+htmlID+"\">" +
+                labelHTML() +
                 "<select onchange=\"ajax('control?cmd=set&buffer="+valueOutput+"&value='+this.value)\" class=\"value\" id=\"select"+htmlID+"\" />" +
                 "</div>";
 

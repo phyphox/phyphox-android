@@ -191,8 +191,8 @@ public class ViewGroupsTest {
         assertThat(grid.getMaxWidth()).isEqualTo(25.0);
         assertThat(grid.getFillLastRow()).isTrue();
         assertThat(((GroupElement) grid.getChildren().get(3)).kind).isEqualTo(GroupElement.Kind.grid);
-        //every element, groups and leaves, in document order
-        assertThat(groups.flatElements()).hasSize(3 + 3 + 2 + 4 + 2 + 2);
+        //every element, groups and leaves, in document order (the fixture of phyphox-docs e909b42)
+        assertThat(groups.flatElements()).hasSize(27);
 
         ExpView stack = experiment.experimentViews.get(1);
         GroupElement gauge = (GroupElement) ((GroupElement) stack.elements.get(0)).getChildren().get(0);

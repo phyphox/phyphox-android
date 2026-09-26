@@ -185,6 +185,7 @@ public class RemoteServer {
                 sb.append(",\"weight\":").append(element.weight);
             if (group.kind == GroupElement.Kind.grid) {
                 sb.append(",\"maxWidth\":").append(group.getMaxWidth());
+                sb.append(",\"maxWidthUnit\":\"").append(group.getMaxWidthScreenUnit() ? "screen" : "text").append("\"");
                 sb.append(",\"fillLastRow\":").append(group.getFillLastRow());
             }
             if (group instanceof TransformElement) {
