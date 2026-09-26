@@ -142,6 +142,8 @@ public class DropDownElement extends ExpViewElement implements Serializable {
         });
 
         arrangeLabelAndControl(row, labelView, textInputLayout);
+        if (isFullWidth() && align != Gravity.START)
+            autoCompleteTextView.setGravity(align | Gravity.CENTER_VERTICAL); //the field spans the row; only its text follows align
 
         rootView = row;
         rootView.setFocusableInTouchMode(true);

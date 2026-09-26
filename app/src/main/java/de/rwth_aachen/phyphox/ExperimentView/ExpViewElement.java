@@ -35,6 +35,7 @@ public abstract class ExpViewElement implements Serializable, BufferNotification
 
     public double weight = 1.0; //Share of the row inside a horizontal group (file format 1.21, groups.md); read nowhere else
     public boolean verticalLayout = false; //Label above the control instead of left of it (file format 1.21, value/edit/toggle/dropdown/slider)
+    public int align = Gravity.START; //Gravity.START, CENTER or END: where label and control go when they take the full width (file format 1.21, align)
     protected boolean inStack = false; //Inside a stack the element is not interactive (no maximize, zoom or picks) and draws no opaque background
 
     transient public View rootView; //Holds the root view of the element
@@ -81,13 +82,15 @@ public abstract class ExpViewElement implements Serializable, BufferNotification
     }
 
     //Puts a label and its control into the row (a horizontal LinearLayout): label in the left half and control in
-    //the right half by default, label above the control with verticalLayout (both full width, left-aligned), or the
-    //control alone across the row when there is no label. The control's own layout params are expected to hold the
-    //left-half weight of the default case (groups.md, "Labels in narrow columns").
+    //the right half by default, label above the control with verticalLayout (both full width), or the control alone
+    //across the row when there is no label. In the two full-width layouts label and control follow align (left by
+    //default). The control's own layout params are expected to hold the left-half weight of the default case
+    //(groups.md, "Labels in narrow columns").
     protected void arrangeLabelAndControl(LinearLayout row, TextView labelView, View control) {
         if (!hasLabel()) {
             control.setLayoutParams(new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT));
             control.setPadding(0, control.getPaddingTop(), control.getPaddingRight(), control.getPaddingBottom());
+            alignControl(control);
             row.addView(control);
             return;
         }
@@ -95,10 +98,11 @@ public abstract class ExpViewElement implements Serializable, BufferNotification
             row.setOrientation(LinearLayout.VERTICAL);
             row.setGravity(Gravity.START);
             labelView.setLayoutParams(new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT));
-            labelView.setGravity(Gravity.START | Gravity.CENTER_VERTICAL);
+            labelView.setGravity(align | Gravity.CENTER_VERTICAL);
             labelView.setPadding(0, labelView.getPaddingTop(), 0, labelView.getPaddingBottom());
             control.setLayoutParams(new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT));
             control.setPadding(0, control.getPaddingTop(), control.getPaddingRight(), control.getPaddingBottom());
+            alignControl(control);
             row.addView(labelView);
             row.addView(control);
             return;
@@ -107,14 +111,38 @@ public abstract class ExpViewElement implements Serializable, BufferNotification
         row.addView(control);
     }
 
+    //Whether label and control take the full width, which is where align applies
+    public boolean isFullWidth() {
+        return !hasLabel() || verticalLayout;
+    }
+
+    //A full-width control follows align: a text view aligns its text, a wrapper positions its content. Left is the
+    //layout as built by the element, so it is left alone.
+    private void alignControl(View control) {
+        if (align == Gravity.START)
+            return;
+        if (control instanceof TextView)
+            ((TextView) control).setGravity(align | Gravity.CENTER_VERTICAL);
+        else if (control instanceof LinearLayout)
+            ((LinearLayout) control).setGravity(align | Gravity.CENTER_VERTICAL);
+    }
+
     //The label span of the web markup, empty without a label; the page lets the control take the row then
     protected String labelHTML() {
         return hasLabel() ? "<span class=\"label\">" + label + "</span>" : "";
     }
 
-    //The CSS classes that go with the label handling of the web markup
+    //The CSS classes that go with the label handling of the web markup: verticalLayout, and alignCenter or alignRight
+    //where align applies (see phyphox-webinterface readme.md, "Labels")
     protected String labelLayoutClass() {
-        return hasLabel() && verticalLayout ? " verticalLayout" : "";
+        String classes = hasLabel() && verticalLayout ? " verticalLayout" : "";
+        if (isFullWidth()) {
+            if (align == Gravity.CENTER)
+                classes += " alignCenter";
+            else if (align == Gravity.END)
+                classes += " alignRight";
+        }
+        return classes;
     }
 
     //The children of a view group (vertical, horizontal, grid, stack, transform), null for a leaf element

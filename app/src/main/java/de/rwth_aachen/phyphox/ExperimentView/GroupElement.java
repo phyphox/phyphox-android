@@ -4,6 +4,8 @@ import android.app.Activity;
 import android.content.Context;
 import android.content.ContextWrapper;
 import android.content.res.Resources;
+import android.graphics.Color;
+import android.graphics.drawable.GradientDrawable;
 import android.util.DisplayMetrics;
 import android.view.Gravity;
 import android.view.MotionEvent;
@@ -40,6 +42,9 @@ public class GroupElement extends ExpViewElement implements Serializable {
     private boolean maxWidthScreenUnit = false;
     private boolean fillLastRow = false;
 
+    //vertical, horizontal and grid: gap between adjacent visible children in text line heights (file format 1.21, spacing)
+    private double spacing = 0;
+
     public GroupElement(Kind kind, String visibility, Resources res) {
         super("", visibility, (String) null, null, res);
         this.kind = kind;
@@ -61,6 +66,32 @@ public class GroupElement extends ExpViewElement implements Serializable {
 
     public boolean getFillLastRow() {
         return fillLastRow;
+    }
+
+    public void setSpacing(double spacing) {
+        this.spacing = Math.max(spacing, 0); //negative is treated as 0
+    }
+
+    public double getSpacing() {
+        return spacing;
+    }
+
+    //The gap in pixels: text line heights like the separator's height and the grid's text unit
+    private int spacingPx(Resources res) {
+        return (int) Math.round(spacing * res.getDimension(R.dimen.info_element_font));
+    }
+
+    //A LinearLayout inserts its middle dividers only between visible children, never at the edges or next to a GONE
+    //child, and takes their size off the width before the weights share the rest - exactly the gap of groups.md, so an
+    //invisible drawable of the gap's size does the spacing
+    private static void spaceChildren(LinearLayout layout, int gap) {
+        if (gap <= 0)
+            return;
+        GradientDrawable divider = new GradientDrawable();
+        divider.setColor(Color.TRANSPARENT);
+        divider.setSize(gap, gap);
+        layout.setDividerDrawable(divider);
+        layout.setShowDividers(LinearLayout.SHOW_DIVIDER_MIDDLE);
     }
 
     public void addChild(ExpViewElement child) {
@@ -112,6 +143,7 @@ public class GroupElement extends ExpViewElement implements Serializable {
             case vertical: {
                 LinearLayout v = new LinearLayout(c);
                 v.setOrientation(LinearLayout.VERTICAL);
+                spaceChildren(v, spacingPx(res));
                 for (ExpViewElement child : children)
                     child.createView(v, c, res, parent, experiment);
                 container = v;
@@ -120,6 +152,7 @@ public class GroupElement extends ExpViewElement implements Serializable {
             case horizontal: {
                 LinearLayout h = new LinearLayout(c);
                 h.setOrientation(LinearLayout.HORIZONTAL);
+                spaceChildren(h, spacingPx(res));
                 for (ExpViewElement child : children)
                     child.createView(h, c, res, parent, experiment);
                 //Width 0 with the weight as layout_weight splits the row; a GONE child leaves its share to the others
@@ -134,7 +167,7 @@ public class GroupElement extends ExpViewElement implements Serializable {
                 break;
             }
             case grid: {
-                GridGroupLayout g = new GridGroupLayout(c, maxWidth, maxWidthScreenUnit ? 0 : res.getDimension(R.dimen.info_element_font), fillLastRow);
+                GridGroupLayout g = new GridGroupLayout(c, maxWidth, maxWidthScreenUnit ? 0 : res.getDimension(R.dimen.info_element_font), fillLastRow, spacingPx(res));
                 createChildrenInto(g, c, res, parent, experiment, null);
                 container = g;
                 break;
@@ -251,17 +284,20 @@ public class GroupElement extends ExpViewElement implements Serializable {
     //Rows of equal columns: the smallest column count that keeps a column at or below maxWidth
     //(groups.md, "View-Element: grid"). Rows are as tall as their tallest child, shorter children
     //are centred vertically. With fillLastRow an incomplete last row is split among its children.
+    //spacing is the gap between columns and between rows; the column count counts it.
     public static class GridGroupLayout extends ViewGroup {
         private final double maxWidth;
         private final float unitPx; //pixels per unit of maxWidth, or 0 for the screen unit (the window's shorter side, read at every measure)
         private final boolean fillLastRow;
+        private final int spacing;
         private final List<int[]> frames = new ArrayList<>(); //per visible child: left, top, right, bottom
 
-        public GridGroupLayout(Context context, double maxWidth, float unitPx, boolean fillLastRow) {
+        public GridGroupLayout(Context context, double maxWidth, float unitPx, boolean fillLastRow, int spacing) {
             super(context);
             this.maxWidth = maxWidth;
             this.unitPx = unitPx;
             this.fillLastRow = fillLastRow;
+            this.spacing = Math.max(spacing, 0);
         }
 
         //The shorter side of the app's window (not the display: a split-screen window counts with its own size), from
@@ -285,11 +321,12 @@ public class GroupElement extends ExpViewElement implements Serializable {
             return (float) (maxWidth * (unitPx > 0 ? unitPx : shorterWindowSide()));
         }
 
+        //The smallest n with (width - (n-1)·spacing) / n <= maxWidth, i.e. n >= (width + spacing) / (maxWidth + spacing)
         public int columnsFor(int width) {
             float maxWidthPx = maxWidthPx();
             if (maxWidthPx <= 0)
                 return 1;
-            return Math.max(1, (int) Math.ceil(width / maxWidthPx - 1e-6));
+            return Math.max(1, (int) Math.ceil((width + spacing) / (maxWidthPx + spacing) - 1e-6));
         }
 
         @Override
@@ -318,18 +355,21 @@ public class GroupElement extends ExpViewElement implements Serializable {
             for (int start = 0; start < visible.size(); start += columns) {
                 int count = Math.min(columns, visible.size() - start);
                 int cols = fillLastRow ? count : columns;
+                int shared = Math.max(width - (cols - 1) * spacing, 0); //the columns share what their gaps leave
+                if (start > 0)
+                    top += spacing;
                 int rowHeight = 0;
                 int left = 0;
                 for (int i = 0; i < count; i++) {
                     View child = visible.get(start + i);
-                    int right = (i + 1) * width / cols;
+                    int right = left + (i + 1) * shared / cols - i * shared / cols;
                     int childWidth = right - left;
                     int lpHeight = child.getLayoutParams().height;
                     int childHeightSpec = lpHeight > 0 ? MeasureSpec.makeMeasureSpec(lpHeight, MeasureSpec.EXACTLY) : MeasureSpec.makeMeasureSpec(0, MeasureSpec.UNSPECIFIED);
                     child.measure(MeasureSpec.makeMeasureSpec(childWidth, MeasureSpec.EXACTLY), childHeightSpec);
                     rowHeight = Math.max(rowHeight, child.getMeasuredHeight());
                     frames.add(new int[]{left, top, right, 0});
-                    left = right;
+                    left = right + spacing;
                 }
                 for (int i = 0; i < count; i++) {
                     int[] frame = frames.get(start + i);

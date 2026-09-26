@@ -465,6 +465,20 @@ public abstract class PhyphoxFile {
             return color;
         }
 
+        //The align attribute of info (file format 1.8) and of value, edit, toggle, dropdown and slider (1.21): left
+        //(default), center or right as a gravity, matched case-insensitively; an unknown value rejects the file
+        //(rules.yml, enum-invalid-value and enum-case-insensitive)
+        protected int getAlignAttribute() throws phyphoxFileException {
+            final String att = getStringAttribute("align");
+            if (att == null || att.equalsIgnoreCase("left"))
+                return Gravity.START;
+            if (att.equalsIgnoreCase("center"))
+                return Gravity.CENTER;
+            if (att.equalsIgnoreCase("right"))
+                return Gravity.END;
+            throw new phyphoxFileException("Unknown value \"" + att + "\" for align.", xpp.getLineNumber());
+        }
+
         //These functions should be overriden with block-specific code
         protected void processStartTag(String tag) throws IOException, XmlPullParserException, phyphoxFileException {
 
@@ -1640,8 +1654,9 @@ public abstract class PhyphoxFile {
             double weight = container == Container.horizontal ? getDoubleAttribute("weight", 1.0) : 1.0;
             //Attributes have to be read before the children are parsed; verticalLayout exists on value, edit, toggle, dropdown and slider
             String lowerTag = tag.toLowerCase();
-            boolean verticalLayout = (lowerTag.equals("value") || lowerTag.equals("edit") || lowerTag.equals("toggle") || lowerTag.equals("dropdown") || lowerTag.equals("slider"))
-                    && getBooleanAttribute("verticalLayout", false);
+            boolean labelledControl = lowerTag.equals("value") || lowerTag.equals("edit") || lowerTag.equals("toggle") || lowerTag.equals("dropdown") || lowerTag.equals("slider");
+            boolean verticalLayout = labelledControl && getBooleanAttribute("verticalLayout", false);
+            int align = labelledControl ? getAlignAttribute() : Gravity.START; //label and control at full width follow it
             double factor = getDoubleAttribute("factor", 1.);
             String unit = getTranslatedAttribute("unit");
             Vector<DataInput> inputs = new Vector<>();
@@ -1672,6 +1687,7 @@ public abstract class PhyphoxFile {
                     inStrings.add(inputs.get(0).buffer.name);
                     ValueElement ve = new ValueElement(label, visibility,null, inStrings, parent.getResources()); //Only a value input
                     ve.verticalLayout = verticalLayout;
+                    ve.align = align;
                     for (ioBlockParser.AdditionalTag at : ats) {
                         if (at.name.equals("input"))
                             continue;
@@ -1713,12 +1729,7 @@ public abstract class PhyphoxFile {
 
                     boolean bold = getBooleanAttribute("bold", false);
                     boolean italic = getBooleanAttribute("italic", false);
-                    String gravityString = getStringAttribute("align");
-                    int gravity = Gravity.START;
-                    if (gravityString != null && gravityString.equals("right"))
-                        gravity = Gravity.END;
-                    else if (gravityString != null && gravityString.equals("center"))
-                        gravity = Gravity.CENTER;
+                    int gravity = getAlignAttribute();
                     float size = (float)getDoubleAttribute("size", 1.0);
 
                     InfoElement infoe = new InfoElement(label, visibility,null, null, parent.getResources()); //No inputs, just the label and resources
@@ -2031,6 +2042,7 @@ public abstract class PhyphoxFile {
 
                     EditElement ie = new EditElement(label, visibility, outputs.get(0).buffer.name, null, parent.getResources()); //Ouput only
                     ie.verticalLayout = verticalLayout;
+                    ie.align = align;
                     ie.setUnit(unit); //A unit displayed next to the input box
                     ie.setFactor(factor); //A scaling factor. Mostly for matching units
                     ie.setSigned(signed); //May the entered number be negative?
@@ -2193,6 +2205,7 @@ public abstract class PhyphoxFile {
 
                     ToggleElement toggleElement = new ToggleElement(label, visibility, outputs.get(0).buffer.name, null, parent.getResources());
                     toggleElement.verticalLayout = verticalLayout;
+                    toggleElement.align = align;
                     toggleElement.setDefaultValue(defaultValue);
                     add(weight, toggleElement);
                     break;
@@ -2211,6 +2224,7 @@ public abstract class PhyphoxFile {
 
                     DropDownElement dropDownElement = new DropDownElement(label, visibility, outputs.get(0).buffer.name, null, parent.getResources());
                     dropDownElement.verticalLayout = verticalLayout;
+                    dropDownElement.align = align;
                     dropDownElement.setDefaultValue(defaultValue);
                     dropDownElement.setColor(color);
                     for(ioBlockParser.AdditionalTag at: ats){
@@ -2275,6 +2289,7 @@ public abstract class PhyphoxFile {
 
                     SliderElement sliderElement = new SliderElement(label, visibility, outStrings, null, parent.getResources());
                     sliderElement.verticalLayout = verticalLayout;
+                    sliderElement.align = align;
                     sliderElement.setDefaultValue(defaultValue);
                     sliderElement.setColor(color);
                     sliderElement.setMinValue(minValue);
@@ -2307,6 +2322,8 @@ public abstract class PhyphoxFile {
                         }
                         group.setGrid(getDoubleAttribute("maxWidth", 25.), screenUnit, getBooleanAttribute("fillLastRow", false));
                     }
+                    if (kind != GroupElement.Kind.stack)
+                        group.setSpacing(getDoubleAttribute("spacing", 0.)); //gap between adjacent children in text line heights
                     Vector<ExpViewElement> children = new Vector<>();
                     Container childContainer = kind == GroupElement.Kind.stack ? Container.stack : (kind == GroupElement.Kind.horizontal ? Container.horizontal : Container.view);
                     (new viewBlockParser(xpp, experiment, parent, children, childContainer)).process();

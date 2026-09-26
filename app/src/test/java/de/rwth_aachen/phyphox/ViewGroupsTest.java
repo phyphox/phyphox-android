@@ -5,6 +5,7 @@ import static org.junit.Assume.assumeTrue;
 
 import android.content.Intent;
 import android.graphics.drawable.ColorDrawable;
+import android.view.Gravity;
 import android.view.View;
 import android.view.ViewGroup;
 
@@ -35,6 +36,7 @@ import de.rwth_aachen.phyphox.ExperimentView.ValueElement;
 import de.rwth_aachen.phyphox.helper.RGB;
 
 // phyphox-test: view-groups-layout
+// phyphox-test: view-group-spacing
 // phyphox-test: view-stack-transform
 // phyphox-test: colors-alpha
 //View groups, the transform, alpha colours and the fixed plot area of file format 1.21 (phyphox-docs
@@ -173,6 +175,99 @@ public class ViewGroupsTest {
         }
     }
 
+    // ------------------------------------------------------------------ view-group-spacing
+
+    @Test
+    public void spacingSeparatesVisibleChildrenAndComesOffTheWidthFirst() throws Exception {
+        //a text line is 14 px here (14 sp at mdpi): spacing 1 = 14 px, 0.5 = 7 px
+        ActivityController<Experiment> controller = launch(
+                "<horizontal spacing=\"1\">"
+                        + "<value label=\"two\" weight=\"2\"><input>v</input></value>"
+                        + "<value label=\"one\"><input>v</input></value>"
+                        + "<value label=\"gone\" visibility=\"hide\"><input>v</input></value>"
+                        + "<value label=\"last\"><input>v</input></value>"
+                        + "</horizontal>"
+                        + "<vertical spacing=\"0.5\">"
+                        + "<value label=\"a\"><input>v</input></value>"
+                        + "<value label=\"gone\" visibility=\"hide\"><input>v</input></value>"
+                        + "<value label=\"b\"><input>v</input></value>"
+                        + "</vertical>"
+                        + "<grid maxWidth=\"10\" spacing=\"1\" fillLastRow=\"true\">"
+                        + "<info label=\"a\" /><info label=\"b\" /><info label=\"c\" /><info label=\"d\" />"
+                        + "</grid>"
+                        + "<grid maxWidth=\"10\" spacing=\"1\">"
+                        + "<info label=\"a\" /><info label=\"b\" /><info label=\"c\" />"
+                        + "</grid>"
+                        + "<horizontal spacing=\"-2\">"
+                        + "<value label=\"a\"><input>v</input></value>"
+                        + "<value label=\"b\"><input>v</input></value>"
+                        + "</horizontal>");
+        try {
+            Experiment activity = controller.get();
+            activity.experiment.updateViews(0, true); //applies the visibility buffers
+
+            //horizontal: two gaps of 14 px between the three visible children come off the 1000 px first, 972 px are shared 2:1:1
+            GroupElement row = (GroupElement) top(activity, 0);
+            assertThat(row.getSpacing()).isEqualTo(1.0);
+            layout(row.rootView, 1000);
+            List<ExpViewElement> c = row.getChildren();
+            assertThat(c.get(2).rootView.getVisibility()).isEqualTo(View.GONE);
+            assertThat(c.get(0).rootView.getLeft()).isEqualTo(0);
+            assertThat(c.get(0).rootView.getWidth()).isWithin(2).of(486);
+            assertThat(c.get(1).rootView.getLeft()).isWithin(2).of(500);
+            assertThat(c.get(1).rootView.getWidth()).isWithin(2).of(243);
+            assertThat(c.get(3).rootView.getLeft()).isWithin(2).of(757);
+            assertThat(c.get(3).rootView.getRight()).isEqualTo(1000);
+
+            //vertical: 7 px between the visible rows, none for the hidden one
+            GroupElement column = (GroupElement) top(activity, 1);
+            layout(column.rootView, 600);
+            List<ExpViewElement> v = column.getChildren();
+            assertThat(v.get(1).rootView.getVisibility()).isEqualTo(View.GONE);
+            assertThat(v.get(0).rootView.getTop()).isEqualTo(0);
+            assertThat(v.get(2).rootView.getTop()).isEqualTo(v.get(0).rootView.getBottom() + 7);
+            assertThat(column.rootView.getHeight()).isEqualTo(v.get(2).rootView.getBottom());
+
+            //grid: maxWidth 10 lines = 140 px. At 290 px the flush grid would take three columns (ceil(290 / 140)),
+            //with the gap counted only two fit: (290 - 14) / 2 = 138 <= 140
+            GroupElement fill = (GroupElement) top(activity, 2);
+            GroupElement.GridGroupLayout fillLayout = (GroupElement.GridGroupLayout) fill.rootView;
+            assertThat(fillLayout.columnsFor(290)).isEqualTo(2);
+            layout(fill.rootView, 290);
+            List<ExpViewElement> g = fill.getChildren();
+            assertThat(g.get(0).rootView.getLeft()).isEqualTo(0);
+            assertThat(g.get(0).rootView.getWidth()).isEqualTo(138);
+            assertThat(g.get(1).rootView.getLeft()).isEqualTo(152);
+            assertThat(g.get(1).rootView.getRight()).isEqualTo(290);
+            assertThat(g.get(1).rootView.getTop()).isEqualTo(g.get(0).rootView.getTop());
+            assertThat(g.get(2).rootView.getTop()).isEqualTo(g.get(0).rootView.getBottom() + 14);
+            assertThat(g.get(3).rootView.getLeft()).isEqualTo(152);
+            assertThat(fill.rootView.getHeight()).isEqualTo(g.get(3).rootView.getBottom());
+            //three columns at 400 px, and with fillLastRow the lone child of the last row takes the whole width
+            layout(fill.rootView, 400);
+            assertThat(fillLayout.columnsFor(400)).isEqualTo(3);
+            assertThat(g.get(0).rootView.getWidth()).isEqualTo(124);
+            assertThat(g.get(1).rootView.getLeft()).isEqualTo(138);
+            assertThat(g.get(2).rootView.getLeft()).isEqualTo(276);
+            assertThat(g.get(2).rootView.getRight()).isEqualTo(400);
+            assertThat(g.get(3).rootView.getWidth()).isEqualTo(400);
+            //without fillLastRow the lone child keeps the column width
+            GroupElement keep = (GroupElement) top(activity, 3);
+            layout(keep.rootView, 290);
+            assertThat(keep.getChildren().get(2).rootView.getWidth()).isEqualTo(138);
+            assertThat(keep.getChildren().get(2).rootView.getLeft()).isEqualTo(0);
+            assertThat(keep.getChildren().get(2).rootView.getTop()).isEqualTo(keep.getChildren().get(0).rootView.getBottom() + 14);
+
+            //negative is 0: the flush layout of today
+            GroupElement flush = (GroupElement) top(activity, 4);
+            assertThat(flush.getSpacing()).isEqualTo(0.0);
+            layout(flush.rootView, 600);
+            assertThat(flush.getChildren().get(1).rootView.getLeft()).isEqualTo(flush.getChildren().get(0).rootView.getRight());
+        } finally {
+            controller.close();
+        }
+    }
+
     @Test
     public void docsFixtureLoadsAndNestsAsWritten() throws Exception {
         File corpus = CorpusTestEnvironment.findCorpus();
@@ -191,6 +286,22 @@ public class ViewGroupsTest {
         assertThat(grid.getMaxWidth()).isEqualTo(25.0);
         assertThat(grid.getFillLastRow()).isTrue();
         assertThat(((GroupElement) grid.getChildren().get(3)).kind).isEqualTo(GroupElement.Kind.grid);
+        //spacing and align as written (phyphox-docs 9fe01e2), the enum matched case-insensitively
+        assertThat(grid.getSpacing()).isEqualTo(0.5);
+        assertThat(horizontal.getSpacing()).isEqualTo(0.0);
+        GroupElement spaced = (GroupElement) grid.getChildren().get(2);
+        assertThat(spaced.kind).isEqualTo(GroupElement.Kind.horizontal);
+        assertThat(spaced.getSpacing()).isEqualTo(1.0);
+        assertThat(spaced.getChildren().get(0).align).isEqualTo(Gravity.END);
+        assertThat(spaced.getChildren().get(1).align).isEqualTo(Gravity.CENTER);
+        GroupElement innerColumn = (GroupElement) spaced.getChildren().get(2);
+        assertThat(innerColumn.getSpacing()).isEqualTo(0.25);
+        assertThat(innerColumn.getChildren().get(0).align).isEqualTo(Gravity.CENTER);
+        assertThat(innerColumn.getChildren().get(1).align).isEqualTo(Gravity.START);
+        assertThat(innerColumn.getChildren().get(2).align).isEqualTo(Gravity.END);
+        ExpViewElement bareValue = ((GroupElement) grid.getChildren().get(3)).getChildren().get(2);
+        assertThat(bareValue.hasLabel()).isFalse();
+        assertThat(bareValue.align).isEqualTo(Gravity.CENTER);
         //every element, groups and leaves, in document order (the fixture of phyphox-docs e909b42)
         assertThat(groups.flatElements()).hasSize(27);
 

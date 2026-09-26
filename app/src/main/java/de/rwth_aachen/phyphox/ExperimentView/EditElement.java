@@ -214,6 +214,8 @@ public class EditElement extends ExpViewElement implements Serializable {
 
         //Add label and the horizontal linear layout (edit box and unit) to the row
         arrangeLabelAndControl(row, labelView, valueUnit);
+        if (isFullWidth() && align != Gravity.START)
+            et.setGravity(align | Gravity.CENTER_VERTICAL); //the field spans the row with its unit; only its text follows align
 
         rootView = row;
         rootView.setFocusableInTouchMode(true);

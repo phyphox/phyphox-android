@@ -183,6 +183,8 @@ public class RemoteServer {
             sb.append("\"");
             if (inHorizontal)
                 sb.append(",\"weight\":").append(element.weight);
+            if (group.kind == GroupElement.Kind.vertical || group.kind == GroupElement.Kind.horizontal || group.kind == GroupElement.Kind.grid)
+                sb.append(",\"spacing\":").append(group.getSpacing());
             if (group.kind == GroupElement.Kind.grid) {
                 sb.append(",\"maxWidth\":").append(group.getMaxWidth());
                 sb.append(",\"maxWidthUnit\":\"").append(group.getMaxWidthScreenUnit() ? "screen" : "text").append("\"");
