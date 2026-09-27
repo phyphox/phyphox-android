@@ -183,6 +183,8 @@ public class AssetExperimentLoader {
                                 if (phyphoxDepth < 0) { //There should not be a phyphox tag within an phyphox tag, but who cares. Just ignore it if it happens
                                     phyphoxDepth = xpp.getDepth(); //Remember depth of phyphox tag
                                     String globalLocale = xpp.getAttributeValue(null, "locale");
+                                    if (globalLocale == null || globalLocale.isEmpty())
+                                        globalLocale = "en"; //Base strings without a root locale are English, like on iOS
                                     String isLinkStr = xpp.getAttributeValue(null, "isLink");
                                     if (isLinkStr != null)
                                         isLink = isLinkStr.toUpperCase().equals("TRUE");

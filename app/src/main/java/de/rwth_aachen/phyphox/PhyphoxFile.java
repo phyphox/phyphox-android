@@ -4110,6 +4110,8 @@ public abstract class PhyphoxFile {
                         }
 
                         String globalLocale = xpp.getAttributeValue(XmlPullParser.NO_NAMESPACE, "locale");
+                        if (globalLocale == null || globalLocale.isEmpty())
+                            globalLocale = "en"; //Base strings without a root locale are English, like on iOS
                         languageRating = Helper.getLanguageRating(parent.getResources(), globalLocale);
                     }
 

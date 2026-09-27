@@ -93,7 +93,7 @@ public abstract class Helper {
 
     public static int getLanguageRating(Resources res, String language) {
         if (language == null || language.isEmpty())
-            return 1; //This can only happen to the base translation. Its language is not specified, but it's probably better for the target audience than a non-matching language - with one exception: If the base language is not specified and an English block is declared as a translation, then the base language is probably just a place-holder, so English is preferred in this case.
+            return 1; //Only a translation block without a locale gets here; the base strings default to "en" before rating. Such a block is unlikely to fit the user better than a non-matching language, but it outranks nothing at all.
 
         int score = 0;
 
