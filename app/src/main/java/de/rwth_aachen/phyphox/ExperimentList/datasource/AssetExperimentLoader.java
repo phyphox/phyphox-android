@@ -175,6 +175,8 @@ public class AssetExperimentLoader {
             String trLink = null;
 
             int languageRating = 0; //If we find a locale, it replaces previous translations as long as it has a higher rating than the previous one.
+            String globalLocale = "en"; //The root locale attribute, "en" when omitted
+            boolean translationSelected = false;
             while (eventType != XmlPullParser.END_DOCUMENT) { //Go through all tags until the end...
                 switch (eventType) {
                     case XmlPullParser.START_TAG: //React to start tags
@@ -182,7 +184,7 @@ public class AssetExperimentLoader {
                             case "phyphox": //The phyphox tag is the root element of the experiment we want to interpret
                                 if (phyphoxDepth < 0) { //There should not be a phyphox tag within an phyphox tag, but who cares. Just ignore it if it happens
                                     phyphoxDepth = xpp.getDepth(); //Remember depth of phyphox tag
-                                    String globalLocale = xpp.getAttributeValue(null, "locale");
+                                    globalLocale = xpp.getAttributeValue(null, "locale");
                                     if (globalLocale == null || globalLocale.isEmpty())
                                         globalLocale = "en"; //Base strings without a root locale are English, like on iOS
                                     String isLinkStr = xpp.getAttributeValue(null, "isLink");
@@ -205,8 +207,12 @@ public class AssetExperimentLoader {
                                     break;
                                 String thisLocale = xpp.getAttributeValue(null, "locale");
                                 int thisLaguageRating = Helper.getLanguageRating(environment.resources, thisLocale);
-                                if (translationDepth < 0 && thisLaguageRating > languageRating) {
+                                //A block carrying the root's own locale stands in for the base strings unless another
+                                //rates strictly better, as in PhyphoxFile and on iOS
+                                boolean standsInForBase = !translationSelected && globalLocale.equals(thisLocale);
+                                if (translationDepth < 0 && (thisLaguageRating > languageRating || standsInForBase)) {
                                     languageRating = thisLaguageRating;
+                                    translationSelected = true;
                                     translationDepth = xpp.getDepth(); //Remember depth of the translation block
                                     trTitle = null;
                                     trFullDescription = null;

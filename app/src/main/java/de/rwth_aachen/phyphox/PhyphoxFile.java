@@ -125,6 +125,7 @@ public abstract class PhyphoxFile {
     }
 
     private static TranslationBlock selectedTranslationBlock = null; //The best-rated translation block seen so far
+    private static String baseLocale = "en"; //The root locale attribute, "en" when omitted
     private static List<TranslationBlock> allTranslationBlocks = new ArrayList<>(); //All translation blocks, kept for validation independent of the user's locale
 
     //Simple helper to return either the translated term or the original one, if no translation could be found
@@ -1415,8 +1416,19 @@ public abstract class PhyphoxFile {
         @Override
         protected void done() throws phyphoxFileException {
             //Links are applied when the root element is done, so base links after this block still count
-            if (selectedTranslationBlock == null)
-                return;
+            if (selectedTranslationBlock == null) {
+                //No block rates strictly better than the base strings: a block carrying the root's own locale
+                //stands in for them, as on iOS (translations[defaultLanguageCode]). This is how a file without
+                //base strings and an "en" block works.
+                for (TranslationBlock block : allTranslationBlocks) {
+                    if (baseLocale.equals(block.locale)) {
+                        selectedTranslationBlock = block;
+                        break;
+                    }
+                }
+                if (selectedTranslationBlock == null)
+                    return;
+            }
             if (selectedTranslationBlock.title != null)
                 experiment.title = selectedTranslationBlock.title;
             if (selectedTranslationBlock.category != null)
@@ -4054,6 +4066,7 @@ public abstract class PhyphoxFile {
         languageRating = 0;
         translation = new HashMap<>();
         selectedTranslationBlock = null;
+        baseLocale = "en";
         allTranslationBlocks = new ArrayList<>();
 
         //New experiment
@@ -4112,6 +4125,7 @@ public abstract class PhyphoxFile {
                         String globalLocale = xpp.getAttributeValue(XmlPullParser.NO_NAMESPACE, "locale");
                         if (globalLocale == null || globalLocale.isEmpty())
                             globalLocale = "en"; //Base strings without a root locale are English, like on iOS
+                        baseLocale = globalLocale;
                         languageRating = Helper.getLanguageRating(parent.getResources(), globalLocale);
                     }
 

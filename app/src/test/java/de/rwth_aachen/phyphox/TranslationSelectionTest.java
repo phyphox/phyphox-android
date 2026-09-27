@@ -8,13 +8,20 @@ import org.robolectric.RobolectricTestRunner;
 import org.robolectric.annotation.Config;
 
 import java.io.ByteArrayInputStream;
+import java.io.File;
+import java.io.FileInputStream;
 import java.nio.charset.StandardCharsets;
+
+import de.rwth_aachen.phyphox.ExperimentList.datasource.AssetExperimentLoader;
+import de.rwth_aachen.phyphox.ExperimentList.model.ExperimentListEnvironment;
+import de.rwth_aachen.phyphox.ExperimentList.model.ExperimentLoadInfoData;
+import de.rwth_aachen.phyphox.ExperimentList.model.ExperimentShortInfo;
 
 // phyphox-test: translation-block-selection
 //Which translation block a file gets (phyphox-docs file-format/index.md, "Block: translations"):
 //the block matching the user's locale best, the base strings otherwise. Base strings without a
 //root locale are English (rated as locale "en", like on iOS), so a German block must not be
-//applied on an English device and an English block never replaces them.
+//applied on an English device; a block carrying the root's locale stands in for the base strings.
 @RunWith(RobolectricTestRunner.class)
 @Config(sdk = 35)
 public class TranslationSelectionTest {
@@ -118,22 +125,91 @@ public class TranslationSelectionTest {
         assertThat(label(experiment)).isEqualTo("Deutsches Label");
     }
 
-    //Base strings without a root locale are English, so an English block never rates strictly better
-    //than them and the base strings stay (as on iOS).
+    //Base strings without a root locale are English. An English block cannot rate strictly better than
+    //them, but it carries the base's own locale and so stands in for the base strings (iOS looks the
+    //root locale up among the blocks). The bundled light experiment has no base strings at all and
+    //relies on this.
     @Test
     @Config(qualifiers = "fr-rFR")
-    public void englishBlockWithoutRootLocaleDoesNotReplaceTheEnglishBase() {
+    public void englishBlockWithoutRootLocaleStandsInForTheBase() {
         PhyphoxExperiment experiment = load(file("", ENGLISH_BLOCK + GERMAN_BLOCK));
-        assertThat(experiment.title).isEqualTo("Base title");
-        assertThat(label(experiment)).isEqualTo("Base label");
+        assertThat(experiment.title).isEqualTo("English title");
+        assertThat(label(experiment)).isEqualTo("English label");
     }
 
     @Test
     @Config(qualifiers = "en-rUS")
-    public void englishBlockWithoutRootLocaleDoesNotReplaceTheEnglishBaseOnAnEnglishDevice() {
+    public void englishBlockWithoutRootLocaleStandsInForTheBaseOnAnEnglishDevice() {
         PhyphoxExperiment experiment = load(file("", ENGLISH_BLOCK + GERMAN_BLOCK));
-        assertThat(experiment.title).isEqualTo("Base title");
-        assertThat(label(experiment)).isEqualTo("Base label");
+        assertThat(experiment.title).isEqualTo("English title");
+        assertThat(label(experiment)).isEqualTo("English label");
+    }
+
+    @Test
+    @Config(qualifiers = "en-rUS")
+    public void germanBlockWithGermanRootLocaleStandsInForTheBaseOnAnEnglishDevice() {
+        PhyphoxExperiment experiment = load(file(" locale=\"de\"", GERMAN_BLOCK));
+        assertThat(experiment.title).isEqualTo("Deutscher Titel");
+        assertThat(label(experiment)).isEqualTo("Deutsches Label");
+    }
+
+    //A better-rated block beats the stand-in.
+    @Test
+    @Config(qualifiers = "en-rUS")
+    public void englishBlockBeatsTheStandInWithGermanRootLocale() {
+        PhyphoxExperiment experiment = load(file(" locale=\"de\"", GERMAN_BLOCK + ENGLISH_BLOCK));
+        assertThat(experiment.title).isEqualTo("English title");
+        assertThat(label(experiment)).isEqualTo("English label");
+    }
+
+    //The bundled light experiment: no base title, no root locale, an "en" block among others.
+    @Test
+    @Config(qualifiers = "en-rUS")
+    public void theBundledLightExperimentGetsItsEnglishTitle() throws Exception {
+        PhyphoxExperiment experiment = CorpusTestEnvironment.load(LIGHT, CorpusTestEnvironment.fullyEquippedActivity());
+        assertThat(experiment.title).isEqualTo("Light");
+        assertThat(experiment.category).isEqualTo("Raw Sensors");
+    }
+
+    //The collection list has its own scanner (AssetExperimentLoader) and must pick the same block.
+    private static final File LIGHT = new File("src/main/assets/experiments/light.phyphox");
+
+    private static ExperimentShortInfo scan(java.io.InputStream input) {
+        Experiment activity = org.robolectric.Robolectric.buildActivity(Experiment.class).setup().get();
+        return AssetExperimentLoader.loadExperimentShortInfo(
+                new ExperimentLoadInfoData(input, "test.phyphox", null, false), new ExperimentListEnvironment(activity));
+    }
+
+    private static ExperimentShortInfo scan(String content) {
+        return scan(new ByteArrayInputStream(content.getBytes(StandardCharsets.UTF_8)));
+    }
+
+    @Test
+    @Config(qualifiers = "en-rUS")
+    public void theListShowsTheBundledLightExperimentWithItsEnglishTitle() throws Exception {
+        try (FileInputStream input = new FileInputStream(LIGHT)) {
+            ExperimentShortInfo info = scan(input);
+            assertThat(info.title).isEqualTo("Light");
+        }
+    }
+
+    @Test
+    @Config(qualifiers = "en")
+    public void theListKeepsTheBaseTitleOnAnEnglishDeviceWithoutRegion() {
+        assertThat(scan(file("", GERMAN_BLOCK)).title).isEqualTo("Base title");
+    }
+
+    @Test
+    @Config(qualifiers = "de-rDE")
+    public void theListShowsTheGermanTitleOnAGermanDevice() {
+        assertThat(scan(file("", GERMAN_BLOCK)).title).isEqualTo("Deutscher Titel");
+    }
+
+    @Test
+    @Config(qualifiers = "en-rUS")
+    public void theListLetsABetterBlockBeatTheStandIn() {
+        assertThat(scan(file(" locale=\"de\"", GERMAN_BLOCK + ENGLISH_BLOCK)).title).isEqualTo("English title");
+        assertThat(scan(file(" locale=\"de\"", ENGLISH_BLOCK + GERMAN_BLOCK)).title).isEqualTo("English title");
     }
 
     //With a non-English root locale the English block is a real translation and applies.
