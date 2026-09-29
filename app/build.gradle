@@ -70,8 +70,9 @@ android {
     }
 
     androidResources {
-        //The phyphox-docs fixture directories each carry a README.md, which would collide in the flat merge
-        ignoreAssetsPattern '!.svn:!.git:!.ds_store:!*.scc:.*:!CVS:!thumbs.db:!picasa.ini:!*~:!README.md'
+        //The phyphox-docs fixture directories each carry a README.md, which would collide in the flat merge; the
+        //webinterface submodule's test directory (mock server, browser suite, node_modules) is not part of the app
+        ignoreAssetsPattern '!.svn:!.git:!.ds_store:!*.scc:.*:!CVS:!thumbs.db:!picasa.ini:!*~:!README.md:test:node_modules'
     }
 
     sourceSets {
