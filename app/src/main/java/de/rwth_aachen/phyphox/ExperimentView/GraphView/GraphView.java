@@ -30,6 +30,7 @@ import java.util.Vector;
 import de.rwth_aachen.phyphox.ExperimentTimeReferenceSet;
 import de.rwth_aachen.phyphox.FloatBufferRepresentation;
 import de.rwth_aachen.phyphox.R;
+import de.rwth_aachen.phyphox.Units;
 import de.rwth_aachen.phyphox.helper.Helper;
 
 //The graphView class implements an Android view which displays a data graph
@@ -110,10 +111,26 @@ public class GraphView extends View {
     private String labelX = null; //Label for the x-axis
     private String labelY = null; //Label for the y-axis
     private String labelZ = null; //Label for the y-axis
-    private String unitX = null; //Label for the x-axis
-    private String unitY = null; //Label for the y-axis
-    private String unitZ = null; //Label for the y-axis
-    private String unitYX = null; //Unit for the slope, i.e. y/x
+    private String unitX = null; //Unit symbol shown on the x-axis (the display unit's)
+    private String unitY = null; //Unit symbol shown on the y-axis
+    private String unitZ = null; //Unit symbol shown on the z-axis
+    private String unitYX = null; //Unit for the slope, i.e. y/x, as the experiment names it
+    //Logical units (docs/file-format/units.md): the experiment's unit id per axis, null for text, and the unit currently
+    //shown. The data, ranges and the zoom state stay in the experiment's unit; only tics, labels and read-outs convert.
+    private final String[] unitIds = new String[3];
+    private final String[] displayUnitIds = new String[3];
+    private final String[] experimentUnitSymbols = new String[3];
+    public static final int AXIS_X = 0, AXIS_Y = 1, AXIS_Z = 2;
+
+    public interface AxisTapListener {
+        void onAxisTap(int axis);
+    }
+
+    private AxisTapListener axisTapListener = null;
+    private final RectF[] axisHitRects = new RectF[3]; //Label areas of the last frame, outside the plot
+    private int pendingAxisTap = -1;
+    private float axisTapDownX, axisTapDownY;
+    public String[] lastXTicLabels = new String[0], lastYTicLabels = new String[0], lastZTicLabels = new String[0]; //As drawn in the last frame
     public boolean timeOnX = false; //x-axis is time axis?
     public boolean timeOnY = false; //y-axis is time axis?
     public boolean suppressScientificNotation = false; //Always avoid scientific notation on axis labels
@@ -128,10 +145,15 @@ public class GraphView extends View {
     private int zPrecision = -1;
 
     public class Tic {
-        double value;
+        double value; //position, in the experiment's unit
+        double display; //the number the label shows: value converted to the display unit
         int precision;
         Tic(double value, int precision) {
+            this(value, value, precision);
+        }
+        Tic(double value, double display, int precision) {
             this.value = value;
+            this.display = display;
             this.precision = precision;
         }
     }
@@ -344,8 +366,61 @@ public class GraphView extends View {
         }
     }
 
+    public void setAxisTapListener(AxisTapListener listener) {
+        this.axisTapListener = listener;
+    }
+
+    //The axis whose label area contains the point, or -1
+    private int axisAt(float x, float y) {
+        for (int axis = 0; axis < 3; axis++)
+            if (axisHitRects[axis] != null && axisHitRects[axis].contains(x, y))
+                return axis;
+        return -1;
+    }
+
+    //A tap on an axis label area (outside the plot, which the tools use) in an interactive mode
+    private boolean handleAxisTap(MotionEvent event) {
+        final float x = event.getX();
+        final float y = event.getY();
+        switch (event.getActionMasked()) {
+            case MotionEvent.ACTION_DOWN: {
+                int axis = axisAt(x, y);
+                if (axis < 0 || !isAxisConvertible(axis))
+                    return false;
+                pendingAxisTap = axis;
+                axisTapDownX = x;
+                axisTapDownY = y;
+                return true;
+            }
+            case MotionEvent.ACTION_MOVE: {
+                if (pendingAxisTap < 0)
+                    return false;
+                float dx = x - axisTapDownX, dy = y - axisTapDownY;
+                if (dx * dx + dy * dy > 30 * 30)
+                    pendingAxisTap = -1; //a drag, not a tap; the rest of the gesture is swallowed
+                return true;
+            }
+            case MotionEvent.ACTION_UP: {
+                if (pendingAxisTap < 0)
+                    return false;
+                int axis = pendingAxisTap;
+                pendingAxisTap = -1;
+                if (axisAt(x, y) == axis && axisTapListener != null)
+                    axisTapListener.onAxisTap(axis);
+                return true;
+            }
+            case MotionEvent.ACTION_CANCEL: {
+                pendingAxisTap = -1;
+                return false;
+            }
+        }
+        return pendingAxisTap >= 0;
+    }
+
     @Override
     public boolean onTouchEvent(MotionEvent event) {
+        if (touchMode != TouchMode.off && axisTapListener != null && event.getPointerCount() == 1 && handleAxisTap(event))
+            return true;
         return switch (touchMode) {
             case zoom -> onTouchEventZoom(event);
             case pick -> onTouchEventPick(event);
@@ -1023,7 +1098,7 @@ public class GraphView extends View {
             return labelZ;
     }
 
-    //Interface to set axis labels
+    //Interface to set axis labels; the unit strings are the experiment's symbols
     public void setLabel(String labelX, String labelY, String labelZ, String unitX, String unitY, String unitZ, String unitYX) {
         this.labelX = labelX;
         this.labelY = labelY;
@@ -1032,6 +1107,67 @@ public class GraphView extends View {
         this.unitY = unitY;
         this.unitZ = unitZ;
         this.unitYX = unitYX;
+        experimentUnitSymbols[AXIS_X] = unitX;
+        experimentUnitSymbols[AXIS_Y] = unitY;
+        experimentUnitSymbols[AXIS_Z] = unitZ;
+    }
+
+    //The logical units per axis (null for a text unit); resets the display units to the experiment's
+    public void setUnitIds(String idX, String idY, String idZ) {
+        unitIds[AXIS_X] = idX;
+        unitIds[AXIS_Y] = idY;
+        unitIds[AXIS_Z] = idZ;
+        for (int axis = 0; axis < 3; axis++)
+            displayUnitIds[axis] = unitIds[axis];
+    }
+
+    public String getUnitId(int axis) {
+        return unitIds[axis];
+    }
+
+    public String getDisplayUnitId(int axis) {
+        return displayUnitIds[axis];
+    }
+
+    //A referenced unit with a quantity, unless the axis shows a clock (units.md, "Elements that are not converted")
+    public boolean isAxisConvertible(int axis) {
+        if (unitIds[axis] == null || !Units.isConvertible(unitIds[axis]))
+            return false;
+        boolean timeAxis = axis == AXIS_X ? timeOnX : (axis == AXIS_Y && timeOnY);
+        return !(timeAxis && absoluteTime);
+    }
+
+    //What the unit dialog does: show the axis in another unit of the same quantity
+    public void setDisplayUnit(int axis, String id) {
+        if (!isAxisConvertible(axis) || !Units.sameQuantity(unitIds[axis], id))
+            return;
+        displayUnitIds[axis] = id;
+        String symbol = id.equals(unitIds[axis]) ? experimentUnitSymbols[axis] : Units.symbol(getResources(), id);
+        switch (axis) {
+            case AXIS_X: unitX = symbol; break;
+            case AXIS_Y: unitY = symbol; break;
+            default: unitZ = symbol; break;
+        }
+        invalidate();
+    }
+
+    //Whether the axis is shown in a unit other than the experiment's
+    public boolean isConverted(int axis) {
+        return unitIds[axis] != null && displayUnitIds[axis] != null && !displayUnitIds[axis].equals(unitIds[axis]) && isAxisConvertible(axis);
+    }
+
+    //A position on the axis in the display unit (scale and offset)
+    public double toDisplay(int axis, double v) {
+        return isConverted(axis) ? Units.convert(v, unitIds[axis], displayUnitIds[axis]) : v;
+    }
+
+    public double fromDisplay(int axis, double v) {
+        return isConverted(axis) ? Units.convert(v, displayUnitIds[axis], unitIds[axis]) : v;
+    }
+
+    //The display factor of the axis (a difference in the display unit per difference in the experiment's)
+    public double displayScale(int axis) {
+        return isConverted(axis) ? Units.scale(unitIds[axis], displayUnitIds[axis]) : 1.0;
     }
 
     //Interface to define a time axis
@@ -1251,7 +1387,15 @@ public class GraphView extends View {
         return tics; //Done
     }
 
-    private String formatTic(Tic tic, int precision, boolean isTime, double systemTimeOffset) {
+    //Tics of an axis shown in another unit: nice numbers in the display unit, placed at the matching positions
+    private Tic[] getDisplayTics(int axis, double min, double max, int maxTics, boolean log) {
+        Tic[] tics = getTics(toDisplay(axis, min), toDisplay(axis, max), maxTics, log, false, 0);
+        for (int i = 0; i < tics.length; i++)
+            tics[i] = new Tic(fromDisplay(axis, tics[i].value), tics[i].value, tics[i].precision);
+        return tics;
+    }
+
+    String formatTic(Tic tic, int precision, boolean isTime, double systemTimeOffset) {
         if (isTime && systemTimeOffset > 0) {
             double alignedOffset = systemTimeOffset + TimeZone.getDefault().getRawOffset()/1000.0;
             if (Math.abs(Math.round(tic.value + alignedOffset) % (24*60*60)) < 0.0001) //If the time stamp is on 00:00:00, we show the date instead
@@ -1260,14 +1404,15 @@ public class GraphView extends View {
                 return DateFormat.getTimeInstance().format(new Date((long)((systemTimeOffset + tic.value) * 1000)));
         }
 
-        if (precision < 0 && (tic.value == 0 || ((Math.abs(tic.value) < 10000) && (Math.abs(tic.value) >= 0.0001))))
-            return String.format("%." + Math.max(tic.precision, 0) + "f", tic.value);
+        double shown = tic.display;
+        if (precision < 0 && (shown == 0 || ((Math.abs(shown) < 10000) && (Math.abs(shown) >= 0.0001))))
+            return String.format("%." + Math.max(tic.precision, 0) + "f", shown);
         else {
             try {
-                return String.format("%." + (precision < 0 ? 3 : precision) + (suppressScientificNotation ? "f" : "g"), tic.value);
+                return String.format("%." + (precision < 0 ? 3 : precision) + (suppressScientificNotation ? "f" : "g"), shown);
             } catch (ArrayIndexOutOfBoundsException e) {
                 //Workaround for Java bug https://bugs.java.com/bugdatabase/view_bug.do?bug_id=6469160 as occuring for example on Samsung Galaxy S6
-                return String.format("%." + (precision < 0 ? 3 : precision) + "f", tic.value);
+                return String.format("%." + (precision < 0 ? 3 : precision) + "f", shown);
             }
         }
     }
@@ -1560,13 +1705,13 @@ public class GraphView extends View {
         Tic singleTicX = null;
         Tic singleTicY = null;
         if (Double.isFinite(workingMinX) && workingMinX == workingMaxX) {
-            singleTicX = new Tic(workingMinX, singleValuePrecision(workingMinX));
+            singleTicX = new Tic(workingMinX, toDisplay(AXIS_X, workingMinX), singleValuePrecision(toDisplay(AXIS_X, workingMinX)));
             double[] range = openZeroRange(workingMinX, logX);
             workingMinX = range[0];
             workingMaxX = range[1];
         }
         if (Double.isFinite(workingMinY) && workingMinY == workingMaxY) {
-            singleTicY = new Tic(workingMinY, singleValuePrecision(workingMinY));
+            singleTicY = new Tic(workingMinY, toDisplay(AXIS_Y, workingMinY), singleValuePrecision(toDisplay(AXIS_Y, workingMinY)));
             double[] range = openZeroRange(workingMinY, logY);
             workingMinY = range[0];
             workingMaxY = range[1];
@@ -1594,12 +1739,12 @@ public class GraphView extends View {
         int maxYTics = timeOnY && absoluteTime ? maxYTimeTics : maxYRegularTics;
         int maxZTics = maxZRegularTics;
 
-        //Generate the tics
-        Tic[] xTics = singleTicX != null ? new Tic[]{singleTicX} : getTics(workingMinX, workingMaxX, maxXTics, logX, timeOnX, systemTimeOffsetX);
-        Tic[] yTics = singleTicY != null ? new Tic[]{singleTicY} : getTics(workingMinY, workingMaxY, maxYTics, logY, timeOnY, systemTimeOffsetY);
+        //Generate the tics (in the display unit where an axis is converted)
+        Tic[] xTics = singleTicX != null ? new Tic[]{singleTicX} : (isConverted(AXIS_X) && !(timeOnX && absoluteTime) ? getDisplayTics(AXIS_X, workingMinX, workingMaxX, maxXTics, logX) : getTics(workingMinX, workingMaxX, maxXTics, logX, timeOnX, systemTimeOffsetX));
+        Tic[] yTics = singleTicY != null ? new Tic[]{singleTicY} : (isConverted(AXIS_Y) && !(timeOnY && absoluteTime) ? getDisplayTics(AXIS_Y, workingMinY, workingMaxY, maxYTics, logY) : getTics(workingMinY, workingMaxY, maxYTics, logY, timeOnY, systemTimeOffsetY));
         Tic[] zTics = null;
         if (zScale)
-            zTics = getTics(workingMinZ, workingMaxZ, maxZTics, logZ, false, 0);
+            zTics = isConverted(AXIS_Z) ? getDisplayTics(AXIS_Z, workingMinZ, workingMaxZ, maxZTics, logZ) : getTics(workingMinZ, workingMaxZ, maxZTics, logZ, false, 0);
 
         if(!showColorScaleForColorMapChart)
             zScale = false;
@@ -1680,6 +1825,7 @@ public class GraphView extends View {
         //Labels for the tics. A tic can sit on the plot border (fixed ranges, zoom), so labels are kept within the
         //plot's width and the view's height instead of being clipped there.
         Rect textBounds = new Rect();
+        List<String> xLabels = new ArrayList<>(), yLabels = new ArrayList<>(), zLabels = new ArrayList<>();
         paint.setTextAlign(Paint.Align.CENTER);
         for (Tic tic : xTics) {
             if (!drawXTicLabels)
@@ -1687,6 +1833,7 @@ public class GraphView extends View {
             if (tic.value < workingMinX || tic.value > workingMaxX)
                 continue;
             String text = formatTic(tic, xPrecision, timeOnX, systemTimeOffsetX);
+            xLabels.add(text);
             float halfWidth = paint.measureText(text) / 2.f;
             float x = (float) Math.max(graphL + halfWidth, Math.min(dataXToViewX(tic.value), graphR - halfWidth));
             canvas.drawText(text, x, h-graphB+(float)(res.getDimensionPixelSize(R.dimen.graph_font)*1.1), paint);
@@ -1698,6 +1845,7 @@ public class GraphView extends View {
             if (tic.value < workingMinY || tic.value > workingMaxY)
                 continue;
             String text = formatTic(tic, yPrecision, timeOnY, systemTimeOffsetY);
+            yLabels.add(text);
             paint.getTextBounds(text, 0, text.length(), textBounds);
             float y = (float) Math.max(graphT - textBounds.top, Math.min(dataYToViewY(tic.value) + res.getDimensionPixelSize(R.dimen.graph_font)*0.4, h - graphB - textBounds.bottom));
             canvas.drawText(text, graphL-(float)(res.getDimensionPixelSize(R.dimen.graph_font)*0.2), y, paint);
@@ -1708,11 +1856,20 @@ public class GraphView extends View {
                 if (tic.value < workingMinZ || tic.value > workingMaxZ)
                     continue;
                 String text = formatTic(tic, zPrecision, false, 0);
+                zLabels.add(text);
                 float halfWidth = paint.measureText(text) / 2.f;
                 float x = (float) Math.max(graphL + halfWidth, Math.min(dataZToViewX(tic.value), graphR - halfWidth));
                 canvas.drawText(text, x, zScaleH+(float)(res.getDimensionPixelSize(R.dimen.graph_font)*1.1), paint);
             }
         }
+        lastXTicLabels = xLabels.toArray(new String[0]);
+        lastYTicLabels = yLabels.toArray(new String[0]);
+        lastZTicLabels = zLabels.toArray(new String[0]);
+
+        //The label areas outside the plot take the unit taps (InteractiveGraphView)
+        axisHitRects[AXIS_X] = new RectF(graphL, h - graphB, graphR, h);
+        axisHitRects[AXIS_Y] = new RectF(0, graphT, graphL, h - graphB);
+        axisHitRects[AXIS_Z] = zScale ? new RectF(graphL, 2 * zScaleH, graphR, graphT) : null;
 
         //Labels
         paint.setTextAlign(Paint.Align.CENTER);

@@ -391,8 +391,27 @@ THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND 
     <string name="settings_mode_dark">On (Default)</string>
     <string name="settings_mode_no_dark">Off </string>
     <string name="settings_mode_dark_system">As system</string>
-    <!-- Units-->
-    // pixel position, wavelenght,
+    <string name="settingsUnitSystem">Unit system</string>
+    <string name="settingsUnitSystemDetail">Show units as defined by the experiment or converted to a unit system; tap a unit in the experiment to change it individually.</string>
+    <string name="settingsUnitSystemExperiment">As defined by the experiment</string>
+    <string name="settingsUnitSystemMetric">Metric (SI)</string>
+    <string name="settingsUnitSystemImperial">Imperial / US customary</string>
+    <string-array name="settingsUnitSystemEntries">
+        <item>@string/settingsUnitSystemExperiment</item>
+        <item>@string/settingsUnitSystemMetric</item>
+        <item>@string/settingsUnitSystemImperial</item>
+    </string-array>
+    <string-array name="settingsUnitSystemValues" translatable="false">
+        <item>experiment</item>
+        <item>metric</item>
+        <item>imperial</item>
+    </string-array>
+    <string name="unit_dialog_title">Unit</string>
+    <string name="unit_dialog_experiment_default">experiment default</string>
+    <string name="unit_dialog_other">Other</string>
+    <!-- Units: the symbols shown for unit references (@id) and the [[unit_short_id]] placeholders. Keep the Latin symbols
+         unless your national standard or school practice prescribes native designations (as in Russian or Ukrainian);
+         a few entries (rpm, arb. unit) are language-dependent abbreviations rather than symbols. -->
     <string name="common_unit_short_arbitrary_unit">arb. unit</string>
     <string name="common_unit_short_second">s</string>
     <string name="common_unit_short_milli_second">ms</string>
@@ -403,7 +422,7 @@ THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND 
     <string name="common_unit_short_degree_celsius">°C</string>
     <string name="common_unit_short_meter">m</string>
     <string name="common_unit_short_nano_meter">nm</string>
-    <string name="common_unit_short_micro_meter">μm</string>
+    <string name="common_unit_short_micro_meter">µm</string>
     <string name="common_unit_short_milli_meter">mm</string>
     <string name="common_unit_short_centi_meter">cm</string>
     <string name="common_unit_short_kilo_meter">km</string>
@@ -414,6 +433,34 @@ THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND 
     <string name="common_unit_short_hecto_pascal">hPa</string>
     <string name="common_unit_short_decibel">dB</string>
     <string name="common_unit_short_percent">%</string>
+    <string name="common_unit_short_micro_second">µs</string>
+    <string name="common_unit_short_minute">min</string>
+    <string name="common_unit_short_hour">h</string>
+    <string name="common_unit_short_kilo_hertz">kHz</string>
+    <string name="common_unit_short_per_minute">1/min</string>
+    <string name="common_unit_short_inch">in</string>
+    <string name="common_unit_short_foot">ft</string>
+    <string name="common_unit_short_yard">yd</string>
+    <string name="common_unit_short_mile">mi</string>
+    <string name="common_unit_short_foot_per_second">ft/s</string>
+    <string name="common_unit_short_mile_per_hour">mph</string>
+    <string name="common_unit_short_foot_per_square_second">ft/s²</string>
+    <string name="common_unit_short_standard_gravity">g</string>
+    <string name="common_unit_short_degree_per_second">°/s</string>
+    <string name="common_unit_short_revolution_per_minute">rpm</string>
+    <string name="common_unit_short_radian">rad</string>
+    <string name="common_unit_short_milli_tesla">mT</string>
+    <string name="common_unit_short_tesla">T</string>
+    <string name="common_unit_short_gauss">G</string>
+    <string name="common_unit_short_foot_candle">fc</string>
+    <string name="common_unit_short_pascal">Pa</string>
+    <string name="common_unit_short_kilo_pascal">kPa</string>
+    <string name="common_unit_short_milli_bar">mbar</string>
+    <string name="common_unit_short_bar">bar</string>
+    <string name="common_unit_short_inch_of_mercury">inHg</string>
+    <string name="common_unit_short_psi">psi</string>
+    <string name="common_unit_short_kelvin">K</string>
+    <string name="common_unit_short_degree_fahrenheit">°F</string>
     <string name="common_quantity_short_time">t</string>
     <string name="common_quantity_short_angular_velocity">ω</string>
     <string name="common_quantity_short_magnetic_field">B</string>

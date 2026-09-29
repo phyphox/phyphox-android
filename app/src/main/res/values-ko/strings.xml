@@ -276,6 +276,34 @@
     <string name="common_unit_short_hecto_pascal">hPa</string>
     <string name="common_unit_short_decibel">dB</string>
     <string name="common_unit_short_percent">%</string>
+    <string name="common_unit_short_micro_second">µs</string>
+    <string name="common_unit_short_minute">min</string>
+    <string name="common_unit_short_hour">h</string>
+    <string name="common_unit_short_kilo_hertz">kHz</string>
+    <string name="common_unit_short_per_minute">1/min</string>
+    <string name="common_unit_short_inch">in</string>
+    <string name="common_unit_short_foot">ft</string>
+    <string name="common_unit_short_yard">yd</string>
+    <string name="common_unit_short_mile">mi</string>
+    <string name="common_unit_short_foot_per_second">ft/s</string>
+    <string name="common_unit_short_mile_per_hour">mph</string>
+    <string name="common_unit_short_foot_per_square_second">ft/s²</string>
+    <string name="common_unit_short_standard_gravity">g</string>
+    <string name="common_unit_short_degree_per_second">°/s</string>
+    <string name="common_unit_short_revolution_per_minute">rpm</string>
+    <string name="common_unit_short_radian">rad</string>
+    <string name="common_unit_short_milli_tesla">mT</string>
+    <string name="common_unit_short_tesla">T</string>
+    <string name="common_unit_short_gauss">G</string>
+    <string name="common_unit_short_foot_candle">fc</string>
+    <string name="common_unit_short_pascal">Pa</string>
+    <string name="common_unit_short_kilo_pascal">kPa</string>
+    <string name="common_unit_short_milli_bar">mbar</string>
+    <string name="common_unit_short_bar">bar</string>
+    <string name="common_unit_short_inch_of_mercury">inHg</string>
+    <string name="common_unit_short_psi">psi</string>
+    <string name="common_unit_short_kelvin">K</string>
+    <string name="common_unit_short_degree_fahrenheit">°F</string>
     <string name="common_quantity_short_time">t</string>
     <string name="common_quantity_short_angular_velocity">ω</string>
     <string name="common_quantity_short_magnetic_field">B</string>
@@ -423,7 +451,7 @@
 \n{시작시간} – 측정 시작 시간
 \n{측정시간} – 측정 시간</string>
     <string name="common_unit_short_nano_meter">nm</string>
-    <string name="common_unit_short_micro_meter">μm</string>
+    <string name="common_unit_short_micro_meter">µm</string>
     <string name="common_quantity_short_wavelength">λ</string>
     <string name="spectrum_orientation">방향</string>
     <string name="localNetworkLoadMessage">이 주소에서 실험을 불러올 수 없습니다. 로컬 네트워크의 기기에서 제공되는 경우, phyphox에 로컬 네트워크 접근 권한이 필요합니다. 권한을 허용하고 다시 시도하시겠습니까\?</string>

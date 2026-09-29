@@ -33,7 +33,7 @@ public class ExpViewFragment extends Fragment {
     }
 
     //Apply zoom to all graphs on the current page.
-    public void applyZoom(double min, double max, boolean follow, String unit, String buffer, boolean yAxis, boolean absoluteTime) {
+    public void applyZoom(double min, double max, boolean follow, Unit unit, String buffer, boolean yAxis, boolean absoluteTime) {
         for (ExpViewElement element : ((Experiment) getActivity()).experiment.experimentViews.elementAt(index).flatElements()) {
             if (element.getClass() == GraphElement.class) {
                 GraphElement ge = (GraphElement)element;

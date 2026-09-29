@@ -26,6 +26,9 @@ import android.widget.TextView;
 import androidx.appcompat.widget.AppCompatEditText;
 import androidx.core.content.ContextCompat;
 
+import org.json.JSONException;
+import org.json.JSONObject;
+
 import java.io.Serializable;
 import java.util.Locale;
 import java.util.Vector;
@@ -33,6 +36,9 @@ import java.util.Vector;
 import de.rwth_aachen.phyphox.ExpViewFragment;
 import de.rwth_aachen.phyphox.PhyphoxExperiment;
 import de.rwth_aachen.phyphox.R;
+import de.rwth_aachen.phyphox.Unit;
+import de.rwth_aachen.phyphox.UnitDialog;
+import de.rwth_aachen.phyphox.Units;
 import de.rwth_aachen.phyphox.helper.DecimalTextWatcher;
 
 //EditElement implements a simple edit box which takes a single value from the user
@@ -40,7 +46,11 @@ public class EditElement extends ExpViewElement implements Serializable {
     transient EditText et = null;
     transient private ValueAnimator commitAnimator = null;
     private double factor; //factor used for conversion. Mostly for prefixes like m, k, M, G...
-    private String unit; //A string to display as unit
+    private Unit unit; //The experiment's unit: a reference to a known unit or custom text
+    private String displayUnitId; //The unit currently shown (session state, docs/file-format/units.md)
+    transient private TextView unitView = null;
+    transient private Resources res;
+    transient private boolean discardOnFocusLoss = false; //A unit switch drops uncommitted text instead of writing it back
     private double defaultValue; //This value is filled into the dataBuffer before the user enters a custom value
     private double currentValue = Double.NaN; //This value is filled into the dataBuffer before the user enters a custom value
     private boolean signed = true; //Is the user allowed to give negative values?
@@ -64,7 +74,8 @@ public class EditElement extends ExpViewElement implements Serializable {
     public EditElement(String label, String visibility, String valueOutput, Vector<String> inputs, Resources res) {
         super(label, visibility, valueOutput, inputs, res);
         this.label = label;
-        this.unit = "";
+        this.unit = Unit.text("");
+        this.res = res;
         this.factor = 1.;
     }
 
@@ -78,12 +89,93 @@ public class EditElement extends ExpViewElement implements Serializable {
         this.defaultValue = v;
     }
 
-    //Interface to set the unit string
-    public void setUnit(String unit) {
-        if (unit == null || unit.equals(""))
-            this.unit = "";
-        else
-            this.unit = unit;
+    //Interface to set the unit
+    public void setUnit(Unit unit) {
+        this.unit = unit == null ? Unit.text("") : unit;
+        this.displayUnitId = this.unit.id;
+    }
+
+    public Unit getUnit() {
+        return unit;
+    }
+
+    public String getDisplayUnitId() {
+        return displayUnitId;
+    }
+
+    //A referenced unit with a quantity and decimal input (an integer restriction in ft is not one in m)
+    public boolean isConvertible() {
+        return unit.id != null && Units.isConvertible(unit.id) && decimal;
+    }
+
+    //What the unit dialog does: show the field in another unit of the same quantity; uncommitted text is discarded
+    public void setDisplayUnit(String id) {
+        if (!isConvertible() || !Units.sameQuantity(unit.id, id))
+            return;
+        displayUnitId = id;
+        if (et != null && et.hasFocus()) {
+            discardOnFocusLoss = true; //the text typed in the old unit is dropped, not committed
+            et.clearFocus();
+            discardOnFocusLoss = false;
+        }
+        if (unitView != null)
+            unitView.setText(displayUnitSymbol());
+        boolean wasFocused = focused;
+        focused = false;
+        setValue(currentValue);
+        focused = wasFocused;
+    }
+
+    @Override
+    public void applyUnitSystem(Units.Setting setting) {
+        if (isConvertible())
+            setDisplayUnit(Units.forSetting(unit.id, setting));
+    }
+
+    public String displayUnitSymbol() {
+        if (unit.id != null && displayUnitId != null && !displayUnitId.equals(unit.id))
+            return Units.symbol(res, displayUnitId);
+        return unit.symbol(res);
+    }
+
+    private boolean converted() {
+        return unit.id != null && displayUnitId != null && !displayUnitId.equals(unit.id);
+    }
+
+    //Factored buffer value -> shown value, and back (units.md, "What a converted element shows")
+    private double toDisplay(double factored) {
+        return converted() ? Units.convert(factored, unit.id, displayUnitId) : factored;
+    }
+
+    private double fromDisplay(double shown) {
+        return converted() ? Units.convert(shown, displayUnitId, unit.id) : shown;
+    }
+
+    //The limits as they apply to the shown number: {min, max} in the display unit (buffer units in the file)
+    public double[] displayedLimits() {
+        return new double[]{min.isInfinite() ? min : toDisplay(min * factor), max.isInfinite() ? max : toDisplay(max * factor)};
+    }
+
+    //The text of the edit box, for the tests
+    public CharSequence displayedText() {
+        return et == null ? null : et.getText();
+    }
+
+    //What the field shows for a buffer value; a converted value is rounded to six significant digits, as the
+    //conversion factors would otherwise fill the field with digits
+    public String formatValue(double v) {
+        if (!decimal)
+            return String.format(Locale.US, "%.0f", v * factor);
+        if (!converted())
+            return String.valueOf(v * factor);
+        return String.valueOf(roundSignificant(toDisplay(v * factor), 6));
+    }
+
+    private static double roundSignificant(double v, int digits) {
+        if (v == 0 || !Double.isFinite(v))
+            return v;
+        double magnitude = Math.pow(10, digits - 1 - Math.floor(Math.log10(Math.abs(v))));
+        return Math.round(v * magnitude) / magnitude;
     }
 
     //Interface to allow signed values
@@ -119,6 +211,7 @@ public class EditElement extends ExpViewElement implements Serializable {
         phyphoxExperiment = experiment;
         root_ll = ll;
         this.c = c;
+        this.res = res;
 
         LinearLayout row = new LinearLayout(c);
         row.setLayoutParams(new ViewGroup.LayoutParams(
@@ -197,12 +290,14 @@ public class EditElement extends ExpViewElement implements Serializable {
         et.setText("NaN");
 
         //The unit next to the edit box
-        TextView unitView = new TextView(c);
+        unitView = new TextView(c);
         unitView.setLayoutParams(new TableRow.LayoutParams(
                 0,
                 ViewGroup.LayoutParams.WRAP_CONTENT,
                 0.3f)); //Smaller part of the right half
-        unitView.setText(this.unit);
+        unitView.setText(displayUnitSymbol());
+        if (isConvertible()) //a tap on the unit offers the other units of the quantity
+            unitView.setOnClickListener(v -> UnitDialog.show(c, unit.id, displayUnitId, this::setDisplayUnit));
         unitView.setGravity(Gravity.END | Gravity.CENTER_VERTICAL);
         unitView.setTextSize(TypedValue.COMPLEX_UNIT_PX, labelSize);
         unitView.setPadding(0, 0, (int) labelSize / 2, 0);
@@ -253,6 +348,10 @@ public class EditElement extends ExpViewElement implements Serializable {
                 commitAnimator.cancel();
             }
             if (!hasFocus) {
+                if (discardOnFocusLoss) {
+                    overlay.setAlpha(0);
+                    return;
+                }
                 setValue(getValue()); //Write back the value actually used...
                 triggered = true;
 
@@ -288,7 +387,7 @@ public class EditElement extends ExpViewElement implements Serializable {
     //Note that the input is send from here as well as the AJAX-request is placed in the
     //onchange-listener in the markup
     protected String createViewHTML(){
-        //Construct value restrictions in HTML5
+        //Construct value restrictions in HTML5 (in the experiment's unit; the interface converts them itself)
         String restrictions = "";
         if (!signed && min < 0)
             restrictions += "min=\"0\" ";
@@ -302,8 +401,31 @@ public class EditElement extends ExpViewElement implements Serializable {
         return "<div style=\"font-size:"+this.labelSize/.4+"%;\" class=\"editElement" + labelLayoutClass() + "\" id=\"element"+htmlID+"\">" +
                 labelHTML() +
                 "<input onchange=\"ajax('control?cmd=set&buffer="+valueOutput+"&value='+this.value/"+ factor + ")\" type=\"number\" class=\"value\" " + restrictions + " />" +
-                "<span class=\"unit\">"+this.unit+"</span>" +
+                "<span class=\"unit\">"+unit.symbol(res)+"</span>" +
                 "</div>";
+    }
+
+    @Override
+    //The remote interface handles the field itself from this (webinterface readme.md, "Value and edit elements")
+    public String getWebConfig() {
+        try {
+            JSONObject cfg = new JSONObject();
+            cfg.put("unit", unit.toJson());
+            cfg.put("factor", factor);
+            cfg.put("min", min.isInfinite() ? JSONObject.NULL : min);
+            cfg.put("max", max.isInfinite() ? JSONObject.NULL : max);
+            cfg.put("signed", signed);
+            cfg.put("decimal", decimal);
+            cfg.put("default", Double.isNaN(defaultValue) ? JSONObject.NULL : defaultValue);
+            return cfg.toString();
+        } catch (JSONException e) {
+            return null;
+        }
+    }
+
+    @Override
+    public String getWebConfigKey() {
+        return "edit";
     }
 
     //Get the value from the edit box (Note, that we have to divide by the factor to achieve a
@@ -312,7 +434,7 @@ public class EditElement extends ExpViewElement implements Serializable {
         if (et == null || focused)
             return currentValue;
         try {
-            currentValue = Double.valueOf(et.getText().toString().replace(",", "."))/factor;
+            currentValue = fromDisplay(Double.valueOf(et.getText().toString().replace(",", ".")))/factor;
             if (!signed && currentValue < 0.0) {
                 currentValue = Math.abs(currentValue); //Another safety net as we cannot entirely rule out the minus sign in decimal notation because of possible scientific representation
             }
@@ -335,12 +457,8 @@ public class EditElement extends ExpViewElement implements Serializable {
                 currentValue = defaultValue;
             else
                 currentValue = v;
-            if (et != null) {
-                if (decimal)
-                    et.setText(String.valueOf(currentValue * factor));
-                else
-                    et.setText(String.format(Locale.US, "%.0f", currentValue * factor));
-            }
+            if (et != null)
+                et.setText(formatValue(currentValue));
         }
     }
 

@@ -142,6 +142,21 @@ public abstract class PhyphoxFile {
         return input;
     }
 
+    //A unit attribute (units.md, rules.yml "unit-reference"): "@<id>" with a known id is a unit reference from file format
+    //1.21 on, the deprecated "[[unit_short_<id>]]" resolves to the same logical unit in every version, and anything else
+    //(custom text, an unknown id, a reference in an older file) is text shown as written, translated like any other string
+    static Unit parseUnit(String raw, PhyphoxExperiment experiment, Experiment parent) {
+        if (raw == null)
+            return null;
+        String s = raw.trim();
+        boolean references = experiment != null && (experiment.versionMajor > 1 || (experiment.versionMajor == 1 && experiment.versionMinor >= 21));
+        if (references && s.startsWith("@") && Units.isKnown(s.substring(1)))
+            return Unit.reference(s.substring(1));
+        if (s.startsWith("[[unit_short_") && s.endsWith("]]") && Units.isKnown(s.substring(13, s.length() - 2)))
+            return Unit.reference(s.substring(13, s.length() - 2));
+        return Unit.text(translate(raw, parent));
+    }
+
     //Returns true if the string is a valid identifier for a dataBuffer, very early versions had some rules here, but we now allow anything as long as it is not empty.
     public static boolean isValidIdentifier(String s) {
         if (s.isEmpty()) {
@@ -413,6 +428,11 @@ public abstract class PhyphoxFile {
         //Helper to receive a string typed attribute and translate it
         protected String getTranslatedAttribute(String identifier) {
             return translate(xpp.getAttributeValue(XmlPullParser.NO_NAMESPACE, identifier), parent);
+        }
+
+        //Helper to receive a unit attribute (see parseUnit)
+        protected Unit getUnitAttribute(String identifier) {
+            return parseUnit(xpp.getAttributeValue(XmlPullParser.NO_NAMESPACE, identifier), experiment, parent);
         }
 
         private final static Pattern intLexical = Pattern.compile("[+-]?[0-9]+");
@@ -1670,7 +1690,7 @@ public abstract class PhyphoxFile {
             boolean verticalLayout = labelledControl && getBooleanAttribute("verticalLayout", false);
             int align = labelledControl ? getAlignAttribute() : Gravity.START; //label and control at full width follow it
             double factor = getDoubleAttribute("factor", 1.);
-            String unit = getTranslatedAttribute("unit");
+            Unit unit = getUnitAttribute("unit");
             Vector<DataInput> inputs = new Vector<>();
             Vector<DataOutput> outputs = new Vector<>();
             switch (tag.toLowerCase()) {
@@ -1771,10 +1791,10 @@ public abstract class PhyphoxFile {
                     String labelX = getTranslatedAttribute("labelX");
                     String labelY = getTranslatedAttribute("labelY");
                     String labelZ = getTranslatedAttribute("labelZ");
-                    String unitX = getTranslatedAttribute("unitX");
-                    String unitY = getTranslatedAttribute("unitY");
-                    String unitZ = getTranslatedAttribute("unitZ");
-                    String unitYX = getTranslatedAttribute("unitYperX");
+                    Unit unitX = getUnitAttribute("unitX");
+                    Unit unitY = getUnitAttribute("unitY");
+                    Unit unitZ = getUnitAttribute("unitZ");
+                    Unit unitYX = getUnitAttribute("unitYperX");
                     String pickLabel = getTranslatedAttribute("pickLabel");
 
                     Vector<Integer> colorScale = new Vector<>();
@@ -1791,20 +1811,20 @@ public abstract class PhyphoxFile {
                         Matcher matcherX = pattern.matcher(labelX);
                         if (matcherX.find()) {
                             labelX =  matcherX.group(1);
-                            unitX =  matcherX.group(2);
+                            unitX =  Unit.text(matcherX.group(2));
                         }
 
                         Matcher matcherY = pattern.matcher(labelY);
                         if (matcherY.find()) {
                             labelY =  matcherY.group(1);
-                            unitY =  matcherY.group(2);
+                            unitY =  Unit.text(matcherY.group(2));
                         }
 
                         if (labelZ != null) {
                             Matcher matcherZ = pattern.matcher(labelZ);
                             if (matcherZ.find()) {
                                 labelZ = matcherZ.group(1);
-                                unitZ = matcherZ.group(2);
+                                unitZ = Unit.text(matcherZ.group(2));
                             }
                         }
                     }
@@ -4158,6 +4178,12 @@ public abstract class PhyphoxFile {
             experiment.message = "Bad experiment definition: No valid view found.";
             return experiment;
         }
+
+        //The Unit system setting is applied on every load (units.md, "The unit-system setting")
+        Units.Setting unitSetting = Units.Setting.read(parent);
+        for (ExpView view : experiment.experimentViews)
+            for (ExpViewElement element : view.flatElements())
+                element.applyUnitSystem(unitSetting);
 
         //We are done without any problems that we know of.
         experiment.loaded = true;

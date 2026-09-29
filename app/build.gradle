@@ -86,6 +86,10 @@ android {
             def containerFixtures = file("$rootDir/../phyphox-docs/fixtures/containers")
             if (containerFixtures.isDirectory())
                 assets.srcDirs += containerFixtures
+            //The generated corpus files double as UI fixtures (unit-references.phyphox for UnitConversionUiTest)
+            def generatedCorpus = file("$rootDir/../phyphox-docs/corpus/generated")
+            if (generatedCorpus.isDirectory())
+                assets.srcDirs += generatedCorpus
             //Graph goldens are compared on the device, so they travel with the test APK
             assets.srcDirs += file("src/androidTest/goldens")
         }

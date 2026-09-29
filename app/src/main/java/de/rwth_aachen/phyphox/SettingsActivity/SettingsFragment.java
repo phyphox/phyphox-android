@@ -43,6 +43,18 @@ public class SettingsFragment extends PreferenceFragmentCompat {
         updateCurrentLanguage();
         updateTheme();
         updateGraphSize();
+        setupUnitSystem();
+    }
+
+    //The Unit system list shows its choice and, below it, what the setting does (docs/file-format/units.md)
+    private void setupUnitSystem() {
+        ListPreference lp = findPreference(de.rwth_aachen.phyphox.Units.Setting.PREF_KEY);
+        if (lp == null)
+            return;
+        lp.setSummaryProvider(preference -> {
+            CharSequence entry = lp.getEntry();
+            return (entry == null ? "" : entry + "\n") + getString(R.string.settingsUnitSystemDetail);
+        });
     }
 
     private void setupPortEditText() {

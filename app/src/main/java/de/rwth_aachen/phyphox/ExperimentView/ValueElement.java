@@ -14,6 +14,10 @@ import android.widget.LinearLayout;
 import android.widget.TableRow;
 import android.widget.TextView;
 
+import org.json.JSONArray;
+import org.json.JSONException;
+import org.json.JSONObject;
+
 import java.io.Serializable;
 import java.util.Vector;
 
@@ -21,6 +25,9 @@ import de.rwth_aachen.phyphox.ExpViewFragment;
 import de.rwth_aachen.phyphox.GpsInput;
 import de.rwth_aachen.phyphox.PhyphoxExperiment;
 import de.rwth_aachen.phyphox.R;
+import de.rwth_aachen.phyphox.Unit;
+import de.rwth_aachen.phyphox.UnitDialog;
+import de.rwth_aachen.phyphox.Units;
 import de.rwth_aachen.phyphox.helper.RGB;
 
 //ValueElement implements a simple text display for a single value with an unit and a given
@@ -32,7 +39,10 @@ public class ValueElement extends ExpViewElement implements Serializable {
     private boolean scientificNotation; //Show scientific notation instead of fixed point (1e-3 instead of 0.001)
     private int precision; //The number of significant digits
     private String formatter; //This formatter is created when scientificNotation and precision are set
-    private String unit; //A string to display as unit
+    private Unit unit; //The experiment's unit: a reference to a known unit or custom text
+    private String displayUnitId; //The unit currently shown (session state, docs/file-format/units.md); the experiment's own unless switched
+    transient private Resources res;
+    private double lastValue = Double.NaN; //Re-rendered when the display unit changes
     private RGB color;
     private String positiveUnit, negativeUnit;
     private GpsInput.ValueFormat valueFormat;
@@ -93,7 +103,8 @@ public class ValueElement extends ExpViewElement implements Serializable {
         this.scientificNotation = false;
         this.precision = 2;
         updateFormatter();
-        this.unit = "";
+        this.unit = Unit.text("");
+        this.res = res;
         this.factor = 1.;
         this.size = 1.;
         this.color = new RGB(res.getColor(R.color.phyphox_white_50_black_50));
@@ -155,13 +166,70 @@ public class ValueElement extends ExpViewElement implements Serializable {
         this.factor = factor;
     }
 
-    //Interface to set the unit string
-    public void setUnit(String unit) {
-        //If there is a unit we will save the space in this string as well...
-        if (unit == null || unit.equals(""))
-            this.unit = "";
-        else
-            this.unit = " "+unit;
+    //Interface to set the unit
+    public void setUnit(Unit unit) {
+        this.unit = unit == null ? Unit.text("") : unit;
+        this.displayUnitId = this.unit.id;
+    }
+
+    public Unit getUnit() {
+        return unit;
+    }
+
+    public String getDisplayUnitId() {
+        return displayUnitId;
+    }
+
+    //A referenced unit with a quantity, a plain float and no direction labels (units.md, "Elements that are not converted")
+    public boolean isConvertible() {
+        return unit.id != null && Units.isConvertible(unit.id)
+                && (valueFormat == null || valueFormat == GpsInput.ValueFormat.FLOAT)
+                && positiveUnit == null && negativeUnit == null;
+    }
+
+    //What the unit dialog does: show the value in another unit of the same quantity
+    public void setDisplayUnit(String id) {
+        if (!isConvertible() || !Units.sameQuantity(unit.id, id))
+            return;
+        displayUnitId = id;
+        render(lastValue);
+    }
+
+    @Override
+    public void applyUnitSystem(Units.Setting setting) {
+        if (isConvertible())
+            setDisplayUnit(Units.forSetting(unit.id, setting));
+    }
+
+    //The symbol shown next to the value: the display unit's, or the experiment's text
+    public String displayUnitSymbol() {
+        if (unit.id != null && displayUnitId != null && !displayUnitId.equals(unit.id))
+            return Units.symbol(res, displayUnitId);
+        return unit.symbol(res);
+    }
+
+    //Conversion of the factored value into the display unit; identity while the experiment's unit is shown
+    private double toDisplay(double factoredValue) {
+        if (unit.id == null || displayUnitId == null || displayUnitId.equals(unit.id))
+            return factoredValue;
+        return Units.convert(factoredValue, unit.id, displayUnitId);
+    }
+
+    //Decimals follow the conversion (units.md, "Precision"): fixed point only, scientific stays as authored
+    private String displayFormatter() {
+        if (scientificNotation || unit.id == null || displayUnitId == null || displayUnitId.equals(unit.id))
+            return formatter;
+        return "%." + Units.precision(precision, Units.scale(unit.id, displayUnitId)) + "f";
+    }
+
+    //The number as the element shows it for a buffer value (the mappings and NaN aside)
+    public String formatNumber(double x) {
+        return String.format(displayFormatter(), toDisplay(x * this.factor));
+    }
+
+    //The text of the value view, for the tests
+    public CharSequence displayedText() {
+        return tv == null ? null : tv.getText();
     }
 
     @Override
@@ -177,6 +245,7 @@ public class ValueElement extends ExpViewElement implements Serializable {
     //Append the Android vews we need to the linear layout
     public void createView(LinearLayout ll, Context c, Resources res, ExpViewFragment parent, PhyphoxExperiment experiment){
         super.createView(ll, c, res, parent, experiment);
+        this.res = res;
 
         //Create a row consisting of label and value
         LinearLayout row = new LinearLayout(c);
@@ -209,6 +278,8 @@ public class ValueElement extends ExpViewElement implements Serializable {
         tv.setPadding((int) labelSize / 2, 0, 0, 0);
         tv.setTypeface(null, Typeface.BOLD);
         tv.setTextColor(color.autoLightColor(res).intColor());
+        if (isConvertible()) //a tap on the value and its unit offers the other units of the quantity
+            tv.setOnClickListener(v -> UnitDialog.show(c, unit.id, displayUnitId, this::setDisplayUnit));
 
 
         //Add label and value to the row (label left, above with verticalLayout, or the value alone without a label)
@@ -229,8 +300,48 @@ public class ValueElement extends ExpViewElement implements Serializable {
         String c = color.hexString(); //rrggbb, or rrggbbaa with an alpha byte
         return "<div style=\"font-size:"+this.labelSize/.4+"%;color:#"+c+"\" class=\"valueElement adjustableColor" + labelLayoutClass() + "\" id=\"element"+htmlID+"\">" +
                 labelHTML() +
-                "<span class=\"value\"><span class=\"valueNumber\" style=\"font-size:" + (this.size*100.) + "%\"></span> <span class=\"valueUnit\">"+ this.unit + "</span></span>" +
+                "<span class=\"value\"><span class=\"valueNumber\" style=\"font-size:" + (this.size*100.) + "%\"></span> <span class=\"valueUnit\">"+ unit.symbol(res) + "</span></span>" +
                 "</div>";
+    }
+
+    @Override
+    //The remote interface builds the value display itself from this (webinterface readme.md, "Value and edit elements")
+    public String getWebConfig() {
+        try {
+            JSONObject cfg = new JSONObject();
+            cfg.put("unit", unit.toJson());
+            cfg.put("precision", precision);
+            cfg.put("scientific", scientificNotation);
+            cfg.put("factor", factor);
+            cfg.put("size", size);
+            String format = "float";
+            if (valueFormat == GpsInput.ValueFormat.DEGREE_MINUTES)
+                format = "degree-minutes";
+            else if (valueFormat == GpsInput.ValueFormat.DEGREE_MINUTES_SECONDS)
+                format = "degree-minutes-seconds";
+            else if (valueFormat == GpsInput.ValueFormat.ASCII_)
+                format = "ascii";
+            cfg.put("format", format);
+            cfg.put("positiveUnit", positiveUnit == null ? JSONObject.NULL : positiveUnit);
+            cfg.put("negativeUnit", negativeUnit == null ? JSONObject.NULL : negativeUnit);
+            JSONArray map = new JSONArray();
+            for (Mapping mapping : mappings) {
+                JSONObject m = new JSONObject();
+                m.put("min", mapping.min.isInfinite() ? JSONObject.NULL : mapping.min);
+                m.put("max", mapping.max.isInfinite() ? JSONObject.NULL : mapping.max);
+                m.put("str", mapping.str);
+                map.put(m);
+            }
+            cfg.put("map", map);
+            return cfg.toString();
+        } catch (JSONException e) {
+            return null;
+        }
+    }
+
+    @Override
+    public String getWebConfigKey() {
+        return "value";
     }
 
     @Override
@@ -241,49 +352,62 @@ public class ValueElement extends ExpViewElement implements Serializable {
             return;
         needsUpdate = false;
         double x = experiment.getBuffer(inputs.get(0)).value;
-        if (tv != null) {
-            String vStr = "";
-            String uStr = "";
-            if (Double.isNaN(x)) {
-                vStr = "-";
+        lastValue = x;
+        if (tv == null)
+            return;
+        asciiText = valueFormat == GpsInput.ValueFormat.ASCII_ ? convertDecimalToAscii(experiment.getBuffer(inputs.get(0)).getArray()) : null;
+        render(x);
+    }
+
+    private String asciiText = null; //The ascii format's text, set by onMayReadFromBuffers
+
+    //Puts value and unit into the text view; also what a change of the display unit re-runs
+    private void render(double x) {
+        if (tv == null)
+            return;
+        String vStr;
+        String uStr;
+        if (Double.isNaN(x)) {
+            vStr = "-";
+            uStr = "";
+        } else {
+            vStr = "";
+            for (Mapping map : mappings)  {
+                if (x >= map.min && x <= map.max) {
+                    vStr = map.str;
+                    break;
+                }
+            }
+            if (!vStr.isEmpty()) {
                 uStr = "";
             } else {
-                for (Mapping map : mappings)  {
-                    if (x >= map.min && x <= map.max) {
-                        vStr = map.str;
-                        break;
-                    }
+                double factoredValue = x * this.factor;
+                if(valueFormat != null && valueFormat != GpsInput.ValueFormat.FLOAT){
+                    if(valueFormat == GpsInput.ValueFormat.ASCII_)
+                        vStr = asciiText == null ? "" : asciiText;
+                    else
+                        vStr = formatGeoCoordinate(factoredValue, valueFormat);
+                } else {
+                    vStr = formatNumber(x);
                 }
-                if (vStr.isEmpty()) {
-                    double factoredValue = x * this.factor;
-                    if(valueFormat != null){
-                        if(valueFormat == GpsInput.ValueFormat.ASCII_)
-                            vStr = convertDecimalToAscii(experiment.getBuffer(inputs.get(0)).getArray());
-                        else
-                            vStr = formatGeoCoordinate(factoredValue, valueFormat);
-                    } else {
-                        vStr = String.format(this.formatter, factoredValue);
-                    }
-
-                    if(positiveUnit != null && (factoredValue >= 0) ){
-                        uStr = this.positiveUnit;
-                    } else if(negativeUnit != null && (factoredValue < 0)){
-                        uStr = this.negativeUnit;
-                    } else {
-                        uStr = this.unit;
-                    }
-
+                if(positiveUnit != null && (factoredValue >= 0) ){
+                    uStr = this.positiveUnit;
+                } else if(negativeUnit != null && (factoredValue < 0)){
+                    uStr = this.negativeUnit;
+                } else {
+                    String symbol = displayUnitSymbol();
+                    uStr = symbol.isEmpty() ? "" : " " + symbol;
                 }
             }
-            String out = vStr+uStr;
+        }
+        String out = vStr+uStr;
 
-            if (size != 1.0) {
-                SpannableString sStr = new SpannableString(out);
-                sStr.setSpan(new MiddleRelativeSizeSpan(1.f/(float)size), vStr.length(), out.length(), SpannableString.SPAN_EXCLUSIVE_EXCLUSIVE);
-                tv.setText(sStr);
-            } else {
-                tv.setText(out);
-            }
+        if (size != 1.0) {
+            SpannableString sStr = new SpannableString(out);
+            sStr.setSpan(new MiddleRelativeSizeSpan(1.f/(float)size), vStr.length(), out.length(), SpannableString.SPAN_EXCLUSIVE_EXCLUSIVE);
+            tv.setText(sStr);
+        } else {
+            tv.setText(out);
         }
     }
 
@@ -363,7 +487,7 @@ public class ValueElement extends ExpViewElement implements Serializable {
             }
         }
 
-        sb.append("     var unitLabel = \""+ this.unit + "\";");
+        sb.append("     var unitLabel = \" "+ unit.symbol(res).replace("\\", "\\\\").replace("\"", "\\\"") + "\";");
         if(positiveUnit != null){
             sb.append("     if(x >= 0 ){");
             sb.append("         unitLabel =  \""+ positiveUnit + "\";");

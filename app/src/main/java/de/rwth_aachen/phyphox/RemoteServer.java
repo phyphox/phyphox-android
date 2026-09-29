@@ -255,11 +255,11 @@ public class RemoteServer {
         if (inHorizontal)
             sb.append(",\"weight\":").append(element.weight);
 
-        //Graphs are built by the web interface from this configuration (see phyphox-webinterface readme.md)
-        String graphConfig = element.getWebGraphConfig();
-        if (graphConfig != null) {
-            sb.append(",\"graph\":");
-            sb.append(graphConfig);
+        //Graphs, values and edits are built by the web interface from this configuration (see phyphox-webinterface readme.md)
+        String webConfig = element.getWebConfig();
+        if (webConfig != null && element.getWebConfigKey() != null) {
+            sb.append(",\"").append(element.getWebConfigKey()).append("\":");
+            sb.append(webConfig);
         }
 
         if(element.visibility != null ){
@@ -357,6 +357,23 @@ public class RemoteServer {
             strings.put("invalidValue", context.getString(R.string.invalidValue));
             strings.put("zoomHint", context.getString(R.string.remoteGraphZoomHint));
             strings.put("colorMapWarning", context.getString(R.string.remoteColorMapWarning));
+            strings.put("unit", context.getString(R.string.unit_dialog_title));
+            strings.put("unitExperimentDefault", context.getString(R.string.unit_dialog_experiment_default));
+            strings.put("metric", context.getString(R.string.settingsUnitSystemMetric));
+            strings.put("imperial", context.getString(R.string.settingsUnitSystemImperial));
+            strings.put("other", context.getString(R.string.unit_dialog_other));
+            return strings.toString();
+        } catch (JSONException e) {
+            return "{}";
+        }
+    }
+
+    //The translated unit symbols, {id: symbol}, so the browser shows the same designations as the app
+    protected String buildUnitStringsJson() {
+        try {
+            JSONObject strings = new JSONObject();
+            for (Units.Definition unit : Units.all())
+                strings.put(unit.id, Units.symbol(context.getResources(), unit.id));
             return strings.toString();
         } catch (JSONException e) {
             return "{}";
@@ -402,6 +419,10 @@ public class RemoteServer {
                     sb.append(line.replace("<!-- [[fontSizeTranslation]] -->", context.getString(R.string.fontSize)));
                 } else if (line.contains("<!-- [[graphStrings]] -->")) { //Localized strings of the graph tools
                     sb.append("graphStrings = Object.assign(graphStrings, ").append(buildGraphStringsJson()).append(");");
+                } else if (line.contains("<!-- [[unitSystem]] -->")) { //The Unit system setting (docs/file-format/units.md)
+                    sb.append("var unitSystem = \"").append(Units.Setting.read(context).name()).append("\";");
+                } else if (line.contains("<!-- [[unitStrings]] -->")) { //The translated unit symbols
+                    sb.append("unitStrings = ").append(buildUnitStringsJson()).append(";");
                 } else if (line.contains("<!-- [[viewLayout]] -->")) {
                     buildViewsJson(sb);
                 } else if (line.contains("<!-- [[viewOptions]] -->")) {

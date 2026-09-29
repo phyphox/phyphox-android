@@ -20,6 +20,7 @@ import de.rwth_aachen.phyphox.ExpViewFragment;
 import de.rwth_aachen.phyphox.ExperimentTimeReference;
 import de.rwth_aachen.phyphox.PhyphoxExperiment;
 import de.rwth_aachen.phyphox.R;
+import de.rwth_aachen.phyphox.Units;
 
 //Abstract ExpViewElement class defining the interface for any element of an experiment view
 public abstract class ExpViewElement implements Serializable, BufferNotification {
@@ -271,10 +272,19 @@ public abstract class ExpViewElement implements Serializable, BufferNotification
         return "function() {}";
     }
 
-    //Elements that the remote interface builds itself from a configuration (currently the graph)
-    //return it here as a JSON object string; it is embedded as "graph" in the view layout.
-    public String getWebGraphConfig() {
+    //Elements that the remote interface builds itself from a configuration return it here as a JSON object
+    //string, embedded under getWebConfigKey() ("graph", "value", "edit") in the view layout (webinterface readme.md)
+    public String getWebConfig() {
         return null;
+    }
+
+    public String getWebConfigKey() {
+        return null;
+    }
+
+    //The Unit system setting, applied when the experiment is loaded (docs/file-format/units.md); elements that show
+    //a convertible unit switch their display unit, everything else ignores it
+    public void applyUnitSystem(Units.Setting setting) {
     }
 
     //This returns the key name of the output dataBuffer. Called by the main loop to figure out

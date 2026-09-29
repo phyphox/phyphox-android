@@ -30,6 +30,8 @@ import de.rwth_aachen.phyphox.ExperimentView.GraphView.InteractiveGraphView;
 import de.rwth_aachen.phyphox.FloatBufferRepresentation;
 import de.rwth_aachen.phyphox.PhyphoxExperiment;
 import de.rwth_aachen.phyphox.R;
+import de.rwth_aachen.phyphox.Unit;
+import de.rwth_aachen.phyphox.Units;
 import de.rwth_aachen.phyphox.helper.RGB;
 
 //GraphElement implements a graph that displays y vs. x arrays from the dataBuffer
@@ -59,10 +61,12 @@ public class GraphElement extends ExpViewElement implements Serializable {
     private String labelX = null; //Label for the x-axis
     private String labelY = null; //Label for the y-axis
     private String labelZ = null; //Label for the z-axis
-    private String unitX = null; //Label for the x-axis
-    private String unitY = null; //Label for the y-axis
-    private String unitZ = null; //Label for the z-axis
-    private String unitYX = null; //Unit for slope (i.e. y/x)
+    private Unit unitX = null; //Unit of the x-axis (a reference to a known unit, or text)
+    private Unit unitY = null; //Unit of the y-axis
+    private Unit unitZ = null; //Unit of the z-axis
+    private Unit unitYX = null; //Unit for slope (i.e. y/x)
+    private transient Resources res;
+    private final String[] displayUnitIds = new String[3]; //The units shown per axis (session state, docs/file-format/units.md)
     private boolean partialUpdate = false; //Allow partialUpdate of newly added data points instead of transfering the whole dataset each time (web-interface)
     private boolean timeOnX = false; //x-axis is time axis?
     private boolean timeOnY = false; //y-axis is time axis?
@@ -112,6 +116,7 @@ public class GraphElement extends ExpViewElement implements Serializable {
     public GraphElement(String label, String visibility, Vector<String> valueOutputs, Vector<String> inputs, Resources res) {
         super(label, visibility, valueOutputs, inputs, res);
         this.self = this;
+        this.res = res;
 
         margin = res.getDimensionPixelSize(R.dimen.activity_vertical_margin);
 
@@ -264,7 +269,7 @@ public class GraphElement extends ExpViewElement implements Serializable {
     }
 
     //Interface to set the axis labels.
-    public void setLabel(String labelX, String labelY, String labelZ, String unitX, String unitY, String unitZ, String unitYX) {
+    public void setLabel(String labelX, String labelY, String labelZ, Unit unitX, Unit unitY, Unit unitZ, Unit unitYX) {
         this.labelX = labelX;
         this.labelY = labelY;
         this.labelZ = labelZ;
@@ -272,8 +277,61 @@ public class GraphElement extends ExpViewElement implements Serializable {
         this.unitY = unitY;
         this.unitZ = unitZ;
         this.unitYX = unitYX;
+        displayUnitIds[GraphView.AXIS_X] = unitX == null ? null : unitX.id;
+        displayUnitIds[GraphView.AXIS_Y] = unitY == null ? null : unitY.id;
+        displayUnitIds[GraphView.AXIS_Z] = unitZ == null ? null : unitZ.id;
         if (gv != null)
-            gv.setLabel(labelX, labelY, labelZ, unitX, unitY, unitZ, unitYX);
+            applyLabelsToView();
+    }
+
+    private static String symbolOf(Unit unit, Resources res) {
+        return unit == null ? null : unit.symbol(res);
+    }
+
+    private static String idOf(Unit unit) {
+        return unit == null ? null : unit.id;
+    }
+
+    private void applyLabelsToView() {
+        gv.setLabel(labelX, labelY, labelZ, symbolOf(unitX, res), symbolOf(unitY, res), symbolOf(unitZ, res), symbolOf(unitYX, res));
+        gv.setUnitIds(idOf(unitX), idOf(unitY), idOf(unitZ));
+        for (int axis = 0; axis < 3; axis++)
+            if (displayUnitIds[axis] != null)
+                gv.setDisplayUnit(axis, displayUnitIds[axis]);
+    }
+
+    public Unit getUnitX() {
+        return unitX;
+    }
+
+    public Unit getUnitY() {
+        return unitY;
+    }
+
+    public Unit getUnitZ() {
+        return unitZ;
+    }
+
+    public String getDisplayUnitId(int axis) {
+        return displayUnitIds[axis];
+    }
+
+    //What the unit dialog does for an axis: kept here across view re-creation, applied to the GraphView
+    public void setDisplayUnit(int axis, String id) {
+        Unit unit = axis == GraphView.AXIS_X ? unitX : (axis == GraphView.AXIS_Y ? unitY : unitZ);
+        if (unit == null || unit.id == null || !Units.sameQuantity(unit.id, id))
+            return;
+        displayUnitIds[axis] = id;
+        if (gv != null)
+            gv.setDisplayUnit(axis, id);
+    }
+
+    @Override
+    public void applyUnitSystem(Units.Setting setting) {
+        Unit[] units = {unitX, unitY, unitZ};
+        for (int axis = 0; axis < 3; axis++)
+            if (units[axis] != null && units[axis].id != null && Units.isConvertible(units[axis].id))
+                setDisplayUnit(axis, Units.forSetting(units[axis].id, setting));
     }
 
     public void setTimeAxes(boolean timeOnX, boolean timeOnY, boolean absoluteTime, boolean linearTime, boolean hideTimeMarkers) {
@@ -325,6 +383,7 @@ public class GraphElement extends ExpViewElement implements Serializable {
     //Create the actual view in Android
     public void createView(LinearLayout ll, Context c, Resources res, final ExpViewFragment parent, PhyphoxExperiment experiment){
         super.createView(ll, c, res, parent, experiment);
+        this.res = res;
 
         Context ctx = c;
         Activity act = null;
@@ -338,6 +397,7 @@ public class GraphElement extends ExpViewElement implements Serializable {
         //Create the graphView
         interactiveGV = new InteractiveGraphView(c);
         interactiveGV.setPickConfig(pickLabel, outputs, data -> newPickData = data);
+        interactiveGV.setDisplayUnitObserver((axis, id) -> displayUnitIds[axis] = id);
         if (currentPickData != null)
             interactiveGV.updatePickData(currentPickData);
         gv = interactiveGV.graphView;
@@ -361,14 +421,16 @@ public class GraphElement extends ExpViewElement implements Serializable {
             DataExport dataExport = new DataExport(experiment);
 
             DataExport.ExportSet set = dataExport.new ExportSet(this.label);
+            //The export carries the original data, so its column names carry the experiment's units
+            String exportUnitX = symbolOf(unitX, res), exportUnitY = symbolOf(unitY, res), exportUnitZ = symbolOf(unitZ, res);
             for (int i = 0; i < inputs.size(); i+=2) {
                 if (i+1 < inputs.size() && inputs.get(i+1) != null)
-                    set.addSource(this.labelX + (i > 1 ? " " + (i / 2 + 1) : "") + (unitX != null && !unitX.isEmpty() ? " (" + unitX +")" : ""), inputs.get(i+1));
+                    set.addSource(this.labelX + (i > 1 ? " " + (i / 2 + 1) : "") + (exportUnitX != null && !exportUnitX.isEmpty() ? " (" + exportUnitX +")" : ""), inputs.get(i+1));
 
                 if (style.get(i/2) == GraphView.Style.mapZ)
-                    set.addSource((this.labelZ != null ? this.labelZ : "z") + (unitZ != null && !unitZ.isEmpty() ? " (" + unitZ + ")" : ""), inputs.get(i));
+                    set.addSource((this.labelZ != null ? this.labelZ : "z") + (exportUnitZ != null && !exportUnitZ.isEmpty() ? " (" + exportUnitZ + ")" : ""), inputs.get(i));
                 else
-                    set.addSource(this.labelY + (i > 1 ? " " + (i / 2 + 1) : "") + (unitY != null && !unitY.isEmpty() ? " (" + unitY + ")" : ""), inputs.get(i));
+                    set.addSource(this.labelY + (i > 1 ? " " + (i / 2 + 1) : "") + (exportUnitY != null && !exportUnitY.isEmpty() ? " (" + exportUnitY + ")" : ""), inputs.get(i));
             }
             dataExport.addSet(set);
 
@@ -398,7 +460,6 @@ public class GraphElement extends ExpViewElement implements Serializable {
         gv.setScaleModeZ(scaleMinZ, minZ, scaleMaxZ, maxZ);
         gv.setFollowX(followX);
         gv.setPlotArea(plotLeft, plotTop, plotRight, plotBottom);
-        gv.setLabel(labelX, labelY, labelZ, unitX, unitY, unitZ, unitYX);
         gv.setTimeAxes(timeOnX, timeOnY);
         gv.setSuppressScientificNotation(suppressScientificNotation);
         gv.setAbsoluteTime(absoluteTime);
@@ -408,6 +469,7 @@ public class GraphElement extends ExpViewElement implements Serializable {
         interactiveGV.allowLogX = logX;
         interactiveGV.allowLogY = logY;
         gv.setPrecision(xPrecision, yPrecision, zPrecision);
+        applyLabelsToView(); //after the time axes: whether an axis converts depends on them
 
         if (!inStack) {
             interactiveGV.setOnClickListener(new View.OnClickListener() {
@@ -470,7 +532,6 @@ public class GraphElement extends ExpViewElement implements Serializable {
         return s == null ? JSONObject.NULL : s;
     }
 
-    @Override
     //Everything the remote interface needs to know about this graph as JSON: the datasets with
     //their buffers and styles, axis labels, ranges and the data picker outputs. The interface
     //(phyphox-webinterface, index.html) turns this into a Chart.js chart. The structure is
@@ -482,10 +543,14 @@ public class GraphElement extends ExpViewElement implements Serializable {
             cfg.put("labelX", jsonString(labelX));
             cfg.put("labelY", jsonString(labelY));
             cfg.put("labelZ", jsonString(labelZ));
-            cfg.put("unitX", jsonString(unitX));
-            cfg.put("unitY", jsonString(unitY));
-            cfg.put("unitZ", jsonString(unitZ));
-            cfg.put("unitYX", jsonString(unitYX));
+            //The unit texts are the experiment's symbols; the ids let the interface convert (units.md)
+            cfg.put("unitX", jsonString(symbolOf(unitX, res)));
+            cfg.put("unitY", jsonString(symbolOf(unitY, res)));
+            cfg.put("unitZ", jsonString(symbolOf(unitZ, res)));
+            cfg.put("unitYX", jsonString(symbolOf(unitYX, res)));
+            cfg.put("unitIdX", jsonString(idOf(unitX)));
+            cfg.put("unitIdY", jsonString(idOf(unitY)));
+            cfg.put("unitIdZ", jsonString(idOf(unitZ)));
             cfg.put("logX", logX);
             cfg.put("logY", logY);
             cfg.put("logZ", logZ);
@@ -572,6 +637,16 @@ public class GraphElement extends ExpViewElement implements Serializable {
         } catch (JSONException e) {
             return null;
         }
+    }
+
+    @Override
+    public String getWebConfig() {
+        return getWebGraphConfig();
+    }
+
+    @Override
+    public String getWebConfigKey() {
+        return "graph";
     }
 
     @Override
@@ -770,20 +845,21 @@ public class GraphElement extends ExpViewElement implements Serializable {
     //If min or max are NaN, they are reset
     //Follow is only allowed for x-axis if partialUpdate is set
     //If unit AND buffer are null, the zoom is applied to the same axis on all graphs
-    //If unit is set, it is applied to all axes with the same unit on all graphs
+    //If unit is set, it is applied to all axes with the same unit on all graphs: a referenced unit matches every axis of
+    //the same quantity and the range (given in the source graph's unit) is converted, text matches by equal text
     //If buffer is set, it is applied to all axes with the same buffer on all graphs
-    public void applyZoom(double min, double max, boolean follow, String unit, String buffer, boolean yAxis, boolean absoluteTime) {
+    public void applyZoom(double min, double max, boolean follow, Unit unit, String buffer, boolean yAxis, boolean absoluteTime) {
         if (unit != null) {
-            if (unitX.equals(unit)) {
-                zoomState.minX = min;
-                zoomState.maxX = max;
+            if (unitMatches(unitX, unit)) {
+                zoomState.minX = Units.convert(min, unit.id, idOf(unitX));
+                zoomState.maxX = Units.convert(max, unit.id, idOf(unitX));
                 zoomState.follows = follow;
                 if (timeOnX)
                     gv.setAbsoluteTime(absoluteTime);
             }
-            if (unitY.equals(unit)) {
-                zoomState.minY = min;
-                zoomState.maxY = max;
+            if (unitMatches(unitY, unit)) {
+                zoomState.minY = Units.convert(min, unit.id, idOf(unitY));
+                zoomState.maxY = Units.convert(max, unit.id, idOf(unitY));
                 if (timeOnY)
                     gv.setAbsoluteTime(absoluteTime);
             }
@@ -821,6 +897,14 @@ public class GraphElement extends ExpViewElement implements Serializable {
         gv.zoomState = zoomState;
         gv.rescale();
         gv.invalidate();
+    }
+
+    private static boolean unitMatches(Unit axisUnit, Unit unit) {
+        if (axisUnit == null)
+            return false;
+        if (unit.id != null)
+            return Units.sameQuantity(axisUnit.id, unit.id);
+        return axisUnit.id == null && unit.text != null && unit.text.equals(axisUnit.text);
     }
 
 }

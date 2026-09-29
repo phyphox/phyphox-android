@@ -47,6 +47,8 @@ import de.rwth_aachen.phyphox.DataOutput;
 import de.rwth_aachen.phyphox.ExpViewFragment;
 import de.rwth_aachen.phyphox.ExperimentView.MarkerOverlayView.MarkerOverlayView;
 import de.rwth_aachen.phyphox.R;
+import de.rwth_aachen.phyphox.Unit;
+import de.rwth_aachen.phyphox.UnitDialog;
 import de.rwth_aachen.phyphox.helper.Helper;
 
 public class InteractiveGraphView extends RelativeLayout implements GraphView.PointInfo {
@@ -76,6 +78,12 @@ public class InteractiveGraphView extends RelativeLayout implements GraphView.Po
         void onPick(Double[] data);
     }
     PickerObserver observer = null;
+
+    //Tells the GraphElement about a unit switched through the axis dialog, so it survives re-creation of the view
+    public interface DisplayUnitObserver {
+        void onDisplayUnitChanged(int axis, String id);
+    }
+    DisplayUnitObserver displayUnitObserver = null;
 
     View rootView;
     FrameLayout graphFrame;
@@ -323,6 +331,7 @@ public class InteractiveGraphView extends RelativeLayout implements GraphView.Po
                 ViewGroup.LayoutParams.MATCH_PARENT,
                 ViewGroup.LayoutParams.MATCH_PARENT));
         graphView.setPointInfoListener(this);
+        graphView.setAxisTapListener(this::onAxisTap);
 
         graphFrame.addView(plotAreaView);
         graphFrame.addView(graphView);
@@ -333,6 +342,37 @@ public class InteractiveGraphView extends RelativeLayout implements GraphView.Po
                 ViewGroup.LayoutParams.MATCH_PARENT));
         markerOverlayView.setGraphSetup(graphView.graphSetup);
         graphFrame.addView(markerOverlayView);
+    }
+
+    public void setDisplayUnitObserver(DisplayUnitObserver observer) {
+        this.displayUnitObserver = observer;
+    }
+
+    //A tap on an axis label in exclusive mode: the unit dialog for that axis (units.md, "Switching a unit by hand")
+    private void onAxisTap(int axis) {
+        if (!interactive || !graphView.isAxisConvertible(axis))
+            return;
+        UnitDialog.show(getContext(), graphView.getUnitId(axis), graphView.getDisplayUnitId(axis), id -> setDisplayUnit(axis, id));
+    }
+
+    //What the unit dialog does for an axis
+    public void setDisplayUnit(int axis, String id) {
+        graphView.setDisplayUnit(axis, id);
+        if (displayUnitObserver != null)
+            displayUnitObserver.onDisplayUnitChanged(axis, graphView.getDisplayUnitId(axis));
+        updateInfo();
+    }
+
+    //The unit of a slope read-out: unitYperX while both axes show their experiment units, else composed from the
+    //display symbols (units.md, "Slopes")
+    private String slopeUnit() {
+        if (!graphView.isConverted(GraphView.AXIS_X) && !graphView.isConverted(GraphView.AXIS_Y) && graphView.getUnitYX() != null)
+            return graphView.getUnitYX();
+        String uy = graphView.getUnitY() != null && !graphView.getUnitY().isEmpty() ? graphView.getUnitY() : "";
+        String ux = graphView.getUnitX() != null && !graphView.getUnitX().isEmpty() ? graphView.getUnitX() : "";
+        if (ux.isEmpty())
+            return uy.isEmpty() ? "" : " " + uy;
+        return " " + (uy.isEmpty() ? "1" : uy) + " / " + ux;
     }
 
     private PopupMenu createGraphToolPopUpMenu(){
@@ -392,7 +432,7 @@ public class InteractiveGraphView extends RelativeLayout implements GraphView.Po
         super.onMeasure(widthMeasureSpec, heightMeasureSpec);
     }
 
-    public void leaveDialog(final ExpViewFragment parent, final String bufferX, final String bufferY, final String unitX, final String unitY) {
+    public void leaveDialog(final ExpViewFragment parent, final String bufferX, final String bufferY, final Unit unitX, final Unit unitY) {
         if (!graphView.absoluteTime && Double.isNaN(graphView.zoomState.minX) && Double.isNaN(graphView.zoomState.minY) && Double.isNaN(graphView.zoomState.maxX) && Double.isNaN(graphView.zoomState.maxY) && Double.isNaN(graphView.zoomState.minZ) && Double.isNaN(graphView.zoomState.maxZ)) {
             parent.leaveExclusive();
             return;
@@ -816,19 +856,14 @@ public class InteractiveGraphView extends RelativeLayout implements GraphView.Po
             points[1] = new Point(viewX2, viewY2);
             markerOverlayView.update(points, null);
 
+            //The fit is done on the data; the read-out shows it in the display units (slope by the scale ratio, b as a position)
             StringBuilder sb = new StringBuilder();
             sb.append(getResources().getString(R.string.graph_fit_label));
             sb.append("\na = ");
-            sb.append(String.format("%g", a));
-            if (graphView.getUnitYX() != null)
-                sb.append(graphView.getUnitYX());
-            else {
-                sb.append(graphView.getUnitY() != null && !graphView.getUnitY().isEmpty() ? " " + graphView.getUnitY() : "");
-                sb.append(" / ");
-                sb.append(graphView.getUnitX() != null && !graphView.getUnitX().isEmpty() ? " " + graphView.getUnitX() : "");
-            }
+            sb.append(String.format("%g", a * graphView.displayScale(GraphView.AXIS_Y) / graphView.displayScale(GraphView.AXIS_X)));
+            sb.append(slopeUnit());
             sb.append("\nb = ");
-            sb.append(String.format("%g", b));
+            sb.append(String.format("%g", graphView.toDisplay(GraphView.AXIS_Y, b)));
             sb.append(graphView.getUnitY() != null && !graphView.getUnitY().isEmpty() ? " " + graphView.getUnitY() : "");
 
             int infoX = Math.round((viewX1 + viewX2)/2.f + pos[0] - getRootView().getWidth()/2.f);
@@ -850,17 +885,19 @@ public class InteractiveGraphView extends RelativeLayout implements GraphView.Po
             int infoX = Math.round((marker[0].viewX + marker[1].viewX)/2.f + pos[0] - getRootView().getWidth()/2.f);
             int infoY = getRootView().getHeight() - pos[1] - Math.round(Math.min(marker[0].viewY, marker[1].viewY) - TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, 20, getResources().getDisplayMetrics()));
 
+            //Differences use the scale alone, the slope the ratio of the two scales (units.md, "Temperature", "Slopes")
+            double scaleX = graphView.displayScale(GraphView.AXIS_X), scaleY = graphView.displayScale(GraphView.AXIS_Y), scaleZ = graphView.displayScale(GraphView.AXIS_Z);
             StringBuilder sb = new StringBuilder();
             sb.append(getResources().getString(R.string.graph_difference_label));
             sb.append("\n    ");
-            sb.append(String.format("%g", Math.abs(marker[0].dataX - marker[1].dataX)));
+            sb.append(String.format("%g", Math.abs(marker[0].dataX - marker[1].dataX) * scaleX));
             sb.append(graphView.getUnitX() != null && !graphView.getUnitX().isEmpty() ? " " + graphView.getUnitX() : "");
             sb.append("\n    ");
-            sb.append(String.format("%g", Math.abs(marker[0].dataY - marker[1].dataY)));
+            sb.append(String.format("%g", Math.abs(marker[0].dataY - marker[1].dataY) * scaleY));
             sb.append(graphView.getUnitY() != null && !graphView.getUnitY().isEmpty() ? " " + graphView.getUnitY() : "");
             if (!Double.isNaN(marker[0].dataZ) && !Double.isNaN(marker[0].dataZ)) {
                 sb.append("\n    ");
-                sb.append(String.format("%g", Math.abs(marker[0].dataZ - marker[1].dataZ)));
+                sb.append(String.format("%g", Math.abs(marker[0].dataZ - marker[1].dataZ) * scaleZ));
                 sb.append(graphView.getUnitZ() != null && !graphView.getUnitZ().isEmpty() ? " " + graphView.getUnitZ() : "");
             }
             sb.append("\n");
@@ -868,14 +905,8 @@ public class InteractiveGraphView extends RelativeLayout implements GraphView.Po
             sb.append("\n    ");
             float dx = marker[0].dataX - marker[1].dataX;
             if (dx != 0) {
-                sb.append(String.format("%g", (marker[0].dataY - marker[1].dataY) / (marker[0].dataX - marker[1].dataX)));
-                if (graphView.getUnitYX() != null)
-                    sb.append(graphView.getUnitYX());
-                else {
-                    sb.append(graphView.getUnitY() != null && !graphView.getUnitY().isEmpty() ? " " + graphView.getUnitY() : "");
-                    sb.append(" / ");
-                    sb.append(graphView.getUnitX() != null && !graphView.getUnitX().isEmpty() ? " " + graphView.getUnitX() : "");
-                }
+                sb.append(String.format("%g", (marker[0].dataY - marker[1].dataY) / (marker[0].dataX - marker[1].dataX) * scaleY / scaleX));
+                sb.append(slopeUnit());
             } else {
                 sb.append("-");
             }
@@ -899,14 +930,14 @@ public class InteractiveGraphView extends RelativeLayout implements GraphView.Po
             StringBuilder sb = new StringBuilder();
             sb.append(getResources().getString(R.string.graph_point_label));
             sb.append("\n    ");
-            sb.append(String.format("%g", activeMarker.dataX));
+            sb.append(String.format("%g", graphView.toDisplay(GraphView.AXIS_X, activeMarker.dataX)));
             sb.append(graphView.getUnitX() != null && !graphView.getUnitX().isEmpty() ? " " + graphView.getUnitX() : "");
             sb.append("\n    ");
-            sb.append(String.format("%g", activeMarker.dataY));
+            sb.append(String.format("%g", graphView.toDisplay(GraphView.AXIS_Y, activeMarker.dataY)));
             sb.append(graphView.getUnitY() != null && !graphView.getUnitY().isEmpty() ? " " + graphView.getUnitY() : "");
             if (!Double.isNaN(activeMarker.dataZ)) {
                 sb.append("\n    ");
-                sb.append(String.format("%g", activeMarker.dataZ));
+                sb.append(String.format("%g", graphView.toDisplay(GraphView.AXIS_Z, activeMarker.dataZ)));
                 sb.append(graphView.getUnitZ() != null && !graphView.getUnitZ().isEmpty() ? " " + graphView.getUnitZ() : "");
             }
 
