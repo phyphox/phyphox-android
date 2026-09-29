@@ -407,7 +407,7 @@ THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND 
         <item>imperial</item>
     </string-array>
     <string name="unit_dialog_title">Unit</string>
-    <string name="unit_dialog_experiment_default">experiment default</string>
+    <string name="unit_dialog_experiment_default">default</string>
     <string name="unit_dialog_other">Other</string>
     <!-- Units: the symbols shown for unit references (@id) and the [[unit_short_id]] placeholders. Keep the Latin symbols
          unless your national standard or school practice prescribes native designations (as in Russian or Ukrainian);

@@ -53,7 +53,7 @@ public class SettingsFragment extends PreferenceFragmentCompat {
             return;
         lp.setSummaryProvider(preference -> {
             CharSequence entry = lp.getEntry();
-            return (entry == null ? "" : entry + "\n") + getString(R.string.settingsUnitSystemDetail);
+            return (entry == null ? "" : entry + "\n\n") + getString(R.string.settingsUnitSystemDetail); //a blank line sets the choice apart
         });
     }
 
