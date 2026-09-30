@@ -1,5 +1,9 @@
 package de.rwth_aachen.phyphox;
 
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assume.assumeTrue;
+
+
 import android.Manifest;
 import android.app.Application;
 import android.content.Context;
@@ -39,13 +43,13 @@ import java.util.regex.Pattern;
 //Shared plumbing for the corpus conformance tests (phyphox-docs/corpus/README.md, "The app test
 //suites"): finds the corpus next to this repository and loads files on a simulated device that
 //has every sensor and permission, since the parser refuses experiments whose sensors are missing.
-abstract class CorpusTestEnvironment {
+public abstract class CorpusTestEnvironment {
 
     //Parameter sentinel: a missing corpus checkout reports a skip instead of an empty parameter list.
     static final String CORPUS_MISSING = "corpus missing";
 
     //A phyphox-docs checkout next to this repository, found by walking up from the working directory.
-    static File findCorpus() {
+    public static File findCorpus() {
         File dir = new File(System.getProperty("user.dir")).getAbsoluteFile();
         for (int i = 0; i < 8 && dir != null; i++) {
             File corpus = new File(new File(dir, "phyphox-docs"), "corpus");
@@ -162,7 +166,7 @@ abstract class CorpusTestEnvironment {
     }
 
     //A simulated device with every sensor and capability the corpus needs, so only parse errors can fail a file.
-    static Experiment fullyEquippedActivity() {
+    public static Experiment fullyEquippedActivity() {
         Application application = ApplicationProvider.getApplicationContext();
 
         Shadows.shadowOf(application).grantPermissions(
@@ -241,8 +245,20 @@ abstract class CorpusTestEnvironment {
         return sensor;
     }
 
+    //A generated corpus fixture, loaded on the fully equipped device, for tests outside this package
+    //(loaded and message are package-private). Skips when the corpus or the file is missing.
+    public static PhyphoxExperiment loadGeneratedFixture(String name) throws IOException {
+        File corpus = findCorpus();
+        assumeTrue("No phyphox-docs checkout found next to this repository - fixture skipped.", corpus != null);
+        File file = new File(corpus, "generated/" + name);
+        assumeTrue("Fixture missing in the phyphox-docs checkout - skipped.", file.isFile());
+        PhyphoxExperiment experiment = load(file, fullyEquippedActivity());
+        assertTrue("fixture failed to load: " + experiment.message, experiment.loaded);
+        return experiment;
+    }
+
     //The real loading path, as loadXMLAsyncTask runs it once the stream is open.
-    static PhyphoxExperiment load(File file, Experiment activity) throws IOException {
+    public static PhyphoxExperiment load(File file, Experiment activity) throws IOException {
         try (InputStream inputStream = new FileInputStream(file)) {
             return load(inputStream, activity);
         }

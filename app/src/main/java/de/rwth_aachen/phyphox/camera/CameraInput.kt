@@ -63,6 +63,12 @@ class CameraInput : Serializable, AnalyzingOpenGLRenderer.ExposureStatisticsList
     var isoDataBuffer: DataBuffer? = null
     var apertureDataBuffer: DataBuffer? = null
     var dataPixelPosition: DataBuffer? = null
+    var dataRed: DataBuffer? = null
+    var dataGreen: DataBuffer? = null
+    var dataBlue: DataBuffer? = null
+    var dataLinearRed: DataBuffer? = null
+    var dataLinearGreen: DataBuffer? = null
+    var dataLinearBlue: DataBuffer? = null
 
     enum class AEStrategy {
         mean, avoidUnderxposure, avoidOverexposure, prioritizeFramerate
@@ -204,6 +210,7 @@ class CameraInput : Serializable, AnalyzingOpenGLRenderer.ExposureStatisticsList
                 dataLock,
                 cameraSettingState,
                 this)
+            analyzingOpenGLRenderer?.measuring = measuring //start() may have been called before the camera was ready
         }
 
         val cameraSelector = CameraHelper.cameraLensToSelector(cameraSettingState.value.currentLens)
@@ -520,6 +527,12 @@ class CameraInput : Serializable, AnalyzingOpenGLRenderer.ExposureStatisticsList
         if (buffers.size > 7 && buffers[7] != null) isoDataBuffer = buffers[7].buffer
         if (buffers.size > 8 && buffers[8] != null) apertureDataBuffer = buffers[8].buffer
         if (buffers.size > 9 && buffers[9] != null) dataPixelPosition = buffers[9].buffer
+        if (buffers.size > 10 && buffers[10] != null) dataRed = buffers[10].buffer
+        if (buffers.size > 11 && buffers[11] != null) dataGreen = buffers[11].buffer
+        if (buffers.size > 12 && buffers[12] != null) dataBlue = buffers[12].buffer
+        if (buffers.size > 13 && buffers[13] != null) dataLinearRed = buffers[13].buffer
+        if (buffers.size > 14 && buffers[14] != null) dataLinearGreen = buffers[14].buffer
+        if (buffers.size > 15 && buffers[15] != null) dataLinearBlue = buffers[15].buffer
 
         this.dataLock = lock
         this.aeStrategy = aeStrategy

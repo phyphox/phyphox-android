@@ -23,6 +23,7 @@ public class LuminanceAnalyzer extends AnalyzingModule {
             "#extension GL_OES_EGL_image_external : require\n" +
             "precision highp float;" +
             "uniform samplerExternalOES texture;" +
+            "uniform vec3 weights;" +
             "varying vec2 positionInPassepartout;" +
             "varying vec2 texPosition;" +
 
@@ -42,7 +43,7 @@ public class LuminanceAnalyzer extends AnalyzingModule {
 //            "    vec3 linRGB = pow(gammaRGB, vec3(2.2, 2.2, 2.2));" +   //Adobe RGB or approximation of sRGB
 
             "    vec3 linRGB = vec3(linearize(gammaRGB.r), linearize(gammaRGB.g), linearize(gammaRGB.b));" +
-            "    gl_FragColor = vec4(0.0, dot(linRGB, vec3(0.2126, 0.7152, 0.0722)), 1.0, 1.0);" +
+            "    gl_FragColor = vec4(0.0, dot(linRGB, weights), 1.0, 1.0);" +
             "  }" +
             "}";
 
@@ -50,6 +51,7 @@ public class LuminanceAnalyzer extends AnalyzingModule {
             "#extension GL_OES_EGL_image_external : require\n" +
                     "precision highp float;" +
                     "uniform samplerExternalOES texture;" +
+                    "uniform vec3 weights;" +
                     "varying vec2 positionInPassepartout;" +
                     "varying vec2 texPosition;" +
                     "void main () {" +
@@ -57,7 +59,7 @@ public class LuminanceAnalyzer extends AnalyzingModule {
                     "    gl_FragColor = vec4(0.0, 0.0, 0.0, 1.0);" +
                     "  } else {" +
                     "    vec3 gammaRGB = texture2D(texture, texPosition).rgb;" +
-                    "    gl_FragColor = vec4(0.0, dot(gammaRGB, vec3(0.2126, 0.7152, 0.0722)), 1.0, 1.0);" +
+                    "    gl_FragColor = vec4(0.0, dot(gammaRGB, weights), 1.0, 1.0);" +
                     " }" +
                     "}";
 
@@ -83,10 +85,25 @@ public class LuminanceAnalyzer extends AnalyzingModule {
             "   gl_FragColor = result;" +
             "}";
 
+    //Weights of the per-pixel dot product: BT.709 for luma/luminance, a unit vector for a single colour channel.
+    //Both shader variants take them as a uniform, so the same reduction chain serves all four outputs.
+    public enum Channel {
+        luma(0.2126f, 0.7152f, 0.0722f),
+        red(1.0f, 0.0f, 0.0f),
+        green(0.0f, 1.0f, 0.0f),
+        blue(0.0f, 0.0f, 1.0f);
+
+        final float[] weights;
+        Channel(float r, float g, float b) {
+            weights = new float[]{r, g, b};
+        }
+    }
+
     boolean linear = false;
+    Channel channel = Channel.luma;
     DataBuffer out;
     int luminanceProgram, luminanceDownsamplingProgram;
-    int luminanceProgramVerticesHandle, luminanceProgramTexCoordinatesHandle, luminanceProgramCamMatrixHandle, luminanceProgramTextureHandle, luminanceProgramPassepartoutMinHandle, luminanceProgramPassepartoutMaxHandle;
+    int luminanceProgramVerticesHandle, luminanceProgramTexCoordinatesHandle, luminanceProgramCamMatrixHandle, luminanceProgramTextureHandle, luminanceProgramPassepartoutMinHandle, luminanceProgramPassepartoutMaxHandle, luminanceProgramWeightsHandle;
     int luminanceDownsamplingProgramVerticesHandle, luminanceDownsamplingProgramTexCoordinatesHandle, luminanceDownsamplingProgramTextureHandle;
     int luminanceDownsamplingResSourceHandle, luminanceDownsamplingResTargetHandle;
 
@@ -95,7 +112,12 @@ public class LuminanceAnalyzer extends AnalyzingModule {
     ByteBuffer resultBuffer = null;
     int resultBufferSize = 0;
     public LuminanceAnalyzer(DataBuffer out, boolean linear) {
+        this(out, linear, Channel.luma);
+    }
+
+    public LuminanceAnalyzer(DataBuffer out, boolean linear, Channel channel) {
         this.linear = linear;
+        this.channel = channel;
         this.out = out;
     }
     @Override
@@ -107,6 +129,7 @@ public class LuminanceAnalyzer extends AnalyzingModule {
         luminanceProgramTextureHandle = GLES20.glGetUniformLocation(luminanceProgram, "texture");
         luminanceProgramPassepartoutMinHandle = GLES20.glGetUniformLocation(luminanceProgram, "passepartoutMin");
         luminanceProgramPassepartoutMaxHandle = GLES20.glGetUniformLocation(luminanceProgram, "passepartoutMax");
+        luminanceProgramWeightsHandle = GLES20.glGetUniformLocation(luminanceProgram, "weights");
 
         luminanceDownsamplingProgram = buildProgram(interpolatingFullScreenVertexShader, luminanceDownsamplingFragmentShader);
         luminanceDownsamplingProgramVerticesHandle = GLES20.glGetAttribLocation(luminanceDownsamplingProgram, "vertices");
@@ -191,6 +214,7 @@ public class LuminanceAnalyzer extends AnalyzingModule {
 
         GLES20.glUniform2f(luminanceProgramPassepartoutMinHandle, passepartout.left, passepartout.top);
         GLES20.glUniform2f(luminanceProgramPassepartoutMaxHandle, passepartout.right, passepartout.bottom);
+        GLES20.glUniform3fv(luminanceProgramWeightsHandle, 1, channel.weights, 0);
 
         GLES20.glUniformMatrix4fv(luminanceProgramCamMatrixHandle, 1, false, camMatrix, 0);
 

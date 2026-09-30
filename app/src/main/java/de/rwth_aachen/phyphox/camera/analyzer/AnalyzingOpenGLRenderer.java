@@ -112,11 +112,41 @@ public class AnalyzingOpenGLRenderer implements Preview.SurfaceProvider, Surface
         if (cameraInput.getDataValue() != null) {
             analyzingModules.add(new HSVAnalyzer(cameraInput.getDataValue(), HSVAnalyzer.Mode.value));
         }
-        if(cameraInput.getDataPixelPosition() != null){
-            if(cameraInput.isFeatureSpectroscopy()){
+        //Colour channels (file format 1.21): the gamma-encoded ones are per-frame scalars under every
+        //feature like luma, the linear ones follow luminance - scalars for photometry, spectra for spectroscopy
+        if (cameraInput.getDataRed() != null) {
+            analyzingModules.add(new LuminanceAnalyzer(cameraInput.getDataRed(), false, LuminanceAnalyzer.Channel.red));
+        }
+        if (cameraInput.getDataGreen() != null) {
+            analyzingModules.add(new LuminanceAnalyzer(cameraInput.getDataGreen(), false, LuminanceAnalyzer.Channel.green));
+        }
+        if (cameraInput.getDataBlue() != null) {
+            analyzingModules.add(new LuminanceAnalyzer(cameraInput.getDataBlue(), false, LuminanceAnalyzer.Channel.blue));
+        }
+        if (cameraInput.isFeaturePhotometry()) {
+            if (cameraInput.getDataLinearRed() != null) {
+                analyzingModules.add(new LuminanceAnalyzer(cameraInput.getDataLinearRed(), true, LuminanceAnalyzer.Channel.red));
+            }
+            if (cameraInput.getDataLinearGreen() != null) {
+                analyzingModules.add(new LuminanceAnalyzer(cameraInput.getDataLinearGreen(), true, LuminanceAnalyzer.Channel.green));
+            }
+            if (cameraInput.getDataLinearBlue() != null) {
+                analyzingModules.add(new LuminanceAnalyzer(cameraInput.getDataLinearBlue(), true, LuminanceAnalyzer.Channel.blue));
+            }
+        }
+        if (cameraInput.isFeatureSpectroscopy()) {
+            boolean spectrumMapped = cameraInput.getDataPixelPosition() != null
+                    || cameraInput.getDataLuminance() != null
+                    || cameraInput.getDataLinearRed() != null
+                    || cameraInput.getDataLinearGreen() != null
+                    || cameraInput.getDataLinearBlue() != null;
+            if (spectrumMapped) {
                 analyzingModules.add(new SpectroscopyAnalyzer(
                         cameraInput.getDataLuminance(),
                         cameraInput.getDataPixelPosition(),
+                        cameraInput.getDataLinearRed(),
+                        cameraInput.getDataLinearGreen(),
+                        cameraInput.getDataLinearBlue(),
                         cameraSettingValueState.getValue().getSpectrumAnalysisOrientation()));
             }
         }

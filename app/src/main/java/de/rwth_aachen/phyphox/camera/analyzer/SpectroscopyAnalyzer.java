@@ -17,7 +17,9 @@ import android.util.Log;
 
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.List;
 
 import de.rwth_aachen.phyphox.DataBuffer;
 import de.rwth_aachen.phyphox.camera.model.CameraSettingState;
@@ -76,20 +78,23 @@ public class SpectroscopyAnalyzer extends AnalyzingModule {
 
 
 
-    DataBuffer out;
     DataBuffer pixelPosition;
+    //One reduction pass per mapped spectrum: luminance and the three linear colour channels. Each
+    //pass shares the ROI and orientation, so a single pixelPosition array pairs with all of them.
+    LuminanceAnalyzer.Channel[] channels;
+    DataBuffer[] channelOutputs;
 
     int spectroscopyProgram = -1;
     int verticalReductionProgram = -1;
     int spectroscopyProgramVerticesHandle, spectroscopyProgramTexCoordinatesHandle;
     int spectroscopyProgramCamMatrixHandle, spectroscopyProgramTextureHandle;
-    int spectroscopyProgramPassepartoutMinHandle, spectroscopyProgramPassepartoutMaxHandle;
+    int spectroscopyProgramPassepartoutMinHandle, spectroscopyProgramPassepartoutMaxHandle, spectroscopyProgramWeightsHandle;
 
     int reductionProgramVerticesHandle, reductionProgramTexCoordinatesHandle;
     int reductionProgramTextureHandle, reductionResSourceHandle, reductionResTargetHandle;
 
     static class Result {
-        double[] luminance;
+        double[][] spectra; //Indexed like channels, each as long as pixelPosition
         double[] pixelPosition;
     }
     Result latestResult = null;
@@ -104,11 +109,27 @@ public class SpectroscopyAnalyzer extends AnalyzingModule {
     }
     private SpectrumOrientation analysisSpectrumOrientation;
 
-    public SpectroscopyAnalyzer(DataBuffer out, DataBuffer pixelPosition, SpectrumOrientation analysisSpectrumOrientation){
+    public SpectroscopyAnalyzer(DataBuffer out, DataBuffer pixelPosition, DataBuffer linearRed, DataBuffer linearGreen, DataBuffer linearBlue, SpectrumOrientation analysisSpectrumOrientation){
         super();
-        this.out = out;
         this.pixelPosition = pixelPosition;
         this.analysisSpectrumOrientation = analysisSpectrumOrientation;
+
+        List<LuminanceAnalyzer.Channel> mappedChannels = new ArrayList<>();
+        List<DataBuffer> mappedOutputs = new ArrayList<>();
+        LuminanceAnalyzer.Channel[] all = {LuminanceAnalyzer.Channel.luma, LuminanceAnalyzer.Channel.red, LuminanceAnalyzer.Channel.green, LuminanceAnalyzer.Channel.blue};
+        DataBuffer[] outputs = {out, linearRed, linearGreen, linearBlue};
+        for (int i = 0; i < all.length; i++) {
+            if (outputs[i] == null)
+                continue;
+            mappedChannels.add(all[i]);
+            mappedOutputs.add(outputs[i]);
+        }
+        if (mappedChannels.isEmpty()) { //Only pixelPosition mapped: one pass is still needed to find the covered range
+            mappedChannels.add(LuminanceAnalyzer.Channel.luma);
+            mappedOutputs.add(null);
+        }
+        channels = mappedChannels.toArray(new LuminanceAnalyzer.Channel[0]);
+        channelOutputs = mappedOutputs.toArray(new DataBuffer[0]);
     }
 
     public void setAnalysisSpectrumOrientation(SpectrumOrientation analysisSpectrumOrientation) {
@@ -149,6 +170,7 @@ public class SpectroscopyAnalyzer extends AnalyzingModule {
         spectroscopyProgramTextureHandle = GLES20.glGetUniformLocation(spectroscopyProgram, "texture");
         spectroscopyProgramPassepartoutMinHandle = GLES20.glGetUniformLocation(spectroscopyProgram, "passepartoutMin");
         spectroscopyProgramPassepartoutMaxHandle = GLES20.glGetUniformLocation(spectroscopyProgram, "passepartoutMax");
+        spectroscopyProgramWeightsHandle = GLES20.glGetUniformLocation(spectroscopyProgram, "weights");
 
         if (verticalReductionProgram >= 0)
             deleteProgram(verticalReductionProgram);
@@ -169,49 +191,53 @@ public class SpectroscopyAnalyzer extends AnalyzingModule {
 
     @Override
     public void analyze(float[] camMatrix, RectF passepartout) {
-        drawLuminance(camMatrix, passepartout);
-
-        for(int i = 0; i < nSpecDownsampleSteps; i++){
-            drawVerticalReduction(i, camMatrix);
-        }
-
         int outW = wSpecDownsampleStep[nSpecDownsampleSteps-1];
         int outH = hSpecDownsampleStep[nSpecDownsampleSteps-1];
-
 
         if (resultBuffer == null || resultBufferSize != outW * outH) {
             resultBufferSize = outW * outH;
             resultBuffer = ByteBuffer.allocateDirect(resultBufferSize * 4).order(ByteOrder.nativeOrder());
         }
-        resultBuffer.rewind();
-
-        GLES20.glReadPixels(0, 0, outW, outH, GLES20.GL_RGBA, GLES20.GL_UNSIGNED_BYTE, resultBuffer);
-
-        resultBuffer.rewind();
-        byte[] bytes = new byte[resultBuffer.remaining()];
-        resultBuffer.get(bytes);
 
         final boolean isLandscape = (analysisSpectrumOrientation == SpectrumOrientation.LANDSCAPE);
         final int spectrumPixels = isLandscape ? outH : outW;
 
         Result result = new Result();
-        result.luminance = new double[spectrumPixels];
+        result.spectra = new double[channels.length][spectrumPixels];
         result.pixelPosition = new double[spectrumPixels];
 
+        //The blue channel carries the pixel coverage, which only depends on the ROI - identical for every pass
         long[] totalContributions = new long[spectrumPixels];
 
-        for (int pixelIndex = 0; pixelIndex < bytes.length / 4 ; pixelIndex++) {
-            int spectrumPixel = isLandscape ? (pixelIndex / outW) : (pixelIndex % outW);
+        for (int c = 0; c < channels.length; c++) {
+            drawLuminance(camMatrix, passepartout, channels[c].weights);
 
-            int byteIndex = pixelIndex * 4;
-            int r = bytes[byteIndex] & 0xff;
-            int g = bytes[byteIndex+1] & 0xff;
-            int b = bytes[byteIndex+2] & 0xff;
-            long luminance  = (r << 8) + g;
+            for(int i = 0; i < nSpecDownsampleSteps; i++){
+                drawVerticalReduction(i, camMatrix);
+            }
 
-            result.pixelPosition[spectrumPixel] = spectrumPixel;
-            result.luminance[spectrumPixel] += (double) luminance;
-            totalContributions[spectrumPixel] += b;
+            resultBuffer.rewind();
+            GLES20.glReadPixels(0, 0, outW, outH, GLES20.GL_RGBA, GLES20.GL_UNSIGNED_BYTE, resultBuffer);
+
+            resultBuffer.rewind();
+            byte[] bytes = new byte[resultBuffer.remaining()];
+            resultBuffer.get(bytes);
+
+            double[] spectrum = result.spectra[c];
+            for (int pixelIndex = 0; pixelIndex < bytes.length / 4 ; pixelIndex++) {
+                int spectrumPixel = isLandscape ? (pixelIndex / outW) : (pixelIndex % outW);
+
+                int byteIndex = pixelIndex * 4;
+                int r = bytes[byteIndex] & 0xff;
+                int g = bytes[byteIndex+1] & 0xff;
+                int b = bytes[byteIndex+2] & 0xff;
+                long luminance  = (r << 8) + g;
+
+                result.pixelPosition[spectrumPixel] = spectrumPixel;
+                spectrum[spectrumPixel] += (double) luminance;
+                if (c == 0)
+                    totalContributions[spectrumPixel] += b;
+            }
         }
 
         final double normalizationFactor = Math.pow(4, nSpecDownsampleSteps);
@@ -223,16 +249,19 @@ public class SpectroscopyAnalyzer extends AnalyzingModule {
             if (minContribution < 0)
                 minContribution = i;
             maxContribution = i;
-            result.luminance[i] /= totalContributions[i] * normalizationFactor;
+            for (double[] spectrum : result.spectra)
+                spectrum[i] /= totalContributions[i] * normalizationFactor;
         }
 
         if (minContribution < 0) {
             // no pixel contributed to any column (dark or clipped frame)
             result.pixelPosition = new double[0];
-            result.luminance = new double[0];
+            for (int c = 0; c < channels.length; c++)
+                result.spectra[c] = new double[0];
         } else {
             result.pixelPosition = Arrays.copyOfRange(result.pixelPosition, minContribution, maxContribution + 1);
-            result.luminance = Arrays.copyOfRange(result.luminance, minContribution, maxContribution + 1);
+            for (int c = 0; c < channels.length; c++)
+                result.spectra[c] = Arrays.copyOfRange(result.spectra[c], minContribution, maxContribution + 1);
         }
 
         checkGLError("spectroscopy analyze");
@@ -246,20 +275,26 @@ public class SpectroscopyAnalyzer extends AnalyzingModule {
         double exposureFactor = Math.pow(2.0, state.getCurrentApertureValue())/2.0 * 100.0/state.getCurrentIsoValue() *
                         (1.0e9/60.0) / state.getCurrentShutterValue();
 
-        out.clear(false);
-        pixelPosition.clear(false); // Clear pixel position buffer too
+        if (pixelPosition != null)
+            pixelPosition.clear(false);
+        for (DataBuffer out : channelOutputs)
+            if (out != null)
+                out.clear(false);
 
         if (latestResult != null) {
             for (int i = 0; i < latestResult.pixelPosition.length; i++) {
-                pixelPosition.append(latestResult.pixelPosition[i]);
-                out.append(latestResult.luminance[i] * exposureFactor);
+                if (pixelPosition != null)
+                    pixelPosition.append(latestResult.pixelPosition[i]);
+                for (int c = 0; c < channelOutputs.length; c++)
+                    if (channelOutputs[c] != null)
+                        channelOutputs[c].append(latestResult.spectra[c][i] * exposureFactor);
             }
         }
 
         latestResult = null;
     }
 
-    void drawLuminance(float[] camMatrix, RectF passepartout) {
+    void drawLuminance(float[] camMatrix, RectF passepartout, float[] weights) {
         makeCurrent(analyzingFramebuffer, width, height);
 
         GLES20.glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
@@ -292,6 +327,7 @@ public class SpectroscopyAnalyzer extends AnalyzingModule {
 
         GLES20.glUniform2f(spectroscopyProgramPassepartoutMinHandle, passepartout.left, passepartout.top);
         GLES20.glUniform2f(spectroscopyProgramPassepartoutMaxHandle, passepartout.right, passepartout.bottom);
+        GLES20.glUniform3fv(spectroscopyProgramWeightsHandle, 1, weights, 0);
 
         GLES20.glUniformMatrix4fv(spectroscopyProgramCamMatrixHandle, 1, false, camMatrix, 0);
 
