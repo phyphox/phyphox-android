@@ -5,6 +5,8 @@ import static de.rwth_aachen.phyphox.camera.analyzer.OpenGLHelper.checkGLError;
 import static de.rwth_aachen.phyphox.camera.analyzer.OpenGLHelper.fullScreenVertexShader;
 import static de.rwth_aachen.phyphox.camera.analyzer.OpenGLHelper.fullScreenVboVertices;
 import static de.rwth_aachen.phyphox.camera.analyzer.OpenGLHelper.fullScreenVboTexCoordinates;
+import static de.rwth_aachen.phyphox.camera.analyzer.OpenGLHelper.setWhiteBalanceUniforms;
+import static de.rwth_aachen.phyphox.camera.analyzer.OpenGLHelper.whiteBalanceFunctions;
 
 import android.graphics.RectF;
 import android.graphics.SurfaceTexture;
@@ -45,16 +47,22 @@ public class AnalyzingOpenGLRendererPreviewOutput implements TextureView.Surface
             "uniform int markUnderexposure;\n" +
             "uniform vec3 overexposureColor;\n" +
             "uniform vec3 underexposureColor;\n" +
+            whiteBalanceFunctions + "\n" +
 
+            //Over- and underexposure are judged on the camera output, the sensor is what clips; the shown colour is
+            //balanced like the measured one
             "void main () {\n" +
             "  vec4 color = texture2D(texture, texPosition);\n" +
             "  if (markOverexposure > 0 && any(greaterThan(color, vec4(0.99, 0.99, 0.99, 1.0)))) {\n" +
             "    color = vec4(overexposureColor, 1.0);\n" +
             "  } else if (markUnderexposure > 0 && any(lessThan(color, vec4(0.01, 0.01, 0.01, 0.0)))) {\n" +
             "    color = vec4(underexposureColor, 1.0);\n" +
-            "  } else if (grayscale > 0) {\n" +
-            "    float luma = dot(color.rgb, vec3(0.2126, 0.7152, 0.0722));\n" +
-            "    color = vec4(luma, luma, luma, 1.0);\n" +
+            "  } else {\n" +
+            "    color = vec4(balanceGamma(color.rgb), 1.0);\n" +
+            "    if (grayscale > 0) {\n" +
+            "      float luma = dot(color.rgb, vec3(0.2126, 0.7152, 0.0722));\n" +
+            "      color = vec4(luma, luma, luma, 1.0);\n" +
+            "    }\n" +
             "  }\n" +
             "  if (any(lessThan(positionInPassepartout, vec2(0.0, 0.0))) || any(greaterThan(positionInPassepartout, vec2(1.0, 1.0))))\n" +
             "       gl_FragColor = vec4(0.5, 0.5, 0.5, 1.0) * color;\n" +
@@ -63,6 +71,7 @@ public class AnalyzingOpenGLRendererPreviewOutput implements TextureView.Surface
             "}\n";
     static int program, verticesHandle, texCoordinatesHandle, camMatrixHandle, textureHandle, passepartoutMinHandle, passepartoutMaxHandle;
     static int grayscaleHandle, markOverexposureHandle, markUnderexposureHandle, overexposureColorHandle, underexposureColorHandle;
+    static int whiteBalanceHandle, whiteBalanceMatrixHandle;
     static EGLContext eglContext = null;
     static EGLDisplay eglDisplay;
     static EGLConfig eglConfig;
@@ -144,6 +153,8 @@ public class AnalyzingOpenGLRendererPreviewOutput implements TextureView.Surface
         overexposureColorHandle = GLES20.glGetUniformLocation(program, "overexposureColor");
         markUnderexposureHandle = GLES20.glGetUniformLocation(program, "markUnderexposure");
         underexposureColorHandle = GLES20.glGetUniformLocation(program, "underexposureColor");
+        whiteBalanceHandle = GLES20.glGetUniformLocation(program, "whiteBalance");
+        whiteBalanceMatrixHandle = GLES20.glGetUniformLocation(program, "whiteBalanceMatrix");
 
         checkGLError("preview: prepareOpenGL");
     }
@@ -184,6 +195,7 @@ public class AnalyzingOpenGLRendererPreviewOutput implements TextureView.Surface
             GLES20.glUniform3f(overexposureColorHandle, markOverexposure.r() / 255.f, markOverexposure.g() / 255.f, markOverexposure.b() / 255.f);
         if (markUnderexposure != null)
             GLES20.glUniform3f(underexposureColorHandle, markUnderexposure.r() / 255.f, markUnderexposure.g() / 255.f, markUnderexposure.b() / 255.f);
+        setWhiteBalanceUniforms(whiteBalanceHandle, whiteBalanceMatrixHandle);
 
         GLES20.glUniformMatrix4fv(camMatrixHandle, 1, false, camMatrix, 0);
 

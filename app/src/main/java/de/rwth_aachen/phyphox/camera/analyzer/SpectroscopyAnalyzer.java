@@ -11,6 +11,7 @@ import static de.rwth_aachen.phyphox.camera.analyzer.OpenGLHelper.fullScreenVert
 import static de.rwth_aachen.phyphox.camera.analyzer.OpenGLHelper.interpolatingHeightFullScreenVertexShader;
 import static de.rwth_aachen.phyphox.camera.analyzer.OpenGLHelper.interpolatingWidthFullScreenVertexShader;
 import static de.rwth_aachen.phyphox.camera.analyzer.OpenGLHelper.packedMeanFunctions;
+import static de.rwth_aachen.phyphox.camera.analyzer.OpenGLHelper.setWhiteBalanceUniforms;
 
 import android.graphics.RectF;
 import android.opengl.GLES20;
@@ -84,6 +85,7 @@ public class SpectroscopyAnalyzer extends AnalyzingModule {
     int spectroscopyProgramVerticesHandle, spectroscopyProgramTexCoordinatesHandle;
     int spectroscopyProgramCamMatrixHandle, spectroscopyProgramTextureHandle;
     int spectroscopyProgramPassepartoutMinHandle, spectroscopyProgramPassepartoutMaxHandle, spectroscopyProgramWeightsHandle;
+    int spectroscopyProgramWhiteBalanceHandle, spectroscopyProgramWhiteBalanceMatrixHandle;
 
     int reductionProgramVerticesHandle, reductionProgramTexCoordinatesHandle;
     int reductionProgramTextureHandle, reductionResSourceHandle, reductionResTargetHandle;
@@ -166,6 +168,8 @@ public class SpectroscopyAnalyzer extends AnalyzingModule {
         spectroscopyProgramPassepartoutMinHandle = GLES20.glGetUniformLocation(spectroscopyProgram, "passepartoutMin");
         spectroscopyProgramPassepartoutMaxHandle = GLES20.glGetUniformLocation(spectroscopyProgram, "passepartoutMax");
         spectroscopyProgramWeightsHandle = GLES20.glGetUniformLocation(spectroscopyProgram, "weights");
+        spectroscopyProgramWhiteBalanceHandle = GLES20.glGetUniformLocation(spectroscopyProgram, "whiteBalance");
+        spectroscopyProgramWhiteBalanceMatrixHandle = GLES20.glGetUniformLocation(spectroscopyProgram, "whiteBalanceMatrix");
 
         if (verticalReductionProgram >= 0)
             deleteProgram(verticalReductionProgram);
@@ -322,6 +326,7 @@ public class SpectroscopyAnalyzer extends AnalyzingModule {
         GLES20.glUniform2f(spectroscopyProgramPassepartoutMinHandle, passepartout.left, passepartout.top);
         GLES20.glUniform2f(spectroscopyProgramPassepartoutMaxHandle, passepartout.right, passepartout.bottom);
         GLES20.glUniform3fv(spectroscopyProgramWeightsHandle, 1, weights, 0);
+        setWhiteBalanceUniforms(spectroscopyProgramWhiteBalanceHandle, spectroscopyProgramWhiteBalanceMatrixHandle);
 
         GLES20.glUniformMatrix4fv(spectroscopyProgramCamMatrixHandle, 1, false, camMatrix, 0);
 

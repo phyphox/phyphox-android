@@ -1,0 +1,117 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.appcompat.widget.LinearLayoutCompat xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="0dp"
+    android:layout_height="wrap_content"
+    android:orientation="vertical"
+    android:paddingLeft="8dp"
+    android:paddingRight="8dp">
+
+    <com.google.android.material.button.MaterialButtonToggleGroup
+        android:id="@+id/whiteBalanceModeToggle"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="4dp"
+        app:singleSelection="true"
+        app:selectionRequired="true"
+        app:checkedButton="@+id/btnWhiteBalanceAuto">
+
+        <Button
+            android:id="@+id/btnWhiteBalanceAuto"
+            style="?attr/materialButtonOutlinedStyle"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:textSize="11sp"
+            app:backgroundTint="@color/toggle_selector_background"
+            android:text="@string/wb_auto" />
+
+        <Button
+            android:id="@+id/btnWhiteBalanceLocked"
+            style="?attr/materialButtonOutlinedStyle"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:textSize="11sp"
+            app:backgroundTint="@color/toggle_selector_background"
+            android:text="@string/wb_locked" />
+
+        <Button
+            android:id="@+id/btnWhiteBalanceTemperature"
+            style="?attr/materialButtonOutlinedStyle"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:textSize="11sp"
+            app:backgroundTint="@color/toggle_selector_background"
+            android:text="@string/wb_temperature" />
+    </com.google.android.material.button.MaterialButtonToggleGroup>
+
+    <androidx.appcompat.widget.LinearLayoutCompat
+        android:id="@+id/whiteBalanceTemperatureControls"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical">
+
+        <HorizontalScrollView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:scrollbars="none">
+
+            <androidx.appcompat.widget.LinearLayoutCompat
+                android:id="@+id/whiteBalanceMarks"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal" />
+        </HorizontalScrollView>
+
+        <androidx.appcompat.widget.LinearLayoutCompat
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:gravity="center_vertical"
+            android:orientation="horizontal">
+
+            <TextView
+                android:id="@+id/textWhiteBalanceTemperature"
+                android:layout_width="72dp"
+                android:layout_height="wrap_content"
+                android:gravity="end"
+                android:textSize="11sp" />
+
+            <com.google.android.material.slider.Slider
+                android:id="@+id/whiteBalanceTemperatureSlider"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:theme="@style/SliderMaterialTheme"
+                android:valueFrom="0.0"
+                android:valueTo="1000.0"
+                android:stepSize="1.0" />
+        </androidx.appcompat.widget.LinearLayoutCompat>
+
+        <androidx.appcompat.widget.LinearLayoutCompat
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:gravity="center_vertical"
+            android:orientation="horizontal">
+
+            <TextView
+                android:id="@+id/textWhiteBalanceTint"
+                android:layout_width="72dp"
+                android:layout_height="wrap_content"
+                android:gravity="end"
+                android:textSize="11sp" />
+
+            <com.google.android.material.slider.Slider
+                android:id="@+id/whiteBalanceTintSlider"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:theme="@style/SliderMaterialTheme"
+                android:valueFrom="-20.0"
+                android:valueTo="20.0"
+                android:stepSize="1.0" />
+        </androidx.appcompat.widget.LinearLayoutCompat>
+    </androidx.appcompat.widget.LinearLayoutCompat>
+
+</androidx.appcompat.widget.LinearLayoutCompat>

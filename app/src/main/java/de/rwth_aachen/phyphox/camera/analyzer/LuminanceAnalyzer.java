@@ -9,6 +9,8 @@ import static de.rwth_aachen.phyphox.camera.analyzer.OpenGLHelper.fullScreenVert
 import static de.rwth_aachen.phyphox.camera.analyzer.OpenGLHelper.interpolatingFullScreenVertexShader;
 import static de.rwth_aachen.phyphox.camera.analyzer.OpenGLHelper.meanDownsamplingFragmentShader;
 import static de.rwth_aachen.phyphox.camera.analyzer.OpenGLHelper.packedMeanFunctions;
+import static de.rwth_aachen.phyphox.camera.analyzer.OpenGLHelper.setWhiteBalanceUniforms;
+import static de.rwth_aachen.phyphox.camera.analyzer.OpenGLHelper.whiteBalanceFunctions;
 
 import android.graphics.RectF;
 import android.opengl.GLES20;
@@ -29,13 +31,7 @@ public class LuminanceAnalyzer extends AnalyzingModule {
             "varying vec2 positionInPassepartout;" +
             "varying vec2 texPosition;" +
             packedMeanFunctions +
-
-            "float linearize(float x) {" +
-            "  if (x < 0.04045) " +
-            "    return x/12.92;" +
-            "  else" +
-            "    return pow((x+0.055)/1.055, 2.4);" +
-            "}" +
+            whiteBalanceFunctions +
 
             "void main () {" +
             "  if (any(lessThan(positionInPassepartout, vec2(0.0, 0.0))) || any(greaterThan(positionInPassepartout, vec2(1.0, 1.0)))) {" +
@@ -45,7 +41,7 @@ public class LuminanceAnalyzer extends AnalyzingModule {
 
 //            "    vec3 linRGB = pow(gammaRGB, vec3(2.2, 2.2, 2.2));" +   //Adobe RGB or approximation of sRGB
 
-            "    vec3 linRGB = vec3(linearize(gammaRGB.r), linearize(gammaRGB.g), linearize(gammaRGB.b));" +
+            "    vec3 linRGB = balanceLinear(linearize3(gammaRGB));" +
             "    gl_FragColor = packMean(vec2(dot(linRGB, weights), 1.0));" +
             "  }" +
             "}";
@@ -58,11 +54,12 @@ public class LuminanceAnalyzer extends AnalyzingModule {
                     "varying vec2 positionInPassepartout;" +
                     "varying vec2 texPosition;" +
                     packedMeanFunctions +
+                    whiteBalanceFunctions +
                     "void main () {" +
                     "  if (any(lessThan(positionInPassepartout, vec2(0.0, 0.0))) || any(greaterThan(positionInPassepartout, vec2(1.0, 1.0)))) {" +
                     "    gl_FragColor = vec4(0.0, 0.0, 0.0, 0.0);" +
                     "  } else {" +
-                    "    vec3 gammaRGB = texture2D(texture, texPosition).rgb;" +
+                    "    vec3 gammaRGB = balanceGamma(texture2D(texture, texPosition).rgb);" +
                     "    gl_FragColor = packMean(vec2(dot(gammaRGB, weights), 1.0));" +
                     " }" +
                     "}";
@@ -87,6 +84,7 @@ public class LuminanceAnalyzer extends AnalyzingModule {
     DataBuffer out;
     int luminanceProgram, luminanceDownsamplingProgram;
     int luminanceProgramVerticesHandle, luminanceProgramTexCoordinatesHandle, luminanceProgramCamMatrixHandle, luminanceProgramTextureHandle, luminanceProgramPassepartoutMinHandle, luminanceProgramPassepartoutMaxHandle, luminanceProgramWeightsHandle;
+    int luminanceProgramWhiteBalanceHandle, luminanceProgramWhiteBalanceMatrixHandle;
     int luminanceDownsamplingProgramVerticesHandle, luminanceDownsamplingProgramTexCoordinatesHandle, luminanceDownsamplingProgramTextureHandle;
     int luminanceDownsamplingResSourceHandle, luminanceDownsamplingResTargetHandle;
 
@@ -113,6 +111,8 @@ public class LuminanceAnalyzer extends AnalyzingModule {
         luminanceProgramPassepartoutMinHandle = GLES20.glGetUniformLocation(luminanceProgram, "passepartoutMin");
         luminanceProgramPassepartoutMaxHandle = GLES20.glGetUniformLocation(luminanceProgram, "passepartoutMax");
         luminanceProgramWeightsHandle = GLES20.glGetUniformLocation(luminanceProgram, "weights");
+        luminanceProgramWhiteBalanceHandle = GLES20.glGetUniformLocation(luminanceProgram, "whiteBalance");
+        luminanceProgramWhiteBalanceMatrixHandle = GLES20.glGetUniformLocation(luminanceProgram, "whiteBalanceMatrix");
 
         luminanceDownsamplingProgram = buildProgram(interpolatingFullScreenVertexShader, meanDownsamplingFragmentShader);
         luminanceDownsamplingProgramVerticesHandle = GLES20.glGetAttribLocation(luminanceDownsamplingProgram, "vertices");
@@ -198,6 +198,7 @@ public class LuminanceAnalyzer extends AnalyzingModule {
         GLES20.glUniform2f(luminanceProgramPassepartoutMinHandle, passepartout.left, passepartout.top);
         GLES20.glUniform2f(luminanceProgramPassepartoutMaxHandle, passepartout.right, passepartout.bottom);
         GLES20.glUniform3fv(luminanceProgramWeightsHandle, 1, channel.weights, 0);
+        setWhiteBalanceUniforms(luminanceProgramWhiteBalanceHandle, luminanceProgramWhiteBalanceMatrixHandle);
 
         GLES20.glUniformMatrix4fv(luminanceProgramCamMatrixHandle, 1, false, camMatrix, 0);
 

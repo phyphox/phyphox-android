@@ -147,7 +147,7 @@
         android:layout_height="wrap_content"
         app:barrierDirection="top"
         app:barrierAllowsGoneWidgets="false"
-        app:constraint_referenced_ids="zoomControl,recyclerViewCameraSetting,bottom_anchor" />
+        app:constraint_referenced_ids="zoomControl,recyclerViewCameraSetting,whiteBalanceControl,bottom_anchor" />
 
     <androidx.recyclerview.widget.RecyclerView
         android:id="@+id/recyclerViewCameraSetting"
@@ -166,6 +166,17 @@
         android:layout_width="0dp"
         android:layout_height="wrap_content"
         android:id="@+id/zoomControl"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintLeft_toLeftOf="parent"
+        app:layout_constraintRight_toLeftOf="@id/cameraSetting"
+        />
+
+    <include
+        layout="@layout/camera_white_balance_control_include"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:id="@+id/whiteBalanceControl"
+        android:visibility="gone"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintLeft_toLeftOf="parent"
         app:layout_constraintRight_toLeftOf="@id/cameraSetting"

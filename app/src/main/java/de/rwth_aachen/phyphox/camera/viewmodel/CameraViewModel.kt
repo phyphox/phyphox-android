@@ -20,6 +20,7 @@ import de.rwth_aachen.phyphox.camera.model.CameraUiState
 import de.rwth_aachen.phyphox.camera.model.OverlayUpdateState
 import de.rwth_aachen.phyphox.camera.model.ShowCameraControls
 import de.rwth_aachen.phyphox.camera.model.ShowSpectroscopyAnalysisControls
+import de.rwth_aachen.phyphox.camera.model.WhiteBalanceMode
 import de.rwth_aachen.phyphox.camera.ui.CameraPreviewScreen
 import de.rwth_aachen.phyphox.camera.ui.ChooseCameraSettingValue
 import de.rwth_aachen.phyphox.camera.viewstate.CameraControlElementViewState
@@ -77,7 +78,8 @@ class CameraViewModel() : ViewModel() {
                                                             cameraUiState.editableCameraSettings?.contains("shutter_speed") ?: false
                                                     val apertureLocked =
                                                             cameraUiState.editableCameraSettings?.contains("aperture") ?: false
-                                                    it.enableAdvanceExposureControl(isoLocked, shutterLocked, apertureLocked)
+                                                    val whiteBalanceLocked = cameraInput.cameraSettingState.value.whiteBalanceLockedByFile
+                                                    it.enableAdvanceExposureControl(isoLocked, shutterLocked, apertureLocked, whiteBalanceLocked)
                                                 }
                                             }
                                         }
@@ -114,7 +116,7 @@ class CameraViewModel() : ViewModel() {
                                             subControls = it.subControls
                                                     .hideAll()
                                                     .copy(
-                                                        recyclerViewVisible = true,
+                                                        recyclerViewVisible = cameraUiState.settingMode != CameraSettingMode.WHITE_BALANCE,
                                                         exposureSlider = it.subControls.exposureSlider.copy(isVisible = cameraUiState.settingMode == CameraSettingMode.EXPOSURE, isEnabled = cameraUiState.settingMode == CameraSettingMode.EXPOSURE),
                                                         isoSlider = it.subControls.isoSlider.copy(isVisible = cameraUiState.settingMode == CameraSettingMode.ISO, isEnabled = cameraUiState.settingMode == CameraSettingMode.ISO),
                                                         apertureSlider = it.subControls.apertureSlider.copy(isVisible = cameraUiState.settingMode == CameraSettingMode.APERTURE, isEnabled = cameraUiState.settingMode == CameraSettingMode.APERTURE),
@@ -270,8 +272,16 @@ class CameraViewModel() : ViewModel() {
     fun cameraSettingOpened() {
     }
 
-    fun changeWhiteBalance(value: FloatArray) {
-        cameraInput.setWhiteBalance(value)
+    fun changeWhiteBalanceMode(mode: WhiteBalanceMode) {
+        cameraInput.setWhiteBalanceMode(mode)
+    }
+
+    fun changeWhiteBalanceTemperature(kelvin: Int) {
+        cameraInput.setWhiteBalanceTemperature(kelvin)
+    }
+
+    fun changeWhiteBalanceTint(duv: Float) {
+        cameraInput.setWhiteBalanceTint(duv)
     }
 
     fun updateCameraSettingValue(value: ChooseCameraSettingValue, settingMode: CameraSettingMode) {

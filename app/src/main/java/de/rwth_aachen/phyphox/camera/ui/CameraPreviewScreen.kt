@@ -44,12 +44,14 @@ import de.rwth_aachen.phyphox.R
 import de.rwth_aachen.phyphox.camera.CameraInput
 import de.rwth_aachen.phyphox.camera.helper.CameraHelper
 import de.rwth_aachen.phyphox.camera.helper.SettingChooseListener
+import de.rwth_aachen.phyphox.camera.helper.WhiteBalance
 import de.rwth_aachen.phyphox.camera.model.CameraSettingMode
 import de.rwth_aachen.phyphox.camera.model.CameraSettingState
 import de.rwth_aachen.phyphox.camera.model.CameraUiAction
 import de.rwth_aachen.phyphox.camera.model.ImageButtonViewState
 import de.rwth_aachen.phyphox.camera.model.ShowCameraControls
 import de.rwth_aachen.phyphox.camera.model.TextViewCameraSettingViewState
+import de.rwth_aachen.phyphox.camera.model.WhiteBalanceMode
 import de.rwth_aachen.phyphox.camera.model.ZoomButtonInfo
 import de.rwth_aachen.phyphox.camera.viewmodel.CameraViewModel
 import de.rwth_aachen.phyphox.camera.viewstate.CameraControlElementViewState
@@ -62,6 +64,7 @@ import java.math.RoundingMode
 import java.text.DecimalFormat
 import kotlin.math.ln
 import kotlin.math.pow
+import kotlin.math.roundToInt
 import de.rwth_aachen.phyphox.camera.analyzer.SpectroscopyAnalyzer
 
 class CameraPreviewScreen(
@@ -130,6 +133,17 @@ class CameraPreviewScreen(
     private val buttonZoomTwoTimes: MaterialButton = root.findViewById(R.id.buttonZoomTimesTwo)
     private val buttonZoomFiveTimes: MaterialButton = root.findViewById(R.id.buttonTimesFive)
     private val buttonZoomTenTimes: MaterialButton = root.findViewById(R.id.buttonTimesTen)
+
+    //White balance panel: automatic, locked, or a temperature scale with reference marks and a tint adjustment
+    private val lnrWhiteBalanceControl: LinearLayoutCompat = root.findViewById(R.id.whiteBalanceControl)
+    private val whiteBalanceModeToggle: MaterialButtonToggleGroup = root.findViewById(R.id.whiteBalanceModeToggle)
+    private val lnrWhiteBalanceTemperatureControls: LinearLayoutCompat = root.findViewById(R.id.whiteBalanceTemperatureControls)
+    private val lnrWhiteBalanceMarks: LinearLayoutCompat = root.findViewById(R.id.whiteBalanceMarks)
+    private val whiteBalanceTemperatureSlider: Slider = root.findViewById(R.id.whiteBalanceTemperatureSlider)
+    private val whiteBalanceTintSlider: Slider = root.findViewById(R.id.whiteBalanceTintSlider)
+    private val textWhiteBalanceTemperature: TextView = root.findViewById(R.id.textWhiteBalanceTemperature)
+    private val textWhiteBalanceTint: TextView = root.findViewById(R.id.textWhiteBalanceTint)
+    private var whiteBalanceRange: IntRange = WhiteBalance.MIN_TEMPERATURE..WhiteBalance.MAX_TEMPERATURE
 
     var recyclerViewClicked = false
     var zoomClicked = false
@@ -228,6 +242,88 @@ class CameraPreviewScreen(
             lnrSpectrumOrientation.visibility = View.VISIBLE
             btnAnalysisSetting.setOnClickListener {  openSpectrumAnalysisConfigurationDialog() }
         }
+
+        setupWhiteBalanceControl()
+    }
+
+    private fun setupWhiteBalanceControl() {
+        whiteBalanceModeToggle.addOnButtonCheckedListener { _, checkedId, isChecked ->
+            if (!isChecked) return@addOnButtonCheckedListener
+            val mode = when (checkedId) {
+                R.id.btnWhiteBalanceLocked -> WhiteBalanceMode.LOCKED
+                R.id.btnWhiteBalanceTemperature -> WhiteBalanceMode.TEMPERATURE
+                else -> WhiteBalanceMode.AUTO
+            }
+            if (mode != cameraInput.cameraSettingState.value.whiteBalanceMode)
+                cameraViewModel.changeWhiteBalanceMode(mode)
+        }
+
+        for (mark in WhiteBalance.Mark.values()) {
+            val button = MaterialButton(context, null, com.google.android.material.R.attr.materialButtonOutlinedStyle)
+            button.text = context.getString(mark.label)
+            button.textSize = 11f
+            button.setOnClickListener { cameraViewModel.changeWhiteBalanceTemperature(mark.temperature) }
+            val params = LinearLayoutCompat.LayoutParams(LinearLayoutCompat.LayoutParams.WRAP_CONTENT, LinearLayoutCompat.LayoutParams.WRAP_CONTENT)
+            params.setMargins(2, 0, 2, 0)
+            lnrWhiteBalanceMarks.addView(button, params)
+        }
+
+        whiteBalanceTemperatureSlider.setLabelFormatter { value -> "${positionToTemperature(value)} K" }
+        whiteBalanceTemperatureSlider.addOnChangeListener { _, value, fromUser ->
+            if (fromUser)
+                cameraViewModel.changeWhiteBalanceTemperature(positionToTemperature(value))
+        }
+        whiteBalanceTintSlider.setLabelFormatter { value -> formatTint(value / 1000.0f) }
+        whiteBalanceTintSlider.addOnChangeListener { _, value, fromUser ->
+            if (fromUser)
+                cameraViewModel.changeWhiteBalanceTint(value / 1000.0f)
+        }
+    }
+
+    //The scale is logarithmic, so the reference marks between 2850 K and 7500 K take up a useful part of it
+    private fun positionToTemperature(position: Float): Int {
+        val min = whiteBalanceRange.first.toDouble()
+        val max = whiteBalanceRange.last.toDouble()
+        val t = min * (max / min).pow(position / 1000.0)
+        return ((t / 10.0).roundToInt() * 10).coerceIn(whiteBalanceRange)
+    }
+
+    private fun temperatureToPosition(temperature: Int): Float {
+        val min = whiteBalanceRange.first.toDouble()
+        val max = whiteBalanceRange.last.toDouble()
+        if (max <= min) return 0f
+        return (1000.0 * ln(temperature.coerceIn(whiteBalanceRange) / min) / ln(max / min)).toFloat().coerceIn(0f, 1000f)
+    }
+
+    private fun formatTint(duv: Float): String = String.format(java.util.Locale.US, "%+.3f", duv)
+
+    private fun whiteBalanceLabel(state: CameraSettingState): String = when (state.whiteBalanceMode) {
+        WhiteBalanceMode.AUTO -> context.getString(R.string.wb_auto)
+        WhiteBalanceMode.LOCKED -> context.getString(R.string.wb_locked)
+        WhiteBalanceMode.TEMPERATURE -> "${state.whiteBalanceTemperatureInEffect} K"
+    }
+
+    //Everything shown is the value in effect: a clamped temperature reads as clamped
+    private fun updateWhiteBalanceControl(state: CameraSettingState) {
+        whiteBalanceRange = state.whiteBalanceTemperatureRange
+        val checked = when (state.whiteBalanceMode) {
+            WhiteBalanceMode.AUTO -> R.id.btnWhiteBalanceAuto
+            WhiteBalanceMode.LOCKED -> R.id.btnWhiteBalanceLocked
+            WhiteBalanceMode.TEMPERATURE -> R.id.btnWhiteBalanceTemperature
+        }
+        if (whiteBalanceModeToggle.checkedButtonId != checked)
+            whiteBalanceModeToggle.check(checked)
+        val temperatureMode = state.whiteBalanceMode == WhiteBalanceMode.TEMPERATURE
+        lnrWhiteBalanceTemperatureControls.isVisible = temperatureMode
+        if (!temperatureMode) return
+        textWhiteBalanceTemperature.text = "${state.whiteBalanceTemperatureInEffect} K"
+        val position = temperatureToPosition(state.whiteBalanceTemperatureInEffect).roundToInt().toFloat()
+        if (whiteBalanceTemperatureSlider.value != position)
+            whiteBalanceTemperatureSlider.value = position
+        textWhiteBalanceTint.text = context.getString(R.string.wb_tint) + " " + formatTint(state.whiteBalanceTintInEffect)
+        val tintPosition = (state.whiteBalanceTintInEffect * 1000.0f).roundToInt().toFloat().coerceIn(whiteBalanceTintSlider.valueFrom, whiteBalanceTintSlider.valueTo)
+        if (whiteBalanceTintSlider.value != tintPosition)
+            whiteBalanceTintSlider.value = tintPosition
     }
 
     fun setInteractive(interactive: Boolean) {
@@ -403,8 +499,9 @@ class CameraPreviewScreen(
 
             textViewExposureStatus.text = currentExposureValue.toString().plus("EV")
 
-            textWhiteBalance.text =
-                context.getString(CameraHelper.getWhiteBalanceModes()[cameraCurrentWhiteBalanceMode] ?: R.string.wb_auto)
+            textWhiteBalance.text = whiteBalanceLabel(cameraSettingState)
+            if (lnrWhiteBalanceControl.isVisible)
+                updateWhiteBalanceControl(cameraSettingState)
         }
 
     }
@@ -684,9 +781,9 @@ class CameraPreviewScreen(
         }
 
         if (forceAll || newState.subControls.whiteBalanceControl != oldState.subControls.whiteBalanceControl) {
-            if (newState.subControls.whiteBalanceControl.isVisible) {
-                loadRecyclerViewContent(CameraSettingMode.WHITE_BALANCE)
-            }
+            lnrWhiteBalanceControl.isVisible = newState.subControls.whiteBalanceControl.isVisible
+            if (newState.subControls.whiteBalanceControl.isVisible)
+                updateWhiteBalanceControl(cameraInput.cameraSettingState.value)
             currentState = currentState!!.copy(subControls = currentState!!.subControls.copy(whiteBalanceControl = newState.subControls.whiteBalanceControl.copy()))
         }
 
@@ -717,9 +814,6 @@ class CameraPreviewScreen(
 
             CameraSettingMode.EXPOSURE -> cameraInput.cameraSettingState.value.currentExposureValue.toDouble()
 
-            CameraSettingMode.WHITE_BALANCE ->
-                cameraInput.cameraSettingState.value.cameraCurrentWhiteBalanceMode.toDouble()
-
             else -> 0.0
         }
 
@@ -748,13 +842,6 @@ class CameraPreviewScreen(
                     value = it.toDouble()
                 )
             }
-            CameraSettingMode.WHITE_BALANCE ->
-                CameraHelper.getWhiteBalanceModes().map {
-                    ChooseCameraSettingValue(
-                        label = context.getString(it.value),
-                        value = it.key.toDouble()
-                    )
-                }
             else -> emptyList()
         }
 

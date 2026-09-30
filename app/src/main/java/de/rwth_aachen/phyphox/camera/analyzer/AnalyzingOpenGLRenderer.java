@@ -31,6 +31,7 @@ import java.util.concurrent.locks.Lock;
 import de.rwth_aachen.phyphox.DataBuffer;
 import de.rwth_aachen.phyphox.ExperimentTimeReference;
 import de.rwth_aachen.phyphox.camera.CameraInput;
+import de.rwth_aachen.phyphox.camera.helper.WhiteBalance;
 import de.rwth_aachen.phyphox.camera.model.CameraSettingState;
 import de.rwth_aachen.phyphox.camera.ui.CameraPreviewScreen;
 import kotlinx.coroutines.flow.StateFlow;
@@ -289,6 +290,26 @@ public class AnalyzingOpenGLRenderer implements Preview.SurfaceProvider, Surface
     long renderingTotal = 0;
     long nFrames = 0;
 
+    //The white balance adaptation of the software path, recomputed only when the white point changes
+    int whiteBalanceTemperature = 0;
+    float whiteBalanceTint = 0.0f;
+    float[] whiteBalanceMatrix = null;
+
+    float[] whiteBalanceMatrix(CameraSettingState state) {
+        if (!state.whiteBalanceCorrectionActive()) {
+            whiteBalanceMatrix = null;
+            return null;
+        }
+        int temperature = state.getWhiteBalanceTemperatureInEffect();
+        float tint = state.getWhiteBalanceTintInEffect();
+        if (whiteBalanceMatrix == null || temperature != whiteBalanceTemperature || tint != whiteBalanceTint) {
+            whiteBalanceMatrix = WhiteBalance.INSTANCE.shaderMatrix(temperature, tint);
+            whiteBalanceTemperature = temperature;
+            whiteBalanceTint = tint;
+        }
+        return whiteBalanceMatrix;
+    }
+
     void writeToBuffers(double t, CameraSettingState state) {
         for (AnalyzingModule analyzingModule : analyzingModules)
             analyzingModule.writeToBuffers(state);
@@ -348,6 +369,8 @@ public class AnalyzingOpenGLRenderer implements Preview.SurfaceProvider, Surface
 
                     if (!running)
                         return;
+
+                    AnalyzingModule.setWhiteBalance(whiteBalanceMatrix(state));
 
                     long reportedTime = cameraSurfaceTexture.getTimestamp();
                     long timestampDelta = reportedTime + timeAdjustment - SystemClock.elapsedRealtimeNanos();

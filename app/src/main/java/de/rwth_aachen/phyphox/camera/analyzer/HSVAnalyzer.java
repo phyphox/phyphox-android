@@ -10,6 +10,8 @@ import static de.rwth_aachen.phyphox.camera.analyzer.OpenGLHelper.edgeWeightFunc
 import static de.rwth_aachen.phyphox.camera.analyzer.OpenGLHelper.interpolatingFullScreenVertexShader;
 import static de.rwth_aachen.phyphox.camera.analyzer.OpenGLHelper.meanDownsamplingFragmentShader;
 import static de.rwth_aachen.phyphox.camera.analyzer.OpenGLHelper.packedMeanFunctions;
+import static de.rwth_aachen.phyphox.camera.analyzer.OpenGLHelper.setWhiteBalanceUniforms;
+import static de.rwth_aachen.phyphox.camera.analyzer.OpenGLHelper.whiteBalanceFunctions;
 
 import android.graphics.RectF;
 import android.opengl.GLES20;
@@ -33,13 +35,14 @@ public class HSVAnalyzer extends AnalyzingModule {
             "uniform samplerExternalOES texture;" +
             "varying vec2 positionInPassepartout;" +
             "varying vec2 texPosition;" +
+            whiteBalanceFunctions +
             "void main () {" +
             "  float x, y;" +
             "  if (any(lessThan(positionInPassepartout, vec2(0.0, 0.0))) || any(greaterThan(positionInPassepartout, vec2(1.0, 1.0)))) {" +
             "    x = 0.5;" + //sin(h) and cos(h) are scaled to 0..1, so 0.5 is the center of the color wheel
             "    y = 0.5;" + //sin(h) and cos(h) are scaled to 0..1, so 0.5 is the center of the color wheel
             "  } else {" +
-            "    vec3 rgb = texture2D(texture, texPosition).rgb;" +
+            "    vec3 rgb = balanceGamma(texture2D(texture, texPosition).rgb);" +
             "    float rgbMax = max(max(rgb.r, rgb.g), rgb.b);" +
             "    float rgbMin = min(min(rgb.r, rgb.g), rgb.b);" +
             "    float d = rgbMax - rgbMin;" +
@@ -70,12 +73,13 @@ public class HSVAnalyzer extends AnalyzingModule {
                     "varying vec2 positionInPassepartout;" +
                     "varying vec2 texPosition;" +
                     packedMeanFunctions +
+                    whiteBalanceFunctions +
                     "void main () {" +
                     "  if (any(lessThan(positionInPassepartout, vec2(0.0, 0.0))) || any(greaterThan(positionInPassepartout, vec2(1.0, 1.0)))) {" +
                     "    gl_FragColor = vec4(0.0, 0.0, 0.0, 0.0);" +
                     "  } else {" +
                     "    float saturation;" +
-                    "    vec3 rgb = texture2D(texture, texPosition).rgb;" +
+                    "    vec3 rgb = balanceGamma(texture2D(texture, texPosition).rgb);" +
                     "    float rgbMax = max(max(rgb.r, rgb.g), rgb.b);" +
                     "    float rgbMin = min(min(rgb.r, rgb.g), rgb.b);" +
                     "    float d = rgbMax - rgbMin;" +
@@ -94,11 +98,12 @@ public class HSVAnalyzer extends AnalyzingModule {
                     "varying vec2 positionInPassepartout;" +
                     "varying vec2 texPosition;" +
                     packedMeanFunctions +
+                    whiteBalanceFunctions +
                     "void main () {" +
                     "  if (any(lessThan(positionInPassepartout, vec2(0.0, 0.0))) || any(greaterThan(positionInPassepartout, vec2(1.0, 1.0)))) {" +
                     "    gl_FragColor = vec4(0.0, 0.0, 0.0, 0.0);" +
                     "  } else {" +
-                    "    vec3 rgb = texture2D(texture, texPosition).rgb;" +
+                    "    vec3 rgb = balanceGamma(texture2D(texture, texPosition).rgb);" +
                     "    float value = max(rgb.r, max(rgb.b, rgb.g));" +
                     "    gl_FragColor = packMean(vec2(value, 1.0));" +
                     " }" +
@@ -142,6 +147,7 @@ public class HSVAnalyzer extends AnalyzingModule {
     DataBuffer out;
     int hsvProgram, hsvDownsamplingProgram;
     int hsvProgramVerticesHandle, hsvProgramTexCoordinatesHandle, hsvProgramCamMatrixHandle, hsvProgramTextureHandle, hsvProgramPassepartoutMinHandle, hsvProgramPassepartoutMaxHandle;
+    int hsvProgramWhiteBalanceHandle, hsvProgramWhiteBalanceMatrixHandle;
     int hsvDownsamplingProgramVerticesHandle, hsvDownsamplingProgramTexCoordinatesHandle, hsvDownsamplingProgramTextureHandle;
     int hsvDownsamplingResSourceHandle, hsvDownsamplingResTargetHandle;
 
@@ -173,6 +179,8 @@ public class HSVAnalyzer extends AnalyzingModule {
         hsvProgramTextureHandle = GLES20.glGetUniformLocation(hsvProgram, "texture");
         hsvProgramPassepartoutMinHandle = GLES20.glGetUniformLocation(hsvProgram, "passepartoutMin");
         hsvProgramPassepartoutMaxHandle = GLES20.glGetUniformLocation(hsvProgram, "passepartoutMax");
+        hsvProgramWhiteBalanceHandle = GLES20.glGetUniformLocation(hsvProgram, "whiteBalance");
+        hsvProgramWhiteBalanceMatrixHandle = GLES20.glGetUniformLocation(hsvProgram, "whiteBalanceMatrix");
 
         switch (mode) {
             case hue:
@@ -279,6 +287,7 @@ public class HSVAnalyzer extends AnalyzingModule {
 
         GLES20.glUniform2f(hsvProgramPassepartoutMinHandle, passepartout.left, passepartout.top);
         GLES20.glUniform2f(hsvProgramPassepartoutMaxHandle, passepartout.right, passepartout.bottom);
+        setWhiteBalanceUniforms(hsvProgramWhiteBalanceHandle, hsvProgramWhiteBalanceMatrixHandle);
 
         GLES20.glUniformMatrix4fv(hsvProgramCamMatrixHandle, 1, false, camMatrix, 0);
 

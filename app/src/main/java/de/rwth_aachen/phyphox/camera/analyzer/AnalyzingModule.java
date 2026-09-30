@@ -38,6 +38,19 @@ public abstract class AnalyzingModule {
     static int[] downsamplingTextures = new int[nDownsampleSteps];
     static int[] downsamplingFramebuffers = new int[nDownsampleSteps];
 
+    //White balance on the software path: the adaptation from the daylight anchor to the requested white point,
+    //column-major 3x3 in linear sRGB (WhiteBalance.shaderMatrix), null while the camera output is taken as it is.
+    //Shared by every analyzer and the preview, set once per frame by the renderer.
+    static volatile float[] whiteBalanceMatrix = null;
+
+    public static void setWhiteBalance(float[] columnMajorMatrix) {
+        whiteBalanceMatrix = columnMajorMatrix;
+    }
+
+    public static float[] getWhiteBalance() {
+        return whiteBalanceMatrix;
+    }
+
     public AnalyzingModule(){}
 
     static protected void init(int width, int height, EGLContext eglContext, EGLDisplay eglDisplay, EGLConfig eglConfig, int cameraTexture) {

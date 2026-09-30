@@ -3,9 +3,12 @@ package de.rwth_aachen.phyphox.camera
 import android.annotation.SuppressLint
 import android.app.Application
 import android.graphics.RectF
+import android.hardware.camera2.CameraCaptureSession
 import android.hardware.camera2.CameraCharacteristics
 import android.hardware.camera2.CameraMetadata
 import android.hardware.camera2.CaptureRequest
+import android.hardware.camera2.CaptureResult
+import android.hardware.camera2.TotalCaptureResult
 import android.os.Build
 import android.util.Log
 import android.util.Size
@@ -30,9 +33,12 @@ import de.rwth_aachen.phyphox.ExperimentTimeReference
 import de.rwth_aachen.phyphox.camera.analyzer.AnalyzingOpenGLRenderer
 import de.rwth_aachen.phyphox.camera.analyzer.SpectroscopyAnalyzer
 import de.rwth_aachen.phyphox.camera.helper.CameraHelper
+import de.rwth_aachen.phyphox.camera.helper.WhiteBalance
 import de.rwth_aachen.phyphox.camera.model.CameraSettingMode
 import de.rwth_aachen.phyphox.camera.model.CameraState
 import de.rwth_aachen.phyphox.camera.model.CameraSettingState
+import de.rwth_aachen.phyphox.camera.model.WhiteBalanceMethod
+import de.rwth_aachen.phyphox.camera.model.WhiteBalanceMode
 import de.rwth_aachen.phyphox.camera.ui.ChooseCameraSettingValue
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -42,6 +48,7 @@ import java.io.Serializable
 import java.util.Vector
 import java.util.concurrent.ExecutionException
 import java.util.concurrent.locks.Lock
+import kotlin.math.roundToInt
 
 /*
 * Takes the essential input from the PhyphoxExperiment which are provided from XML.
@@ -137,6 +144,26 @@ class CameraInput : Serializable, AnalyzingOpenGLRenderer.ExposureStatisticsList
                 extender.setCaptureRequestOption(CaptureRequest.LENS_FOCUS_DISTANCE, dioptres)
             }
 
+            //On the CCT path the camera may clamp the requested white point: show what is in effect
+            if (Build.VERSION.SDK_INT >= 36) {
+                extender.setSessionCaptureCallback(object : CameraCaptureSession.CaptureCallback() {
+                    override fun onCaptureCompleted(session: CameraCaptureSession, request: CaptureRequest, result: TotalCaptureResult) {
+                        val state = cameraSettingState.value
+                        if (state.whiteBalanceMode != WhiteBalanceMode.TEMPERATURE || state.whiteBalanceMethod != WhiteBalanceMethod.CCT)
+                            return
+                        val temperature = result.get(CaptureResult.COLOR_CORRECTION_COLOR_TEMPERATURE) ?: return
+                        val tint = (result.get(CaptureResult.COLOR_CORRECTION_COLOR_TINT) ?: return) / 5000.0f
+                        if (temperature == state.whiteBalanceTemperatureInEffect && tint == state.whiteBalanceTintInEffect)
+                            return
+                        lifecycleOwner.lifecycleScope.launch {
+                            val current = cameraSettingState.value
+                            if (current.whiteBalanceMode == WhiteBalanceMode.TEMPERATURE && current.whiteBalanceMethod == WhiteBalanceMethod.CCT)
+                                _cameraSettingState.emit(current.copy(whiteBalanceTemperatureInEffect = temperature, whiteBalanceTintInEffect = tint))
+                        }
+                    }
+                })
+            }
+
             val currentCameraSettingValueState = _cameraSettingState.value
             val newCameraSettingValueState = currentCameraSettingValueState.copy(
                 sensorFrameDuration = sensorFrameDuration
@@ -176,7 +203,7 @@ class CameraInput : Serializable, AnalyzingOpenGLRenderer.ExposureStatisticsList
                     CameraState.INITIALIZING -> {
                         setupZoomControl()
                         loadAndSetupExposureSettingRanges()
-                        updateCaptureRequestOptions(cameraSettingState)
+                        updateCaptureRequestOptions(_cameraSettingState.value)
                         updateSpectroscopyAnalyzerOrientation()
                         _cameraSettingState.emit(
                                 _cameraSettingState.value.copy(
@@ -352,8 +379,21 @@ class CameraInput : Serializable, AnalyzingOpenGLRenderer.ExposureStatisticsList
 
         val exposureRange = CameraHelper.getExposureValuesDefaultList()
 
+        //White balance by white point: the calibrated CCT mode where the camera lists it (Android 16), else the
+        //daylight mode as a D65 anchor for the adaptation in the shaders, else the AWB lock (LEGACY devices list only AUTO)
         val awbAvailableModes = cameraInfo?.getCameraCharacteristic(CameraCharacteristics.CONTROL_AWB_AVAILABLE_MODES) ?: intArrayOf()
-        val maxRegionsAWB = cameraInfo?.getCameraCharacteristic(CameraCharacteristics.CONTROL_MAX_REGIONS_AWB) ?: 0
+        val cctRange = if (Build.VERSION.SDK_INT >= 36
+                && cameraInfo?.getCameraCharacteristic(CameraCharacteristics.COLOR_CORRECTION_AVAILABLE_MODES)?.contains(CameraMetadata.COLOR_CORRECTION_MODE_CCT) == true)
+            cameraInfo.getCameraCharacteristic(CameraCharacteristics.COLOR_CORRECTION_COLOR_TEMPERATURE_RANGE)
+        else
+            null
+        val whiteBalanceMethod = when {
+            cctRange != null -> WhiteBalanceMethod.CCT
+            awbAvailableModes.contains(CameraMetadata.CONTROL_AWB_MODE_DAYLIGHT) -> WhiteBalanceMethod.DAYLIGHT_ANCHOR
+            else -> WhiteBalanceMethod.AWB_LOCK
+        }
+        val whiteBalanceTemperatureRange = cctRange?.let { it.lower..it.upper } ?: (WhiteBalance.MIN_TEMPERATURE..WhiteBalance.MAX_TEMPERATURE)
+        Log.i("CameraInput", "White balance method: $whiteBalanceMethod, temperature range $whiteBalanceTemperatureRange")
 
         val currentCameraSettingValueState = _cameraSettingState.value
         val newCameraSettingValueState = currentCameraSettingValueState.copy(
@@ -363,9 +403,9 @@ class CameraInput : Serializable, AnalyzingOpenGLRenderer.ExposureStatisticsList
                 isoRange = isoRange,
                 exposureRange = exposureRange,
                 cameraState = CameraState.RUNNING,
-                cameraMaxRegionAWB =  maxRegionsAWB,
-                cameraWhiteBalanceModes = CameraHelper.getWhiteBalanceModes().filter { awbAvailableModes.contains(it.key) }.keys.toList(),
-        )
+                whiteBalanceMethod = whiteBalanceMethod,
+                whiteBalanceTemperatureRange = whiteBalanceTemperatureRange,
+        ).withWhiteBalanceInEffect()
 
          _cameraSettingState.value = newCameraSettingValueState
 
@@ -381,14 +421,40 @@ class CameraInput : Serializable, AnalyzingOpenGLRenderer.ExposureStatisticsList
         }
     }
 
-    fun setWhiteBalance(value: FloatArray) {
-        lifecycleOwner?.lifecycleScope?.launch {
-            _cameraSettingState.emit(
-                    _cameraSettingState.value.copy(
-                            cameraCurrentWhiteBalanceManualValue = value,
-                    )
-            )
+    //The camera-gui's white balance control. Unlike the file's lock, which waits for the first start, a lock
+    //chosen here (or a temperature on a camera without a daylight anchor) freezes the automatic result at once.
+    fun setWhiteBalanceMode(mode: WhiteBalanceMode) {
+        applyWhiteBalance { state ->
+            state.copy(whiteBalanceMode = mode, whiteBalanceFrozen = needsAwbLock(state.copy(whiteBalanceMode = mode)))
         }
+    }
+
+    fun setWhiteBalanceTemperature(kelvin: Int) {
+        applyWhiteBalance { state -> state.copy(whiteBalanceTemperature = kelvin) }
+    }
+
+    fun setWhiteBalanceTint(duv: Float) {
+        applyWhiteBalance { state -> state.copy(whiteBalanceTint = duv) }
+    }
+
+    private fun needsAwbLock(state: CameraSettingState): Boolean =
+        state.whiteBalanceMode == WhiteBalanceMode.LOCKED
+                || (state.whiteBalanceMode == WhiteBalanceMode.TEMPERATURE && state.whiteBalanceMethod == WhiteBalanceMethod.AWB_LOCK)
+
+    private fun applyWhiteBalance(change: (CameraSettingState) -> CameraSettingState) {
+        lifecycleOwner?.lifecycleScope?.launch {
+            val newState = change(_cameraSettingState.value).withWhiteBalanceInEffect()
+            updateCaptureRequestOptions(newState)
+            _cameraSettingState.emit(newState)
+        }
+    }
+
+    //A lock requested by the file takes effect when the measurement is first started and is never released
+    private fun freezeWhiteBalanceAtStart() {
+        val state = cameraSettingState.value
+        if (state.whiteBalanceFrozen || !needsAwbLock(state))
+            return
+        applyWhiteBalance { current -> current.copy(whiteBalanceFrozen = true) }
     }
 
     @androidx.annotation.OptIn(androidx.camera.camera2.interop.ExperimentalCamera2Interop::class)
@@ -397,12 +463,27 @@ class CameraInput : Serializable, AnalyzingOpenGLRenderer.ExposureStatisticsList
         crBuilder.setCaptureRequestOption(CaptureRequest.SENSOR_SENSITIVITY, newState.currentIsoValue)
                 .setCaptureRequestOption(CaptureRequest.SENSOR_EXPOSURE_TIME, newState.currentShutterValue)
                 .setCaptureRequestOption(CaptureRequest.LENS_APERTURE, newState.currentApertureValue)
-                .setCaptureRequestOption(CaptureRequest.CONTROL_AWB_MODE, newState.cameraCurrentWhiteBalanceMode)
+        applyWhiteBalanceOptions(crBuilder, newState)
 
         camera?.let {
             val control = Camera2CameraControl.from(it.getCameraControl())
             control.setCaptureRequestOptions(crBuilder.build())
         }
+    }
+
+    @androidx.annotation.OptIn(androidx.camera.camera2.interop.ExperimentalCamera2Interop::class)
+    private fun applyWhiteBalanceOptions(builder: CaptureRequestOptions.Builder, state: CameraSettingState) {
+        val method = if (state.whiteBalanceMode == WhiteBalanceMode.TEMPERATURE) state.whiteBalanceMethod else null
+        if (method == WhiteBalanceMethod.CCT && Build.VERSION.SDK_INT >= 36) {
+            builder.setCaptureRequestOption(CaptureRequest.CONTROL_AWB_MODE, CameraMetadata.CONTROL_AWB_MODE_OFF)
+                    .setCaptureRequestOption(CaptureRequest.COLOR_CORRECTION_MODE, CameraMetadata.COLOR_CORRECTION_MODE_CCT)
+                    .setCaptureRequestOption(CaptureRequest.COLOR_CORRECTION_COLOR_TEMPERATURE, state.whiteBalanceTemperatureInEffect)
+                    .setCaptureRequestOption(CaptureRequest.COLOR_CORRECTION_COLOR_TINT, (state.whiteBalanceTintInEffect * 5000.0f).roundToInt().coerceIn(-50, 50))
+            return
+        }
+        val awbMode = if (method == WhiteBalanceMethod.DAYLIGHT_ANCHOR) CameraMetadata.CONTROL_AWB_MODE_DAYLIGHT else CameraMetadata.CONTROL_AWB_MODE_AUTO
+        builder.setCaptureRequestOption(CaptureRequest.CONTROL_AWB_MODE, awbMode)
+                .setCaptureRequestOption(CaptureRequest.CONTROL_AWB_LOCK, state.whiteBalanceFrozen && needsAwbLock(state))
     }
 
     fun updateCameraSettingValue(value: ChooseCameraSettingValue, settingMode: CameraSettingMode) {
@@ -444,12 +525,6 @@ class CameraInput : Serializable, AnalyzingOpenGLRenderer.ExposureStatisticsList
                             currentExposureValue = exposure,
                     )
                 }
-            }
-            CameraSettingMode.WHITE_BALANCE -> {
-                val wb: Int = CameraHelper.getWhiteBalanceModes().filter { value.value.toInt() == it.key }.keys.first()
-                newCameraSettingState = currentCameraSettingState.copy(
-                        cameraCurrentWhiteBalanceMode = wb,
-                )
             }
             else -> {
                 Log.e("CameraInput", "updateCameraSettingValue called with unexpected settingMode " + settingMode)
@@ -548,6 +623,7 @@ class CameraInput : Serializable, AnalyzingOpenGLRenderer.ExposureStatisticsList
     fun start() {
         measuring = true
         analyzingOpenGLRenderer?.measuring = true
+        freezeWhiteBalanceAtStart()
     }
 
     fun stop() {
@@ -587,12 +663,38 @@ class CameraInput : Serializable, AnalyzingOpenGLRenderer.ExposureStatisticsList
                 Log.w("CameraInput", "Ignoring negative locked focus distance: $it")
         }
 
+        //White balance (file format 1.21): without a value the automatic result is frozen at the first start, with
+        //a value it is a colour temperature in Kelvin, optionally with a Duv tint; either form disables the GUI control
+        var whiteBalanceMode = WhiteBalanceMode.AUTO
+        var whiteBalanceTemperature = WhiteBalance.DEFAULT_TEMPERATURE
+        var whiteBalanceTint = 0.0f
+        lockedSettings?.get("white_balance")?.let { value ->
+            if (value.isEmpty()) {
+                whiteBalanceMode = WhiteBalanceMode.LOCKED
+            } else {
+                val temperature = value.toDoubleOrNull()
+                if (temperature == null || temperature <= 0.0) {
+                    Log.w("CameraInput", "Ignoring locked white balance with unreadable temperature: $value")
+                } else {
+                    whiteBalanceMode = WhiteBalanceMode.TEMPERATURE
+                    whiteBalanceTemperature = temperature.roundToInt()
+                    lockedSettings?.get("white_balance_tint")?.takeIf(String::isNotEmpty)?.toFloatOrNull()?.let {
+                        whiteBalanceTint = it
+                    }
+                }
+            }
+        }
+
         return CameraSettingState(
                 currentIsoValue = isoCurrentValue,
                 currentShutterValue = shutterSpeedCurrentValue,
                 currentApertureValue = apertureCurrentValue,
-                currentExposureValue = currentExposureValue
-        )
+                currentExposureValue = currentExposureValue,
+                whiteBalanceMode = whiteBalanceMode,
+                whiteBalanceTemperature = whiteBalanceTemperature,
+                whiteBalanceTint = whiteBalanceTint,
+                whiteBalanceLockedByFile = whiteBalanceMode != WhiteBalanceMode.AUTO
+        ).withWhiteBalanceInEffect()
     }
 
     /*

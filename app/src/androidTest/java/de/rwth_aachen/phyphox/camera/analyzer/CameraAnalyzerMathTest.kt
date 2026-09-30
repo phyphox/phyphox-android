@@ -14,6 +14,7 @@ import android.os.Looper
 import android.view.Surface
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import de.rwth_aachen.phyphox.DataBuffer
+import de.rwth_aachen.phyphox.camera.helper.WhiteBalance
 import de.rwth_aachen.phyphox.camera.model.CameraSettingState
 import org.junit.After
 import org.junit.Assert.assertEquals
@@ -54,6 +55,7 @@ class CameraAnalyzerMathTest {
         const val WB = 0.0722
 
         fun linearize(v: Double) = if (v < 0.04045) v / 12.92 else ((v + 0.055) / 1.055).pow(2.4)
+        fun encode(v: Double) = if (v <= 0.0031308) 12.92 * v else 1.055 * v.pow(1.0 / 2.4) - 0.055
         //The analyzers carry value and coverage as 16-bit means, so the reference and the GPU differ by the
         //16-bit rounding once per reduction step and by the sub-LSB precision of the texture filter
         const val UNIFORM_TOLERANCE = 1e-4
@@ -139,6 +141,7 @@ class CameraAnalyzerMathTest {
 
     @After
     fun tearDown() {
+        AnalyzingModule.setWhiteBalance(null)
         AnalyzingModule.release()
         surface.release()
         surfaceTexture.release()
@@ -398,5 +401,68 @@ class CameraAnalyzerMathTest {
         val rowMean = factor * mean(frame, FULL) { linearize(r(it)) }
         for (j in 0 until H)
             assertEquals("linearRed at row $j", rowMean, flat["linearRed"]!![j], factor * TEXTURED_TOLERANCE)
+    }
+
+    //The white balance adaptation of the software path (phyphox-docs docs/file-format/input.md "White balance"):
+    //with the camera held at daylight, a frame of the target illuminant's white becomes neutral in every output,
+    //a daylight-neutral frame turns blue for a tungsten target, and the gamma-encoded outputs are re-encoded
+    //after the adaptation in linear space. The CPU reference applies WhiteBalance's own matrix per pixel.
+    @Test
+    fun whiteBalanceAdaptationBalancesTheTargetIlluminant() {
+        val temperature = 3200
+        val tint = -0.004f
+        val m = WhiteBalance.correction(temperature, tint)
+        AnalyzingModule.setWhiteBalance(WhiteBalance.shaderMatrix(temperature, tint))
+
+        //The illuminant's white, dimmed so that no channel clips after the adaptation
+        val white = WhiteBalance.illuminantRGB(temperature, tint)
+        val c = Color.rgb((encode(0.6 * white[0]) * 255).roundToInt(), (encode(0.6 * white[1]) * 255).roundToInt(), (encode(0.6 * white[2]) * 255).roundToInt())
+        present(uniform(Color.red(c), Color.green(c), Color.blue(c)))
+        val linear = WhiteBalance.apply(m, doubleArrayOf(linearize(r(c)), linearize(g(c)), linearize(b(c))))
+        val tolerance = 1e-3
+        assertEquals("linearRed", linear[0], channel(true, LuminanceAnalyzer.Channel.red), tolerance)
+        assertEquals("linearGreen", linear[1], channel(true, LuminanceAnalyzer.Channel.green), tolerance)
+        assertEquals("linearBlue", linear[2], channel(true, LuminanceAnalyzer.Channel.blue), tolerance)
+        assertEquals("luminance", WR * linear[0] + WG * linear[1] + WB * linear[2], channel(true, LuminanceAnalyzer.Channel.luma), tolerance)
+        //Neutral up to the 8-bit quantisation of the frame
+        val spread = max(linear[0], max(linear[1], linear[2])) - min(linear[0], min(linear[1], linear[2]))
+        assertTrue("the illuminant's white comes out neutral (spread $spread)", spread < 0.01)
+        assertEquals("red", encode(linear[0]), channel(false, LuminanceAnalyzer.Channel.red), tolerance)
+        assertEquals("green", encode(linear[1]), channel(false, LuminanceAnalyzer.Channel.green), tolerance)
+        assertEquals("blue", encode(linear[2]), channel(false, LuminanceAnalyzer.Channel.blue), tolerance)
+        assertEquals("luma", WR * encode(linear[0]) + WG * encode(linear[1]) + WB * encode(linear[2]), channel(false, LuminanceAnalyzer.Channel.luma), tolerance)
+        assertTrue("saturation of a neutral frame", hsv(HSVAnalyzer.Mode.saturation) < 0.02)
+        assertEquals("value", encode(max(linear[0], max(linear[1], linear[2]))), hsv(HSVAnalyzer.Mode.value), tolerance)
+
+        //Daylight grey balanced for tungsten is blue: a mid grey, so that no channel clips yet
+        present(uniform(128, 128, 128))
+        val grey = WhiteBalance.apply(m, DoubleArray(3) { linearize(128 / 255.0) })
+        val red = channel(true, LuminanceAnalyzer.Channel.red)
+        val green = channel(true, LuminanceAnalyzer.Channel.green)
+        val blue = channel(true, LuminanceAnalyzer.Channel.blue)
+        assertTrue("blue $blue > green $green > red $red", blue > green && green > red)
+        assertEquals("red against the reference", grey[0], red, tolerance)
+        assertEquals("green against the reference", grey[1], green, tolerance)
+        assertEquals("blue against the reference", grey[2], blue, tolerance)
+        assertTrue("hue of the blue cast", hueDistanceDegrees(hsv(HSVAnalyzer.Mode.hue), 220.0) < 30.0)
+
+        //A spectrum is balanced like a scalar
+        val spectrum = spectra(SpectroscopyAnalyzer.SpectrumOrientation.PORTRAIT)
+        for (i in 0 until W step 37) {
+            assertEquals("linearRed at column $i", red, spectrum["linearRed"]!![i], tolerance)
+            assertEquals("linearBlue at column $i", blue, spectrum["linearBlue"]!![i], tolerance)
+        }
+
+        //On white the boosted channels clip at one, as they would in the camera's own 8-bit pipeline
+        present(uniform(255, 255, 255))
+        val clipped = WhiteBalance.apply(m, doubleArrayOf(1.0, 1.0, 1.0))
+        assertTrue("green and blue are boosted beyond one for a tungsten target: $clipped", clipped[1] > 1.0 && clipped[2] > 1.0)
+        assertEquals("blue clipped at one", 1.0, channel(true, LuminanceAnalyzer.Channel.blue), UNIFORM_TOLERANCE)
+        assertEquals("red as the reference has it", clipped[0], channel(true, LuminanceAnalyzer.Channel.red), tolerance)
+
+        //Off again: the camera output as it is
+        AnalyzingModule.setWhiteBalance(null)
+        assertEquals("red without adaptation", 1.0, channel(true, LuminanceAnalyzer.Channel.red), UNIFORM_TOLERANCE)
+        assertEquals("blue without adaptation", 1.0, channel(true, LuminanceAnalyzer.Channel.blue), UNIFORM_TOLERANCE)
     }
 }

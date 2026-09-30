@@ -42,6 +42,7 @@ data class CameraMainControlsViewState(
             isIsoLocked: Boolean,
             isShutterSpeedLocked: Boolean,
             isApertureLocked: Boolean,
+            isWhiteBalanceLocked: Boolean,
     ): CameraMainControlsViewState =
             copy(
                     switchLensButton = switchLensButton.copy(isVisible = true, isEnabled = true),
@@ -51,7 +52,7 @@ data class CameraMainControlsViewState(
                     autoExposureButton = autoExposureButton.copy(isVisible = true, isEnabled = true),
                     exposureButton = exposureButton.copy(isVisible = false),
                     zoomButton = zoomButton.copy(isVisible = true, isEnabled = true),
-                    whiteBalanceButton = whiteBalanceButton.copy(isVisible = true, isEnabled = true)
+                    whiteBalanceButton = whiteBalanceButton.copy(isVisible = true, isEnabled = !isWhiteBalanceLocked)
             )
 }
 

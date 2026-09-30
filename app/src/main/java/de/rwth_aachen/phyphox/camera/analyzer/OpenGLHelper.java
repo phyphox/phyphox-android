@@ -120,6 +120,47 @@ public abstract class OpenGLHelper {
             "  return vec4(vh / 255.0, vc.x * 255.0 - vh, ch / 255.0, vc.y * 255.0 - ch);" +
             "}";
 
+    //White balance by white point on the software path: the camera is held at a daylight white point and the
+    //Bradford adaptation to the requested one is applied here, in linear sRGB. Outputs defined on the gamma-encoded
+    //pipeline output (luma, the colour channels, HSV, the preview) go through linear space and back.
+    //whiteBalance == 0 leaves the camera output untouched.
+    final static String whiteBalanceFunctions =
+            "uniform int whiteBalance;" +
+            "uniform mat3 whiteBalanceMatrix;" +
+            "float linearize(float x) {" +
+            "  if (x < 0.04045) " +
+            "    return x/12.92;" +
+            "  else" +
+            "    return pow((x+0.055)/1.055, 2.4);" +
+            "}" +
+            "vec3 linearize3(vec3 c) { return vec3(linearize(c.r), linearize(c.g), linearize(c.b)); }" +
+            "float encode(float x) {" +
+            "  if (x <= 0.0031308)" +
+            "    return 12.92*x;" +
+            "  else" +
+            "    return 1.055*pow(x, 1.0/2.4) - 0.055;" +
+            "}" +
+            "vec3 encode3(vec3 c) { return vec3(encode(c.r), encode(c.g), encode(c.b)); }" +
+            "vec3 balanceLinear(vec3 lin) {" +
+            "  if (whiteBalance > 0)" +
+            "    return clamp(whiteBalanceMatrix * lin, 0.0, 1.0);" +
+            "  else" +
+            "    return lin;" +
+            "}" +
+            "vec3 balanceGamma(vec3 g) {" +
+            "  if (whiteBalance > 0)" +
+            "    return encode3(clamp(whiteBalanceMatrix * linearize3(g), 0.0, 1.0));" +
+            "  else" +
+            "    return g;" +
+            "}";
+
+    static void setWhiteBalanceUniforms(int flagHandle, int matrixHandle) {
+        float[] matrix = AnalyzingModule.whiteBalanceMatrix;
+        GLES20.glUniform1i(flagHandle, matrix != null ? 1 : 0);
+        if (matrix != null)
+            GLES20.glUniformMatrix3fv(matrixHandle, 1, false, matrix, 0);
+    }
+
     //A bilinear sample on the texture edge averages a real texel with its clamped copy and counts half, one
     //beyond the edge counts nothing - otherwise the edge rows and columns of a region touching the frame
     //edge would be counted several times over, once more per reduction step.
