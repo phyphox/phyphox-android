@@ -10,6 +10,7 @@ import static de.rwth_aachen.phyphox.camera.analyzer.OpenGLHelper.fullScreenVboV
 import static de.rwth_aachen.phyphox.camera.analyzer.OpenGLHelper.fullScreenVertexShader;
 import static de.rwth_aachen.phyphox.camera.analyzer.OpenGLHelper.interpolatingHeightFullScreenVertexShader;
 import static de.rwth_aachen.phyphox.camera.analyzer.OpenGLHelper.interpolatingWidthFullScreenVertexShader;
+import static de.rwth_aachen.phyphox.camera.analyzer.OpenGLHelper.packedMeanFunctions;
 
 import android.graphics.RectF;
 import android.opengl.GLES20;
@@ -39,19 +40,16 @@ public class SpectroscopyAnalyzer extends AnalyzingModule {
                     "varying vec2 texPosition2;" +
                     "varying vec2 texPosition3;" +
                     "varying vec2 texPosition4;" +
+                    packedMeanFunctions +
                     "void main () {" +
-                    "   vec4 result = texture2D(texture, texPosition1);" +
+                    "   vec2 sum = unpackMean(texture2D(texture, texPosition1));" +
                     "   if (texPosition2.y <= 1.0)" +
-                    "       result += texture2D(texture, texPosition2);" +
+                    "       sum += unpackMean(texture2D(texture, texPosition2));" +
                     "   if (texPosition3.y <= 1.0)" +
-                    "       result += texture2D(texture, texPosition3);" +
+                    "       sum += unpackMean(texture2D(texture, texPosition3));" +
                     "   if (texPosition4.y <= 1.0)" +
-                    "       result += texture2D(texture, texPosition4);" +
-                    "   float overflow = floor(result.g);" +
-                    "   result.g = result.g - overflow;" +
-                    "   result.r = result.r + overflow / 255.0;" +
-                    "   result.b = result.b / 4.0;" +
-                    "   gl_FragColor = result;" +
+                    "       sum += unpackMean(texture2D(texture, texPosition4));" +
+                    "   gl_FragColor = packMean(sum / 4.0);" +
                     "}";
 
     final static String verticalWidthReductionFragmentShader =
@@ -61,19 +59,16 @@ public class SpectroscopyAnalyzer extends AnalyzingModule {
                     "varying vec2 texPosition2;" +
                     "varying vec2 texPosition3;" +
                     "varying vec2 texPosition4;" +
+                    packedMeanFunctions +
                     "void main () {" +
-                    "   vec4 result = texture2D(texture, texPosition1);" +
+                    "   vec2 sum = unpackMean(texture2D(texture, texPosition1));" +
                     "   if (texPosition2.x <= 1.0)" +
-                    "       result += texture2D(texture, texPosition2);" +
+                    "       sum += unpackMean(texture2D(texture, texPosition2));" +
                     "   if (texPosition3.x <= 1.0)" +
-                    "       result += texture2D(texture, texPosition3);" +
+                    "       sum += unpackMean(texture2D(texture, texPosition3));" +
                     "   if (texPosition4.x <= 1.0)" +
-                    "       result += texture2D(texture, texPosition4);" +
-                    "   float overflow = floor(result.g);" +
-                    "   result.g = result.g - overflow;" +
-                    "   result.r = result.r + overflow / 255.0;" +
-                    "   result.b = result.b / 4.0;" +
-                    "   gl_FragColor = result;" +
+                    "       sum += unpackMean(texture2D(texture, texPosition4));" +
+                    "   gl_FragColor = packMean(sum / 4.0);" +
                     "}";
 
 
@@ -206,8 +201,8 @@ public class SpectroscopyAnalyzer extends AnalyzingModule {
         result.spectra = new double[channels.length][spectrumPixels];
         result.pixelPosition = new double[spectrumPixels];
 
-        //The blue channel carries the pixel coverage, which only depends on the ROI - identical for every pass
-        long[] totalContributions = new long[spectrumPixels];
+        //The coverage only depends on the ROI - identical for every pass
+        long[] coverage = new long[spectrumPixels];
 
         for (int c = 0; c < channels.length; c++) {
             drawLuminance(camMatrix, passepartout, channels[c].weights);
@@ -231,26 +226,25 @@ public class SpectroscopyAnalyzer extends AnalyzingModule {
                 int r = bytes[byteIndex] & 0xff;
                 int g = bytes[byteIndex+1] & 0xff;
                 int b = bytes[byteIndex+2] & 0xff;
-                long luminance  = (r << 8) + g;
+                int a = bytes[byteIndex+3] & 0xff;
 
                 result.pixelPosition[spectrumPixel] = spectrumPixel;
-                spectrum[spectrumPixel] += (double) luminance;
+                spectrum[spectrumPixel] += r * 255 + g;
                 if (c == 0)
-                    totalContributions[spectrumPixel] += b;
+                    coverage[spectrumPixel] += b * 255 + a;
             }
         }
 
-        final double normalizationFactor = Math.pow(4, nSpecDownsampleSteps);
         int minContribution = -1;
         int maxContribution = spectrumPixels-1;
         for (int i = 0; i < spectrumPixels; i++) {
-            if (totalContributions[i] == 0)
+            if (coverage[i] == 0)
                 continue;
             if (minContribution < 0)
                 minContribution = i;
             maxContribution = i;
             for (double[] spectrum : result.spectra)
-                spectrum[i] /= totalContributions[i] * normalizationFactor;
+                spectrum[i] /= coverage[i];
         }
 
         if (minContribution < 0) {
@@ -297,7 +291,7 @@ public class SpectroscopyAnalyzer extends AnalyzingModule {
     void drawLuminance(float[] camMatrix, RectF passepartout, float[] weights) {
         makeCurrent(analyzingFramebuffer, width, height);
 
-        GLES20.glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
+        GLES20.glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
         GLES20.glClear(GLES20.GL_COLOR_BUFFER_BIT);
 
         // Calculate scissor rect

@@ -6,7 +6,10 @@ import static de.rwth_aachen.phyphox.camera.analyzer.OpenGLHelper.checkGLError;
 import static de.rwth_aachen.phyphox.camera.analyzer.OpenGLHelper.fullScreenVboTexCoordinates;
 import static de.rwth_aachen.phyphox.camera.analyzer.OpenGLHelper.fullScreenVboVertices;
 import static de.rwth_aachen.phyphox.camera.analyzer.OpenGLHelper.fullScreenVertexShader;
+import static de.rwth_aachen.phyphox.camera.analyzer.OpenGLHelper.edgeWeightFunction;
 import static de.rwth_aachen.phyphox.camera.analyzer.OpenGLHelper.interpolatingFullScreenVertexShader;
+import static de.rwth_aachen.phyphox.camera.analyzer.OpenGLHelper.meanDownsamplingFragmentShader;
+import static de.rwth_aachen.phyphox.camera.analyzer.OpenGLHelper.packedMeanFunctions;
 
 import android.graphics.RectF;
 import android.opengl.GLES20;
@@ -66,6 +69,7 @@ public class HSVAnalyzer extends AnalyzingModule {
                     "uniform samplerExternalOES texture;" +
                     "varying vec2 positionInPassepartout;" +
                     "varying vec2 texPosition;" +
+                    packedMeanFunctions +
                     "void main () {" +
                     "  if (any(lessThan(positionInPassepartout, vec2(0.0, 0.0))) || any(greaterThan(positionInPassepartout, vec2(1.0, 1.0)))) {" +
                     "    gl_FragColor = vec4(0.0, 0.0, 0.0, 0.0);" +
@@ -79,7 +83,7 @@ public class HSVAnalyzer extends AnalyzingModule {
                     "      saturation = 0.0;" +
                     "    else" +
                     "      saturation = d / rgbMax;" +
-                    "    gl_FragColor = vec4(0.0, saturation, 1.0, 1.0);" +
+                    "    gl_FragColor = packMean(vec2(saturation, 1.0));" +
                     " }" +
                     "}";
 
@@ -89,13 +93,14 @@ public class HSVAnalyzer extends AnalyzingModule {
                     "uniform samplerExternalOES texture;" +
                     "varying vec2 positionInPassepartout;" +
                     "varying vec2 texPosition;" +
+                    packedMeanFunctions +
                     "void main () {" +
                     "  if (any(lessThan(positionInPassepartout, vec2(0.0, 0.0))) || any(greaterThan(positionInPassepartout, vec2(1.0, 1.0)))) {" +
                     "    gl_FragColor = vec4(0.0, 0.0, 0.0, 0.0);" +
                     "  } else {" +
                     "    vec3 rgb = texture2D(texture, texPosition).rgb;" +
                     "    float value = max(rgb.r, max(rgb.b, rgb.g));" +
-                    "    gl_FragColor = vec4(0.0, value, 1.0, 1.0);" +
+                    "    gl_FragColor = packMean(vec2(value, 1.0));" +
                     " }" +
                     "}";
 
@@ -109,21 +114,18 @@ public class HSVAnalyzer extends AnalyzingModule {
             "vec2 unpack(vec4 rgba) {" +
                     "return vec2(rgba.r + rgba.g/255.0, rgba.b + rgba.a/255.0);" +
             "}" +
+            edgeWeightFunction +
             "void main () {" +
-            "   vec2 result = unpack(texture2D(texture, texPosition1));" +
-            "   if (texPosition2.x <= 1.0)" +
-            "       result += unpack(texture2D(texture, texPosition2));" +
-            "   else" +
-            "       result += vec2(0.5, 0.5);" +
-            "   if (texPosition3.y <= 1.0)" +
-            "       result += unpack(texture2D(texture, texPosition3));" +
-            "   else" +
-            "       result += vec2(0.5, 0.5);" +
-            "   if (texPosition4.x <= 1.0 && texPosition4.y <= 1.0)" +
-            "       result += unpack(texture2D(texture, texPosition4));" +
-            "   else" +
-            "       result += vec2(0.5, 0.5);" +
-            "   result /= vec2(4.0, 4.0);" +
+            "   float wx1 = weight(texPosition1.x, resSource.x);" +
+            "   float wx2 = weight(texPosition2.x, resSource.x);" +
+            "   float wy1 = weight(texPosition1.y, resSource.y);" +
+            "   float wy2 = weight(texPosition3.y, resSource.y);" +
+            "   vec2 center = vec2(0.5, 0.5);" +
+            "   vec2 result = wx1 * wy1 * (unpack(texture2D(texture, texPosition1)) - center)" +
+            "               + wx2 * wy1 * (unpack(texture2D(texture, texPosition2)) - center)" +
+            "               + wx1 * wy2 * (unpack(texture2D(texture, texPosition3)) - center)" +
+            "               + wx2 * wy2 * (unpack(texture2D(texture, texPosition4)) - center);" +
+            "   result = result / 4.0 + center;" +
 
             "  float x2 = fract(255.0 * result.x);" +
             "  result.x -= x2/255.0;" +
@@ -132,27 +134,6 @@ public class HSVAnalyzer extends AnalyzingModule {
             "  gl_FragColor = vec4(result.x, x2, result.y, y2);" +
             "}";
 
-    final static String saturationValueDownsamplingFragmentShader =
-            "precision highp float;" +
-                    "uniform sampler2D texture;" +
-                    "varying vec2 texPosition1;" +
-                    "varying vec2 texPosition2;" +
-                    "varying vec2 texPosition3;" +
-                    "varying vec2 texPosition4;" +
-                    "void main () {" +
-                    "   vec4 result = texture2D(texture, texPosition1);" +
-                    "   if (texPosition2.x <= 1.0)" +
-                    "       result += texture2D(texture, texPosition2);" +
-                    "   if (texPosition3.y <= 1.0)" +
-                    "       result += texture2D(texture, texPosition3);" +
-                    "   if (texPosition4.x <= 1.0 && texPosition4.y <= 1.0)" +
-                    "       result += texture2D(texture, texPosition4);" +
-                    "   float overflow = floor(result.g);" +
-                    "   result.g = result.g - overflow;" +
-                    "   result.r = result.r + overflow / 255.0;" +
-                    "   result.b = result.b / 4.0;" +
-                    "   gl_FragColor = result;" +
-                    "}";
 
     enum Mode {
         hue, saturation, value
@@ -198,10 +179,10 @@ public class HSVAnalyzer extends AnalyzingModule {
                 hsvDownsamplingProgram = buildProgram(interpolatingFullScreenVertexShader, hueDownsamplingFragmentShader);
                 break;
             case saturation:
-                hsvDownsamplingProgram = buildProgram(interpolatingFullScreenVertexShader, saturationValueDownsamplingFragmentShader);
+                hsvDownsamplingProgram = buildProgram(interpolatingFullScreenVertexShader, meanDownsamplingFragmentShader);
                 break;
             case value:
-                hsvDownsamplingProgram = buildProgram(interpolatingFullScreenVertexShader, saturationValueDownsamplingFragmentShader);
+                hsvDownsamplingProgram = buildProgram(interpolatingFullScreenVertexShader, meanDownsamplingFragmentShader);
                 break;
         }
         hsvDownsamplingProgramVerticesHandle = GLES20.glGetAttribLocation(hsvDownsamplingProgram, "vertices");
@@ -240,23 +221,23 @@ public class HSVAnalyzer extends AnalyzingModule {
                 long g = resultBuffer.get() & 0xff;
                 long b = resultBuffer.get() & 0xff;
                 long a = resultBuffer.get() & 0xff;
-                x += ((r << 8) + g) - 0x7f7f;
-                y += ((b << 8) + a) - 0x7f7f;
+                x += (r * 255 + g) - 32512; //hi + lo/255 packing, 32512 = the packed color wheel center
+                y += (b * 255 + a) - 32512;
             }
             double h = Math.atan2(y, x) * RGB.HUE_MAX / (2.0 * Math.PI);
             latestResult = h < 0 ? h + RGB.HUE_MAX : h;
         } else {
-            long sum = 0;
-            long totalContribution = 0;
+            long value = 0;
+            long coverage = 0;
             while (resultBuffer.hasRemaining()) {
                 long r = resultBuffer.get() & 0xff;
                 long g = resultBuffer.get() & 0xff;
                 long b = resultBuffer.get() & 0xff;
                 long a = resultBuffer.get() & 0xff;
-                sum += ((r << 8) + g);
-                totalContribution += b;
+                value += r * 255 + g;
+                coverage += b * 255 + a;
             }
-            latestResult = (double)sum / (double)(totalContribution*Math.pow(4, nDownsampleSteps));
+            latestResult = coverage == 0 ? Double.NaN : (double)value / (double)coverage;
         }
 
         checkGLError("hsv analyze");

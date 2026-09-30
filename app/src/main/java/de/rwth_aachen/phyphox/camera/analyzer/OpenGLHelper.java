@@ -109,6 +109,49 @@ public abstract class OpenGLHelper {
             "   gl_Position = vec4(vertices, 0., 1.);" +
             "}";
 
+    //Photometric sums travel as 16-bit means, (value hi, value lo, coverage hi, coverage lo), unpacked as
+    //hi + lo/255. The coarse part stays a plain 8-bit channel: a sub-LSB error of the texture filter then
+    //remains a sub-LSB error, whereas a carry count multiplied back by 255 would amplify it 255-fold.
+    final static String packedMeanFunctions =
+            "vec2 unpackMean(vec4 s) { return vec2(s.r + s.g / 255.0, s.b + s.a / 255.0); }" +
+            "vec4 packMean(vec2 vc) {" +
+            "  float vh = floor(vc.x * 255.0 + 1e-4);" +
+            "  float ch = floor(vc.y * 255.0 + 1e-4);" +
+            "  return vec4(vh / 255.0, vc.x * 255.0 - vh, ch / 255.0, vc.y * 255.0 - ch);" +
+            "}";
+
+    //A bilinear sample on the texture edge averages a real texel with its clamped copy and counts half, one
+    //beyond the edge counts nothing - otherwise the edge rows and columns of a region touching the frame
+    //edge would be counted several times over, once more per reduction step.
+    final static String edgeWeightFunction =
+            "uniform vec2 resSource;" +
+            "float weight(float p, float res) {" +
+            "   float halfTexel = 0.5 / res;" +
+            "   return p <= 1.0 - halfTexel ? 1.0 : (p <= 1.0 + halfTexel ? 0.5 : 0.0);" +
+            "}";
+
+    //One 2D reduction step: four bilinear samples, i.e. sixteen texels, to one packed mean of value and coverage
+    final static String meanDownsamplingFragmentShader =
+            "precision highp float;" +
+            "uniform sampler2D texture;" +
+            "varying vec2 texPosition1;" +
+            "varying vec2 texPosition2;" +
+            "varying vec2 texPosition3;" +
+            "varying vec2 texPosition4;" +
+            packedMeanFunctions +
+            edgeWeightFunction +
+            "void main () {" +
+            "   float wx1 = weight(texPosition1.x, resSource.x);" +
+            "   float wx2 = weight(texPosition2.x, resSource.x);" +
+            "   float wy1 = weight(texPosition1.y, resSource.y);" +
+            "   float wy2 = weight(texPosition3.y, resSource.y);" +
+            "   vec2 sum = wx1 * wy1 * unpackMean(texture2D(texture, texPosition1))" +
+            "            + wx2 * wy1 * unpackMean(texture2D(texture, texPosition2))" +
+            "            + wx1 * wy2 * unpackMean(texture2D(texture, texPosition3))" +
+            "            + wx2 * wy2 * unpackMean(texture2D(texture, texPosition4));" +
+            "   gl_FragColor = packMean(sum / 4.0);" +
+            "}";
+
     final static String interpolatingFullScreenVertexShader =
             "precision highp float;" +
             "attribute vec2 vertices;" +
