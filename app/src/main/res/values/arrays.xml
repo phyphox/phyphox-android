@@ -1,12 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string-array name="applyZoomApplyToSpinner">
-        <item>@string/applyZoomThis</item>
-        <item>@string/applyZoomSameVariable</item>
-        <item>@string/applyZoomSameUnit</item>
-        <item>@string/applyZoomSameAxis</item>
-    </string-array>
-
     <array name="initial_slider_values">
         <item>60.0</item>
         <item>70.0</item>

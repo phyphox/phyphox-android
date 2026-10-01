@@ -136,17 +136,18 @@
     <string name="landscape_orientation">Landscape</string>
     <string name="spectrum_analysis_setting">Spectrum Analysis Settings</string>
     <!-- Graph Zooms  -->
-    <string name="applyZoomTitle">Apply zoom</string>
-    <string name="applyZoomExplanation">As you are closing the interactive mode of this graph, you can select if you want to keep your zoom.</string>
-    <string name="applyZoomAdvanced">Advanced options</string>
-    <string name="applyZoomApply">Apply to…</string>
-    <string name="applyZoomReset">Reset to default</string>
-    <string name="applyZoomKeep">Keep as selected</string>
-    <string name="applyZoomFollow">Keep and follow new data</string>
-    <string name="applyZoomThis">Only this graph</string>
-    <string name="applyZoomSameVariable">Other graphs: Same variable</string>
-    <string name="applyZoomSameUnit">Other graphs: Same unit</string>
-    <string name="applyZoomSameAxis">Other graphs: Same axis</string>
+    <string name="applyZoomQuestionTitle">Keep this view?</string>
+    <string name="applyZoomQuestion">You zoomed in. Should the graph keep showing this section when you return?</string>
+    <string name="applyZoomRange">%1$s: %2$s to %3$s</string>
+    <string name="applyZoomActionReset">Reset zoom</string>
+    <string name="applyZoomActionKeep">Keep this section</string>
+    <string name="applyZoomActionFollow">Keep and follow new data</string>
+    <string name="applyZoomMoreOptions">More options…</string>
+    <string name="applyZoomAlsoApply">Also apply to other graphs with…</string>
+    <string name="applyZoomTargetThis">this graph only</string>
+    <string name="applyZoomTargetSameData">the same data</string>
+    <string name="applyZoomTargetSameUnit">the same unit (%s)</string>
+    <string name="applyZoomTargetSameAxis">any %s axis</string>
     <!-- Creating new experiments  -->
     <string name="newExperiment">Add experiments</string>
     <string name="newExperimentSimple">Add simple experiment</string>

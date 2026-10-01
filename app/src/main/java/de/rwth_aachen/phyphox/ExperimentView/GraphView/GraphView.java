@@ -1098,6 +1098,45 @@ public class GraphView extends View {
             return labelZ;
     }
 
+    //The zoomed range of an axis for "Keep this view?": "t: 2.0 s to 4.5 s" with the numbers as the tic labels show them
+    //(display unit, clock times on a time axis in system time); null if the axis is not zoomed
+    public String zoomRangeLine(int axis) {
+        double min, max;
+        String label, unit;
+        boolean isTime, log;
+        int precision;
+        switch (axis) {
+            case AXIS_X: min = zoomState.minX; max = zoomState.maxX; label = labelX; unit = unitX; isTime = timeOnX; log = logX; precision = xPrecision; break;
+            case AXIS_Y: min = zoomState.minY; max = zoomState.maxY; label = labelY; unit = unitY; isTime = timeOnY; log = logY; precision = yPrecision; break;
+            default: min = zoomState.minZ; max = zoomState.maxZ; label = labelZ; unit = unitZ; isTime = false; log = logZ; precision = zPrecision; break;
+        }
+        if (Double.isNaN(min) || Double.isNaN(max))
+            return null;
+        double offset = isTime && absoluteTime ? systemTimeOffset(axis) : 0.0;
+        boolean clock = isTime && offset > 0;
+        double dMin = toDisplay(axis, min), dMax = toDisplay(axis, max);
+        Tic[] tics = isConverted(axis) ? getTics(dMin, dMax, maxXRegularTics, log, false, 0) : getTics(min, max, maxXRegularTics, log, isTime, offset);
+        int ticPrecision = 0;
+        for (Tic tic : tics)
+            ticPrecision = Math.max(ticPrecision, tic.precision);
+        String from = formatTic(new Tic(min, dMin, ticPrecision), precision, isTime, offset);
+        String to = formatTic(new Tic(max, dMax, ticPrecision), precision, isTime, offset);
+        if (!clock && unit != null && !unit.isEmpty()) {
+            from += " " + unit;
+            to += " " + unit;
+        }
+        return getContext().getString(R.string.applyZoomRange, label == null ? "" : label, from, to);
+    }
+
+    //Seconds to add to experiment time for the clock labels of a time axis, 0 without a time reference
+    private double systemTimeOffset(int axis) {
+        if (axis == AXIS_X)
+            return (timeOnX && timeReferencesX != null && timeReferencesX.length > 0 && timeReferencesX[0] != null && timeReferencesX[0].size() > 0) ? (timeReferencesX[0].get(0).systemTime*0.001 - timeReferencesX[0].get(0).experimentTime) : 0.0;
+        if (axis == AXIS_Y)
+            return (timeOnY && timeReferencesY != null && timeReferencesY.length > 0 && timeReferencesY[0] != null && timeReferencesY[0].size() > 0) ? (timeReferencesY[0].get(0).systemTime*0.001 - timeReferencesY[0].get(0).experimentTime) : 0.0;
+        return 0.0;
+    }
+
     //Interface to set axis labels; the unit strings are the experiment's symbols
     public void setLabel(String labelX, String labelY, String labelZ, String unitX, String unitY, String unitZ, String unitYX) {
         this.labelX = labelX;
@@ -1726,14 +1765,8 @@ public class GraphView extends View {
         if (logZ && workingMinZ < 0.000001)
             workingMinZ = 0.000001;
 
-        double systemTimeOffsetX, systemTimeOffsetY;
-        if (absoluteTime) {
-            systemTimeOffsetX = (timeOnX && timeReferencesX != null && timeReferencesX.length > 0 && timeReferencesX[0] != null && timeReferencesX[0].size() > 0) ? (timeReferencesX[0].get(0).systemTime*0.001 - timeReferencesX[0].get(0).experimentTime) : 0.0;
-            systemTimeOffsetY = (timeOnY && timeReferencesY != null && timeReferencesY.length > 0 && timeReferencesY[0] != null && timeReferencesY[0].size() > 0) ? (timeReferencesY[0].get(0).systemTime*0.001 - timeReferencesY[0].get(0).experimentTime) : 0.0;
-        } else {
-            systemTimeOffsetX = 0.0;
-            systemTimeOffsetY = 0.0;
-        }
+        double systemTimeOffsetX = absoluteTime ? systemTimeOffset(AXIS_X) : 0.0;
+        double systemTimeOffsetY = absoluteTime ? systemTimeOffset(AXIS_Y) : 0.0;
 
         int maxXTics = timeOnX && absoluteTime ? maxXTimeTics : maxXRegularTics;
         int maxYTics = timeOnY && absoluteTime ? maxYTimeTics : maxYRegularTics;

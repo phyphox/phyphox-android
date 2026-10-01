@@ -6,6 +6,7 @@ import android.content.ContextWrapper;
 import android.content.DialogInterface;
 import android.content.res.ColorStateList;
 import android.graphics.Point;
+import android.graphics.Typeface;
 import android.text.InputType;
 import android.util.AttributeSet;
 import android.util.Log;
@@ -16,17 +17,15 @@ import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.ArrayAdapter;
 import android.widget.Button;
-import android.widget.CompoundButton;
 import android.widget.EditText;
 import android.widget.FrameLayout;
-import android.widget.GridLayout;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.PopupMenu;
 import android.widget.PopupWindow;
 import android.widget.RadioButton;
-import android.widget.RadioGroup;
 import android.widget.RelativeLayout;
 import android.widget.Spinner;
 import android.widget.TextView;
@@ -34,12 +33,13 @@ import android.widget.Toast;
 
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.widget.LinearLayoutCompat;
-import androidx.appcompat.widget.SwitchCompat;
 import androidx.core.content.ContextCompat;
 import androidx.core.view.ViewCompat;
 import androidx.core.widget.ImageViewCompat;
 
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Vector;
 
 import de.rwth_aachen.phyphox.DataExport;
@@ -432,178 +432,138 @@ public class InteractiveGraphView extends RelativeLayout implements GraphView.Po
         super.onMeasure(widthMeasureSpec, heightMeasureSpec);
     }
 
+    //"Keep this view?" when the maximized graph is left with a zoom (ApplyZoomChoice holds the rules). Two direct buttons,
+    //"More options…" expands per-axis controls that start from the emphasised button and change the buttons to Cancel/OK.
     public void leaveDialog(final ExpViewFragment parent, final String bufferX, final String bufferY, final Unit unitX, final Unit unitY) {
-        if (!graphView.absoluteTime && Double.isNaN(graphView.zoomState.minX) && Double.isNaN(graphView.zoomState.minY) && Double.isNaN(graphView.zoomState.maxX) && Double.isNaN(graphView.zoomState.maxY) && Double.isNaN(graphView.zoomState.minZ) && Double.isNaN(graphView.zoomState.maxZ)) {
+        final GraphView.ZoomState zoomState = graphView.zoomState;
+        if (!ApplyZoomChoice.anyZoomed(zoomState)) {
             parent.leaveExclusive();
             return;
         }
-        AlertDialog.Builder builder = new AlertDialog.Builder(getContext());
-        final View dialogView = inflate(getContext(), R.layout.apply_zoom_dialog, null);
-        builder.setView(dialogView);
-        final TextView tvLabelX = (TextView) dialogView.findViewById(R.id.applyZoomXLabel);
-        final TextView tvLabelY = (TextView) dialogView.findViewById(R.id.applyZoomYLabel);
-        final TextView tvLabelZ = (TextView) dialogView.findViewById(R.id.applyZoomZLabel);
-        final RadioButton rbReset = (RadioButton) dialogView.findViewById(R.id.applyZoomReset);
-        final RadioButton rbKeep = (RadioButton) dialogView.findViewById(R.id.applyZoomKeep);
-        final RadioButton rbResetX = (RadioButton) dialogView.findViewById(R.id.applyZoomXReset);
-        final RadioButton rbKeepX = (RadioButton) dialogView.findViewById(R.id.applyZoomXKeep);
-        final RadioButton rbFollowX = (RadioButton) dialogView.findViewById(R.id.applyZoomXFollow);
-        final RadioButton rbResetY = (RadioButton) dialogView.findViewById(R.id.applyZoomYReset);
-        final RadioButton rbKeepY = (RadioButton) dialogView.findViewById(R.id.applyZoomYKeep);
-        final RadioButton rbResetZ = (RadioButton) dialogView.findViewById(R.id.applyZoomZReset);
-        final RadioButton rbKeepZ = (RadioButton) dialogView.findViewById(R.id.applyZoomZKeep);
-        final Spinner sApplyX = (Spinner) dialogView.findViewById(R.id.applyZoomXApplyTo);
-        final Spinner sApplyY = (Spinner) dialogView.findViewById(R.id.applyZoomYApplyTo);
-        final SwitchCompat swAdvanced = (SwitchCompat) dialogView.findViewById(R.id.applyZoomAdvanced);
-
-        final RadioGroup rgGenericOptions = (RadioGroup) dialogView.findViewById(R.id.applyZoomMode);
-        final GridLayout glXOptions = (GridLayout)dialogView.findViewById(R.id.applyZoomX);
-        final GridLayout glYOptions = (GridLayout)dialogView.findViewById(R.id.applyZoomY);
-        final GridLayout glZOptions = (GridLayout)dialogView.findViewById(R.id.applyZoomZ);
-
         boolean hasZAxis = false;
-        for (int i = 0; i < graphView.style.length; i++) {
-            if (graphView.style[i] == GraphView.Style.mapZ)
+        for (GraphView.Style style : graphView.style)
+            if (style == GraphView.Style.mapZ)
                 hasZAxis = true;
-        }
-        final boolean zShown = hasZAxis;
+        final boolean[] zoomed = {ApplyZoomChoice.isZoomed(zoomState, GraphView.AXIS_X), ApplyZoomChoice.isZoomed(zoomState, GraphView.AXIS_Y), hasZAxis && ApplyZoomChoice.isZoomed(zoomState, GraphView.AXIS_Z)};
+        final boolean incrementalX = graphView.graphSetup.incrementalX;
 
-        swAdvanced.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
-            @Override
-            public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
-                if (isChecked) {
-                    glXOptions.setVisibility(VISIBLE);
-                    glYOptions.setVisibility(VISIBLE);
-                    glZOptions.setVisibility(zShown ? VISIBLE : GONE);
-                    rgGenericOptions.setVisibility(GONE);
-                } else {
-                    glXOptions.setVisibility(GONE);
-                    glYOptions.setVisibility(GONE);
-                    glZOptions.setVisibility(GONE);
-                    rgGenericOptions.setVisibility(VISIBLE);
+        final View dialogView = inflate(getContext(), R.layout.apply_zoom_dialog, null);
+        final LinearLayout ranges = dialogView.findViewById(R.id.applyZoomRanges);
+        final TextView[] labels = {dialogView.findViewById(R.id.applyZoomXLabel), dialogView.findViewById(R.id.applyZoomYLabel), dialogView.findViewById(R.id.applyZoomZLabel)};
+        final View[] sections = {dialogView.findViewById(R.id.applyZoomX), dialogView.findViewById(R.id.applyZoomY), dialogView.findViewById(R.id.applyZoomZ)};
+        for (int axis = 0; axis < 3; axis++) {
+            sections[axis].setVisibility(zoomed[axis] ? VISIBLE : GONE);
+            if (!zoomed[axis])
+                continue;
+            String line = graphView.zoomRangeLine(axis);
+            TextView tv = new TextView(getContext());
+            tv.setText(line);
+            ranges.addView(tv);
+            labels[axis].setText(line);
+        }
+        final View options = dialogView.findViewById(R.id.applyZoomOptions);
+        final RadioButton[] reset = {dialogView.findViewById(R.id.applyZoomXReset), dialogView.findViewById(R.id.applyZoomYReset), dialogView.findViewById(R.id.applyZoomZReset)};
+        final RadioButton[] keep = {dialogView.findViewById(R.id.applyZoomXKeep), dialogView.findViewById(R.id.applyZoomYKeep), dialogView.findViewById(R.id.applyZoomZKeep)};
+        final RadioButton followX = dialogView.findViewById(R.id.applyZoomXFollow);
+        followX.setVisibility(incrementalX ? VISIBLE : GONE);
+        final Spinner applyX = dialogView.findViewById(R.id.applyZoomXApplyTo);
+        final Spinner applyY = dialogView.findViewById(R.id.applyZoomYApplyTo);
+        final List<ApplyZoomChoice.Target> targetsX = setupZoomTargets(applyX, "x", unitX, graphView.getUnitX());
+        final List<ApplyZoomChoice.Target> targetsY = setupZoomTargets(applyY, "y", unitY, graphView.getUnitY());
+
+        final ApplyZoomChoice.Action simpleDefault = ApplyZoomChoice.defaultAction(graphView.previouslyKept);
+        final AlertDialog dialog = new AlertDialog.Builder(getContext())
+                .setTitle(R.string.applyZoomQuestionTitle)
+                .setView(dialogView)
+                .setPositiveButton(R.string.applyZoomActionKeep, null)
+                .setNegativeButton(R.string.applyZoomActionReset, null)
+                .setNeutralButton(R.string.applyZoomMoreOptions, null)
+                .create();
+        dialog.setOnShowListener(d -> {
+            final Button keepButton = dialog.getButton(DialogInterface.BUTTON_POSITIVE);
+            final Button resetButton = dialog.getButton(DialogInterface.BUTTON_NEGATIVE);
+            final Button moreButton = dialog.getButton(DialogInterface.BUTTON_NEUTRAL);
+            (simpleDefault == ApplyZoomChoice.Action.KEEP ? keepButton : resetButton).setTypeface(null, Typeface.BOLD);
+            keepButton.setOnClickListener(v -> {
+                dialog.dismiss();
+                applySimpleZoomChoice(parent, ApplyZoomChoice.Action.KEEP, bufferX, bufferY, unitX, unitY);
+            });
+            resetButton.setOnClickListener(v -> {
+                dialog.dismiss();
+                applySimpleZoomChoice(parent, ApplyZoomChoice.Action.RESET, bufferX, bufferY, unitX, unitY);
+            });
+            moreButton.setOnClickListener(v -> {
+                for (int axis = 0; axis < 3; axis++) {
+                    ApplyZoomChoice.Action initial = ApplyZoomChoice.initialAxisAction(zoomState, axis, simpleDefault, incrementalX);
+                    (initial == ApplyZoomChoice.Action.FOLLOW ? followX : initial == ApplyZoomChoice.Action.KEEP ? keep[axis] : reset[axis]).setChecked(true);
                 }
-            }
-        });
-
-        tvLabelX.setText(graphView.getLabelAndUnitX());
-        tvLabelY.setText(graphView.getLabelAndUnitY());
-        tvLabelZ.setText(graphView.getLabelAndUnitZ());
-        rbFollowX.setVisibility(graphView.graphSetup.incrementalX ? VISIBLE : GONE);
-
-        if (graphView.previouslyKept) {
-            rbKeep.setChecked(true);
-        } else {
-            rbReset.setChecked(true);
-        }
-
-        if (graphView.zoomState.follows && graphView.graphSetup.incrementalX && !Double.isNaN(graphView.zoomState.minX) && !Double.isNaN(graphView.zoomState.maxX)) {
-            rbFollowX.setChecked(true);
-        } else if (!Double.isNaN(graphView.zoomState.minX) && !Double.isNaN(graphView.zoomState.maxX)) {
-            rbKeepX.setChecked(true);
-        } else {
-            rbResetX.setChecked(true);
-        }
-
-        if (!Double.isNaN(graphView.zoomState.minY) && !Double.isNaN(graphView.zoomState.maxY)) {
-            rbKeepY.setChecked(true);
-        } else {
-            rbResetY.setChecked(true);
-        }
-
-        if (zShown) {
-            if (!Double.isNaN(graphView.zoomState.minZ) && !Double.isNaN(graphView.zoomState.maxZ)) {
-                rbKeepZ.setChecked(true);
-            } else {
-                rbResetZ.setChecked(true);
-            }
-        }
-
-        builder.setTitle(R.string.applyZoomTitle)
-                .setPositiveButton(R.string.ok, (dialog, id) -> {
-                    double minX, maxX, minY, maxY, minZ, maxZ;
-                    boolean simple = !swAdvanced.isChecked();
-
-                    graphView.previouslyKept = (simple && rbKeep.isChecked()) || (!simple && (rbKeepX.isChecked() || rbKeepY.isChecked() || rbKeepZ.isChecked()));
-
-                    if ((simple && rbReset.isChecked()) || (!simple && rbResetX.isChecked())) {
-                        minX = Double.NaN;
-                        maxX = Double.NaN;
-
-                    } else {
-                        minX = graphView.zoomState.minX;
-                        maxX = graphView.zoomState.maxX;
-                    }
-                    if ((simple && rbReset.isChecked()) || (!simple && rbResetY.isChecked())) {
-                        minY = Double.NaN;
-                        maxY = Double.NaN;
-                    } else {
-                        minY = graphView.zoomState.minY;
-                        maxY = graphView.zoomState.maxY;
-                    }
-
-                    if ((simple && graphView.zoomState.follows) || (!simple && rbFollowX.isChecked())) {
-                        graphView.zoomState.follows = true;
-                    } else if ((simple && rbReset.isChecked() && graphView.followX)
-                            || (!simple && rbResetX.isChecked() && graphView.followX)) {
-                        graphView.zoomState.follows = true;
-                        minX = graphView.minX;
-                        maxX = graphView.maxX;
-                    } else
-                        graphView.zoomState.follows = false;
-                    graphView.zoomState.minX = minX;
-                    graphView.zoomState.maxX = maxX;
-                    graphView.zoomState.minY = minY;
-                    graphView.zoomState.maxY = maxY;
-                    graphView.rescale();
-
-                    if (!simple) {
-
-                        switch (sApplyX.getSelectedItemPosition()) {
-                            case 1:
-                                parent.applyZoom(minX, maxX, rbFollowX.isChecked(), null, bufferX, false, graphView.timeOnX && graphView.absoluteTime);
-                                break;
-                            case 2:
-                                parent.applyZoom(minX, maxX, rbFollowX.isChecked(), unitX, null, false, graphView.timeOnX && graphView.absoluteTime);
-                                break;
-                            case 3:
-                                parent.applyZoom(minX, maxX, rbFollowX.isChecked(), null, null, false, graphView.timeOnX && graphView.absoluteTime);
-                                break;
-                        }
-
-                        switch (sApplyY.getSelectedItemPosition()) {
-                            case 1:
-                                parent.applyZoom(minY, maxY, false, null, bufferY, true, graphView.timeOnY && graphView.absoluteTime);
-                                break;
-                            case 2:
-                                parent.applyZoom(minY, maxY, false, unitY, null, true, graphView.timeOnY && graphView.absoluteTime);
-                                break;
-                            case 3:
-                                parent.applyZoom(minY, maxY, false, null, null, true, graphView.timeOnY && graphView.absoluteTime);
-                                break;
-                        }
-                    }
-
-                    if (zShown) {
-                        if ((simple && rbReset.isChecked()) || (!simple && rbResetZ.isChecked())) {
-                            minZ = Double.NaN;
-                            maxZ = Double.NaN;
-                        } else {
-                            minZ = graphView.zoomState.minZ;
-                            maxZ = graphView.zoomState.maxZ;
-                        }
-                        graphView.zoomState.minZ = minZ;
-                        graphView.zoomState.maxZ = maxZ;
-                    }
-
-                    parent.leaveExclusive();
-                })
-                .setNegativeButton(R.string.cancel, new DialogInterface.OnClickListener() {
-                    public void onClick(DialogInterface dialog, int id) {
-
-                    }
+                options.setVisibility(VISIBLE);
+                moreButton.setVisibility(GONE);
+                keepButton.setText(R.string.ok);
+                resetButton.setText(R.string.cancel);
+                keepButton.setTypeface(null, Typeface.NORMAL);
+                resetButton.setTypeface(null, Typeface.NORMAL);
+                resetButton.setOnClickListener(v2 -> dialog.cancel());
+                keepButton.setOnClickListener(v2 -> {
+                    dialog.dismiss();
+                    ApplyZoomChoice.Action[] actions = new ApplyZoomChoice.Action[3];
+                    for (int axis = 0; axis < 3; axis++)
+                        actions[axis] = !zoomed[axis] || reset[axis].isChecked() ? ApplyZoomChoice.Action.RESET : (axis == GraphView.AXIS_X && followX.isChecked() ? ApplyZoomChoice.Action.FOLLOW : ApplyZoomChoice.Action.KEEP);
+                    applyZoomChoice(parent, actions[0], actions[1], actions[2],
+                            zoomed[0] ? targetsX.get(applyX.getSelectedItemPosition()) : ApplyZoomChoice.Target.THIS,
+                            zoomed[1] ? targetsY.get(applyY.getSelectedItemPosition()) : ApplyZoomChoice.Target.THIS,
+                            bufferX, bufferY, unitX, unitY);
                 });
-        AlertDialog dialog = builder.create();
+            });
+        });
         dialog.show();
+    }
+
+    //"Also apply to other graphs with…": the same unit is only offered when the axis has one (the symbol shown is the display unit's)
+    private List<ApplyZoomChoice.Target> setupZoomTargets(Spinner spinner, String axisName, Unit unit, String unitSymbol) {
+        List<ApplyZoomChoice.Target> targets = new ArrayList<>();
+        List<String> labels = new ArrayList<>();
+        targets.add(ApplyZoomChoice.Target.THIS);
+        labels.add(getContext().getString(R.string.applyZoomTargetThis));
+        targets.add(ApplyZoomChoice.Target.SAME_DATA);
+        labels.add(getContext().getString(R.string.applyZoomTargetSameData));
+        if (unit != null && !unit.isEmpty() && unitSymbol != null && !unitSymbol.isEmpty()) {
+            targets.add(ApplyZoomChoice.Target.SAME_UNIT);
+            labels.add(getContext().getString(R.string.applyZoomTargetSameUnit, unitSymbol));
+        }
+        targets.add(ApplyZoomChoice.Target.SAME_AXIS);
+        labels.add(getContext().getString(R.string.applyZoomTargetSameAxis, axisName));
+        ArrayAdapter<String> adapter = new ArrayAdapter<>(getContext(), android.R.layout.simple_spinner_item, labels);
+        adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+        spinner.setAdapter(adapter);
+        return targets;
+    }
+
+    private void applySimpleZoomChoice(ExpViewFragment parent, ApplyZoomChoice.Action simple, String bufferX, String bufferY, Unit unitX, Unit unitY) {
+        GraphView.ZoomState z = graphView.zoomState;
+        boolean incrementalX = graphView.graphSetup.incrementalX;
+        applyZoomChoice(parent,
+                ApplyZoomChoice.initialAxisAction(z, GraphView.AXIS_X, simple, incrementalX),
+                ApplyZoomChoice.initialAxisAction(z, GraphView.AXIS_Y, simple, incrementalX),
+                ApplyZoomChoice.initialAxisAction(z, GraphView.AXIS_Z, simple, incrementalX),
+                ApplyZoomChoice.Target.THIS, ApplyZoomChoice.Target.THIS, bufferX, bufferY, unitX, unitY);
+    }
+
+    private void applyZoomChoice(ExpViewFragment parent, ApplyZoomChoice.Action x, ApplyZoomChoice.Action y, ApplyZoomChoice.Action z, ApplyZoomChoice.Target targetX, ApplyZoomChoice.Target targetY, String bufferX, String bufferY, Unit unitX, Unit unitY) {
+        ApplyZoomChoice.apply(graphView, x, y, z);
+        GraphView.ZoomState s = graphView.zoomState;
+        propagateZoom(parent, targetX, s.minX, s.maxX, x == ApplyZoomChoice.Action.FOLLOW, unitX, bufferX, false, graphView.timeOnX && graphView.absoluteTime);
+        propagateZoom(parent, targetY, s.minY, s.maxY, false, unitY, bufferY, true, graphView.timeOnY && graphView.absoluteTime);
+        parent.leaveExclusive();
+    }
+
+    private void propagateZoom(ExpViewFragment parent, ApplyZoomChoice.Target target, double min, double max, boolean follow, Unit unit, String buffer, boolean yAxis, boolean absoluteTime) {
+        switch (target) {
+            case SAME_DATA: parent.applyZoom(min, max, follow, null, buffer, yAxis, absoluteTime); break;
+            case SAME_UNIT: parent.applyZoom(min, max, follow, unit, null, yAxis, absoluteTime); break;
+            case SAME_AXIS: parent.applyZoom(min, max, follow, null, null, yAxis, absoluteTime); break;
+            default: break;
+        }
     }
 
     //Inside a stack (file format 1.21): no maximize icon and no touches (the stack intercepts them anyway)
