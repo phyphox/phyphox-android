@@ -210,6 +210,7 @@ class CameraPreviewFragment (
 
         constraintSet.clone(requireContext(), targetLayoutId)
         constraintSet.applyTo(rootLayout)
+        cameraPreviewScreen.setControlsVertical(isLandscape)
         setInteractive(isInteractive)
         lifecycleScope.launch {
             cameraPreviewScreen.updateCameraScreenViewState(cameraScreenViewState.value, true)

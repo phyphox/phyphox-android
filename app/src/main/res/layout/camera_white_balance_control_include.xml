@@ -7,10 +7,12 @@
     android:paddingLeft="8dp"
     android:paddingRight="8dp">
 
+    <!-- CameraPreviewScreen.setControlsVertical turns the rows into columns when the controls stand beside the preview -->
     <com.google.android.material.button.MaterialButtonToggleGroup
         android:id="@+id/whiteBalanceModeToggle"
-        android:layout_width="match_parent"
+        android:layout_width="wrap_content"
         android:layout_height="wrap_content"
+        android:layout_gravity="center"
         android:layout_marginTop="4dp"
         app:singleSelection="true"
         app:selectionRequired="true"
@@ -19,9 +21,8 @@
         <Button
             android:id="@+id/btnWhiteBalanceAuto"
             style="?attr/materialButtonOutlinedStyle"
-            android:layout_width="0dp"
+            android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_weight="1"
             android:textSize="11sp"
             app:backgroundTint="@color/toggle_selector_background"
             android:text="@string/wb_auto" />
@@ -29,9 +30,8 @@
         <Button
             android:id="@+id/btnWhiteBalanceLocked"
             style="?attr/materialButtonOutlinedStyle"
-            android:layout_width="0dp"
+            android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_weight="1"
             android:textSize="11sp"
             app:backgroundTint="@color/toggle_selector_background"
             android:text="@string/wb_locked" />
@@ -39,9 +39,8 @@
         <Button
             android:id="@+id/btnWhiteBalanceTemperature"
             style="?attr/materialButtonOutlinedStyle"
-            android:layout_width="0dp"
+            android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_weight="1"
             android:textSize="11sp"
             app:backgroundTint="@color/toggle_selector_background"
             android:text="@string/wb_temperature" />
@@ -53,29 +52,25 @@
         android:layout_height="wrap_content"
         android:orientation="vertical">
 
-        <HorizontalScrollView
+        <androidx.appcompat.widget.LinearLayoutCompat
+            android:id="@+id/whiteBalanceMarks"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:scrollbars="none">
-
-            <androidx.appcompat.widget.LinearLayoutCompat
-                android:id="@+id/whiteBalanceMarks"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:orientation="horizontal" />
-        </HorizontalScrollView>
+            android:gravity="center"
+            android:orientation="horizontal" />
 
         <androidx.appcompat.widget.LinearLayoutCompat
+            android:id="@+id/whiteBalanceTemperatureRow"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:gravity="center_vertical"
+            android:gravity="center"
             android:orientation="horizontal">
 
             <TextView
                 android:id="@+id/textWhiteBalanceTemperature"
                 android:layout_width="72dp"
                 android:layout_height="wrap_content"
-                android:gravity="end"
+                android:gravity="center"
                 android:textSize="11sp" />
 
             <com.google.android.material.slider.Slider
@@ -90,16 +85,17 @@
         </androidx.appcompat.widget.LinearLayoutCompat>
 
         <androidx.appcompat.widget.LinearLayoutCompat
+            android:id="@+id/whiteBalanceTintRow"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:gravity="center_vertical"
+            android:gravity="center"
             android:orientation="horizontal">
 
             <TextView
                 android:id="@+id/textWhiteBalanceTint"
                 android:layout_width="72dp"
                 android:layout_height="wrap_content"
-                android:gravity="end"
+                android:gravity="center"
                 android:textSize="11sp" />
 
             <com.google.android.material.slider.Slider

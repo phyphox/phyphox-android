@@ -85,7 +85,7 @@
         android:minHeight="100dp"
         app:layout_constrainedHeight="true"
         app:layout_constraintLeft_toLeftOf="parent"
-        app:layout_constraintRight_toLeftOf="@id/cameraSetting"
+        app:layout_constraintRight_toLeftOf="@id/cameraControlsBarrier"
         android:layout_marginTop="8dp"
         android:layout_marginBottom="8dp"
         app:layout_constraintTop_toBottomOf="@id/llPreviewMinMaxControl"
@@ -106,12 +106,17 @@
 
     </FrameLayout>
 
+    <!-- Landscape: the main buttons stand in a column at the right edge and the open sub-control (the value list,
+         the zoom control or the white balance panel) in a second column next to them; the barrier at their left
+         edge is what the preview reaches to. The anchor in the bottom-right corner keeps the barriers defined
+         while every control is gone. -->
     <androidx.constraintlayout.widget.Barrier
         android:id="@+id/spectroscopyControlBarrier"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         app:barrierDirection="top"
-        app:constraint_referenced_ids="lnrSpectroscopyAnalysisControl,cameraControlsBarrier" />
+        app:barrierAllowsGoneWidgets="false"
+        app:constraint_referenced_ids="lnrSpectroscopyAnalysisControl,controlsAnchor" />
 
     <androidx.appcompat.widget.LinearLayoutCompat
         android:id="@+id/lnrSpectroscopyAnalysisControl"
@@ -119,12 +124,12 @@
         android:layout_height="wrap_content"
         android:orientation="horizontal"
         android:layout_marginTop="8dp"
-        app:layout_constraintRight_toLeftOf="@id/cameraSetting"
+        app:layout_constraintRight_toLeftOf="@id/cameraControlsBarrier"
         app:layout_constraintLeft_toLeftOf="parent"
         android:gravity="center"
         android:visibility="gone"
         app:layout_constraintTop_toBottomOf="@id/fl_preview_view"
-        app:layout_constraintBottom_toTopOf="@id/cameraControlsBarrier">
+        app:layout_constraintBottom_toBottomOf="parent">
 
         <com.google.android.material.button.MaterialButton
             android:id="@+id/imgAnalysisSetting"
@@ -143,50 +148,54 @@
 
     <androidx.constraintlayout.widget.Barrier
         android:id="@+id/cameraControlsBarrier"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        app:barrierDirection="top"
+        android:layout_width="wrap_content"
+        android:layout_height="match_parent"
+        app:barrierDirection="left"
         app:barrierAllowsGoneWidgets="false"
-        app:constraint_referenced_ids="zoomControl,recyclerViewCameraSetting,whiteBalanceControl,bottom_anchor" />
+        app:constraint_referenced_ids="zoomControl,recyclerViewCameraSetting,whiteBalanceControl,cameraSetting,controlsAnchor" />
 
     <androidx.recyclerview.widget.RecyclerView
         android:id="@+id/recyclerViewCameraSetting"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:scrollbars="horizontal"
-        app:layout_constrainedHeight="true"
+        android:layout_width="wrap_content"
+        android:layout_height="0dp"
+        android:scrollbars="vertical"
+        app:layout_constraintTop_toTopOf="parent"
         app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintLeft_toLeftOf="parent"
         app:layout_constraintRight_toLeftOf="@id/cameraSetting"
-        android:layout_marginTop="1dp"
+        android:layout_marginTop="8dp"
+        android:layout_marginBottom="8dp"
         />
 
     <include
         layout="@layout/camera_zoom_control_include"
-        android:layout_width="0dp"
-        android:layout_height="wrap_content"
+        android:layout_width="wrap_content"
+        android:layout_height="0dp"
         android:id="@+id/zoomControl"
+        app:layout_constraintTop_toTopOf="parent"
         app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintLeft_toLeftOf="parent"
         app:layout_constraintRight_toLeftOf="@id/cameraSetting"
+        android:layout_marginTop="8dp"
+        android:layout_marginBottom="8dp"
         />
 
     <include
         layout="@layout/camera_white_balance_control_include"
-        android:layout_width="0dp"
-        android:layout_height="wrap_content"
+        android:layout_width="wrap_content"
+        android:layout_height="0dp"
         android:id="@+id/whiteBalanceControl"
         android:visibility="gone"
+        app:layout_constraintTop_toTopOf="parent"
         app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintLeft_toLeftOf="parent"
         app:layout_constraintRight_toLeftOf="@id/cameraSetting"
+        android:layout_marginTop="8dp"
+        android:layout_marginBottom="8dp"
         />
 
     <Space
-        android:id="@+id/bottom_anchor"
+        android:id="@+id/controlsAnchor"
         android:layout_width="0dp"
         android:layout_height="0dp"
         app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintStart_toStartOf="parent" />
+        app:layout_constraintRight_toRightOf="parent" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>

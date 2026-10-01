@@ -149,7 +149,7 @@
         android:layout_height="wrap_content"
         app:barrierDirection="top"
         app:barrierAllowsGoneWidgets="false"
-        app:constraint_referenced_ids="zoomControl,recyclerViewCameraSetting,whiteBalanceControl,bottom_anchor" />
+        app:constraint_referenced_ids="zoomControl,recyclerViewCameraSetting,whiteBalanceControl,controlsAnchor" />
 
     <androidx.recyclerview.widget.RecyclerView
         android:id="@+id/recyclerViewCameraSetting"
@@ -185,7 +185,7 @@
         />
 
     <Space
-        android:id="@+id/bottom_anchor"
+        android:id="@+id/controlsAnchor"
         android:layout_width="0dp"
         android:layout_height="0dp"
         app:layout_constraintBottom_toBottomOf="parent"

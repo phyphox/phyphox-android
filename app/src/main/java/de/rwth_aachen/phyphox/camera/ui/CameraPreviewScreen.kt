@@ -19,6 +19,7 @@ import android.view.WindowManager
 import android.view.animation.AlphaAnimation
 import android.widget.FrameLayout
 import android.widget.ImageView
+import android.widget.LinearLayout
 import android.widget.TextView
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.content.res.AppCompatResources
@@ -97,6 +98,7 @@ class CameraPreviewScreen(
 
     private val lnrCameraSetting: LinearLayoutCompat = root.findViewById(R.id.cameraSetting)
     private val lnrZoomControl: LinearLayoutCompat = root.findViewById(R.id.zoomControl)
+    private val lnrZoomButtons: LinearLayoutCompat = root.findViewById(R.id.zoomButton)
     private val lnrZoom: LinearLayoutCompat = root.findViewById(R.id.lnrZoom)
     private val lnrSwitchLens = root.findViewById<LinearLayoutCompat>(R.id.lnrSwitchLens)
     private val lnrIso = root.findViewById<LinearLayoutCompat>(R.id.lnrImageIso)
@@ -139,6 +141,8 @@ class CameraPreviewScreen(
     private val whiteBalanceModeToggle: MaterialButtonToggleGroup = root.findViewById(R.id.whiteBalanceModeToggle)
     private val lnrWhiteBalanceTemperatureControls: LinearLayoutCompat = root.findViewById(R.id.whiteBalanceTemperatureControls)
     private val lnrWhiteBalanceMarks: LinearLayoutCompat = root.findViewById(R.id.whiteBalanceMarks)
+    private val lnrWhiteBalanceTemperatureRow: LinearLayoutCompat = root.findViewById(R.id.whiteBalanceTemperatureRow)
+    private val lnrWhiteBalanceTintRow: LinearLayoutCompat = root.findViewById(R.id.whiteBalanceTintRow)
     private val whiteBalanceTemperatureSlider: Slider = root.findViewById(R.id.whiteBalanceTemperatureSlider)
     private val whiteBalanceTintSlider: Slider = root.findViewById(R.id.whiteBalanceTintSlider)
     private val textWhiteBalanceTemperature: TextView = root.findViewById(R.id.textWhiteBalanceTemperature)
@@ -167,6 +171,10 @@ class CameraPreviewScreen(
     var resizableState = ResizableViewModuleState.Normal
 
     var isLandscape = true
+
+    //True while the main buttons stand in a column at the right edge (landscape): the open sub-control then
+    //stands next to them as a column as well
+    private var controlsVertical = false
 
     init {
         previewTextureView.visibility = View.VISIBLE
@@ -261,13 +269,20 @@ class CameraPreviewScreen(
         for (mark in WhiteBalance.Mark.values()) {
             val button = MaterialButton(context, null, com.google.android.material.R.attr.materialButtonOutlinedStyle)
             button.text = context.getString(mark.label)
-            button.textSize = 11f
+            button.textSize = 10f
+            button.maxLines = 1
+            button.insetTop = 0
+            button.insetBottom = 0
+            button.minHeight = 0
+            button.minimumHeight = 0
+            button.setPadding(button.paddingLeft / 4, 0, button.paddingRight / 4, 0)
             button.setOnClickListener { cameraViewModel.changeWhiteBalanceTemperature(mark.temperature) }
-            val params = LinearLayoutCompat.LayoutParams(LinearLayoutCompat.LayoutParams.WRAP_CONTENT, LinearLayoutCompat.LayoutParams.WRAP_CONTENT)
-            params.setMargins(2, 0, 2, 0)
-            lnrWhiteBalanceMarks.addView(button, params)
+            lnrWhiteBalanceMarks.addView(button)
         }
+        setControlsVertical(false)
 
+        whiteBalanceTemperatureSlider.isTickVisible = false
+        whiteBalanceTintSlider.isTickVisible = false
         whiteBalanceTemperatureSlider.setLabelFormatter { value -> "${positionToTemperature(value)} K" }
         whiteBalanceTemperatureSlider.addOnChangeListener { _, value, fromUser ->
             if (fromUser)
@@ -277,6 +292,44 @@ class CameraPreviewScreen(
         whiteBalanceTintSlider.addOnChangeListener { _, value, fromUser ->
             if (fromUser)
                 cameraViewModel.changeWhiteBalanceTint(value / 1000.0f)
+        }
+    }
+
+    //Portrait: the sub-controls are rows under the preview. Landscape: the main buttons stand in a column at the
+    //right edge, and the open sub-control becomes a column next to them - a vertical value list, the zoom buttons
+    //stacked beside a vertical slider, the white balance toggle, marks and sliders as columns side by side.
+    fun setControlsVertical(vertical: Boolean) {
+        controlsVertical = vertical
+        val fill = LinearLayoutCompat.LayoutParams.MATCH_PARENT
+        val wrap = LinearLayoutCompat.LayoutParams.WRAP_CONTENT
+        val along = if (vertical) LinearLayoutCompat.VERTICAL else LinearLayoutCompat.HORIZONTAL //items of a list
+        val across = if (vertical) LinearLayoutCompat.HORIZONTAL else LinearLayoutCompat.VERTICAL //lists side by side
+        val sliderOrientation = if (vertical) LinearLayout.VERTICAL else LinearLayout.HORIZONTAL
+        //An item that shares a row equally in portrait, or stands in a column in landscape
+        fun itemParams() = if (vertical) LinearLayoutCompat.LayoutParams(fill, wrap) else LinearLayoutCompat.LayoutParams(0, wrap, 1f)
+
+        (recyclerViewCameraSetting.layoutManager as? LinearLayoutManager)?.orientation = along
+
+        lnrZoomControl.orientation = across
+        lnrZoomButtons.orientation = along
+        zoomSlider.setOrientation(sliderOrientation)
+        zoomSlider.layoutParams = if (vertical) LinearLayoutCompat.LayoutParams(wrap, 0, 1f) else LinearLayoutCompat.LayoutParams(fill, wrap)
+
+        lnrWhiteBalanceControl.orientation = across
+        whiteBalanceModeToggle.orientation = along
+        lnrWhiteBalanceTemperatureControls.orientation = across
+        lnrWhiteBalanceTemperatureControls.layoutParams = if (vertical) LinearLayoutCompat.LayoutParams(wrap, fill) else LinearLayoutCompat.LayoutParams(fill, wrap)
+        lnrWhiteBalanceMarks.orientation = along
+        lnrWhiteBalanceMarks.layoutParams = if (vertical) LinearLayoutCompat.LayoutParams(wrap, fill) else LinearLayoutCompat.LayoutParams(fill, wrap)
+        for (i in 0 until lnrWhiteBalanceMarks.childCount)
+            lnrWhiteBalanceMarks.getChildAt(i).layoutParams = itemParams()
+        for (row in listOf(lnrWhiteBalanceTemperatureRow, lnrWhiteBalanceTintRow)) {
+            row.orientation = along
+            row.layoutParams = if (vertical) LinearLayoutCompat.LayoutParams(wrap, fill) else LinearLayoutCompat.LayoutParams(fill, wrap)
+        }
+        for (slider in listOf(whiteBalanceTemperatureSlider, whiteBalanceTintSlider)) {
+            slider.setOrientation(sliderOrientation)
+            slider.layoutParams = if (vertical) LinearLayoutCompat.LayoutParams(wrap, 0, 1f) else LinearLayoutCompat.LayoutParams(0, wrap, 1f)
         }
     }
 
@@ -383,6 +436,10 @@ class CameraPreviewScreen(
             ZoomButtonInfo(10.0f, SelectedZoomButton.TenTimes)
         )
 
+        //A camera without a zoom range (the emulator's, for one) would crash the slider's validation
+        zoomSlider.isVisible = cameraSettingState.cameraMaxZoomRatio > cameraSettingState.cameraMinZoomRatio
+        if (!zoomSlider.isVisible)
+            return
         zoomSlider.valueFrom = cameraSettingState.cameraMinZoomRatio
         zoomSlider.valueTo = cameraSettingState.cameraMaxZoomRatio
         zoomSlider.stepSize = 0.0f
@@ -693,12 +750,15 @@ class CameraPreviewScreen(
             } else {
                 recyclerViewCameraSetting.isVisible = false
                 lnrZoomControl.isVisible = false
+                lnrWhiteBalanceControl.isVisible = false
             }
             currentState = currentState!!.copy(isVisible = newState.isVisible)
         }
 
-        if (!forceAll && !newState.isVisible) {
-            return //No need to update anything as long as it isn't visible anyways
+        if (!newState.isVisible) {
+            //Nothing else to update while the controls are hidden; the sub-controls in particular must not come back
+            //on a forced update (a constraint switch when the element changes shape), whatever their own state says
+            return
         }
 
         if (forceAll || newState.mainControls.switchLensButton != oldState.mainControls.switchLensButton) {
@@ -908,7 +968,7 @@ class CameraPreviewScreen(
 
         with(recyclerViewCameraSetting) {
 
-            val mLayoutManager = LinearLayoutManager(context, LinearLayoutManager.HORIZONTAL, false)
+            val mLayoutManager = LinearLayoutManager(context, if (controlsVertical) LinearLayoutManager.VERTICAL else LinearLayoutManager.HORIZONTAL, false)
             layoutManager = mLayoutManager
             itemAnimator = DefaultItemAnimator()
 

@@ -173,5 +173,13 @@ public class CameraWhiteBalanceTest {
 
         maximizePreview();
         assertTrue("the white balance control is enabled at level 3", activity.findViewById(R.id.lnrWhiteBalance).isEnabled());
+
+        //The panel opens from the button and closes with the controls when the preview leaves the exclusive view
+        View panel = activity.findViewById(R.id.whiteBalanceControl);
+        getInstrumentation().runOnMainSync(() -> activity.findViewById(R.id.lnrWhiteBalance).performClick());
+        await("the white balance panel did not open", () -> panel.getVisibility() == View.VISIBLE);
+        View minimize = activity.findViewById(R.id.imageMinimize);
+        getInstrumentation().runOnMainSync(minimize::performClick);
+        await("the white balance panel stayed open after leaving the exclusive view", () -> panel.getVisibility() != View.VISIBLE);
     }
 }
