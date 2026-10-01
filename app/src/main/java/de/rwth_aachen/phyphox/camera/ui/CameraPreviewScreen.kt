@@ -140,7 +140,6 @@ class CameraPreviewScreen(
     private val lnrWhiteBalanceControl: LinearLayoutCompat = root.findViewById(R.id.whiteBalanceControl)
     private val whiteBalanceModeToggle: MaterialButtonToggleGroup = root.findViewById(R.id.whiteBalanceModeToggle)
     private val lnrWhiteBalanceTemperatureControls: LinearLayoutCompat = root.findViewById(R.id.whiteBalanceTemperatureControls)
-    private val lnrWhiteBalanceMarks: LinearLayoutCompat = root.findViewById(R.id.whiteBalanceMarks)
     private val lnrWhiteBalanceTemperatureRow: LinearLayoutCompat = root.findViewById(R.id.whiteBalanceTemperatureRow)
     private val lnrWhiteBalanceTintRow: LinearLayoutCompat = root.findViewById(R.id.whiteBalanceTintRow)
     private val whiteBalanceTemperatureSlider: Slider = root.findViewById(R.id.whiteBalanceTemperatureSlider)
@@ -266,19 +265,6 @@ class CameraPreviewScreen(
                 cameraViewModel.changeWhiteBalanceMode(mode)
         }
 
-        for (mark in WhiteBalance.Mark.values()) {
-            val button = MaterialButton(context, null, com.google.android.material.R.attr.materialButtonOutlinedStyle)
-            button.text = context.getString(mark.label)
-            button.textSize = 10f
-            button.maxLines = 1
-            button.insetTop = 0
-            button.insetBottom = 0
-            button.minHeight = 0
-            button.minimumHeight = 0
-            button.setPadding(button.paddingLeft / 4, 0, button.paddingRight / 4, 0)
-            button.setOnClickListener { cameraViewModel.changeWhiteBalanceTemperature(mark.temperature) }
-            lnrWhiteBalanceMarks.addView(button)
-        }
         setControlsVertical(false)
 
         whiteBalanceTemperatureSlider.isTickVisible = false
@@ -297,7 +283,7 @@ class CameraPreviewScreen(
 
     //Portrait: the sub-controls are rows under the preview. Landscape: the main buttons stand in a column at the
     //right edge, and the open sub-control becomes a column next to them - a vertical value list, the zoom buttons
-    //stacked beside a vertical slider, the white balance toggle, marks and sliders as columns side by side.
+    //stacked beside a vertical slider, the white balance toggle and sliders as columns side by side.
     fun setControlsVertical(vertical: Boolean) {
         controlsVertical = vertical
         val fill = LinearLayoutCompat.LayoutParams.MATCH_PARENT
@@ -305,24 +291,19 @@ class CameraPreviewScreen(
         val along = if (vertical) LinearLayoutCompat.VERTICAL else LinearLayoutCompat.HORIZONTAL //items of a list
         val across = if (vertical) LinearLayoutCompat.HORIZONTAL else LinearLayoutCompat.VERTICAL //lists side by side
         val sliderOrientation = if (vertical) LinearLayout.VERTICAL else LinearLayout.HORIZONTAL
-        //An item that shares a row equally in portrait, or stands in a column in landscape
-        fun itemParams() = if (vertical) LinearLayoutCompat.LayoutParams(fill, wrap) else LinearLayoutCompat.LayoutParams(0, wrap, 1f)
 
         (recyclerViewCameraSetting.layoutManager as? LinearLayoutManager)?.orientation = along
 
         lnrZoomControl.orientation = across
         lnrZoomButtons.orientation = along
         zoomSlider.setOrientation(sliderOrientation)
-        zoomSlider.layoutParams = if (vertical) LinearLayoutCompat.LayoutParams(wrap, 0, 1f) else LinearLayoutCompat.LayoutParams(fill, wrap)
+        //The zoom control stacks the buttons and the slider across the list direction, so the slider fills the other axis
+        zoomSlider.layoutParams = if (vertical) LinearLayoutCompat.LayoutParams(wrap, fill) else LinearLayoutCompat.LayoutParams(fill, wrap)
 
         lnrWhiteBalanceControl.orientation = across
         whiteBalanceModeToggle.orientation = along
         lnrWhiteBalanceTemperatureControls.orientation = across
         lnrWhiteBalanceTemperatureControls.layoutParams = if (vertical) LinearLayoutCompat.LayoutParams(wrap, fill) else LinearLayoutCompat.LayoutParams(fill, wrap)
-        lnrWhiteBalanceMarks.orientation = along
-        lnrWhiteBalanceMarks.layoutParams = if (vertical) LinearLayoutCompat.LayoutParams(wrap, fill) else LinearLayoutCompat.LayoutParams(fill, wrap)
-        for (i in 0 until lnrWhiteBalanceMarks.childCount)
-            lnrWhiteBalanceMarks.getChildAt(i).layoutParams = itemParams()
         for (row in listOf(lnrWhiteBalanceTemperatureRow, lnrWhiteBalanceTintRow)) {
             row.orientation = along
             row.layoutParams = if (vertical) LinearLayoutCompat.LayoutParams(wrap, fill) else LinearLayoutCompat.LayoutParams(fill, wrap)
@@ -333,7 +314,7 @@ class CameraPreviewScreen(
         }
     }
 
-    //The scale is logarithmic, so the reference marks between 2850 K and 7500 K take up a useful part of it
+    //The scale is logarithmic: the usual illuminants between 2500 K and 8000 K take up a useful part of it
     private fun positionToTemperature(position: Float): Int {
         val min = whiteBalanceRange.first.toDouble()
         val max = whiteBalanceRange.last.toDouble()

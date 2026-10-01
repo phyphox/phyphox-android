@@ -1,6 +1,5 @@
 package de.rwth_aachen.phyphox.camera.helper
 
-import de.rwth_aachen.phyphox.R
 import kotlin.math.sqrt
 
 //White balance by white point (file format 1.21, phyphox-docs docs/file-format/input.md "White balance"):
@@ -17,15 +16,6 @@ object WhiteBalance {
     const val MAX_TINT_CCT = 0.01f
 
     val D65 = doubleArrayOf(0.3127, 0.3290)
-
-    //Reference marks on the temperature scale: the old preset names as labels, each sets a temperature and nothing else
-    enum class Mark(val temperature: Int, val label: Int) {
-        incandescent(2850, R.string.wb_incandescent),
-        fluorescent(4200, R.string.wb_fluorescent),
-        daylight(5500, R.string.wb_daylight),
-        cloudy(6500, R.string.wb_cloudy),
-        shade(7500, R.string.wb_shade)
-    }
 
     //Planckian locus in CIE xy (Kim et al. 2002), 1667..25000 K
     fun planckianXY(temperature: Double): DoubleArray {

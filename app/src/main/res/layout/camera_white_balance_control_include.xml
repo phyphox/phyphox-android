@@ -53,13 +53,6 @@
         android:orientation="vertical">
 
         <androidx.appcompat.widget.LinearLayoutCompat
-            android:id="@+id/whiteBalanceMarks"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:gravity="center"
-            android:orientation="horizontal" />
-
-        <androidx.appcompat.widget.LinearLayoutCompat
             android:id="@+id/whiteBalanceTemperatureRow"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
