@@ -49,6 +49,7 @@ public class DepthGuiElement extends ExpViewElement implements Serializable {
     transient private DepthPreview cv = null;
     transient ImageView collapseImage = null;
     transient ImageView expandImage = null;
+    transient TextView labelView = null;
     transient Spinner modeControl = null;
     transient Spinner cameraSelection = null;
     TextInputLayout textInputCameraSelection;
@@ -125,14 +126,21 @@ public class DepthGuiElement extends ExpViewElement implements Serializable {
         expandImage.setLayoutParams(lp);
         titleLine.addView(expandImage);
 
-        collapseImage = new ImageView(c);
+        collapseImage = new ImageView(c); //twice the expand icon's size so it is noticed in exclusive mode
+        collapseImage.setId(ViewCompat.generateViewId());
         collapseImage.setImageResource(R.drawable.ic_collapse_arrow);
-        collapseImage.setLayoutParams(lp);
+        collapseImage.setScaleType(ImageView.ScaleType.FIT_CENTER);
+        int collapseSize = (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, 26, c.getResources().getDisplayMetrics());
+        RelativeLayout.LayoutParams lpCollapse = new RelativeLayout.LayoutParams(collapseSize, collapseSize);
+        lpCollapse.setMargins(elMargin, elMargin, elMargin, elMargin);
+        lpCollapse.addRule(RelativeLayout.ALIGN_PARENT_TOP);
+        lpCollapse.addRule(RelativeLayout.ALIGN_PARENT_LEFT);
+        collapseImage.setLayoutParams(lpCollapse);
         collapseImage.setVisibility(INVISIBLE);
         titleLine.addView(collapseImage);
 
         //Create the label as textView
-        TextView labelView = new TextView(c);
+        labelView = new TextView(c);
         lp = new RelativeLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT);
         lp.setMargins(margin, 0, 0, 0);
         lp.addRule(RelativeLayout.ALIGN_PARENT_TOP);
@@ -292,6 +300,15 @@ public class DepthGuiElement extends ExpViewElement implements Serializable {
         return "<div style=\"font-size: 105%;\" class=\"graphElement\" id=\"element" + htmlID + "\">" + (hasLabel() ? "<span class=\"label\" onclick=\"toggleExclusive("+htmlID+");\">"+this.label+"</span>" : "") + "<div class=\"warningIcon\" onclick=\"alert('"+ warningText + "')\"></div></div>";
     }
 
+    private void placeLabelBeside(ImageView icon) {
+        if (labelView == null)
+            return;
+        RelativeLayout.LayoutParams lp = (RelativeLayout.LayoutParams) labelView.getLayoutParams();
+        lp.removeRule(RelativeLayout.RIGHT_OF);
+        lp.addRule(RelativeLayout.RIGHT_OF, icon.getId());
+        labelView.setLayoutParams(lp);
+    }
+
     @Override
     public void restore() {
         super.restore();
@@ -301,6 +318,7 @@ public class DepthGuiElement extends ExpViewElement implements Serializable {
             if (expandImage != null && collapseImage != null) {
                 expandImage.setVisibility(VISIBLE);
                 collapseImage.setVisibility(INVISIBLE);
+                placeLabelBeside(expandImage);
             }
             if (modeControl != null)
                 modeControl.setVisibility(GONE);
@@ -325,6 +343,7 @@ public class DepthGuiElement extends ExpViewElement implements Serializable {
             if (expandImage != null && collapseImage != null) {
                 expandImage.setVisibility(INVISIBLE);
                 collapseImage.setVisibility(VISIBLE);
+                placeLabelBeside(collapseImage);
             }
             if (modeControl != null)
                 modeControl.setVisibility(VISIBLE);

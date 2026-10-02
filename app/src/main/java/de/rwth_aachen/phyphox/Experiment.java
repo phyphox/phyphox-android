@@ -120,6 +120,7 @@ import de.rwth_aachen.phyphox.camera.depth.DepthInput;
 import de.rwth_aachen.phyphox.helper.DecimalTextWatcher;
 import de.rwth_aachen.phyphox.helper.DebugSwitches;
 import de.rwth_aachen.phyphox.helper.Helper;
+import de.rwth_aachen.phyphox.helper.SafeViewPager;
 import de.rwth_aachen.phyphox.NetworkConnection.NetworkConnection;
 import de.rwth_aachen.phyphox.ExperimentView.ExpViewElement;
 
@@ -274,7 +275,7 @@ public class Experiment extends AppCompatActivity implements View.OnClickListene
         }
     }
 
-    private ExpViewFragment getCurrentExpViewFragment() {
+    ExpViewFragment getCurrentExpViewFragment() {
         if (adapter == null || pager == null)
             return null;
         return (ExpViewFragment)getSupportFragmentManager().findFragmentByTag("android:switcher:" + pager.getId() + ":" + adapter.getItemId(pager.getCurrentItem()));
@@ -600,7 +601,26 @@ public class Experiment extends AppCompatActivity implements View.OnClickListene
         FragmentManager manager = getSupportFragmentManager();
         adapter = new ExpViewPagerAdapter(manager, this.experiment);
         pager.setAdapter(adapter);
-        tabLayout.setupWithViewPager(pager);
+        //Tabs are wired by hand instead of setupWithViewPager so a tab tap can be held back while an element is maximized
+        tabLayout.removeAllTabs();
+        for (int i = 0; i < adapter.getCount(); i++)
+            tabLayout.addTab(tabLayout.newTab().setText(adapter.getPageTitle(i)));
+        tabLayout.addOnTabSelectedListener(new TabLayout.OnTabSelectedListener() {
+            @Override
+            public void onTabSelected(TabLayout.Tab tab) {
+                selectPage(tab.getPosition());
+            }
+
+            @Override
+            public void onTabUnselected(TabLayout.Tab tab) {}
+
+            @Override
+            public void onTabReselected(TabLayout.Tab tab) {}
+        });
+        ((SafeViewPager) pager).setPagingLock(() -> {
+            ExpViewFragment f = getCurrentExpViewFragment();
+            return f != null && f.hasExclusive();
+        }, delta -> selectPage(pager.getCurrentItem() + delta));
         pager.addOnPageChangeListener(new TabLayout.TabLayoutOnPageChangeListener(tabLayout));
         pager.addOnPageChangeListener(new ViewPager.OnPageChangeListener() {
             @Override
@@ -633,6 +653,21 @@ public class Experiment extends AppCompatActivity implements View.OnClickListene
         } catch (Exception e) {
             Toast.makeText(getApplicationContext(), e.getMessage(), Toast.LENGTH_LONG).show();
         }
+    }
+
+    //A page change while an element is maximized first closes the exclusive view (a zoomed graph asks); the pager moves
+    //once it is gone, and not at all if the user cancels
+    void selectPage(int target) {
+        if (pager == null || adapter == null || target < 0 || target >= adapter.getCount() || target == pager.getCurrentItem())
+            return;
+        ExpViewFragment f = getCurrentExpViewFragment();
+        if (f != null && f.hasExclusive()) {
+            if (tabLayout.getSelectedTabPosition() != pager.getCurrentItem())
+                tabLayout.selectTab(tabLayout.getTabAt(pager.getCurrentItem()));
+            f.requestLeaveExclusive(() -> pager.setCurrentItem(target));
+            return;
+        }
+        pager.setCurrentItem(target);
     }
 
     //This is called from the experiment loading thread in onPostExecute, so the experiment should
@@ -1262,8 +1297,13 @@ public class Experiment extends AppCompatActivity implements View.OnClickListene
     public boolean onOptionsItemSelected(MenuItem item) {
         int id = item.getItemId();
 
-        //Home-button. Back to the Experiment List
+        //Home-button: like system back, it first closes a maximized element and leaves the experiment only without one
         if (id == android.R.id.home) {
+            ExpViewFragment f = getCurrentExpViewFragment();
+            if (f != null && f.hasExclusive()) {
+                f.requestLeaveExclusive();
+                return true;
+            }
             leaveExperiment(this::navigateUpToExperimentList);
             return true;
         }

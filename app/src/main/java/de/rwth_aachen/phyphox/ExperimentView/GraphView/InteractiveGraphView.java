@@ -332,6 +332,10 @@ public class InteractiveGraphView extends RelativeLayout implements GraphView.Po
                 ViewGroup.LayoutParams.MATCH_PARENT));
         graphView.setPointInfoListener(this);
         graphView.setAxisTapListener(this::onAxisTap);
+        graphView.setOutsideTapListener(() -> { //a tap beside the plot leaves the maximized graph like the collapse icon does
+            if (interactive)
+                performClick();
+        });
 
         graphFrame.addView(plotAreaView);
         graphFrame.addView(graphView);
@@ -479,6 +483,7 @@ public class InteractiveGraphView extends RelativeLayout implements GraphView.Po
                 .setNegativeButton(R.string.applyZoomActionReset, null)
                 .setNeutralButton(R.string.applyZoomMoreOptions, null)
                 .create();
+        dialog.setOnCancelListener(d -> parent.leaveRequestCancelled());
         dialog.setOnShowListener(d -> {
             final Button keepButton = dialog.getButton(DialogInterface.BUTTON_POSITIVE);
             final Button resetButton = dialog.getButton(DialogInterface.BUTTON_NEGATIVE);
@@ -619,6 +624,13 @@ public class InteractiveGraphView extends RelativeLayout implements GraphView.Po
         if (titleRow) {
             expandImage.setVisibility(interactive ? INVISIBLE : VISIBLE);
             collapseImage.setVisibility(interactive ? VISIBLE : INVISIBLE);
+            //The collapse icon is twice the size of the expand icon so it is noticed; the label moves beside it
+            RelativeLayout.LayoutParams lp = (RelativeLayout.LayoutParams) graphLabel.getLayoutParams();
+            lp.removeRule(RelativeLayout.RIGHT_OF);
+            lp.addRule(RelativeLayout.RIGHT_OF, interactive ? R.id.graph_collapse_image : R.id.graph_expand_image);
+            graphLabel.setLayoutParams(lp);
+            graphLabel.setGravity(Gravity.CENTER_VERTICAL);
+            graphLabel.setMinimumHeight(interactive ? (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, 34, getResources().getDisplayMetrics()) : 0);
         }
 
         this.interactive = interactive;

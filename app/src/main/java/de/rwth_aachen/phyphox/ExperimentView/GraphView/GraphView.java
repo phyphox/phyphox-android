@@ -9,6 +9,7 @@ import android.graphics.Paint;
 import android.graphics.Rect;
 import android.graphics.RectF;
 import android.util.Log;
+import android.util.TypedValue;
 import android.view.MotionEvent;
 import android.view.ScaleGestureDetector;
 import android.view.View;
@@ -126,9 +127,15 @@ public class GraphView extends View {
         void onAxisTap(int axis);
     }
 
+    public interface OutsideTapListener {
+        void onOutsideTap();
+    }
+
     private AxisTapListener axisTapListener = null;
-    private final RectF[] axisHitRects = new RectF[3]; //Label areas of the last frame, outside the plot
+    private OutsideTapListener outsideTapListener = null;
+    private final RectF[] axisHitRects = new RectF[3]; //The drawn axis label texts of the last frame, with a slop
     private int pendingAxisTap = -1;
+    private boolean pendingOutsideTap = false;
     private float axisTapDownX, axisTapDownY;
     public String[] lastXTicLabels = new String[0], lastYTicLabels = new String[0], lastZTicLabels = new String[0]; //As drawn in the last frame
     public boolean timeOnX = false; //x-axis is time axis?
@@ -370,7 +377,19 @@ public class GraphView extends View {
         this.axisTapListener = listener;
     }
 
-    //The axis whose label area contains the point, or -1
+    //Called for a tap outside the plot (and its colour scale) that is not on an axis label: leaves the maximized graph
+    public void setOutsideTapListener(OutsideTapListener listener) {
+        this.outsideTapListener = listener;
+    }
+
+    private boolean insidePlotOrScale(float x, float y) {
+        GraphSetup s = graphSetup;
+        if (x >= s.plotBoundL && x <= s.plotBoundL + s.plotBoundW && y >= s.plotBoundT && y <= s.plotBoundT + s.plotBoundH)
+            return true;
+        return s.zaBoundW > 0 && s.zaBoundH > 0 && x >= s.zaBoundL && x <= s.zaBoundL + s.zaBoundW && y >= s.zaBoundT && y <= s.zaBoundT + 2 * s.zaBoundH;
+    }
+
+    //The axis whose label text contains the point, or -1
     private int axisAt(float x, float y) {
         for (int axis = 0; axis < 3; axis++)
             if (axisHitRects[axis] != null && axisHitRects[axis].contains(x, y))
@@ -378,48 +397,64 @@ public class GraphView extends View {
         return -1;
     }
 
-    //A tap on an axis label area (outside the plot, which the tools use) in an interactive mode
+    //Taps outside the plot in an interactive mode: on an axis label text the unit dialog (text units have none), anywhere
+    //else the maximized graph is left; the plot itself belongs to the tools
     private boolean handleAxisTap(MotionEvent event) {
         final float x = event.getX();
         final float y = event.getY();
         switch (event.getActionMasked()) {
             case MotionEvent.ACTION_DOWN: {
                 int axis = axisAt(x, y);
-                if (axis < 0 || !isAxisConvertible(axis))
+                if (axis >= 0) {
+                    if (!isAxisConvertible(axis) || axisTapListener == null)
+                        return false;
+                    pendingAxisTap = axis;
+                } else if (outsideTapListener != null && !insidePlotOrScale(x, y))
+                    pendingOutsideTap = true;
+                else
                     return false;
-                pendingAxisTap = axis;
                 axisTapDownX = x;
                 axisTapDownY = y;
                 return true;
             }
             case MotionEvent.ACTION_MOVE: {
-                if (pendingAxisTap < 0)
+                if (pendingAxisTap < 0 && !pendingOutsideTap)
                     return false;
                 float dx = x - axisTapDownX, dy = y - axisTapDownY;
-                if (dx * dx + dy * dy > 30 * 30)
-                    pendingAxisTap = -1; //a drag, not a tap; the rest of the gesture is swallowed
+                if (dx * dx + dy * dy > 30 * 30) { //a drag, not a tap; the rest of the gesture is swallowed
+                    pendingAxisTap = -1;
+                    pendingOutsideTap = false;
+                }
                 return true;
             }
             case MotionEvent.ACTION_UP: {
-                if (pendingAxisTap < 0)
-                    return false;
-                int axis = pendingAxisTap;
-                pendingAxisTap = -1;
-                if (axisAt(x, y) == axis && axisTapListener != null)
-                    axisTapListener.onAxisTap(axis);
-                return true;
+                if (pendingAxisTap >= 0) {
+                    int axis = pendingAxisTap;
+                    pendingAxisTap = -1;
+                    if (axisAt(x, y) == axis)
+                        axisTapListener.onAxisTap(axis);
+                    return true;
+                }
+                if (pendingOutsideTap) {
+                    pendingOutsideTap = false;
+                    if (!insidePlotOrScale(x, y) && axisAt(x, y) < 0)
+                        outsideTapListener.onOutsideTap();
+                    return true;
+                }
+                return false;
             }
             case MotionEvent.ACTION_CANCEL: {
                 pendingAxisTap = -1;
+                pendingOutsideTap = false;
                 return false;
             }
         }
-        return pendingAxisTap >= 0;
+        return pendingAxisTap >= 0 || pendingOutsideTap;
     }
 
     @Override
     public boolean onTouchEvent(MotionEvent event) {
-        if (touchMode != TouchMode.off && axisTapListener != null && event.getPointerCount() == 1 && handleAxisTap(event))
+        if (touchMode != TouchMode.off && (axisTapListener != null || outsideTapListener != null) && event.getPointerCount() == 1 && handleAxisTap(event))
             return true;
         return switch (touchMode) {
             case zoom -> onTouchEventZoom(event);
@@ -1899,28 +1934,39 @@ public class GraphView extends View {
         lastYTicLabels = yLabels.toArray(new String[0]);
         lastZTicLabels = zLabels.toArray(new String[0]);
 
-        //The label areas outside the plot take the unit taps (InteractiveGraphView)
-        axisHitRects[AXIS_X] = new RectF(graphL, h - graphB, graphR, h);
-        axisHitRects[AXIS_Y] = new RectF(0, graphT, graphL, h - graphB);
-        axisHitRects[AXIS_Z] = zScale ? new RectF(graphL, 2 * zScaleH, graphR, graphT) : null;
-
-        //Labels
+        //Labels. Their drawn text (plus a slop) takes the unit taps, anything else outside the plot leaves the maximized
+        //graph (InteractiveGraphView), so the rectangles are what the hit test uses.
         paint.setTextAlign(Paint.Align.CENTER);
         if (drawTitle) {
             paint.setFakeBoldText(true);
             canvas.drawText(title, graphL+graphW/2, graphT-(float)(res.getDimensionPixelSize(R.dimen.graph_font)*0.4), paint);
             paint.setFakeBoldText(false);
         }
-        if (drawXLabel)
-            canvas.drawText(timeOnX && absoluteTime ? getLabelAndSystemTimeRangeX(workingMinX, workingMaxX, systemTimeOffsetX) : getLabelAndUnitX(), graphL+graphW/2, h-(int)(res.getDimensionPixelSize(R.dimen.graph_font)*0.3), paint);
+        float font = res.getDimensionPixelSize(R.dimen.graph_font);
+        float slop = TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, 12, res.getDisplayMetrics());
+        axisHitRects[AXIS_X] = null;
+        axisHitRects[AXIS_Y] = null;
+        axisHitRects[AXIS_Z] = null;
+        if (drawXLabel) {
+            String text = timeOnX && absoluteTime ? getLabelAndSystemTimeRangeX(workingMinX, workingMaxX, systemTimeOffsetX) : getLabelAndUnitX();
+            float cx = graphL+graphW/2, baseline = h-(int)(font*0.3), halfWidth = paint.measureText(text) / 2;
+            canvas.drawText(text, cx, baseline, paint);
+            axisHitRects[AXIS_X] = new RectF(cx - halfWidth - slop, baseline - font - slop, cx + halfWidth + slop, baseline + 0.3f * font + slop);
+        }
         if (drawYLabel) {
+            String text = timeOnY && absoluteTime ? getLabelAndSystemTimeRangeY(workingMinY, workingMaxY, systemTimeOffsetY) : getLabelAndUnitY();
+            float cy = graphH / 2 + graphT, halfWidth = paint.measureText(text) / 2;
             canvas.save();
-            canvas.rotate(-90, res.getDimensionPixelSize(R.dimen.graph_font), graphH / 2 + graphT);
-            canvas.drawText(timeOnY && absoluteTime ? getLabelAndSystemTimeRangeY(workingMinY, workingMaxY, systemTimeOffsetY) : getLabelAndUnitY(), res.getDimensionPixelSize(R.dimen.graph_font), graphH / 2 + graphT, paint);
+            canvas.rotate(-90, font, cy);
+            canvas.drawText(text, font, cy, paint);
             canvas.restore();
+            axisHitRects[AXIS_Y] = new RectF(-slop, cy - halfWidth - slop, 1.3f * font + slop, cy + halfWidth + slop);
         }
         if (zScale && labelZ != null) {
-            canvas.drawText(getLabelAndUnitZ(), graphL+graphW/2, zScaleH+(int)(res.getDimensionPixelSize(R.dimen.graph_font)*2.4), paint);
+            String text = getLabelAndUnitZ();
+            float cx = graphL+graphW/2, baseline = zScaleH+(int)(font*2.4), halfWidth = paint.measureText(text) / 2;
+            canvas.drawText(text, cx, baseline, paint);
+            axisHitRects[AXIS_Z] = new RectF(cx - halfWidth - slop, baseline - font - slop, cx + halfWidth + slop, baseline + 0.3f * font + slop);
         }
 
         //Draw rect around graph

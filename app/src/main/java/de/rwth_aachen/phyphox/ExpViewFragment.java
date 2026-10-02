@@ -25,6 +25,7 @@ public class ExpViewFragment extends Fragment {
     private int index;
     public CustomScrollableView root;
     boolean hasExclusive;
+    private Runnable afterLeave = null; //what a held-back tab change does once exclusive mode is gone
 
     //This falls under graphElement-> SpectroscopyCalibrationManager
 
@@ -89,6 +90,23 @@ public class ExpViewFragment extends Fragment {
     public void requestLeaveExclusive() {
         if (!hasExclusive)
             return;
+        afterLeave = null;
+        requestLeaveExclusiveKeepingAction();
+    }
+
+    //The same, running the action once exclusive mode is gone; nothing happens if the user cancels
+    public void requestLeaveExclusive(Runnable afterLeave) {
+        if (!hasExclusive)
+            return;
+        this.afterLeave = afterLeave;
+        requestLeaveExclusiveKeepingAction();
+    }
+
+    public void leaveRequestCancelled() {
+        afterLeave = null;
+    }
+
+    private void requestLeaveExclusiveKeepingAction() {
         if (getActivity() instanceof Experiment && ((Experiment) getActivity()).experiment != null && ((Experiment) getActivity()).experiment.experimentViews.size() > index) {
             for (ExpViewElement element : ((Experiment) getActivity()).experiment.experimentViews.elementAt(index).flatElements()) {
                 if (element.state == ExpView.State.maximized && element.getChildren() == null) { //the leaf, not a group on the path to it
@@ -118,6 +136,10 @@ public class ExpViewFragment extends Fragment {
             element.restore();
         }
         ll.setLayoutTransition(null);
+        Runnable action = afterLeave;
+        afterLeave = null;
+        if (action != null)
+            action.run();
     }
 
     public static ExpViewFragment newInstance(int index) {
@@ -171,8 +193,8 @@ public class ExpViewFragment extends Fragment {
         if(isVisibleToUser) {
             if (getActivity() != null && ((Experiment)getActivity()).experiment != null)
                 ((Experiment) getActivity()).experiment.updateViews(index, true);
-        } else {
-            leaveExclusive();
+        } else if (hasExclusive) {
+            leaveExclusive(); //the fragment really goes away; a user's tab change is held back in Experiment.selectPage
         }
     }
 

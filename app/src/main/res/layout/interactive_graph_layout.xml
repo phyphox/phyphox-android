@@ -15,8 +15,9 @@
     <ImageView
         android:id="@+id/graph_collapse_image"
         app:srcCompat="@drawable/ic_collapse_arrow"
-        android:layout_height="wrap_content"
-        android:layout_width="wrap_content"
+        android:layout_height="26dp"
+        android:layout_width="26dp"
+        android:scaleType="fitCenter"
         android:visibility="invisible"
         android:layout_marginTop="8dp"
         />

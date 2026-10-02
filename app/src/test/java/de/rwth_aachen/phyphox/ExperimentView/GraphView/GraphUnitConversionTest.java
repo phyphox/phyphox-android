@@ -26,7 +26,8 @@ import java.util.List;
 //The GraphView's share of the unit conversion (phyphox-docs docs/file-format/units.md): a converted axis shows
 //nice tics in the display unit at the matching data positions, positions use scale and offset while differences
 //use the scale alone (temperature), a clock axis and a text unit are not convertible, and a tap on an axis label
-//area in an interactive mode reaches the listener while a tap inside the plot does not.
+//text in an interactive mode reaches the listener while a tap inside the plot does not and a tap beside the label
+//leaves the maximized graph.
 @RunWith(RobolectricTestRunner.class)
 @GraphicsMode(GraphicsMode.Mode.NATIVE)
 @Config(sdk = 35, qualifiers = "en-rUS-w411dp-h891dp-normal-port-notnight-mdpi")
@@ -36,6 +37,7 @@ public class GraphUnitConversionTest {
 
     private GraphView graph;
     private final List<Integer> taps = new ArrayList<>();
+    private int outsideTaps = 0;
 
     @Before
     public void setUp() {
@@ -58,6 +60,7 @@ public class GraphUnitConversionTest {
             }
         });
         graph.setAxisTapListener(taps::add);
+        graph.setOutsideTapListener(() -> outsideTaps++);
         parent.measure(View.MeasureSpec.makeMeasureSpec(WIDTH, View.MeasureSpec.EXACTLY),
                 View.MeasureSpec.makeMeasureSpec(HEIGHT, View.MeasureSpec.EXACTLY));
         parent.layout(0, 0, WIDTH, HEIGHT);
@@ -129,24 +132,33 @@ public class GraphUnitConversionTest {
     }
 
     @Test
-    public void aTapOnAnAxisLabelReachesTheListenerOnlyInAnInteractiveMode() {
+    public void aTapOnAnAxisLabelReachesTheListenerOnlyInAnInteractiveModeAndATapBesideItLeaves() {
         draw();
         GraphSetup s = graph.graphSetup;
-        float xLabelX = s.plotBoundL + s.plotBoundW / 2f, xLabelY = (s.plotBoundT + s.plotBoundH + HEIGHT) / 2f;
-        float yLabelX = s.plotBoundL / 2f, yLabelY = s.plotBoundT + s.plotBoundH / 2f;
+        float font = graph.getResources().getDimensionPixelSize(de.rwth_aachen.phyphox.R.dimen.graph_font);
+        float xLabelX = s.plotBoundL + s.plotBoundW / 2f, xLabelY = HEIGHT - 0.6f * font;
+        float yLabelX = 0.6f * font, yLabelY = s.plotBoundT + s.plotBoundH / 2f;
         tap(xLabelX, xLabelY);
         assertThat(taps).isEmpty(); //not maximized: the whole element is one button
+        assertThat(outsideTaps).isEqualTo(0);
         graph.setTouchMode(GraphView.TouchMode.zoom);
         tap(xLabelX, xLabelY);
         tap(yLabelX, yLabelY);
         tap(s.plotBoundL + s.plotBoundW / 2f, s.plotBoundT + s.plotBoundH / 2f);
         assertThat(taps).containsExactly(GraphView.AXIS_X, GraphView.AXIS_Y).inOrder();
+        assertThat(outsideTaps).isEqualTo(0);
+        //the band beside the label text and the tic label row are not the label: they leave the maximized graph
+        tap(s.plotBoundL + 5, xLabelY);
+        tap(xLabelX, s.plotBoundT + s.plotBoundH + 2);
+        assertThat(taps).hasSize(2);
+        assertThat(outsideTaps).isEqualTo(2);
         graph.setTouchMode(GraphView.TouchMode.pick);
         tap(xLabelX, xLabelY);
         assertThat(taps).containsExactly(GraphView.AXIS_X, GraphView.AXIS_Y, GraphView.AXIS_X).inOrder();
-        //a text unit has no dialog
+        //a text unit has no dialog, and its label does not leave either
         graph.setUnitIds(null, "meter_per_square_second", null);
         tap(xLabelX, xLabelY);
         assertThat(taps).hasSize(3);
+        assertThat(outsideTaps).isEqualTo(2);
     }
 }
