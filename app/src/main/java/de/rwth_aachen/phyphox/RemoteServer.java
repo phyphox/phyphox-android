@@ -362,6 +362,18 @@ public class RemoteServer {
             strings.put("metric", context.getString(R.string.settingsUnitSystemMetric));
             strings.put("imperial", context.getString(R.string.settingsUnitSystemImperial));
             strings.put("other", context.getString(R.string.unit_dialog_other));
+            strings.put("applyZoomQuestionTitle", context.getString(R.string.applyZoomQuestionTitle));
+            strings.put("applyZoomQuestion", context.getString(R.string.applyZoomQuestion));
+            strings.put("applyZoomRange", context.getString(R.string.applyZoomRange));
+            strings.put("applyZoomActionReset", context.getString(R.string.applyZoomActionReset));
+            strings.put("applyZoomActionKeep", context.getString(R.string.applyZoomActionKeep));
+            strings.put("applyZoomActionFollow", context.getString(R.string.applyZoomActionFollow));
+            strings.put("applyZoomMoreOptions", context.getString(R.string.applyZoomMoreOptions));
+            strings.put("applyZoomAlsoApply", context.getString(R.string.applyZoomAlsoApply));
+            strings.put("applyZoomTargetThis", context.getString(R.string.applyZoomTargetThis));
+            strings.put("applyZoomTargetSameData", context.getString(R.string.applyZoomTargetSameData));
+            strings.put("applyZoomTargetSameUnit", context.getString(R.string.applyZoomTargetSameUnit));
+            strings.put("applyZoomTargetSameAxis", context.getString(R.string.applyZoomTargetSameAxis));
             return strings.toString();
         } catch (JSONException e) {
             return "{}";
