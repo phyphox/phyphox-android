@@ -168,8 +168,6 @@ public class GraphView extends View {
     private double[] lineWidth;
     private int[] color;
 
-    public boolean previouslyKept = false; //Keeps track if the user has kept his zoom when he left the interactive mode the last time
-
     public enum ScaleMode {
         auto, extend, fixed
     }
@@ -200,6 +198,7 @@ public class GraphView extends View {
         public double minZ = Double.NaN;
         public double maxZ = Double.NaN;
         public boolean follows = false;
+        public boolean previouslyKept = false; //the user kept a zoom when leaving the maximized graph before ("Keep this view?")
     }
 
     public ZoomState zoomState = new ZoomState();

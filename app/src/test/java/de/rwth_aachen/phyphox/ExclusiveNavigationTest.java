@@ -107,6 +107,24 @@ public class ExclusiveNavigationTest {
     }
 
     @Test
+    public void theZoomAndFollowStateSurviveARecreatedView() throws Exception {
+        ActivityController<Experiment> controller = launch();
+        try {
+            Experiment activity = controller.get();
+            GraphElement graph = (GraphElement) activity.experiment.experimentViews.get(0).elements.get(0);
+            graph.applyZoom(2, 4, true, null, null, false, false); //keep and follow new data
+            graph.getZoomState().previouslyKept = true;
+            activity.getCurrentExpViewFragment().recreateView();
+            ShadowLooper.idleMainLooper();
+            assertThat(graph.getZoomState().follows).isTrue();
+            assertThat(graph.getZoomState().maxX - graph.getZoomState().minX).isWithin(1e-9).of(2.0);
+            assertThat(graph.getZoomState().previouslyKept).isTrue();
+        } finally {
+            controller.close();
+        }
+    }
+
+    @Test
     public void aTabChangeWaitsForTheExclusiveViewAndAZoomedGraphAsksFirst() throws Exception {
         ActivityController<Experiment> controller = launch();
         try {

@@ -83,7 +83,7 @@ public class ApplyZoomChoiceTest {
         assertThat(z.minY).isEqualTo(1.0);
         assertThat(z.maxY).isEqualTo(3.0);
         assertThat(z.follows).isFalse();
-        assertThat(graph.previouslyKept).isTrue();
+        assertThat(graph.zoomState.previouslyKept).isTrue();
 
         z.minX = 2; z.maxX = 4;
         ApplyZoomChoice.apply(graph, ApplyZoomChoice.Action.FOLLOW, ApplyZoomChoice.Action.RESET, ApplyZoomChoice.Action.RESET);
@@ -95,7 +95,7 @@ public class ApplyZoomChoiceTest {
         ApplyZoomChoice.apply(graph, ApplyZoomChoice.Action.RESET, ApplyZoomChoice.Action.RESET, ApplyZoomChoice.Action.RESET);
         assertThat(z.follows).isTrue();
         assertThat(z.maxX - z.minX).isWithin(1e-9).of(graph.maxX - graph.minX); //the configured window, following
-        assertThat(graph.previouslyKept).isFalse();
+        assertThat(graph.zoomState.previouslyKept).isFalse();
     }
 
     @Test

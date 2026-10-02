@@ -469,7 +469,7 @@ public class InteractiveGraphView extends RelativeLayout implements GraphView.Po
         final List<ApplyZoomChoice.Target> targetsX = setupZoomTargets(applyX, "x", unitX, graphView.getUnitX());
         final List<ApplyZoomChoice.Target> targetsY = setupZoomTargets(applyY, "y", unitY, graphView.getUnitY());
 
-        final ApplyZoomChoice.Action simpleDefault = ApplyZoomChoice.defaultAction(graphView.previouslyKept);
+        final ApplyZoomChoice.Action simpleDefault = ApplyZoomChoice.defaultAction(zoomState.previouslyKept);
         final AlertDialog dialog = new AlertDialog.Builder(getContext())
                 .setTitle(R.string.applyZoomQuestionTitle)
                 .setView(dialogView)

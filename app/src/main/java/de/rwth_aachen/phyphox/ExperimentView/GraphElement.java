@@ -304,6 +304,10 @@ public class GraphElement extends ExpViewElement implements Serializable {
         return unitX;
     }
 
+    public GraphView.ZoomState getZoomState() {
+        return zoomState;
+    }
+
     public Unit getUnitY() {
         return unitY;
     }
@@ -401,10 +405,6 @@ public class GraphElement extends ExpViewElement implements Serializable {
         if (currentPickData != null)
             interactiveGV.updatePickData(currentPickData);
         gv = interactiveGV.graphView;
-        if (zoomState != null)
-            gv.zoomState = zoomState;
-        else
-            zoomState = gv.zoomState;
         LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(
                 ViewGroup.LayoutParams.MATCH_PARENT,
                 ViewGroup.LayoutParams.WRAP_CONTENT);
@@ -459,6 +459,11 @@ public class GraphElement extends ExpViewElement implements Serializable {
         gv.setScaleModeY(scaleMinY, minY, scaleMaxY, maxY);
         gv.setScaleModeZ(scaleMinZ, minZ, scaleMaxZ, maxZ);
         gv.setFollowX(followX);
+        //The user's zoom and follow state outlives the view, so it is handed over after setFollowX has set the file's defaults
+        if (zoomState != null)
+            gv.zoomState = zoomState;
+        else
+            zoomState = gv.zoomState;
         gv.setPlotArea(plotLeft, plotTop, plotRight, plotBottom);
         gv.setTimeAxes(timeOnX, timeOnY);
         gv.setSuppressScientificNotation(suppressScientificNotation);

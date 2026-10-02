@@ -39,7 +39,7 @@ public final class ApplyZoomChoice {
     //Writes the choice into the graph: NaN = reset; a reset x axis of a followX graph goes back to following its configured window
     public static void apply(GraphView graphView, Action x, Action y, Action z) {
         GraphView.ZoomState s = graphView.zoomState;
-        graphView.previouslyKept = x != Action.RESET || y != Action.RESET || z != Action.RESET;
+        s.previouslyKept = x != Action.RESET || y != Action.RESET || z != Action.RESET;
         if (x == Action.RESET) {
             if (graphView.followX) {
                 s.follows = true;
