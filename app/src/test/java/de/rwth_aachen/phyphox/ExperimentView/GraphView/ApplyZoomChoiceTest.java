@@ -17,6 +17,7 @@ import org.robolectric.annotation.GraphicsMode;
 
 import java.util.ArrayList;
 
+// phyphox-test: apply-zoom-choice
 //The question when leaving a maximized graph with a zoom: no question without a zoom (also with the time axis on system
 //time), the per-axis controls start from the emphasised button, a choice lands in the zoom state with the followX
 //fallback, and the range lines show the zoom as the tic labels would.

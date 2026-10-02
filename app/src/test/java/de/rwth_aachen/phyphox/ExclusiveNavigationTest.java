@@ -27,6 +27,7 @@ import java.nio.file.Files;
 import de.rwth_aachen.phyphox.ExperimentList.model.Const;
 import de.rwth_aachen.phyphox.ExperimentView.GraphElement;
 
+// phyphox-test: exclusive-navigation
 //The ways out of a maximized element: system back and the toolbar's arrow first close the exclusive view and leave the
 //experiment only without one; a tab change while an element is maximized is held back until the exclusive view is gone
 //(a zoomed graph asks first, Cancel stays).
