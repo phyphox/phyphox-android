@@ -34,9 +34,15 @@
             <LinearLayout
                 android:id="@+id/applyZoomX"
                 android:orientation="vertical"
-                android:layout_marginTop="@dimen/activity_vertical_margin"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content">
+
+                <View
+                    android:layout_width="match_parent"
+                    android:layout_height="1dp"
+                    android:layout_marginTop="@dimen/activity_vertical_margin"
+                    android:layout_marginBottom="@dimen/activity_vertical_padding"
+                    android:background="?android:attr/listDivider" />
 
                 <LinearLayout
                     android:orientation="horizontal"
@@ -92,9 +98,15 @@
             <LinearLayout
                 android:id="@+id/applyZoomY"
                 android:orientation="vertical"
-                android:layout_marginTop="@dimen/activity_vertical_margin"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content">
+
+                <View
+                    android:layout_width="match_parent"
+                    android:layout_height="1dp"
+                    android:layout_marginTop="@dimen/activity_vertical_margin"
+                    android:layout_marginBottom="@dimen/activity_vertical_padding"
+                    android:background="?android:attr/listDivider" />
 
                 <LinearLayout
                     android:orientation="horizontal"
@@ -145,9 +157,15 @@
             <LinearLayout
                 android:id="@+id/applyZoomZ"
                 android:orientation="vertical"
-                android:layout_marginTop="@dimen/activity_vertical_margin"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content">
+
+                <View
+                    android:layout_width="match_parent"
+                    android:layout_height="1dp"
+                    android:layout_marginTop="@dimen/activity_vertical_margin"
+                    android:layout_marginBottom="@dimen/activity_vertical_padding"
+                    android:background="?android:attr/listDivider" />
 
                 <LinearLayout
                     android:orientation="horizontal"
