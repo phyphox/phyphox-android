@@ -18,13 +18,6 @@
             android:layout_height="wrap_content" />
 
         <LinearLayout
-            android:id="@+id/applyZoomRanges"
-            android:orientation="vertical"
-            android:layout_marginTop="@dimen/activity_vertical_padding"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content" />
-
-        <LinearLayout
             android:id="@+id/applyZoomOptions"
             android:orientation="vertical"
             android:visibility="gone"

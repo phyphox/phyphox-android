@@ -452,18 +452,12 @@ public class InteractiveGraphView extends RelativeLayout implements GraphView.Po
         final boolean incrementalX = graphView.graphSetup.incrementalX;
 
         final View dialogView = inflate(getContext(), R.layout.apply_zoom_dialog, null);
-        final LinearLayout ranges = dialogView.findViewById(R.id.applyZoomRanges);
         final TextView[] labels = {dialogView.findViewById(R.id.applyZoomXLabel), dialogView.findViewById(R.id.applyZoomYLabel), dialogView.findViewById(R.id.applyZoomZLabel)};
         final View[] sections = {dialogView.findViewById(R.id.applyZoomX), dialogView.findViewById(R.id.applyZoomY), dialogView.findViewById(R.id.applyZoomZ)};
         for (int axis = 0; axis < 3; axis++) {
             sections[axis].setVisibility(zoomed[axis] ? VISIBLE : GONE);
-            if (!zoomed[axis])
-                continue;
-            String line = graphView.zoomRangeLine(axis);
-            TextView tv = new TextView(getContext());
-            tv.setText(line);
-            ranges.addView(tv);
-            labels[axis].setText(line);
+            if (zoomed[axis])
+                labels[axis].setText(graphView.zoomRangeLine(axis)); //the axis section is headed by its label and range
         }
         final View options = dialogView.findViewById(R.id.applyZoomOptions);
         final RadioButton[] reset = {dialogView.findViewById(R.id.applyZoomXReset), dialogView.findViewById(R.id.applyZoomYReset), dialogView.findViewById(R.id.applyZoomZReset)};
