@@ -17,7 +17,7 @@ public class AudioOutput {
     private ArrayList<AudioOutputPlugin> plugins = new ArrayList<>();
     private final int bufferBaseSize = 2048; //This is actually a fourth of the total buffer, similar to the four buffers used on iOS
     private int bufferSize = 0; //Total buffer size, can be different if minBufferSize is larger than 4x2048
-    private int index = 0;
+    private volatile long index = 0; //long: a looped output is never reset and an int would overflow after 12 hours at 48 kHz
     private boolean playing = false;
     private boolean active = false;
     private boolean beepOnly = false;
@@ -51,44 +51,48 @@ public class AudioOutput {
         public void run() {
             float[] floatData = new float[bufferBaseSize*2]; //x2 for stereo samples
             short[] shortData = new short[bufferBaseSize*2];
-            float amplitude;
 
             while (playing && active) {
-                Arrays.fill(floatData, 0);
-                amplitude = 0.0f;
-
-                if (beeper != null) {
-                    beeper.generate(floatData, bufferBaseSize, rate, index);
-                    amplitude += beeper.a;
-                }
-
-                if (!beepOnly) {
-                    for (AudioOutputPlugin plugin : plugins) {
-                        plugin.generate(floatData, bufferBaseSize, rate, index, loop);
-                        amplitude += plugin.getAmplitude();
-                    }
-                }
-
-                index += bufferBaseSize;
-
-                if (normalize && amplitude > 0)
-                    amplitude = 1.0f/amplitude;
-                else
-                    amplitude = 1.0f;
-                float x;
-                for (int i = 0; i < 2*bufferBaseSize; i++) {
-                    x = amplitude * floatData[i] * Short.MAX_VALUE;
-                    if (x > Short.MAX_VALUE)
-                        shortData[i] = Short.MAX_VALUE;
-                    else if (x < Short.MIN_VALUE)
-                        shortData[i] = Short.MIN_VALUE;
-                    else
-                        shortData[i] = (short)x;
-                }
+                nextBlock(floatData, shortData);
                 audioTrack.write(shortData, 0, bufferBaseSize*2);
             }
         }
     };
+
+    //Generates the next block of bufferBaseSize stereo frames
+    void nextBlock(float[] floatData, short[] shortData) {
+        Arrays.fill(floatData, 0);
+        float amplitude = 0.0f;
+
+        if (beeper != null) {
+            beeper.generate(floatData, bufferBaseSize, rate, index);
+            amplitude += beeper.a;
+        }
+
+        if (!beepOnly) {
+            for (AudioOutputPlugin plugin : plugins) {
+                plugin.generate(floatData, bufferBaseSize, rate, index, loop);
+                amplitude += plugin.getAmplitude();
+            }
+        }
+
+        index += bufferBaseSize;
+
+        if (normalize && amplitude > 0)
+            amplitude = 1.0f/amplitude;
+        else
+            amplitude = 1.0f;
+        float x;
+        for (int i = 0; i < 2*bufferBaseSize; i++) {
+            x = amplitude * floatData[i] * Short.MAX_VALUE;
+            if (x > Short.MAX_VALUE)
+                shortData[i] = Short.MAX_VALUE;
+            else if (x < Short.MIN_VALUE)
+                shortData[i] = Short.MIN_VALUE;
+            else
+                shortData[i] = (short)x;
+        }
+    }
 
     public void start(boolean beepOnly) {
         this.beepOnly = beepOnly;
@@ -96,9 +100,7 @@ public class AudioOutput {
     }
 
     public void play() {
-        if (beeper != null)
-            beeper.start -= index;
-        index = 0;
+        retrigger();
         if (playing || !active)
             return;
 
@@ -111,6 +113,16 @@ public class AudioOutput {
 
         ///Start writing to the buffer
         new Thread(fillBuffer).start();
+    }
+
+    //Each analysis cycle starts a one-shot output over from its beginning, while a looped output that is already playing
+    //continues undisturbed (spec/output.yml). Both pick up new data with the next block.
+    void retrigger() {
+        if (playing && loop)
+            return;
+        if (beeper != null)
+            beeper.start -= index;
+        index = 0;
     }
 
     public void beep(double f, double d, double delay) {
@@ -130,7 +142,7 @@ public class AudioOutput {
         if (beeper != null) {
             int maxRemainingSamples;
             if (beeper.start >= 0)
-                maxRemainingSamples = beeper.start + (int)beeper.d * rate - index + bufferSize/2;
+                maxRemainingSamples = (int)(beeper.start + (int)beeper.d * rate - index + bufferSize/2);
             else
                 maxRemainingSamples = (int)beeper.d * rate;
             try {
@@ -153,7 +165,7 @@ public class AudioOutput {
         double f;
         double d;
         double phase = 0;
-        int start;
+        long start;
         boolean done = false;
 
         Beeper(double f, double d, double delay) {
@@ -162,7 +174,7 @@ public class AudioOutput {
             this.start = index + (int)(delay*audioTrack.getPlaybackRate()) - bufferSize/2;
         }
 
-        public void generate(float[] buffer, int samples, int rate, int index) {
+        public void generate(float[] buffer, int samples, int rate, long index) {
             if (done)
                 return;
 
@@ -170,18 +182,18 @@ public class AudioOutput {
                 return;
 
             int end = samples;
-            int durationEnd = start + (int)(d * rate) - index;
+            long durationEnd = start + (long)(d * rate) - index;
             if (durationEnd <= 0) {
                 done = true;
                 return;
             } else if (durationEnd < samples) {
                 done = true;
-                end = durationEnd;
+                end = (int)durationEnd;
             }
 
             double phaseStep = (double)f / (double)rate;
 
-            for (int i = Math.max(0, start - index); i < end; i++) {
+            for (int i = (int)Math.max(0, start - index); i < end; i++) {
                 float v = (float) (a * sineLookup[(int)(phase * sineLookupSize) % sineLookupSize]);
                 buffer[2*i] += v;
                 buffer[2*i+1] += v;
@@ -195,7 +207,7 @@ public class AudioOutput {
     public abstract class AudioOutputPlugin {
         public abstract boolean setParameter(String parameter, DataInput input);
         public abstract float getAmplitude();
-        public abstract void generate(float[] buffer, int samples, int rate, int index, boolean loop);
+        public abstract void generate(float[] buffer, int samples, int rate, long index, boolean loop);
     }
 
     public class AudioOutputPluginDirect extends AudioOutputPlugin {
@@ -215,7 +227,7 @@ public class AudioOutput {
         }
 
         @Override
-        public void generate(float[] buffer, int samples, int rate, int index, boolean loop) {
+        public void generate(float[] buffer, int samples, int rate, long index, boolean loop) {
             if (input == null)
                 return;
 
@@ -225,13 +237,13 @@ public class AudioOutput {
 
             if (loop) {
                 for (int i = 0; i < samples; i++) {
-                    float v = data[(index + i) % data.length].floatValue();
+                    float v = data[(int)((index + i) % data.length)].floatValue();
                     buffer[2*i] += v;
                     buffer[2*i+1] += v;
                 }
             } else {
                 for (int i = 0; i < samples && i + index < data.length; i++) {
-                    float v = data[index + i].floatValue();
+                    float v = data[(int)(index + i)].floatValue();
                     buffer[2*i] += v;
                     buffer[2*i+1] += v;
                 }
@@ -270,16 +282,16 @@ public class AudioOutput {
         }
 
         //Sets the stereo gains from pan and returns how many of the samples fall within the duration
-        protected int prepare(int samples, int rate, int index, boolean loop) {
+        protected int prepare(int samples, int rate, long index, boolean loop) {
             float p = finiteOrZero(pan.getValue());
             float d = finiteOrZero(duration.getValue());
             panLeft = p > 0 ? (float)(1.0 - p) : 1.0f;
             panRight = p < 0 ? (float)(1.0 + p) : 1.0f;
             int end = samples;
             if (!loop) {
-                int durationEnd = (int)(d * rate) - index;
+                long durationEnd = (long)(d * rate) - index;
                 if (durationEnd < end)
-                    end = durationEnd;
+                    end = (int)durationEnd;
             }
             return end;
         }
@@ -305,7 +317,7 @@ public class AudioOutput {
             return false;
         }
 
-        public void generate(float[] buffer, int samples, int rate, int index, boolean loop) {
+        public void generate(float[] buffer, int samples, int rate, long index, boolean loop) {
             int end = prepare(samples, rate, index, loop);
             float a = finiteOrZero(amplitude.getValue());
             float f = finiteOrZero(frequency.getValue());
@@ -333,7 +345,7 @@ public class AudioOutput {
 
     public class AudioOutputPluginNoise extends AudioOutputPluginGenerated {
 
-        public void generate(float[] buffer, int samples, int rate, int index, boolean loop) {
+        public void generate(float[] buffer, int samples, int rate, long index, boolean loop) {
             int end = prepare(samples, rate, index, loop);
             float a = finiteOrZero(amplitude.getValue());
             for (int i = 0; i < end; i++) {
