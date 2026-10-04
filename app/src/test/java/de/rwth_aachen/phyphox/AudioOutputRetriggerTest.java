@@ -10,6 +10,7 @@ import org.robolectric.annotation.Config;
 
 import java.lang.reflect.Field;
 
+// phyphox-test: audio-output-retrigger
 //Playback is triggered after every analysis cycle. A trigger starts a one-shot output over from its beginning, while a
 //looped output that is already playing continues undisturbed (phyphox-docs spec/output.yml). Blocks are generated with
 //nextBlock() directly, as Robolectric's AudioTrack does not take the short writes of the fill thread.
