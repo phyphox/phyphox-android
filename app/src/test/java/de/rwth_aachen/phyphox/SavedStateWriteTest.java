@@ -186,7 +186,8 @@ public class SavedStateWriteTest {
             String[] lines = time.split("\n");
             assertEquals("\"event\",\"experiment time\",\"system time\",\"system time text\"", lines[0]);
             assertEquals(3, lines.length);
-            Pattern row = Pattern.compile("\"(START|PAUSE)\",-?\\d\\.\\d{9}E-?\\d+,\\d+\\.\\d{3},\"\\d{4}-\\d{2}-\\d{2} \\d{2}:\\d{2}:\\d{2}\\.\\d{3} UTC[+-]\\d{2}:\\d{2}\"");
+            //the XXX pattern of the export prints Z at zero offset, so a UTC device writes "UTCZ"
+            Pattern row = Pattern.compile("\"(START|PAUSE)\",-?\\d\\.\\d{9}E-?\\d+,\\d+\\.\\d{3},\"\\d{4}-\\d{2}-\\d{2} \\d{2}:\\d{2}:\\d{2}\\.\\d{3} UTC(Z|[+-]\\d{2}:\\d{2})\"");
             assertTrue(lines[1], row.matcher(lines[1]).matches() && lines[1].startsWith("\"START\",0.000000000E0,"));
             assertTrue(lines[2], row.matcher(lines[2]).matches() && lines[2].startsWith("\"PAUSE\","));
             assertFalse("CR in a CSV of the state", time.contains("\r"));
