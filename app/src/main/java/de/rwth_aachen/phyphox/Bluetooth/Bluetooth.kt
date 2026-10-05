@@ -6,6 +6,7 @@ import android.bluetooth.BluetoothAdapter
 import android.bluetooth.BluetoothDevice
 import android.bluetooth.BluetoothGatt
 import android.bluetooth.BluetoothGattCharacteristic
+import android.bluetooth.BluetoothGattDescriptor
 import android.bluetooth.BluetoothProfile
 import android.content.Context
 import android.content.pm.PackageManager
@@ -83,6 +84,9 @@ open class Bluetooth(
 
     @Transient
     private var eventCharacteristic: BluetoothGattCharacteristic? = null
+
+    @Transient
+    private var commandCharacteristic: BluetoothGattCharacteristic? = null
 
     @JvmField
     protected var valuesSize = 0 //number of mapped Characteristics
@@ -199,6 +203,8 @@ open class Bluetooth(
         }
         if (eventCharacteristic != null && !reusedDevice)
             writeEventCharacteristic(null)
+        if (!reusedDevice)
+            subscribeToCommands()
 
         mapping.clear() //clear mapping so it won't contain a characteristic twice
         saveTime.clear()
@@ -524,6 +530,10 @@ open class Bluetooth(
             }
 
             val data = characteristic.value ?: return
+            if (characteristic.uuid == phyphoxCommandCharacteristicUUID) {
+                handleCommand(data)
+                return
+            }
             //an input and an output block may share this connection; one that does not map the characteristic ignores it
             for (b in sharing)
                 b.dispatchNotification(data, characteristic)
@@ -546,21 +556,66 @@ open class Bluetooth(
 
     //Writes status and time references to the phyphox event characteristic on start/pause/clear/connect
     fun writeEventCharacteristic(timeMapping: ExperimentTimeReference.TimeMapping?) {
-        val eventChar = eventCharacteristic
-        if (forcedBreak || eventChar == null)
-            return
-        //byte 0: 0x00 pause, 0x01 start, 0x02 clear, 0xff connection established; then experiment time in ms
-        //(-1 if no measurement ran yet) and system time in ms since 1970, both int64 big endian
-        val out = ByteBuffer.allocate(17)
-        out.put(when (timeMapping?.event) {
+        //byte 0: 0x00 pause, 0x01 start, 0x02 clear, 0xff connection established
+        val type: Byte = when (timeMapping?.event) {
             ExperimentTimeReference.TimeMappingEvent.PAUSE -> 0x00
             ExperimentTimeReference.TimeMappingEvent.START -> 0x01
             ExperimentTimeReference.TimeMappingEvent.CLEAR -> 0x02
             null -> 0xff.toByte()
-        })
-        out.putLong(if (timeMapping != null) (timeMapping.experimentTime * 1000).toLong() else -1L)
-        out.putLong(timeMapping?.systemTime ?: System.currentTimeMillis())
+        }
+        writeEvent(type, if (timeMapping != null) (timeMapping.experimentTime * 1000).toLong() else -1L,
+                timeMapping?.systemTime ?: System.currentTimeMillis())
+    }
+
+    //Answer to a STATUS command: the current state as an event block, START with the current experiment
+    // time while measuring (also during the stop countdown of a timed run), PAUSE otherwise
+    fun writeStatusEvent(measuring: Boolean, experimentTime: Double) {
+        writeEvent(if (measuring) 0x01 else 0x00, (experimentTime * 1000).toLong(), System.currentTimeMillis())
+    }
+
+    //The 17-byte event block: type, experiment time in ms (-1 if no measurement ran yet) and system time
+    // in ms since 1970, both int64 big endian
+    private fun writeEvent(type: Byte, experimentTimeMs: Long, systemTimeMs: Long) {
+        val eventChar = eventCharacteristic
+        if (forcedBreak || eventChar == null)
+            return
+        val out = ByteBuffer.allocate(17)
+        out.put(type)
+        out.putLong(experimentTimeMs)
+        out.putLong(systemTimeMs)
         submitControlWrite(eventChar.uuid, out.array())
+    }
+
+    //Subscribes to the phyphox command characteristic if the device offers one. A device whose
+    // subscription fails does not block the experiment; its commands are then simply not received.
+    private fun subscribeToCommands() {
+        val c = btGatt?.findCharacteristicOrNull(phyphoxCommandCharacteristicUUID)
+        commandCharacteristic = c
+        if (c == null)
+            return
+        if (btGatt?.setCharacteristicNotification(c, true) != true) {
+            Log.w(TAG, "Could not enable notifications on the command characteristic")
+            return
+        }
+        if (c.getDescriptor(BluetoothInput.CONFIG_DESCRIPTOR) == null)
+            return //no config descriptor - the device might be notifying permanently
+        val value = if ((c.properties and BluetoothGattCharacteristic.PROPERTY_NOTIFY) != 0)
+            BluetoothGattDescriptor.ENABLE_NOTIFICATION_VALUE
+        else
+            BluetoothGattDescriptor.ENABLE_INDICATION_VALUE
+        if (!awaitWriteDescriptor(c.uuid, BluetoothInput.CONFIG_DESCRIPTOR, value))
+            Log.w(TAG, "Could not subscribe to the command characteristic")
+    }
+
+    //A notification on the command characteristic. The activity carries the command out like a tap on
+    // the corresponding button; an unknown command is ignored by contract so newer devices stay harmless.
+    internal fun handleCommand(data: ByteArray) {
+        val command = BluetoothCommand.decode(data)
+        if (command == null) {
+            Log.d(TAG, "Ignoring unknown command from $deviceName: " + (data.firstOrNull()?.let { "0x%02x".format(it.toInt() and 0xff) } ?: "empty"))
+            return
+        }
+        (activity as? BluetoothCommandDelegate)?.onBluetoothCommand(command, this)
     }
 
     /** Attributes of a characteristic as defined in the phyphox file */
@@ -751,6 +806,9 @@ open class Bluetooth(
 
         @JvmField
         val phyphoxEventCharacteristicUUID: UUID = UUID.fromString("cddf0004-30f7-4671-8b43-5e40ba53514a")
+
+        @JvmField
+        val phyphoxCommandCharacteristicUUID: UUID = UUID.fromString("cddf0005-30f7-4671-8b43-5e40ba53514a")
 
         private val BATTERY_UUID = UUID.fromString("0000180f-0000-1000-8000-00805f9b34fb")
         private val BATTERY_LEVEL = UUID.fromString("00002a19-0000-1000-8000-00805f9b34fb")

@@ -107,6 +107,8 @@ import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
 import de.rwth_aachen.phyphox.Bluetooth.Bluetooth;
+import de.rwth_aachen.phyphox.Bluetooth.BluetoothCommand;
+import de.rwth_aachen.phyphox.Bluetooth.BluetoothCommandDelegate;
 import de.rwth_aachen.phyphox.Bluetooth.BluetoothInput;
 import de.rwth_aachen.phyphox.Bluetooth.BluetoothOutput;
 import de.rwth_aachen.phyphox.Bluetooth.ConnectedBluetoothDeviceInfoAdapter;
@@ -128,7 +130,8 @@ import de.rwth_aachen.phyphox.ExperimentView.ExpViewElement;
 // The intent has to provide a *.phyphox file which defines the experiment
 public class Experiment extends AppCompatActivity implements View.OnClickListener,
         NetworkConnection.ScanDialogDismissedDelegate,
-        NetworkConnection.NetworkConnectionDataPolicyInfoDelegate, UpdateConnectedDeviceDelegate{
+        NetworkConnection.NetworkConnectionDataPolicyInfoDelegate, UpdateConnectedDeviceDelegate,
+        BluetoothCommandDelegate {
 
     //String constants to identify values saved in onSaveInstanceState
     private static final String STATE_CURRENT_VIEW = "current_view"; //Which experiment view is selected?
@@ -2101,6 +2104,51 @@ public class Experiment extends AppCompatActivity implements View.OnClickListene
             return measuring;
         }
         return remoteStartSucceeded;
+    }
+
+    //A command from a Bluetooth device (command characteristic, cddf0005): the same actions as the
+    // app's own buttons, carried out on the UI thread. START while measuring or during a countdown is a
+    // no-op, PAUSE cancels a countdown, TOGGLE is the play/pause button. A start before all devices are
+    // connected is refused, which the device notices by the missing START event.
+    @Override
+    public void onBluetoothCommand(BluetoothCommand command, Bluetooth device) {
+        runOnUiThread(() -> {
+            if (experiment == null || !experiment.loaded)
+                return;
+            boolean active = measuring || cdTimer != null;
+            switch (command) {
+                case START:
+                    if (!active && isBluetoothConnectionSuccessful)
+                        startFromCommand();
+                    break;
+                case PAUSE:
+                    if (active)
+                        stopMeasurement();
+                    break;
+                case TOGGLE:
+                    if (active)
+                        stopMeasurement();
+                    else if (isBluetoothConnectionSuccessful)
+                        startFromCommand();
+                    break;
+                case CLEAR:
+                    clearData(new LinkedList<>());
+                    break;
+                case CLEAR_ALL:
+                    clearData(Arrays.asList(experiment.getClearGroups()));
+                    break;
+                case STATUS:
+                    device.writeStatusEvent(measuring, experiment.experimentTimeReference.getExperimentTime());
+                    break;
+            }
+        });
+    }
+
+    private void startFromCommand() {
+        if (timedRun)
+            startTimedMeasurement();
+        else
+            startMeasurement();
     }
 
     //Called by remote server request a defocus from other thread
