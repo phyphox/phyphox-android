@@ -92,6 +92,7 @@ import java.util.regex.Pattern;
 import java.util.zip.CRC32;
 
 import de.rwth_aachen.phyphox.Bluetooth.BluetoothExperimentLoader;
+import de.rwth_aachen.phyphox.Bluetooth.BluetoothNameFilter;
 import de.rwth_aachen.phyphox.Bluetooth.BluetoothScanDialog;
 import de.rwth_aachen.phyphox.Experiment;
 import de.rwth_aachen.phyphox.ExperimentList.datasource.AssetExperimentLoader;
@@ -1304,9 +1305,9 @@ public class ExperimentListActivity extends AppCompatActivity {
 
         Set<String> experiments = new HashSet<>();
         if (device.getName() != null) {
-            for (String name : hiddenBluetoothRepository.getBluetoothDeviceNameList().keySet()) {
-                if (device.getName().contains(name)) {
-                    Vector<String> experimentsForName = hiddenBluetoothRepository.getBluetoothDeviceNameList().get(name);
+            for (BluetoothNameFilter nameFilter : hiddenBluetoothRepository.getBluetoothDeviceNameList().keySet()) {
+                if (nameFilter.matches(device.getName())) {
+                    Vector<String> experimentsForName = hiddenBluetoothRepository.getBluetoothDeviceNameList().get(nameFilter);
                     if (experimentsForName != null)
                         experiments.addAll(experimentsForName);
                 }
@@ -1395,7 +1396,7 @@ public class ExperimentListActivity extends AppCompatActivity {
 
     //Scan for supported Bluetooth devices (or devices offering an experiment) and open the choice for the picked one
     private void startBluetoothScan() {
-        Set<String> bluetoothNameKeySet = experimentRepository.getBluetoothDeviceNameList().keySet();
+        Set<BluetoothNameFilter> bluetoothNameKeySet = experimentRepository.getBluetoothDeviceNameList().keySet();
         Set<UUID> bluetoothUUIDKeySet = experimentRepository.getBluetoothDeviceUUIDList().keySet();
 
         new BluetoothScanner(this, bluetoothNameKeySet, bluetoothUUIDKeySet, new BluetoothScanner.BluetoothScanListener() {

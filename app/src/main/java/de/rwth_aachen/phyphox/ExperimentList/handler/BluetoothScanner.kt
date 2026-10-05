@@ -5,6 +5,7 @@ import android.bluetooth.BluetoothAdapter
 import android.os.Handler
 import android.os.Looper
 import de.rwth_aachen.phyphox.Bluetooth.Bluetooth
+import de.rwth_aachen.phyphox.Bluetooth.BluetoothNameFilter
 import de.rwth_aachen.phyphox.Bluetooth.BluetoothScanDialog
 import de.rwth_aachen.phyphox.R
 import java.util.UUID
@@ -16,7 +17,7 @@ import java.util.UUID
  */
 class BluetoothScanner(
     private val parent: Activity,
-    private val bluetoothDeviceNameList: Set<String>,
+    private val bluetoothDeviceNameList: Set<BluetoothNameFilter>,
     private val bluetoothDeviceUUIDList: Set<UUID>,
     private val listener: BluetoothScanListener
 ) {

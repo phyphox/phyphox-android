@@ -257,6 +257,17 @@ public abstract class CorpusTestEnvironment {
         return experiment;
     }
 
+    //A corpus file that the parser has to refuse, for tests outside this package: the error message,
+    //or null when the file loaded. Skips when the corpus or the file is missing.
+    public static String refusalMessage(String relativePath) throws IOException {
+        File corpus = findCorpus();
+        assumeTrue("No phyphox-docs checkout found next to this repository - fixture skipped.", corpus != null);
+        File file = new File(corpus, relativePath);
+        assumeTrue("Fixture missing in the phyphox-docs checkout - skipped.", file.isFile());
+        PhyphoxExperiment experiment = load(file, fullyEquippedActivity());
+        return experiment.loaded ? null : experiment.message;
+    }
+
     //The real loading path, as loadXMLAsyncTask runs it once the stream is open.
     public static PhyphoxExperiment load(File file, Experiment activity) throws IOException {
         try (InputStream inputStream = new FileInputStream(file)) {

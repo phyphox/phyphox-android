@@ -82,9 +82,9 @@ class BluetoothScanDialog(
     @Volatile
     private var selectedDevice: BluetoothDeviceInfo? = null
 
-    private var nameFilter: String? = null
+    private var nameFilter: BluetoothNameFilter? = null
     private var uuidFilter: UUID? = null
-    private var supportedNameFilter: Set<String>? = null
+    private var supportedNameFilter: Set<BluetoothNameFilter>? = null
     private var supportedUUIDFilter: Set<UUID>? = null
 
     init {
@@ -130,9 +130,9 @@ class BluetoothScanDialog(
 
     /** Scans and blocks until a device is picked or the dialog is cancelled; null if cancelled or scanning is not possible. */
     fun getBluetoothDevice(
-        nameFilter: String?,
+        nameFilter: BluetoothNameFilter?,
         uuidFilter: UUID?,
-        supportedNameFilter: Set<String>?,
+        supportedNameFilter: Set<BluetoothNameFilter>?,
         supportedUUIDFilter: Set<UUID>?,
         idString: String?
     ): BluetoothDeviceInfo? {
@@ -152,10 +152,10 @@ class BluetoothScanDialog(
 
         parentActivity.runOnUiThread {
             val idSuffix = if (idString.isNullOrEmpty()) "" else " ($idString)"
-            val notification = if (nameFilter.isNullOrEmpty())
+            val notification = if (nameFilter == null || nameFilter.isEmpty)
                 ctx.resources.getString(R.string.bt_scanning_generic) + idSuffix
             else
-                ctx.resources.getString(R.string.bt_scanning_specific1) + " \"" + nameFilter + "\" " + ctx.resources.getString(R.string.bt_scanning_specific2) + idSuffix
+                ctx.resources.getString(R.string.bt_scanning_specific1) + " \"" + nameFilter.description + "\" " + ctx.resources.getString(R.string.bt_scanning_specific2) + idSuffix
             if (autoConnect)
                 dialog?.setMessage(notification)
             else
@@ -223,7 +223,7 @@ class BluetoothScanDialog(
                 if (name.isEmpty())
                     return
                 val filter = nameFilter
-                if (!filter.isNullOrEmpty() && !name.contains(filter))
+                if (filter != null && !filter.matches(name))
                     return
 
                 val uuids: MutableSet<UUID> = advertisedUuids?.mapTo(HashSet()) { it.uuid } ?: HashSet()
@@ -232,7 +232,7 @@ class BluetoothScanDialog(
                         return
                 }
 
-                var supported = supportedNameFilter.isNullOrEmpty() || supportedNameFilter!!.any { name.contains(it) }
+                var supported = supportedNameFilter.isNullOrEmpty() || supportedNameFilter!!.any { it.matches(name) }
                 if (!supported && supportedUUIDFilter?.any { it in uuids } == true)
                     supported = true
 

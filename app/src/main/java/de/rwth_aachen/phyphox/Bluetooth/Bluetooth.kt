@@ -44,7 +44,7 @@ import kotlin.math.min
  */
 open class Bluetooth(
     @JvmField var idString: String?,
-    deviceName: String?,
+    nameFilter: BluetoothNameFilter?,
     @JvmField var deviceAddress: String?,
     @JvmField var uuidFilter: UUID?,
     @JvmField var autoConnect: Boolean,
@@ -54,7 +54,9 @@ open class Bluetooth(
 ) : Serializable {
 
     @JvmField
-    var deviceName: String = deviceName ?: ""
+    val nameFilter: BluetoothNameFilter = nameFilter ?: BluetoothNameFilter.NONE
+
+    val deviceName: String get() = nameFilter.description
 
     @JvmField
     var requestMTU: Int = 0
@@ -228,8 +230,8 @@ open class Bluetooth(
 
         //Paired devices get precedence
         for (d in getPairedDevices()) {
-            if (deviceName.isNotEmpty() && deviceAddress.isNullOrEmpty()) {
-                if (d.name?.contains(deviceName) == true) {
+            if (!nameFilter.isEmpty && deviceAddress.isNullOrEmpty()) {
+                if (d.name?.let { nameFilter.matches(it) } == true) {
                     btDevice = d
                     break
                 }
@@ -249,7 +251,7 @@ open class Bluetooth(
                 return false
             if (!bsd.locationEnabled())
                 return false
-            val bdi = bsd.getBluetoothDevice(deviceName, uuidFilter, null, null, idString)
+            val bdi = bsd.getBluetoothDevice(nameFilter, uuidFilter, null, null, idString)
             if (bdi != null)
                 btDevice = bdi.device
         }

@@ -9,6 +9,7 @@ import java.util.Set;
 import java.util.UUID;
 import java.util.Vector;
 
+import de.rwth_aachen.phyphox.Bluetooth.BluetoothNameFilter;
 import de.rwth_aachen.phyphox.helper.RGB;
 
 public class ExperimentShortInfo {
@@ -27,6 +28,6 @@ public class ExperimentShortInfo {
     public String categoryName;
     public boolean selected = false;
 
-    public final Set<String> bluetoothDeviceNames = new HashSet<>();
+    public final Set<BluetoothNameFilter> bluetoothDeviceNames = new HashSet<>();
     public final Set<UUID> bluetoothDeviceUUIDs = new HashSet<>();
 }

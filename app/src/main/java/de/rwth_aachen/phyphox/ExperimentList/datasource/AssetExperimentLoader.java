@@ -30,6 +30,7 @@ import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.UUID;
 import java.util.Vector;
+import java.util.regex.PatternSyntaxException;
 
 import de.rwth_aachen.phyphox.ExperimentList.model.ExperimentListEnvironment;
 import de.rwth_aachen.phyphox.ExperimentList.model.ExperimentLoadInfoData;
@@ -38,6 +39,7 @@ import de.rwth_aachen.phyphox.helper.DebugSwitches;
 import de.rwth_aachen.phyphox.helper.baseColorDrawable.BaseColorDrawable;
 import de.rwth_aachen.phyphox.helper.baseColorDrawable.BitmapIcon;
 import de.rwth_aachen.phyphox.Bluetooth.Bluetooth;
+import de.rwth_aachen.phyphox.Bluetooth.BluetoothNameFilter;
 import de.rwth_aachen.phyphox.ExperimentList.ui.ExperimentsInCategory;
 import de.rwth_aachen.phyphox.GpsInput;
 import de.rwth_aachen.phyphox.helper.Helper;
@@ -69,7 +71,7 @@ public class AssetExperimentLoader {
     }
 
     public void addBluetoothInfos(ExperimentShortInfo shortInfo){
-        for (String bluetoothDeviceName : shortInfo.bluetoothDeviceNames) {
+        for (BluetoothNameFilter bluetoothDeviceName : shortInfo.bluetoothDeviceNames) {
             if (!repository.bluetoothDeviceNameList.containsKey(bluetoothDeviceName))
                 repository.bluetoothDeviceNameList.put(bluetoothDeviceName, new Vector<>());
             repository.bluetoothDeviceNameList.get(bluetoothDeviceName).add(shortInfo.xmlFile);
@@ -370,6 +372,7 @@ public class AssetExperimentLoader {
                                     break;
                                 }
                                 String name = xpp.getAttributeValue(null, "name");
+                                String nameRegex = xpp.getAttributeValue(null, "nameRegex");
                                 String uuidStr = xpp.getAttributeValue(null, "uuid");
                                 UUID uuid = null;
                                 try {
@@ -379,8 +382,12 @@ public class AssetExperimentLoader {
                                 }
 
 
-                                if (name != null && !name.isEmpty()) {
-                                    shortInfo.bluetoothDeviceNames.add(name);
+                                try {
+                                    BluetoothNameFilter btNameFilter = new BluetoothNameFilter(name, nameRegex);
+                                    if (!btNameFilter.isEmpty())
+                                        shortInfo.bluetoothDeviceNames.add(btNameFilter);
+                                } catch (PatternSyntaxException ignored) { //PhyphoxFile refuses the file when it is opened
+
                                 }
                                 if (uuid != null) {
                                    shortInfo.bluetoothDeviceUUIDs.add(uuid);

@@ -22,6 +22,7 @@ import de.rwth_aachen.phyphox.ExperimentList.model.ExperimentShortInfo;
 import de.rwth_aachen.phyphox.ExperimentList.ui.ExperimentsInCategory;
 import de.rwth_aachen.phyphox.helper.Helper;
 import de.rwth_aachen.phyphox.R;
+import de.rwth_aachen.phyphox.Bluetooth.BluetoothNameFilter;
 import de.rwth_aachen.phyphox.SavedState;
 
 public class ExperimentRepository{
@@ -29,9 +30,9 @@ public class ExperimentRepository{
     public Vector<ExperimentsInCategory> categories = new Vector<>();
 
     /**
-     * Collects names of Bluetooth devices and maps them to (hidden) experiments supporting these devices
+     * Collects the name criteria (name and nameRegex) of Bluetooth devices and maps them to (hidden) experiments supporting these devices
      */
-    public final HashMap<String, Vector<String>> bluetoothDeviceNameList = new HashMap<>();
+    public final HashMap<BluetoothNameFilter, Vector<String>> bluetoothDeviceNameList = new HashMap<>();
 
     /**
      *  Collects uuids of Bluetooth devices (services or characteristics) and maps them to (hidden) experiments supporting these devices
@@ -158,7 +159,7 @@ public class ExperimentRepository{
         }
     }
 
-    public HashMap<String, Vector<String>> getBluetoothDeviceNameList() {
+    public HashMap<BluetoothNameFilter, Vector<String>> getBluetoothDeviceNameList() {
         return bluetoothDeviceNameList;
     }
 

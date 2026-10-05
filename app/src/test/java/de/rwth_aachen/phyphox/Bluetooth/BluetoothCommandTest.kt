@@ -50,7 +50,7 @@ class BluetoothCommandTest {
     @Test
     fun aNotificationReachesTheActivityAsACommandAndUnknownOnesDoNot() {
         val activity = Robolectric.buildActivity(CapturingActivity::class.java).create().get()
-        val device = Bluetooth(null, "sim", null, null, false, activity, activity, Vector())
+        val device = Bluetooth(null, BluetoothNameFilter("sim", null), null, null, false, activity, activity, Vector())
         device.handleCommand(byteArrayOf(0x01))
         device.handleCommand(byteArrayOf(0x03))
         device.handleCommand(byteArrayOf())

@@ -51,10 +51,12 @@ import java.util.UUID;
 import java.util.Vector;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.util.regex.PatternSyntaxException;
 import java.util.zip.CRC32;
 
 import de.rwth_aachen.phyphox.Bluetooth.Bluetooth;
 import de.rwth_aachen.phyphox.Bluetooth.BluetoothInput;
+import de.rwth_aachen.phyphox.Bluetooth.BluetoothNameFilter;
 import de.rwth_aachen.phyphox.Bluetooth.BluetoothOutput;
 import de.rwth_aachen.phyphox.Bluetooth.ConversionsConfig;
 import de.rwth_aachen.phyphox.Bluetooth.ConversionsInput;
@@ -431,6 +433,16 @@ public abstract class PhyphoxFile {
         //Helper to receive a string typed attribute
         protected String getStringAttribute(String identifier) {
             return xpp.getAttributeValue(XmlPullParser.NO_NAMESPACE, identifier);
+        }
+
+        //The name criteria of a bluetooth element; a nameRegex that does not compile refuses the file (rule ble-name-regex)
+        protected BluetoothNameFilter parseBluetoothNameFilter() throws phyphoxFileException {
+            String nameRegex = getStringAttribute("nameRegex");
+            try {
+                return new BluetoothNameFilter(getStringAttribute("name"), nameRegex);
+            } catch (PatternSyntaxException e) {
+                throw new phyphoxFileException("Invalid nameRegex \"" + nameRegex + "\": " + e.getDescription(), xpp.getLineNumber());
+            }
         }
 
         //Helper to receive a string typed attribute and translate it
@@ -2881,7 +2893,7 @@ public abstract class PhyphoxFile {
 
                             String idString = getTranslatedAttribute("id");
 
-                            String nameFilter = getStringAttribute("name");
+                            BluetoothNameFilter nameFilter = parseBluetoothNameFilter();
                             String addressFilter = getStringAttribute("address");
                             String uuidFilterStr = getStringAttribute("uuid");
                             UUID uuidFilter = null;
@@ -4105,7 +4117,7 @@ public abstract class PhyphoxFile {
                         throw new phyphoxFileException(parent.getResources().getString(R.string.bt_android_version));
                     } else {
                         String idString = getTranslatedAttribute("id");
-                        String nameFilter = getStringAttribute("name");
+                        BluetoothNameFilter nameFilter = parseBluetoothNameFilter();
                         String addressFilter = getStringAttribute("address");
                         String uuidFilterStr = getStringAttribute("uuid");
 

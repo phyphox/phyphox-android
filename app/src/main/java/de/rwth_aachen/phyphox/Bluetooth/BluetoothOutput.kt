@@ -10,7 +10,7 @@ import java.util.Vector
 /** A BLE device that receives buffer data after each analysis cycle or on a button trigger. */
 class BluetoothOutput(
     idString: String?,
-    deviceName: String?,
+    nameFilter: BluetoothNameFilter?,
     deviceAddress: String?,
     uuidFilter: UUID?,
     autoConnect: Boolean,
@@ -19,7 +19,7 @@ class BluetoothOutput(
     @JvmField
     val data: Vector<DataInput>,
     characteristics: Vector<CharacteristicData>
-) : Bluetooth(idString, deviceName, deviceAddress, uuidFilter, autoConnect, activity, context, characteristics) {
+) : Bluetooth(idString, nameFilter, deviceAddress, uuidFilter, autoConnect, activity, context, characteristics) {
 
     private val requestedTriggers = HashSet<String>()
 

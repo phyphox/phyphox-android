@@ -21,7 +21,7 @@ import java.util.concurrent.locks.Lock
 /** A BLE device delivering data to the experiment, pushed (notification/indication) or polled (poll). */
 class BluetoothInput @Throws(PhyphoxFile.phyphoxFileException::class) constructor(
     idString: String?,
-    deviceName: String?,
+    nameFilter: BluetoothNameFilter?,
     deviceAddress: String?,
     mode: String,
     uuidFilter: UUID?,
@@ -34,7 +34,7 @@ class BluetoothInput @Throws(PhyphoxFile.phyphoxFileException::class) constructo
     context: Context,
     characteristics: Vector<CharacteristicData>,
     private val experimentTimeReference: ExperimentTimeReference
-) : Bluetooth(idString, deviceName, deviceAddress, uuidFilter, autoConnect, activity, context, characteristics) {
+) : Bluetooth(idString, nameFilter, deviceAddress, uuidFilter, autoConnect, activity, context, characteristics) {
 
     private val mode: String = mode.lowercase()
 
