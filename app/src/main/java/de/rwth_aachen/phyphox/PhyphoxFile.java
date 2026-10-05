@@ -82,7 +82,9 @@ import de.rwth_aachen.phyphox.ExperimentView.ExpView;
 import de.rwth_aachen.phyphox.ExperimentView.ExpViewElement;
 import de.rwth_aachen.phyphox.ExperimentView.GraphElement;
 import de.rwth_aachen.phyphox.ExperimentView.GraphView.GraphView;
+import de.rwth_aachen.phyphox.ExperimentView.GeometryElement;
 import de.rwth_aachen.phyphox.ExperimentView.GroupElement;
+import de.rwth_aachen.phyphox.ExperimentView.ScaleElement;
 import de.rwth_aachen.phyphox.ExperimentView.ImageElement;
 import de.rwth_aachen.phyphox.ExperimentView.TransformElement;
 import de.rwth_aachen.phyphox.ExperimentView.InfoElement;
@@ -1669,9 +1671,9 @@ public abstract class PhyphoxFile {
         private boolean allowed(String tag) {
             switch (container) {
                 case stack:
-                    return tag.equals("info") || tag.equals("separator") || tag.equals("value") || tag.equals("graph") || tag.equals("image") || tag.equals("transform");
+                    return tag.equals("info") || tag.equals("separator") || tag.equals("value") || tag.equals("graph") || tag.equals("image") || tag.equals("geometry") || tag.equals("scale") || tag.equals("transform");
                 case transform:
-                    return tag.equals("info") || tag.equals("separator") || tag.equals("value") || tag.equals("graph") || tag.equals("image");
+                    return tag.equals("info") || tag.equals("separator") || tag.equals("value") || tag.equals("graph") || tag.equals("image") || tag.equals("geometry") || tag.equals("scale");
                 default:
                     return !tag.equals("transform");
             }
@@ -2193,6 +2195,80 @@ public abstract class PhyphoxFile {
                     experiment.resources.add(src);
                     break;
                 }
+                case "geometry": { //A static shape (file format 1.21, drawing.md); label has no effect
+                    GeometryElement geometry = new GeometryElement(visibility, parent.getResources());
+                    String shapeStr = getStringAttribute("shape");
+                    if (shapeStr != null) {
+                        //Enumerated values are matched case-insensitively (see rules.yml, enum-case-insensitive)
+                        geometry.shape = Helper.enumFromStringIgnoreCase(GeometryElement.Shape.class, shapeStr);
+                        if (geometry.shape == null)
+                            throw new phyphoxFileException("Unknown geometry shape \"" + shapeStr + "\".", xpp.getLineNumber());
+                    }
+                    geometry.aspectRatio = getDoubleAttribute("aspectRatio", 1.);
+                    geometry.color = getColorAttribute("color", null);
+                    geometry.lineColor = getColorAttribute("lineColor", null);
+                    geometry.lineWidth = getDoubleAttribute("lineWidth", 0.01);
+                    geometry.left = getDoubleAttribute("left", 0.);
+                    geometry.top = getDoubleAttribute("top", 0.);
+                    geometry.right = getDoubleAttribute("right", 1.);
+                    geometry.bottom = getDoubleAttribute("bottom", 1.);
+                    geometry.cornerRadius = getDoubleAttribute("cornerRadius", 0.);
+                    geometry.centerX = getDoubleAttribute("centerX", 0.5);
+                    geometry.centerY = getDoubleAttribute("centerY", 0.5);
+                    geometry.radius = getDoubleAttribute("radius", 0.5);
+                    geometry.innerRadius = getDoubleAttribute("innerRadius", 0.);
+                    geometry.startAngle = getDoubleAttribute("startAngle", 0.);
+                    geometry.sweepAngle = getDoubleAttribute("sweepAngle", 6.2832);
+                    geometry.startX = getDoubleAttribute("startX", 0.);
+                    geometry.startY = getDoubleAttribute("startY", 0.5);
+                    geometry.endX = getDoubleAttribute("endX", 1.);
+                    geometry.endY = getDoubleAttribute("endY", 0.5);
+                    add(weight, geometry);
+                    break;
+                }
+                case "scale": { //The axis of a gauge (file format 1.21, drawing.md); label is the axis label, input children bind min/max
+                    ScaleElement scale = new ScaleElement(label, visibility, parent.getResources());
+                    String shapeStr = getStringAttribute("shape");
+                    if (shapeStr != null) {
+                        scale.shape = Helper.enumFromStringIgnoreCase(ScaleElement.Shape.class, shapeStr);
+                        if (scale.shape == null)
+                            throw new phyphoxFileException("Unknown scale shape \"" + shapeStr + "\".", xpp.getLineNumber());
+                    }
+                    String orientationStr = getStringAttribute("valueOrientation");
+                    if (orientationStr != null) {
+                        scale.valueOrientation = Helper.enumFromStringIgnoreCase(ScaleElement.ValueOrientation.class, orientationStr);
+                        if (scale.valueOrientation == null)
+                            throw new phyphoxFileException("Unknown valueOrientation \"" + orientationStr + "\".", xpp.getLineNumber());
+                    }
+                    scale.aspectRatio = getDoubleAttribute("aspectRatio", 1.);
+                    scale.min = getDoubleAttribute("min", 0.);
+                    scale.max = getDoubleAttribute("max", 1.);
+                    scale.setUnit(unit);
+                    scale.color = getColorAttribute("color", null);
+                    scale.size = getDoubleAttribute("size", 1.);
+                    scale.lineWidth = getDoubleAttribute("lineWidth", 0.005);
+                    scale.ticStep = getDoubleAttribute("ticStep", 0.);
+                    scale.ticLength = getDoubleAttribute("ticLength", 0.03);
+                    scale.minorTics = getIntAttribute("minorTics", 0);
+                    scale.minorTicLength = getDoubleAttribute("minorTicLength", 0.015);
+                    scale.valueEvery = getIntAttribute("valueEvery", 1);
+                    scale.valueDistance = getDoubleAttribute("valueDistance", 0.08);
+                    scale.precision = getIntAttribute("precision", -1);
+                    scale.labelPositionX = getDoubleAttribute("labelPositionX", 0.5);
+                    scale.labelPositionY = getDoubleAttribute("labelPositionY", 0.5);
+                    scale.startX = getDoubleAttribute("startX", 0.1);
+                    scale.startY = getDoubleAttribute("startY", 0.5);
+                    scale.endX = getDoubleAttribute("endX", 0.9);
+                    scale.endY = getDoubleAttribute("endY", 0.5);
+                    scale.centerX = getDoubleAttribute("centerX", 0.5);
+                    scale.centerY = getDoubleAttribute("centerY", 0.5);
+                    scale.radius = getDoubleAttribute("radius", 0.4);
+                    scale.startAngle = getDoubleAttribute("startAngle", -2.3562);
+                    scale.sweepAngle = getDoubleAttribute("sweepAngle", 4.7124);
+                    (new scaleBlockParser(xpp, experiment, parent, scale)).process();
+                    add(weight, scale);
+                    break;
+                }
                 case "camera-gui": {
                     String showControls = getStringAttribute("show_controls");
                     if (showControls == null) {
@@ -2385,6 +2461,37 @@ public abstract class PhyphoxFile {
             }
         }
 
+    }
+
+    //The children of a scale: input tags with as="min" or as="max" bind the range to a data container
+    private static class scaleBlockParser extends xmlBlockParser {
+        private final ScaleElement scale;
+
+        scaleBlockParser(XmlPullParser xpp, PhyphoxExperiment experiment, Experiment parent, ScaleElement scale) {
+            super(xpp, experiment, parent);
+            this.scale = scale;
+        }
+
+        @Override
+        protected void processStartTag(String tag) throws XmlPullParserException, phyphoxFileException, IOException {
+            if (!tag.equalsIgnoreCase("input"))
+                throw new phyphoxFileException("Unknown tag " + tag + " in scale.", xpp.getLineNumber());
+            String as = getStringAttribute("as");
+            if (as == null)
+                throw new phyphoxFileException("The input of a scale requires the as attribute.", xpp.getLineNumber());
+            boolean isMin;
+            //Enumerated values are matched case-insensitively (see rules.yml, enum-case-insensitive)
+            if (as.equalsIgnoreCase("min"))
+                isMin = true;
+            else if (as.equalsIgnoreCase("max"))
+                isMin = false;
+            else
+                throw new phyphoxFileException("Unknown value \"" + as + "\" for the as attribute of a scale input.", xpp.getLineNumber());
+            DataInput input = getInputElement();
+            if (!input.isBuffer)
+                throw new phyphoxFileException("The input of a scale names a data container.", xpp.getLineNumber());
+            scale.bind(isMin, input.buffer.name);
+        }
     }
 
     //The children of a transform: its input tags bind the properties, everything else is the one wrapped view element

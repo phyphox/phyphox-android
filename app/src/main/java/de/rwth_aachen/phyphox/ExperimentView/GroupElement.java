@@ -10,6 +10,7 @@ import android.util.DisplayMetrics;
 import android.view.Gravity;
 import android.view.MotionEvent;
 import android.view.View;
+import android.view.ViewConfiguration;
 import android.view.ViewGroup;
 import android.widget.FrameLayout;
 import android.widget.LinearLayout;
@@ -269,15 +270,62 @@ public class GroupElement extends ExpViewElement implements Serializable {
             child.restore();
     }
 
-    //A stack is not interactive: touches on its children are intercepted here and left to the page (scrolling)
+    //A stack is not interactive: touches on its children are intercepted here and left to the page (scrolling). The one
+    //exception is the label of an untransformed scale, which opens the unit dialog like a graph axis (drawing.md): a tap
+    //is offered to the children from the topmost down, skipping transformed children (their wrapper is not a ScaleView)
+    //and any child that does not handle it, so a scale at the bottom with a needle drawn over its label is still reached.
     public static class StackLayout extends FrameLayout {
+        private ScaleElement.ScaleView tapTarget = null;
+        private float downX, downY;
+        private final int touchSlop;
+
         public StackLayout(Context context) {
             super(context);
+            touchSlop = ViewConfiguration.get(context).getScaledTouchSlop();
         }
 
         @Override
         public boolean onInterceptTouchEvent(MotionEvent ev) {
             return true;
+        }
+
+        //The untransformed scale whose label lies under the point (in this layout's coordinates), topmost first
+        public ScaleElement.ScaleView scaleLabelAt(float x, float y) {
+            for (int i = getChildCount() - 1; i >= 0; i--) {
+                View child = getChildAt(i);
+                if (child.getVisibility() != View.VISIBLE || !(child instanceof ScaleElement.ScaleView))
+                    continue;
+                ScaleElement.ScaleView scale = (ScaleElement.ScaleView) child;
+                if (scale.hitsLabel(x - child.getLeft(), y - child.getTop()))
+                    return scale;
+            }
+            return null;
+        }
+
+        @Override
+        public boolean onTouchEvent(MotionEvent ev) {
+            switch (ev.getActionMasked()) {
+                case MotionEvent.ACTION_DOWN:
+                    tapTarget = scaleLabelAt(ev.getX(), ev.getY());
+                    downX = ev.getX();
+                    downY = ev.getY();
+                    return tapTarget != null; //everything else stays with the page
+                case MotionEvent.ACTION_MOVE:
+                    if (tapTarget != null && Math.hypot(ev.getX() - downX, ev.getY() - downY) > touchSlop)
+                        tapTarget = null;
+                    return true;
+                case MotionEvent.ACTION_UP:
+                    if (tapTarget != null) {
+                        ScaleElement.ScaleView target = tapTarget;
+                        tapTarget = null;
+                        target.openUnitDialog();
+                    }
+                    return true;
+                case MotionEvent.ACTION_CANCEL:
+                    tapTarget = null;
+                    return true;
+            }
+            return super.onTouchEvent(ev);
         }
     }
 

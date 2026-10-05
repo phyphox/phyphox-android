@@ -1347,6 +1347,42 @@ public class GraphView extends View {
         return step;
     }
 
+    //The "nice" step between the major tics of a linear axis of the given range with at most maxTics tics, and the
+    //number of decimals the labels at that step need: {step, precision}. Shared with the scale element, which lays
+    //its automatic tics out like a graph axis (phyphox-docs views/drawing.md, "Tics").
+    public static double[] linearTicStep(double range, int maxTics) {
+        int exponent = (int)Math.floor(Math.log10(range)) - 1;
+        double stepFactor = Math.pow(10, exponent); //First estimate how large the steps between our tics should be as a power of ten
+        double steps = range/stepFactor; //How many steps would there be with step times stepfactor?
+        double step = 1.;
+        int precision = 0;
+
+        //Depending on how many steps we would have, increase the step factor to stay within maxTics
+        if (steps <= maxTics) {
+            step = 1 * stepFactor;
+            precision = -exponent;
+        } else if (steps <= maxTics * 2) {
+            step = 2*stepFactor;
+            precision = -exponent;
+        } else if (steps <= maxTics * 5) {
+            step = 5*stepFactor;
+            precision = -exponent;
+        } else if (steps <= maxTics * 10) {
+            step = 10*stepFactor;
+            precision = -exponent-1;
+        } else if (steps <= maxTics * 20) {
+            step = 20*stepFactor;
+            precision = -exponent-1;
+        } else if (steps <= maxTics * 50) {
+            step = 50*stepFactor;
+            precision = -exponent-1;
+        } else if (steps <= maxTics * 100) {
+            step = 100 * stepFactor;
+            precision = -exponent-2;
+        }
+        return new double[]{step, precision};
+    }
+
     //Helper function that figures out where to put tics on an axis
     //Takes the min and max of that axis, a maximum count of tics, whether the axis is supposed to
     // be logarithmic and whether it is showing experiment time or system time (starting at the
@@ -1412,33 +1448,9 @@ public class GraphView extends View {
         if (isTime && systemTimeOffset > 0) {
             step = getTimeStepFromRange(range, maxTics);
         } else {
-            int exponent = (int)Math.floor(Math.log10(range)) - 1;
-            double stepFactor = Math.pow(10, exponent); //First estimate how large the steps between our tics should be as a power of ten
-            double steps = range/stepFactor; //How many steps would there be with step times stepfactor?
-
-            //Depending on how many steps we would have, increase the step factor to stay within maxTics
-            if (steps <= maxTics) {
-                step = 1 * stepFactor;
-                precision = -exponent;
-            } else if (steps <= maxTics * 2) {
-                step = 2*stepFactor;
-                precision = -exponent;
-            } else if (steps <= maxTics * 5) {
-                step = 5*stepFactor;
-                precision = -exponent;
-            } else if (steps <= maxTics * 10) {
-                step = 10*stepFactor;
-                precision = -exponent-1;
-            } else if (steps <= maxTics * 20) {
-                step = 20*stepFactor;
-                precision = -exponent-1;
-            } else if (steps <= maxTics * 50) {
-                step = 50*stepFactor;
-                precision = -exponent-1;
-            } else if (steps <= maxTics * 100) {
-                step = 100 * stepFactor;
-                precision = -exponent-2;
-            }
+            double[] stepAndPrecision = linearTicStep(range, maxTics);
+            step = stepAndPrecision[0];
+            precision = (int) stepAndPrecision[1];
         }
 
         //ok how many (integer) steps exactly?
