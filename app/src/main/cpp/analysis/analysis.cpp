@@ -32,12 +32,13 @@ extern "C" {
         env->ReleaseDoubleArrayElements(b, y, 0);
     }
 
-    JNIEXPORT void JNICALL Java_de_rwth_1aachen_phyphox_Analysis_fftw3complex(JNIEnv *env, jobject obj, jfloatArray xy, jint n) {
+    //Complex transform of any length n, unscaled in both directions (the normalization is applied in Java)
+    JNIEXPORT void JNICALL Java_de_rwth_1aachen_phyphox_Analysis_fftw3complex(JNIEnv *env, jobject obj, jfloatArray xy, jint n, jboolean inverse) {
         jfloat *a = env->GetFloatArrayElements(xy, 0);
         fftwf_complex *fftwa = (fftwf_complex*)a;
 
         fftwf_plan p;
-        p = fftwf_plan_dft_1d(n, fftwa, fftwa, FFTW_FORWARD, FFTW_ESTIMATE);
+        p = fftwf_plan_dft_1d(n, fftwa, fftwa, inverse ? FFTW_BACKWARD : FFTW_FORWARD, FFTW_ESTIMATE);
         fftwf_execute(p);
         fftwf_destroy_plan(p);
 

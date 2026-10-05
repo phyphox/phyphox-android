@@ -34,7 +34,7 @@ public class Analysis {
     }
 
     public static native void nativePower(double[] x, double[] y);
-    public static native void fftw3complex(float[] xy, int n);
+    public static native void fftw3complex(float[] xy, int n, boolean inverse);
     public static native void fftw3crosscorrelation(float[] x, float[] y, int n);
 
     //Rounds half away from zero like the formula language's round; Math.round (half up, NaN -> 0) and floor(x+0.5) both differ
@@ -1694,13 +1694,34 @@ public class Analysis {
         }
     }
 
-    //Calculate FFT of single input
-    //If the input length is not a power of two the input will be filled with zeros until it is a power of two
+    //Fourier transforms: one module for fft, ifft, dft and idft (phyphox-docs rule fourier-transform-conventions).
+    //Kernel exp(-2*pi*i*k*n/N) forward, exp(+2*pi*i*k*n/N) inverse, scaled by the normalization factor afterwards.
+    //input1 is re, input2 is im (optional, zeros when absent); output1 is re, output2 is im
     public static class fftAM extends AnalysisModule implements Serializable {
+        public enum Normalization {
+            backward, forward, ortho, none;
+
+            //The factor s: which direction carries the 1/N
+            double factor(boolean inverse, int n) {
+                switch (this) {
+                    case forward: return inverse ? 1. : 1. / n;
+                    case ortho: return 1. / Math.sqrt(n);
+                    case none: return 1.;
+                    default: return inverse ? 1. / n : 1.;
+                }
+            }
+        }
+
+        private final boolean inverse;
+        private final boolean exact; //dft/idft promise the exact transform for any length, fft/ifft only for powers of two
+        private final Normalization normalization;
         private FFT fft;
 
-        protected fftAM(PhyphoxExperiment experiment, Vector<DataInput> inputs, Vector<DataOutput> outputs) {
+        protected fftAM(PhyphoxExperiment experiment, Vector<DataInput> inputs, Vector<DataOutput> outputs, boolean inverse, boolean exact, Normalization normalization) {
             super(experiment, inputs, outputs);
+            this.inverse = inverse;
+            this.exact = exact;
+            this.normalization = normalization;
 
             useArray = true;
             if (!nativeLib)
@@ -1709,66 +1730,105 @@ public class Analysis {
 
         @Override
         protected void update() {
+            if (inputArrays.size() == 0 || inputArrays.get(0) == null)
+                return;
+
+            boolean hasIm = inputArrays.size() > 1 && inputArrays.get(1) != null;
+            int size = inputArraySizes.get(0);
+            if (hasIm)
+                size = Math.min(size, inputArraySizes.get(1));
+            if (size < 1) //empty in, empty out; a single sample is the identity and is written back
+                return;
+
+            double[] re = new double[size];
+            double[] im = new double[size];
+            for (int i = 0; i < size; i++) {
+                re[i] = inputArrays.get(0)[i];
+                im[i] = hasIm ? inputArrays.get(1)[i] : 0.;
+            }
 
             if (nativeLib) {
-
-                if (inputArrays.size() == 0)
-                    return;
-
-                boolean hasIm = inputArrays.size() > 1 && inputArrays.get(1) != null;
-                int size = inputArraySizes.get(0);
-                if (hasIm)
-                    size = Math.min(size, inputArraySizes.get(1));
-                if (size < 2)
-                    return;
-
+                //FFTW is exact for any N (single precision)
                 final float xy[] = new float[2 * size];
-
                 for (int i = 0; i < size; i++) {
-                    xy[2 * i] = inputArrays.get(0)[i].floatValue();
-                    xy[2 * i + 1] = hasIm ? inputArrays.get(1)[i].floatValue() : 0.f;
+                    xy[2 * i] = (float) re[i];
+                    xy[2 * i + 1] = (float) im[i];
                 }
-
-                fftw3complex(xy, size);
-
-                //Append the real part of the result to output1 and the imaginary part to output2 (if used)
+                fftw3complex(xy, size, inverse);
                 for (int i = 0; i < size; i++) {
-                    if (outputs.size() > 0 && outputs.get(0) != null)
-                        outputs.get(0).append(xy[2 * i]);
-                    if (outputs.size() > 1 && outputs.get(1) != null)
-                        outputs.get(1).append(xy[2 * i + 1]);
+                    re[i] = xy[2 * i];
+                    im[i] = xy[2 * i + 1];
                 }
+            } else if (exact || size == 1) {
+                directSum(re, im, size);
             } else {
-
-                boolean hasIm = inputArrays.size() > 1 && inputArrays.get(1) != null;
-                int size = inputArrays.get(0).length;
-                if (hasIm)
-                    size = Math.min(size, inputArrays.get(1).length);
-                if (size < 2)
-                    return;
-
-                if (fft.n != size) {
-                    fft.prepare(size);
-                }
-
-                Double x[] = new Double[fft.np2];
-                Double y[] = new Double[fft.np2];
-                for (int i = 0; i < fft.np2; i++) {
-                    x[i] = i < size ? inputArrays.get(0)[i] : 0.;
-                    y[i] = hasIm && i < size ? inputArrays.get(1)[i] : 0.;
-                }
-
-                fft.calculate(x, y);
-
-                //Append the real part of the result to output1 and the imaginary part to output2 (if used)
-                for (int i = 0; i < size; i++) {
-                    if (outputs.size() > 0 && outputs.get(0) != null)
-                        outputs.get(0).append(x[i]);
-                    if (outputs.size() > 1 && outputs.get(1) != null)
-                        outputs.get(1).append(y[i]);
-                }
-
+                radix2(re, im, size);
             }
+
+            double scale = normalization.factor(inverse, size);
+            if (scale != 1.) {
+                for (int i = 0; i < size; i++) {
+                    re[i] *= scale;
+                    im[i] *= scale;
+                }
+            }
+
+            for (int i = 0; i < size; i++) {
+                if (outputs.size() > 0 && outputs.get(0) != null)
+                    outputs.get(0).append(re[i]);
+                if (outputs.size() > 1 && outputs.get(1) != null)
+                    outputs.get(1).append(im[i]);
+            }
+        }
+
+        //The Java fallback of fft/ifft: radix-2, zero-padded to the next power of two and truncated back, so a
+        //length that is not a power of two is not the exact transform (implementation-defined by contract).
+        //The inverse is conj(FFT(conj(x))).
+        private void radix2(double[] re, double[] im, int n) {
+            if (fft.n != n)
+                fft.prepare(n);
+
+            Double x[] = new Double[fft.np2];
+            Double y[] = new Double[fft.np2];
+            for (int i = 0; i < fft.np2; i++) {
+                x[i] = i < n ? re[i] : 0.;
+                y[i] = i < n ? (inverse ? -im[i] : im[i]) : 0.;
+            }
+
+            fft.calculate(x, y);
+
+            for (int i = 0; i < n; i++) {
+                re[i] = x[i];
+                im[i] = inverse ? -y[i] : y[i];
+            }
+        }
+
+        //The exact transform of any length as a direct sum in double precision (dft/idft without the native
+        //library; also N = 1, which is the identity). The twiddle index is (k*j) mod N so the angles stay exact.
+        private void directSum(double[] re, double[] im, int n) {
+            double[] cos = new double[n];
+            double[] sin = new double[n];
+            double sign = inverse ? 1. : -1.;
+            for (int m = 0; m < n; m++) {
+                cos[m] = Math.cos(2. * Math.PI * m / n);
+                sin[m] = sign * Math.sin(2. * Math.PI * m / n);
+            }
+
+            double[] outRe = new double[n];
+            double[] outIm = new double[n];
+            for (int k = 0; k < n; k++) {
+                double sumRe = 0., sumIm = 0.;
+                for (int j = 0; j < n; j++) {
+                    int m = (int) (((long) k * j) % n);
+                    sumRe += re[j] * cos[m] - im[j] * sin[m];
+                    sumIm += re[j] * sin[m] + im[j] * cos[m];
+                }
+                outRe[k] = sumRe;
+                outIm[k] = sumIm;
+            }
+
+            System.arraycopy(outRe, 0, re, 0, n);
+            System.arraycopy(outIm, 0, im, 0, n);
         }
     }
 

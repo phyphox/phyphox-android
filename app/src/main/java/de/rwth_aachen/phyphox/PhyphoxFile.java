@@ -3754,7 +3754,23 @@ public abstract class PhyphoxFile {
 
                     experiment.analysis.add(new Analysis.reduceAM(experiment, inputs, outputs, averageX, sumY, averageY));
                 } break;
-                case "fft": { //Fourier transform
+                case "fft": //Fourier transforms: the tag selects direction and exactness, all four share slots and normalization
+                case "ifft":
+                case "dft":
+                case "idft": {
+                    String normalizationStr = getStringAttribute("normalization");
+                    Analysis.fftAM.Normalization normalization = Analysis.fftAM.Normalization.backward;
+                    if (normalizationStr != null) {
+                        switch (normalizationStr.toLowerCase()) { //Enumerated values are matched case-insensitively
+                            case "backward": normalization = Analysis.fftAM.Normalization.backward; break;
+                            case "forward": normalization = Analysis.fftAM.Normalization.forward; break;
+                            case "ortho": normalization = Analysis.fftAM.Normalization.ortho; break;
+                            case "none": normalization = Analysis.fftAM.Normalization.none; break;
+                            default: throw new phyphoxFileException("Unknown normalization " + normalizationStr, xpp.getLineNumber());
+                        }
+                    }
+                    boolean inverse = tag.toLowerCase().startsWith("i");
+                    boolean exact = tag.toLowerCase().endsWith("dft");
 
                     ioBlockParser.ioMapping[] inputMapping = {
                             new ioBlockParser.ioMapping() {{name = "re"; asRequired = false; minCount = 1; maxCount = 1; valueAllowed = false; repeatableOffset = -1; }},
@@ -3766,7 +3782,7 @@ public abstract class PhyphoxFile {
                     };
                     (new ioBlockParser(xpp, experiment, parent, inputs, outputs, inputMapping, outputMapping, "as")).process(); //Load inputs and outputs
 
-                    experiment.analysis.add(new Analysis.fftAM(experiment, inputs, outputs));
+                    experiment.analysis.add(new Analysis.fftAM(experiment, inputs, outputs, inverse, exact, normalization));
                 } break;
                 case "autocorrelation": { //Autocorrelation. First in/out is y, second in/out may be x
 
