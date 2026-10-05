@@ -221,6 +221,7 @@ jobs:
       # phyphox-test: accessibility-smoke
       # phyphox-test: switch-bypassed-ui
       # phyphox-test: save-to-collection
+      # phyphox-test: saved-state-collection
       # and the translations selection:
       # phyphox-test: translations-ui
       - name: ${{ matrix.suite }} suites

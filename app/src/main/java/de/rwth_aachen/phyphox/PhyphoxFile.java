@@ -25,6 +25,7 @@ import android.view.Gravity;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
 
+import org.apache.commons.io.FileUtils;
 import org.xmlpull.v1.XmlPullParser;
 import org.xmlpull.v1.XmlPullParserException;
 
@@ -172,6 +173,7 @@ public abstract class PhyphoxFile {
         byte source[] = null;           //A copy of the input for non-local sources
         public String errorMessage = "";       //Error message that can be displayed to the user
         String resourceFolder = null;   //Local folder that holds the resources required by the experiment (for example images)
+        String stateFolder = null;      //The directory the experiment is loaded as a saved state from (holds meta/state.csv, see SavedState), or null
         long crc32;
     }
 
@@ -258,14 +260,17 @@ public abstract class PhyphoxFile {
                         File file = new File(tempDir, intent.getStringExtra(EXPERIMENT_XML));
                         phyphoxStream.inputStream = new FileInputStream(file);
                         remoteInputToMemory(phyphoxStream, file.getParentFile().getAbsolutePath(), false);
+                        phyphoxStream.stateFolder = SavedState.folderPathOf(file);
                     } catch (Exception e) {
                         phyphoxStream.errorMessage = "Error loading this experiment from local storage: " +e.getMessage();
                     }
-                } else { //The local file is in the private directory
+                } else { //The local file is in the private directory (a plain file, or experiment.phyphox inside a saved state's directory)
                     try {
-                        phyphoxStream.inputStream = parent.openFileInput(intent.getStringExtra(EXPERIMENT_XML));
                         File file = new File(parent.getFilesDir(), intent.getStringExtra(EXPERIMENT_XML));
-                        remoteInputToMemory(phyphoxStream, file.getParentFile().getAbsolutePath(), true);
+                        phyphoxStream.inputStream = new FileInputStream(file);
+                        phyphoxStream.stateFolder = SavedState.folderPathOf(file);
+                        //A plain file keeps its resources in the folder named after its CRC32, a saved state in its own res/
+                        remoteInputToMemory(phyphoxStream, file.getParentFile().getAbsolutePath(), phyphoxStream.stateFolder == null);
                     } catch (Exception e) {
                         phyphoxStream.errorMessage = "Error loading this experiment from local storage: " +e.getMessage();
                     }
@@ -292,6 +297,7 @@ public abstract class PhyphoxFile {
                     phyphoxStream.inputStream = resolver.openInputStream(uri);
                     File containingFolder = new File(uri.getPath());
                     remoteInputToMemory(phyphoxStream, containingFolder.getParent(), false);
+                    phyphoxStream.stateFolder = SavedState.folderPathOf(containingFolder);
                 } catch (Exception e) {
                     phyphoxStream.errorMessage = "Error loading experiment from file: " + e.getMessage();
                 }
@@ -4107,6 +4113,7 @@ public abstract class PhyphoxFile {
         experiment.source = input.source;
         experiment.crc32 = input.crc32;
         experiment.resourceFolder = input.resourceFolder;
+        experiment.stateFolder = input.stateFolder;
         try {
             //Setup the pull parser
             BufferedReader reader = new BufferedReader(new InputStreamReader(input.inputStream));
@@ -4185,6 +4192,16 @@ public abstract class PhyphoxFile {
             return experiment;
         }
 
+        //A saved state replaces the buffers, the time reference and the title once the file is parsed
+        //(saved-states.md, "Loading semantics"); state-title and events of the file do not count then
+        if (input.stateFolder != null) {
+            String error = SavedState.restore(experiment, new File(input.stateFolder));
+            if (error != null) {
+                experiment.message = error;
+                return experiment;
+            }
+        }
+
         //The Unit system setting is applied on every load (units.md, "The unit-system setting")
         Units.Setting unitSetting = Units.Setting.read(parent);
         for (ExpView view : experiment.experimentViews)
@@ -4236,6 +4253,18 @@ public abstract class PhyphoxFile {
 
         //Copying is done on a second thread...
         protected String doInBackground(String... params) {
+            if (parent.get().experiment.stateFolder != null) {
+                //A saved state that came from outside is kept as its whole tree, like a plain experiment as its file
+                File target = new File(parent.get().getFilesDir(), UUID.randomUUID().toString().replaceAll("-", "") + SavedState.DIRECTORY_SUFFIX);
+                try {
+                    FileUtils.copyDirectory(new File(parent.get().experiment.stateFolder), target);
+                } catch (Exception e) {
+                    Helper.deleteRecursive(target);
+                    return "Error saving the state: " + e.getMessage();
+                }
+                return "";
+            }
+
             InputStream input;
             if (parent.get().experiment.source != null) {
                 //We have stored the original source file...

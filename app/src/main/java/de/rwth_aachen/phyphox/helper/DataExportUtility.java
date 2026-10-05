@@ -41,6 +41,7 @@ public class DataExportUtility{
     public static final String MIME_TYPE_CSV_ZIP = "application/zip";
     public static final String MIME_TYPE_XLSX = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet";
     public static final String MIME_TYPE_PHYPHOX = "application/octet-stream";
+    public static final String MIME_TYPE_STATE = "application/zip"; //a saved state is a zip container (saved-states.md)
 
     public static void createFileInDownloads(File exportFile, String filenameBase, String mimeType, Activity c){
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
@@ -168,10 +169,14 @@ public class DataExportUtility{
     }
 
     public static void startPhyphoxFileSharing(Activity a, File file){
+        startPhyphoxFileSharing(a, file, MIME_TYPE_PHYPHOX);
+    }
+
+    public static void startPhyphoxFileSharing(Activity a, File file, String mimeType){
 
         final Uri uri = FileProvider.getUriForFile(a.getBaseContext(), a.getPackageName() + ".exportProvider", file);
 
-        final Intent intent = createShareIntent(a, uri , MIME_TYPE_PHYPHOX);
+        final Intent intent = createShareIntent(a, uri , mimeType);
         grantUriPermission(a, intent, uri);
 
         //Create chooser

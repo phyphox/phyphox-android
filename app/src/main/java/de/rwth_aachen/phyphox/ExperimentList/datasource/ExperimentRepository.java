@@ -22,6 +22,7 @@ import de.rwth_aachen.phyphox.ExperimentList.model.ExperimentShortInfo;
 import de.rwth_aachen.phyphox.ExperimentList.ui.ExperimentsInCategory;
 import de.rwth_aachen.phyphox.helper.Helper;
 import de.rwth_aachen.phyphox.R;
+import de.rwth_aachen.phyphox.SavedState;
 
 public class ExperimentRepository{
 
@@ -76,8 +77,14 @@ public class ExperimentRepository{
         }
     }
 
-    //Removes a collection experiment and its resource folder (named after the hex CRC32 of the file)
+    //Removes a collection experiment and its resource folder (named after the hex CRC32 of the file);
+    //a saved state is its whole .phystate directory
     public static void deleteExperiment(Context context, String xmlFile) {
+        File stateDir = SavedState.directoryOf(context.getFilesDir(), xmlFile);
+        if (stateDir != null) {
+            Helper.deleteRecursive(stateDir);
+            return;
+        }
         long crc32 = Helper.getCRC32(new File(context.getFilesDir(), xmlFile));
         context.deleteFile(xmlFile);
         File resFolder = new File(context.getFilesDir(), Long.toHexString(crc32).toLowerCase());

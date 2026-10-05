@@ -827,8 +827,9 @@ public class Experiment extends AppCompatActivity implements View.OnClickListene
             this.experiment = null;
         }
 
-        //Check if experiment is already in list and if so, flag it as local.
-        if (experiment.source != null && Helper.experimentInCollection(experiment.crc32, this)) {
+        //Check if experiment is already in list and if so, flag it as local. A saved state carries the
+        //unchanged experiment file, so a state of a collected experiment can still be saved itself.
+        if (experiment.source != null && experiment.stateFolder == null && Helper.experimentInCollection(experiment.crc32, this)) {
             experiment.isLocal = true;
         }
 
@@ -2357,7 +2358,8 @@ public class Experiment extends AppCompatActivity implements View.OnClickListene
             buttonToCollection = view.findViewById(R.id.imageSave);
             buttonToCollection.setOnClickListener(v -> buttonCollectionClicked());
 
-            filename = FileNameFormat.sanitize(defaultName) + ".phyphox";
+            //A state is a zip container (saved-states.md), shared and downloaded as such
+            filename = FileNameFormat.sanitize(defaultName) + ".zip";
             file = new File(getCacheDir(), "/"+filename);
 
             progressBar = view.findViewById(R.id.progressBar);
@@ -2372,11 +2374,11 @@ public class Experiment extends AppCompatActivity implements View.OnClickListene
                 updateUIForProgress(true, buttonShare);
                 FileOutputStream output = new FileOutputStream(file);
 
-                experiment.writeStateFileAsync(customTitleET.getText().toString(), output, new WriteStateFileCallback() {
+                experiment.writeStateFileAsync(Experiment.this, customTitleET.getText().toString(), output, new WriteStateFileCallback() {
                     @Override
                     public void onSuccess() {
                         updateUIForProgress(false, buttonShare);
-                        DataExportUtility.startPhyphoxFileSharing(Experiment.this, file);
+                        DataExportUtility.startPhyphoxFileSharing(Experiment.this, file, DataExportUtility.MIME_TYPE_STATE);
                         bottomSheetDialog.dismiss();
                     }
 
@@ -2400,11 +2402,11 @@ public class Experiment extends AppCompatActivity implements View.OnClickListene
                 updateUIForProgress(true, buttonDownload);
                 FileOutputStream output = new FileOutputStream(file);
 
-                experiment.writeStateFileAsync(customTitleET.getText().toString(), output, new WriteStateFileCallback() {
+                experiment.writeStateFileAsync(Experiment.this, customTitleET.getText().toString(), output, new WriteStateFileCallback() {
                     @Override
                     public void onSuccess() {
                         updateUIForProgress(false, buttonDownload);
-                        DataExportUtility.createFileInDownloads(file, filename, MIME_TYPE_PHYPHOX, Experiment.this);
+                        DataExportUtility.createFileInDownloads(file, filename, DataExportUtility.MIME_TYPE_STATE, Experiment.this);
                         bottomSheetDialog.dismiss();
                     }
 
@@ -2426,10 +2428,10 @@ public class Experiment extends AppCompatActivity implements View.OnClickListene
         private void buttonCollectionClicked() {
             try {
                 updateUIForProgress(true,  buttonToCollection);
-                String file1 = UUID.randomUUID().toString().replaceAll("-", "") + ".phyphox"; //Random file name
-                FileOutputStream output = openFileOutput(file1, Activity.MODE_PRIVATE);
+                //The collection keeps the extracted container tree in a directory of its own
+                File dir = new File(getFilesDir(), UUID.randomUUID().toString().replaceAll("-", "") + SavedState.DIRECTORY_SUFFIX);
 
-                experiment.writeStateFileAsync(customTitleET.getText().toString(), output, new WriteStateFileCallback() {
+                experiment.writeStateDirectoryAsync(Experiment.this, customTitleET.getText().toString(), dir, new WriteStateFileCallback() {
                     @Override
                     public void onSuccess() {
                         updateUIForProgress(false,  buttonToCollection);

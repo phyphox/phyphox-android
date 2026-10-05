@@ -27,6 +27,7 @@ import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.ScrollView;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.view.ContextThemeWrapper;
@@ -34,6 +35,7 @@ import androidx.core.app.ShareCompat;
 import androidx.core.content.FileProvider;
 
 import java.io.File;
+import java.io.IOException;
 import java.util.List;
 import java.util.Map;
 import java.util.Vector;
@@ -46,6 +48,8 @@ import de.rwth_aachen.phyphox.ExperimentList.model.ExperimentShortInfo;
 import de.rwth_aachen.phyphox.helper.Helper;
 import de.rwth_aachen.phyphox.helper.RGB;
 import de.rwth_aachen.phyphox.R;
+import de.rwth_aachen.phyphox.SavedState;
+import de.rwth_aachen.phyphox.helper.FileNameFormat;
 
 //This adapter is used to fill the gridView of the categories in the experiment list.
 //So, this can be considered to be the experiment entries within an category
@@ -133,6 +137,24 @@ public class ExperimentItemAdapter extends BaseAdapter {
 
         //Notify the adapter that we changed its contents
         this.notifyDataSetChanged();
+    }
+
+    interface FileAction {
+        void run(File file);
+    }
+
+    //A state is shared as the zip of its tree, built off the UI thread into the cache
+    private void zipState(File stateDir, String title, FileAction then) {
+        File zip = new File(parentActivity.getCacheDir(), FileNameFormat.sanitize(title) + ".zip");
+        new Thread(() -> {
+            try {
+                SavedState.zipDirectory(stateDir, zip);
+            } catch (IOException e) {
+                parentActivity.runOnUiThread(() -> Toast.makeText(parentActivity, "Error: " + e.getMessage(), Toast.LENGTH_LONG).show());
+                return;
+            }
+            parentActivity.runOnUiThread(() -> then.run(zip));
+        }).start();
     }
 
     //This mini class holds all the Android views to be displayed
@@ -269,13 +291,22 @@ public class ExperimentItemAdapter extends BaseAdapter {
                 popup.getMenu().findItem(R.id.experiment_item_rename).setVisible(isSavedState);
 
                 File xmlFile = new File(parentActivity.getFilesDir(), "/" + experimentShortInfos.get(position).xmlFile);
+                //A saved state in the container format lives in its own directory and leaves as a zip
+                File stateDir = SavedState.directoryOf(parentActivity.getFilesDir(), experimentShortInfos.get(position).xmlFile);
+                String title = experimentShortInfos.get(position).title;
                 popup.setOnMenuItemClickListener(menuItem -> {
                     int itemId = menuItem.getItemId();
                     if (itemId == R.id.experiment_item_share) {
-                        DataExportUtility.startPhyphoxFileSharing(parentActivity, xmlFile);
+                        if (stateDir != null)
+                            zipState(stateDir, title, zip -> DataExportUtility.startPhyphoxFileSharing(parentActivity, zip, DataExportUtility.MIME_TYPE_STATE));
+                        else
+                            DataExportUtility.startPhyphoxFileSharing(parentActivity, xmlFile);
                         return true;
                     } else if (itemId == R.id.experiment_item_download) {
-                        DataExportUtility.createFileInDownloads(xmlFile, xmlFile.getName(), DataExportUtility.MIME_TYPE_PHYPHOX, parentActivity  );
+                        if (stateDir != null)
+                            zipState(stateDir, title, zip -> DataExportUtility.createFileInDownloads(zip, zip.getName(), DataExportUtility.MIME_TYPE_STATE, parentActivity));
+                        else
+                            DataExportUtility.createFileInDownloads(xmlFile, xmlFile.getName(), DataExportUtility.MIME_TYPE_PHYPHOX, parentActivity  );
                         return true;
                     } else if (itemId == R.id.experiment_item_delete) {
                         //Create dialog to ask the user if he REALLY wants to delete...
@@ -307,6 +338,16 @@ public class ExperimentItemAdapter extends BaseAdapter {
                                     if (newName.replaceAll("\\s+", "").isEmpty())
                                         return;
                                     //Confirmed. Rename the item and reload the list
+
+                                    if (stateDir != null) { //the container format: the title in meta/state.csv and nothing else
+                                        try {
+                                            SavedState.rename(stateDir, newName);
+                                        } catch (IOException e) {
+                                            Toast.makeText(parentActivity, "Error: " + e.getMessage(), Toast.LENGTH_LONG).show();
+                                        }
+                                        experimentRepository.loadAndShowMainExperimentList(parentActivity);
+                                        return;
+                                    }
 
                                     long oldCrc32 = Helper.getCRC32(new File(parentActivity.getFilesDir(), experimentShortInfos.get(position).xmlFile));
                                     File oldResFolder = new File(parentActivity.getFilesDir(), Long.toHexString(oldCrc32).toLowerCase());

@@ -15,41 +15,24 @@ import android.util.Log;
 import androidx.camera.core.CameraControl;
 import androidx.collection.ArraySet;
 
-import org.w3c.dom.Attr;
-import org.w3c.dom.Document;
-import org.w3c.dom.Element;
-import org.w3c.dom.Node;
-import org.w3c.dom.NodeList;
-
-import java.io.ByteArrayInputStream;
+import java.io.File;
 import java.io.IOException;
-import java.io.InputStream;
 import java.io.OutputStream;
 import java.io.Serializable;
-import java.text.DecimalFormat;
-import java.text.DecimalFormatSymbols;
-import java.text.NumberFormat;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
 import java.util.Vector;
+import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
-
-import javax.xml.parsers.DocumentBuilder;
-import javax.xml.parsers.DocumentBuilderFactory;
-import javax.xml.transform.Transformer;
-import javax.xml.transform.TransformerFactory;
-import javax.xml.transform.dom.DOMSource;
-import javax.xml.transform.stream.StreamResult;
 
 import de.rwth_aachen.phyphox.Bluetooth.Bluetooth;
 import de.rwth_aachen.phyphox.Bluetooth.BluetoothInput;
@@ -59,6 +42,7 @@ import de.rwth_aachen.phyphox.camera.depth.DepthInput;
 import de.rwth_aachen.phyphox.NetworkConnection.NetworkConnection;
 import de.rwth_aachen.phyphox.ExperimentView.ExpView;
 import de.rwth_aachen.phyphox.ExperimentView.ExpViewElement;
+import de.rwth_aachen.phyphox.helper.Helper;
 
 //This class holds all the information that makes up an experiment
 //There are also some functions that the experiment should perform
@@ -72,6 +56,7 @@ public class PhyphoxExperiment implements Serializable, ExperimentTimeReference.
     byte[] source = null; //This holds the original source file
     Set<String> resources = new ArraySet<>();
     public String resourceFolder = null;
+    public String stateFolder = null; //The directory this experiment was loaded as a saved state from (SavedState), or null
     long crc32 = 0;
     String message = ""; //Holds error messages
     String title = ""; //The title of this experiment
@@ -596,165 +581,61 @@ public class PhyphoxExperiment implements Serializable, ExperimentTimeReference.
 
     }
 
-    public void writeStateFileAsync(String customTitle, OutputStream os, Experiment.WriteStateFileCallback writeStateFileCallback){
-
-        ExecutorService stateWriterExecutor = Executors.newSingleThreadExecutor();
-
-        Handler mainThreadHandler = new Handler(Looper.getMainLooper());
-
-        stateWriterExecutor.execute(() -> {
-            String result = null;
-
+    //The state writers (SavedState) run off the UI thread; the callback comes back on it
+    public void writeStateFileAsync(Context ctx, String customTitle, OutputStream os, Experiment.WriteStateFileCallback writeStateFileCallback) {
+        runStateWriter(() -> {
+            String result = writeStateFile(ctx, customTitle, os);
             try {
-                result = writeStateFile(customTitle, os);
-            } catch (Exception e){
-                result = e.getMessage();
-            } finally {
-                try {
-                    os.close();
-                } catch (IOException e){
-                    e.printStackTrace();
-                    if (result == null)
-                        result = "Failed to close stream: " +e.getMessage();
-                }
+                os.close();
+            } catch (IOException e) {
+                if (result == null)
+                    result = "Failed to close stream: " + e.getMessage();
             }
+            return result;
+        }, writeStateFileCallback);
+    }
 
+    //The collection keeps the extracted tree; a failed write leaves no half directory behind
+    public void writeStateDirectoryAsync(Context ctx, String customTitle, File dir, Experiment.WriteStateFileCallback writeStateFileCallback) {
+        runStateWriter(() -> {
+            try {
+                SavedState.writeDirectory(this, customTitle, ctx, dir);
+            } catch (Exception e) {
+                Helper.deleteRecursive(dir);
+                return e.getMessage() == null ? e.toString() : e.getMessage();
+            }
+            return null;
+        }, writeStateFileCallback);
+    }
+
+    private void runStateWriter(Callable<String> writer, Experiment.WriteStateFileCallback writeStateFileCallback) {
+        ExecutorService stateWriterExecutor = Executors.newSingleThreadExecutor();
+        Handler mainThreadHandler = new Handler(Looper.getMainLooper());
+        stateWriterExecutor.execute(() -> {
+            String result;
+            try {
+                result = writer.call();
+            } catch (Exception e) {
+                result = e.getMessage() == null ? e.toString() : e.getMessage();
+            }
             String finalResult = result;
-
             mainThreadHandler.post(() -> {
                 if (finalResult == null)
                     writeStateFileCallback.onSuccess();
                 else
                     writeStateFileCallback.onError(finalResult);
             });
-
             stateWriterExecutor.shutdown();
-
         });
-
     }
 
-    String writeStateFile(String customTitle, OutputStream os) {
-
-        if (source == null)
-            return "Source is null.";
-        DocumentBuilderFactory dbf = DocumentBuilderFactory.newInstance();
-        DocumentBuilder db;
+    //Writes the saved-state container (saved-states.md) to os; null on success, otherwise the error message
+    String writeStateFile(Context ctx, String customTitle, OutputStream os) {
         try {
-            db = dbf.newDocumentBuilder();
+            SavedState.writeZip(this, customTitle, ctx, os);
         } catch (Exception e) {
-            return "Could not create DocumentBuilder: " + e.getMessage();
+            return e.getMessage() == null ? e.toString() : e.getMessage();
         }
-
-        Document doc;
-        InputStream is = new ByteArrayInputStream(source);
-        try {
-            doc = db.parse(is);
-        } catch (Exception e) {
-            return "Could not parse source: " + e.getMessage();
-        }
-
-        Element root = doc.getDocumentElement();
-        if (root == null)
-            return "Source has no root.";
-
-        root.normalize();
-
-        //Drop the metadata of a previous save. getChildNodes() is live, removing while iterating
-        //skips the next sibling, and a duplicate state-title makes the file unloadable on iOS.
-        NodeList children = root.getChildNodes();
-        List<Node> obsolete = new ArrayList<>();
-        for (int i = 0; i < children.getLength(); i++) {
-            String name = children.item(i).getNodeName();
-            if (name.equals("state-title") || name.equals("color") || name.equals("events"))
-                obsolete.add(children.item(i));
-        }
-        for (Node node : obsolete)
-            root.removeChild(node);
-
-        Element customTitleEl = doc.createElement("state-title");
-        customTitleEl.setTextContent(customTitle);
-        root.appendChild(customTitleEl);
-
-        Element colorEl = doc.createElement("color");
-        colorEl.setTextContent("blue");
-        root.appendChild(colorEl);
-
-        Element eventsEl = doc.createElement("events");
-        for (ExperimentTimeReference.TimeMapping event : experimentTimeReference.getTimeMappings()) {
-
-            Element eventEl = doc.createElement(event.event.name().toLowerCase());
-            eventEl.setAttribute("experimentTime", event.experimentTime.toString());
-            eventEl.setAttribute("systemTime", Long.toString(event.systemTime));
-            eventsEl.appendChild(eventEl);
-        }
-        root.appendChild(eventsEl);
-
-        NodeList containers = root.getElementsByTagName("data-containers");
-        if (containers.getLength() != 1)
-            return "Source needs exactly one data-container block.";
-
-        NodeList buffers = containers.item(0).getChildNodes();
-
-        DecimalFormat format = (DecimalFormat) NumberFormat.getInstance(Locale.ENGLISH);
-        format.applyPattern("0.#########E0");
-        DecimalFormatSymbols dfs = format.getDecimalFormatSymbols();
-        dfs.setDecimalSeparator('.');
-        format.setDecimalFormatSymbols(dfs);
-        format.setGroupingUsed(false);
-
-        for (int i = 0; i < buffers.getLength(); i++) {
-            if (!buffers.item(i).getNodeName().equals("container"))
-                continue;
-
-            DataBuffer buffer = getBuffer(buffers.item(i).getTextContent());
-            if (buffer == null)
-                continue;
-
-            Attr attr = doc.createAttribute("init");
-
-            //under the data lock like every other reader: the analysis keeps writing on its own thread
-            Double[] values;
-            dataLock.lock();
-            try {
-                values = buffer.getArray();
-            } finally {
-                dataLock.unlock();
-            }
-
-            StringBuilder sb = new StringBuilder();
-            boolean first = true;
-            for (double v : values) {
-                if (first)
-                    first = false;
-                else
-                    sb.append(",");
-                sb.append(format.format(v));
-            }
-
-            attr.setValue(sb.toString());
-
-            buffers.item(i).getAttributes().setNamedItem(attr);
-        }
-
-        TransformerFactory tf = TransformerFactory.newInstance();
-        Transformer t;
-        try {
-            t = tf.newTransformer();
-        } catch (Exception e) {
-            return "Could not create transformer: " + e.getMessage();
-        }
-
-        DOMSource domSource = new DOMSource(doc);
-
-
-        StreamResult streamResult = new StreamResult(os);
-        try {
-            t.transform(domSource, streamResult);
-        } catch (Exception e) {
-            return "Transform failed: " + e.getMessage();
-        }
-
         return null;
     }
 }

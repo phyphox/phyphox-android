@@ -334,6 +334,27 @@ public class DataBuffer implements Serializable {
             else
                 return;
         }
+        discard();
+
+        if (reset)
+            this.append(init, init.length);
+
+        if (notify)
+            notifyListeners(true, reset);
+    }
+
+    //Replaces the contents with the values of a saved state, whatever init put here; the newest size
+    //values if there are more, and a static buffer that received data counts as filled
+    //(saved-states.md, "Loading semantics")
+    public void restore(Double[] values) {
+        staticAndSet = false;
+        discard();
+        append(values, values.length, false);
+        if (values.length > 0)
+            markSet();
+    }
+
+    private void discard() {
         buffer.clear();
         value = Double.NaN;
         if (floatCopy != null) {
@@ -366,12 +387,6 @@ public class DataBuffer implements Serializable {
         }
         min = Double.NaN;
         max = Double.NaN;
-
-        if (reset)
-            this.append(init, init.length);
-
-        if (notify)
-            notifyListeners(true, reset);
     }
 
     public void clear(boolean reset) {

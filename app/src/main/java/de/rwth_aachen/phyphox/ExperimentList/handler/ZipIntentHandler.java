@@ -15,6 +15,7 @@ import java.util.zip.ZipInputStream;
 
 import de.rwth_aachen.phyphox.ExperimentList.ExperimentListActivity;
 import de.rwth_aachen.phyphox.PhyphoxFile;
+import de.rwth_aachen.phyphox.SavedState;
 
 //This asyncTask extracts a zip file to a temporary directory
 //When it's done, it either opens a single phyphox file or asks the user how to handle multiple phyphox files
@@ -51,6 +52,23 @@ public class ZipIntentHandler extends AsyncTask<String, Void, String> {
             if (!tempPath.mkdirs())
                 return "Could not create temporary directory to extract zip file.";
 
+            //A saved state (saved-states.md) is recognised by its meta/state.csv and extracted as a whole;
+            //any other archive yields only its experiments and res/ entries. The stream is the in-memory
+            //copy, so a first pass over the entry names is cheap.
+            boolean isState = false;
+            if (phyphoxStream.inputStream.markSupported()) {
+                phyphoxStream.inputStream.mark(Integer.MAX_VALUE);
+                ZipInputStream scan = new ZipInputStream(phyphoxStream.inputStream);
+                ZipEntry scanned;
+                while ((scanned = scan.getNextEntry()) != null) {
+                    if (scanned.getName().equals(SavedState.STATE_CSV)) {
+                        isState = true;
+                        break;
+                    }
+                }
+                phyphoxStream.inputStream.reset();
+            }
+
             ZipInputStream zis = new ZipInputStream(phyphoxStream.inputStream);
 
             ZipEntry entry;
@@ -62,8 +80,12 @@ public class ZipIntentHandler extends AsyncTask<String, Void, String> {
                 if (!canonicalPath.startsWith(tempPath.getCanonicalPath() + File.separator)) {
                     return "Security exception: The zip file appears to be tempered with to perform a path traversal attack. Please contact the source of your experiment package or contact the phyphox team for details and help on this issue.";
                 }
-                if (!(entry.getName().endsWith(".phyphox") || f.getParentFile().getName().equals("res")))
+                if (!isState && !(entry.getName().endsWith(".phyphox") || f.getParentFile().getName().equals("res")))
                     continue;
+                if (entry.isDirectory()) {
+                    f.mkdirs();
+                    continue;
+                }
                 f.getParentFile().mkdirs();
                 FileOutputStream out = new FileOutputStream(f);
                 int size = 0;
@@ -73,6 +95,13 @@ public class ZipIntentHandler extends AsyncTask<String, Void, String> {
                 out.close();
             }
             zis.close();
+
+            //An incomplete or damaged state is refused as a whole rather than opened as the plain experiment
+            if (isState) {
+                String error = SavedState.validate(tempPath);
+                if (error != null)
+                    return error;
+            }
         } catch (Exception e) {
             Log.e("zip", "Error loading zip file.", e);
             return "Error loading zip file: " + e.getMessage();

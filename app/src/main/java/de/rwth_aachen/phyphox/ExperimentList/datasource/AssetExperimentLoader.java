@@ -22,6 +22,7 @@ import org.xmlpull.v1.XmlPullParser;
 import org.xmlpull.v1.XmlPullParserException;
 
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.HashMap;
@@ -42,6 +43,7 @@ import de.rwth_aachen.phyphox.GpsInput;
 import de.rwth_aachen.phyphox.helper.Helper;
 import de.rwth_aachen.phyphox.helper.RGB;
 import de.rwth_aachen.phyphox.R;
+import de.rwth_aachen.phyphox.SavedState;
 import de.rwth_aachen.phyphox.SensorInput;
 import de.rwth_aachen.phyphox.helper.baseColorDrawable.TextIcon;
 import de.rwth_aachen.phyphox.helper.baseColorDrawable.VectorIcon;
@@ -453,10 +455,11 @@ public class AssetExperimentLoader {
                 return invalidExperiment(data.experimentXML, "Invalid: \" + experimentXML + \" misses a category.", data.isTemp, data.isAsset, environment);
             }
 
-            if (stateTitle != null) {
+            if (stateTitle != null) { //A legacy saved state: its title, the experiment's as subtitle, the list's own colour
                 shortInfo.description = shortInfo.title;
                 shortInfo.title = stateTitle;
                 category = environment.resources.getString(R.string.save_state_category);
+                shortInfo.color = savedStateColor(environment);
             }
 
             //Let's check the icon
@@ -486,6 +489,22 @@ public class AssetExperimentLoader {
         return shortInfo;
     }
 
+    //The list's presentation of a saved state (saved-states.md): the state's title, the experiment's
+    //title as subtitle, the "Saved states" category and the app's own colour - the blue the legacy
+    //serializer used to force into the file, so the list looks as before.
+    static RGB savedStateColor(ExperimentListEnvironment environment) {
+        return new RGB(environment.resources.getColor(R.color.phyphox_blue_60));
+    }
+
+    public static void presentAsSavedState(ExperimentShortInfo shortInfo, String stateTitle, ExperimentListEnvironment environment) {
+        shortInfo.description = shortInfo.title;
+        shortInfo.title = stateTitle;
+        shortInfo.categoryName = environment.resources.getString(R.string.save_state_category);
+        shortInfo.color = savedStateColor(environment);
+        if (shortInfo.icon instanceof BaseColorDrawable)
+            ((BaseColorDrawable) shortInfo.icon).setBaseColor(shortInfo.color);
+    }
+
     /**
      * Load experiments from local files
      */
@@ -506,6 +525,27 @@ public class AssetExperimentLoader {
                     addExperiment(shortInfo);
                 }
 
+            }
+
+            //Saved states in the container format: a <uuid>.phystate directory holding the extracted tree
+            File[] states = environment.getFilesDir().listFiles((dir, filename) -> filename.endsWith(SavedState.DIRECTORY_SUFFIX));
+            if (states != null) {
+                for (File dir : states) {
+                    File xml = new File(dir, SavedState.EXPERIMENT_FILE);
+                    if (!dir.isDirectory() || !xml.isFile())
+                        continue;
+                    String xmlFile = dir.getName() + "/" + SavedState.EXPERIMENT_FILE;
+                    ExperimentShortInfo shortInfo;
+                    try (InputStream input = new FileInputStream(xml)) {
+                        shortInfo = loadExperimentShortInfo(new ExperimentLoadInfoData(input, xmlFile, null, false), environment);
+                    }
+                    if (shortInfo == null)
+                        continue;
+                    String stateTitle = SavedState.readTitle(dir);
+                    presentAsSavedState(shortInfo, stateTitle == null ? shortInfo.title : stateTitle, environment);
+                    addBluetoothInfos(shortInfo);
+                    addExperiment(shortInfo);
+                }
             }
 
         } catch (IOException e) {

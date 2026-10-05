@@ -212,51 +212,12 @@ public class DataExport implements Serializable {
                     }
                     //Add meta data in a separate folder
                     if (!minimalistic) {
-                        ZipEntry entry;
-                        entry = new ZipEntry("meta/device.csv");
-                        zstream.putNextEntry(entry);
-                        zstream.write(("\"property\""+separator+"\"value\"\n").getBytes());
-
-                        StringBuilder data = new StringBuilder();
-                        for (Metadata.DeviceMetadata deviceMetadata : Metadata.DeviceMetadata.values()) {
-                            if (deviceMetadata == Metadata.DeviceMetadata.sensorMetadata || deviceMetadata == Metadata.DeviceMetadata.uniqueID || deviceMetadata == Metadata.DeviceMetadata.camera2api || deviceMetadata == Metadata.DeviceMetadata.camera2apiFull)
-                                continue;
-                            String identifier = deviceMetadata.toString();
-                            data.append("\"").append(identifier).append("\"").append(separator);
-                            data.append("\"").append(new Metadata(identifier, ctx).get("")).append("\"").append("\n");
-                        }
-                        for (SensorInput.SensorName sensor : Metadata.sensorsWithMetadata()) {
-                            for (Metadata.SensorMetadata sensorMetadata : Metadata.SensorMetadata.values()) {
-                                String identifier = sensorMetadata.toString();
-                                data.append("\"").append(sensor.name()).append(" ").append(identifier).append("\"").append(separator);
-                                data.append("\"").append(new Metadata(sensor.name()+identifier, ctx).get("")).append("\"").append("\n");
-                            }
-                        }
-                        zstream.write(data.toString().getBytes()); //Write to zip-file
+                        zstream.putNextEntry(new ZipEntry("meta/device.csv"));
+                        zstream.write(deviceCsv(separator, ctx).getBytes());
                         zstream.closeEntry();
 
-                        entry = new ZipEntry("meta/time.csv");
-                        zstream.putNextEntry(entry);
-                        zstream.write(("\"event\""+separator+"\"experiment time\""+separator+"\"system time\""+separator+"\"system time text\"\n").getBytes());
-
-                        DecimalFormat longformat = (DecimalFormat) NumberFormat.getInstance(Locale.ENGLISH);
-                        longformat.applyPattern("############0.000");
-                        longformat.setDecimalFormatSymbols(dfs);
-                        longformat.setGroupingUsed(false);
-
-                        data = new StringBuilder();
-                        SimpleDateFormat dateFormat;
-                        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N)
-                            dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.SSS 'UTC'XXX");
-                        else
-                            dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.SSS 'UTC'Z");
-                        for (ExperimentTimeReference.TimeMapping timeMapping : experiment.experimentTimeReference.getTimeMappings()) {
-                            data.append("\"").append(timeMapping.event.name()).append("\"").append(separator);
-                            data.append(format.format(timeMapping.experimentTime)).append(separator);
-                            data.append(longformat.format(timeMapping.systemTime/1000.)).append(separator);
-                            data.append("\"").append(dateFormat.format(timeMapping.systemTime)).append("\"").append("\n");
-                        }
-                        zstream.write(data.toString().getBytes()); //Write to zip-file
+                        zstream.putNextEntry(new ZipEntry("meta/time.csv"));
+                        zstream.write(timeCsv(experiment.experimentTimeReference, separator, decimalPoint).getBytes());
                         zstream.closeEntry();
                     }
                 } catch (Exception e) {
@@ -290,6 +251,65 @@ public class DataExport implements Serializable {
             else
                 return this.filenameBase + ".zip";
         }
+    }
+
+    //meta/device.csv, shared with the saved-state container (SavedState), which uses the fixed dialect
+    static String deviceCsv(char separator, Context ctx) {
+        StringBuilder data = new StringBuilder();
+        data.append("\"property\"").append(separator).append("\"value\"\n");
+        for (Metadata.DeviceMetadata deviceMetadata : Metadata.DeviceMetadata.values()) {
+            if (deviceMetadata == Metadata.DeviceMetadata.sensorMetadata || deviceMetadata == Metadata.DeviceMetadata.uniqueID || deviceMetadata == Metadata.DeviceMetadata.camera2api || deviceMetadata == Metadata.DeviceMetadata.camera2apiFull)
+                continue;
+            String identifier = deviceMetadata.toString();
+            data.append(csvString(identifier)).append(separator);
+            data.append(csvString(new Metadata(identifier, ctx).get(""))).append("\n");
+        }
+        for (SensorInput.SensorName sensor : Metadata.sensorsWithMetadata()) {
+            for (Metadata.SensorMetadata sensorMetadata : Metadata.SensorMetadata.values()) {
+                String identifier = sensorMetadata.toString();
+                data.append(csvString(sensor.name() + " " + identifier)).append(separator);
+                data.append(csvString(new Metadata(sensor.name()+identifier, ctx).get(""))).append("\n");
+            }
+        }
+        return data.toString();
+    }
+
+    //meta/time.csv: START/PAUSE, experiment time, system time in seconds with millisecond resolution, the same instant as text
+    static String timeCsv(ExperimentTimeReference timeReference, char separator, char decimalPoint) {
+        DecimalFormat format = (DecimalFormat) NumberFormat.getInstance(Locale.ENGLISH);
+        format.applyPattern("0.000000000E0");
+        DecimalFormatSymbols dfs = format.getDecimalFormatSymbols();
+        dfs.setDecimalSeparator(decimalPoint);
+        format.setDecimalFormatSymbols(dfs);
+        format.setGroupingUsed(false);
+
+        DecimalFormat longformat = (DecimalFormat) NumberFormat.getInstance(Locale.ENGLISH);
+        longformat.applyPattern("############0.000");
+        longformat.setDecimalFormatSymbols(dfs);
+        longformat.setGroupingUsed(false);
+
+        SimpleDateFormat dateFormat = dateFormat();
+
+        StringBuilder data = new StringBuilder();
+        data.append("\"event\"").append(separator).append("\"experiment time\"").append(separator).append("\"system time\"").append(separator).append("\"system time text\"\n");
+        for (ExperimentTimeReference.TimeMapping timeMapping : timeReference.getTimeMappings()) {
+            data.append(csvString(timeMapping.event.name())).append(separator);
+            data.append(format.format(timeMapping.experimentTime)).append(separator);
+            data.append(longformat.format(timeMapping.systemTime/1000.)).append(separator);
+            data.append(csvString(dateFormat.format(timeMapping.systemTime))).append("\n");
+        }
+        return data.toString();
+    }
+
+    static SimpleDateFormat dateFormat() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N)
+            return new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.SSS 'UTC'XXX");
+        else
+            return new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.SSS 'UTC'Z");
+    }
+
+    private static String csvString(String s) {
+        return "\"" + (s == null ? "" : s.replace("\"", "\"\"")) + "\"";
     }
 
     //Excel (xlsx) export using our own minimal XlsxWriter

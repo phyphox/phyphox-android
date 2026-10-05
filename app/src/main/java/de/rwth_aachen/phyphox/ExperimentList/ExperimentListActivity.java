@@ -107,6 +107,7 @@ import de.rwth_aachen.phyphox.helper.Helper;
 import de.rwth_aachen.phyphox.helper.ReportingScrollView;
 import de.rwth_aachen.phyphox.helper.WindowInsetHelper;
 import de.rwth_aachen.phyphox.PhyphoxFile;
+import de.rwth_aachen.phyphox.SavedState;
 import de.rwth_aachen.phyphox.R;
 import de.rwth_aachen.phyphox.SensorInput;
 import de.rwth_aachen.phyphox.SettingsActivity.SettingsActivity;
@@ -808,6 +809,9 @@ public class ExperimentListActivity extends AppCompatActivity {
             final Collection<File> files = FileUtils.listFiles(tempPath, extensions, true);
             if (files.size() == 0) {
                 Toast.makeText(this, "Error: There is no valid phyphox experiment in this zip file.", Toast.LENGTH_LONG).show();
+            } else if (files.size() > 1 && new File(tempPath, SavedState.STATE_CSV).isFile()) {
+                //A saved state holds exactly one experiment (saved-states.md); there is no picker for it
+                Toast.makeText(this, "Error: A saved state must contain exactly one experiment.", Toast.LENGTH_LONG).show();
             } else if (files.size() == 1) {
                 //Create an intent for this file
                 Intent intent = new Intent(this, Experiment.class);
