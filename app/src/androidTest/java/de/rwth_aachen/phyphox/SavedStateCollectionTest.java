@@ -248,6 +248,35 @@ public class SavedStateCollectionTest {
         throw new AssertionError("the entry \"" + title + "\" has no menu button");
     }
 
+    //The sheet opens at its peek height, and on a landscape tablet the title field sits below it:
+    //drag the sheet up until the field is on screen
+    private UiObject2 awaitTitleField() {
+        for (int attempt = 0; attempt < 5; attempt++) {
+            UiObject2 field = device().wait(Until.findObject(By.res(app().getPackageName(), "editTextMeasurementName")), 3000);
+            if (field != null)
+                return field;
+            int w = device().getDisplayWidth();
+            int h = device().getDisplayHeight();
+            android.util.Log.i("SavedStateCollectionTest", "title field below the sheet's peek on " + w + "x" + h + ", dragging the sheet up");
+            device().swipe(w / 2, h - h / 10, w / 2, h / 10, 30);
+        }
+        dumpScreen("save-sheet");
+        throw new AssertionError("the save sheet has no title field");
+    }
+
+    //What the screen showed when a lookup failed, next to the app's external files for the artifact upload
+    private void dumpScreen(String name) {
+        File dir = app().getExternalFilesDir(null);
+        if (dir == null)
+            return;
+        try {
+            device().dumpWindowHierarchy(new File(dir, name + ".xml"));
+            device().takeScreenshot(new File(dir, name + ".png"));
+        } catch (IOException e) {
+            //diagnostics only
+        }
+    }
+
     private static Map<String, byte[]> treeContents(File dir) throws IOException {
         Map<String, byte[]> contents = new TreeMap<>();
         collect(dir, "", contents);
@@ -298,8 +327,7 @@ public class SavedStateCollectionTest {
         assertNotNull("the experiment has no overflow menu", overflow);
         overflow.click();
         await(app().getString(R.string.save_state)).click();
-        UiObject2 titleField = device().wait(Until.findObject(By.res(app().getPackageName(), "editTextMeasurementName")), 10000);
-        assertNotNull("the save sheet has no title field", titleField);
+        UiObject2 titleField = awaitTitleField();
         titleField.setText(STATE_TITLE);
         awaitButton(app().getString(R.string.save_state_save)).click();
 
