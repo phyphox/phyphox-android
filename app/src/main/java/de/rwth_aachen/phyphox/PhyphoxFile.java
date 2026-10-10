@@ -134,7 +134,7 @@ public abstract class PhyphoxFile {
     private static List<TranslationBlock> allTranslationBlocks = new ArrayList<>(); //All translation blocks, kept for validation independent of the user's locale
 
     //Simple helper to return either the translated term or the original one, if no translation could be found
-    private static String translate(String input, Experiment parent) {
+    private static String translate(String input, ExperimentActivity parent) {
         if (input == null)
             return null;
         if (translation.containsKey(input.trim()))
@@ -150,7 +150,7 @@ public abstract class PhyphoxFile {
     //A unit attribute (units.md, rules.yml "unit-reference"): "@<id>" with a known id is a unit reference from file format
     //1.21 on, the deprecated "[[unit_short_<id>]]" resolves to the same logical unit in every version, and anything else
     //(custom text, an unknown id, a reference in an older file) is text shown as written, translated like any other string
-    static Unit parseUnit(String raw, PhyphoxExperiment experiment, Experiment parent) {
+    static Unit parseUnit(String raw, PhyphoxExperiment experiment, ExperimentActivity parent) {
         if (raw == null)
             return null;
         String s = raw.trim();
@@ -379,7 +379,7 @@ public abstract class PhyphoxFile {
     //For each block type, this a class has to be derived, which overrides processStartTag and
     // processEndTag
     protected static class xmlBlockParser {
-        protected Experiment parent; //For some elements we need access to the parent activity
+        protected ExperimentActivity parent; //For some elements we need access to the parent activity
         private String tag; //The tag of the block that should be handled by this parser
         private String namespace; //The namespace of the block handled by this parser. Tags from other namespaces are skipped entirely.
         private int rootDepth; //The depth of the base of the block handled by this parser
@@ -389,7 +389,7 @@ public abstract class PhyphoxFile {
         private boolean textAdvanced;
 
         //The constructor takes the tag, and the experiment to fill
-        xmlBlockParser(XmlPullParser xpp, PhyphoxExperiment experiment, Experiment parent) {
+        xmlBlockParser(XmlPullParser xpp, PhyphoxExperiment experiment, ExperimentActivity parent) {
             this.xpp = xpp;
             this.experiment = experiment;
             this.parent = parent;
@@ -586,7 +586,7 @@ public abstract class PhyphoxFile {
     private static class FlashlightBlockParser extends xmlBlockParser {
         FlashlightOutput flashlightOutput;
 
-        FlashlightBlockParser(XmlPullParser xpp, PhyphoxExperiment experiment, Experiment parent, FlashlightOutput flashlightOutput) {
+        FlashlightBlockParser(XmlPullParser xpp, PhyphoxExperiment experiment, ExperimentActivity parent, FlashlightOutput flashlightOutput) {
             super(xpp, experiment, parent);
             this.flashlightOutput = flashlightOutput;
         }
@@ -628,7 +628,7 @@ public abstract class PhyphoxFile {
         AudioOutput.AudioOutputPlugin currentPlugin = null;
         int level = 0;
 
-        AudioOutputPluginBlockParser (XmlPullParser xpp, PhyphoxExperiment experiment, Experiment parent, AudioOutput audioOutput) {
+        AudioOutputPluginBlockParser (XmlPullParser xpp, PhyphoxExperiment experiment, ExperimentActivity parent, AudioOutput audioOutput) {
             super(xpp, experiment, parent);
             this.audioOutput = audioOutput;
         }
@@ -727,7 +727,7 @@ public abstract class PhyphoxFile {
         Vector<Bluetooth.CharacteristicData> characteristics; // characteristics of the bluetooth input / output
         HashSet<UUID> characteristicsWithExtraTime; // uuids of all characteristics that have extra=time to make sure they can't have it twice
 
-        BluetoothIoBlockParser(XmlPullParser xpp, PhyphoxExperiment experiment, Experiment parent, Vector<DataOutput> outputList, Vector<DataInput> inputList, Vector<Bluetooth.CharacteristicData> characteristics) {
+        BluetoothIoBlockParser(XmlPullParser xpp, PhyphoxExperiment experiment, ExperimentActivity parent, Vector<DataOutput> outputList, Vector<DataInput> inputList, Vector<Bluetooth.CharacteristicData> characteristics) {
             super(xpp, experiment, parent);
             this.outputList = outputList;
             this.inputList = inputList;
@@ -891,11 +891,11 @@ public abstract class PhyphoxFile {
         ioMapping[] outputMapping;
         String mappingAttribute;
 
-        ioBlockParser(XmlPullParser xpp, PhyphoxExperiment experiment, Experiment parent, Vector<DataInput> inputList, Vector<DataOutput> outputList, ioMapping[] inputMapping, ioMapping[] outputMapping, String mappingAttribute) {
+        ioBlockParser(XmlPullParser xpp, PhyphoxExperiment experiment, ExperimentActivity parent, Vector<DataInput> inputList, Vector<DataOutput> outputList, ioMapping[] inputMapping, ioMapping[] outputMapping, String mappingAttribute) {
             this(xpp, experiment, parent, inputList, outputList, inputMapping, outputMapping, mappingAttribute, null);
         }
 
-        ioBlockParser(XmlPullParser xpp, PhyphoxExperiment experiment, Experiment parent, Vector<DataInput> inputList, Vector<DataOutput> outputList, ioMapping[] inputMapping, ioMapping[] outputMapping, String mappingAttribute, Vector<AdditionalTag> additionalTags) {
+        ioBlockParser(XmlPullParser xpp, PhyphoxExperiment experiment, ExperimentActivity parent, Vector<DataInput> inputList, Vector<DataOutput> outputList, ioMapping[] inputMapping, ioMapping[] outputMapping, String mappingAttribute, Vector<AdditionalTag> additionalTags) {
             super(xpp, experiment, parent);
             this.inputList = inputList;
             this.outputList = outputList;
@@ -1201,7 +1201,7 @@ public abstract class PhyphoxFile {
 
         Vector<GraphInput> graphInputs;
 
-        graphIoBlockParser(XmlPullParser xpp, PhyphoxExperiment experiment, Experiment parent, Vector<GraphInput> graphInputs, Vector<DataOutput> outputList, ioMapping[] outputMapping) {
+        graphIoBlockParser(XmlPullParser xpp, PhyphoxExperiment experiment, ExperimentActivity parent, Vector<GraphInput> graphInputs, Vector<DataOutput> outputList, ioMapping[] outputMapping) {
             super(xpp, experiment, parent, null, outputList, null, outputMapping, "axis", null);
             this.graphInputs = graphInputs;
         }
@@ -1257,7 +1257,7 @@ public abstract class PhyphoxFile {
     //Blockparser for the root element
     private static class phyphoxBlockParser extends xmlBlockParser {
 
-        phyphoxBlockParser(XmlPullParser xpp, PhyphoxExperiment experiment, Experiment parent) {
+        phyphoxBlockParser(XmlPullParser xpp, PhyphoxExperiment experiment, ExperimentActivity parent) {
             super(xpp, experiment, parent);
         }
 
@@ -1427,7 +1427,7 @@ public abstract class PhyphoxFile {
     //Blockparser for the translations block
     private static class translationsBlockParser extends xmlBlockParser {
 
-        translationsBlockParser(XmlPullParser xpp, PhyphoxExperiment experiment, Experiment parent) {
+        translationsBlockParser(XmlPullParser xpp, PhyphoxExperiment experiment, ExperimentActivity parent) {
             super(xpp, experiment, parent);
         }
 
@@ -1485,7 +1485,7 @@ public abstract class PhyphoxFile {
 
         private final TranslationBlock block;
 
-        translationBlockParser(XmlPullParser xpp, PhyphoxExperiment experiment, Experiment parent, TranslationBlock block) {
+        translationBlockParser(XmlPullParser xpp, PhyphoxExperiment experiment, ExperimentActivity parent, TranslationBlock block) {
             super(xpp, experiment, parent);
             this.block = block;
         }
@@ -1539,7 +1539,7 @@ public abstract class PhyphoxFile {
     //Blockparser for the data-containers block
     private static class dataContainersBlockParser extends xmlBlockParser {
 
-        dataContainersBlockParser(XmlPullParser xpp, PhyphoxExperiment experiment, Experiment parent) {
+        dataContainersBlockParser(XmlPullParser xpp, PhyphoxExperiment experiment, ExperimentActivity parent) {
             super(xpp, experiment, parent);
         }
 
@@ -1587,7 +1587,7 @@ public abstract class PhyphoxFile {
     //Blockparser for the events block
     private static class eventsBlockParser extends xmlBlockParser {
 
-        eventsBlockParser(XmlPullParser xpp, PhyphoxExperiment experiment, Experiment parent) {
+        eventsBlockParser(XmlPullParser xpp, PhyphoxExperiment experiment, ExperimentActivity parent) {
             super(xpp, experiment, parent);
         }
 
@@ -1619,7 +1619,7 @@ public abstract class PhyphoxFile {
     //Blockparser for the views block
     private static class viewsBlockParser extends xmlBlockParser {
 
-        viewsBlockParser(XmlPullParser xpp, PhyphoxExperiment experiment, Experiment parent) {
+        viewsBlockParser(XmlPullParser xpp, PhyphoxExperiment experiment, ExperimentActivity parent) {
             super(xpp, experiment, parent);
         }
 
@@ -1674,7 +1674,7 @@ public abstract class PhyphoxFile {
         }
 
         //The viewBlockParser takes the vector it should fill and the kind of container it parses for
-        viewBlockParser(XmlPullParser xpp, PhyphoxExperiment experiment, Experiment parent, Vector<ExpViewElement> target, Container container) {
+        viewBlockParser(XmlPullParser xpp, PhyphoxExperiment experiment, ExperimentActivity parent, Vector<ExpViewElement> target, Container container) {
             super(xpp, experiment, parent);
             this.target = target;
             this.container = container;
@@ -2479,7 +2479,7 @@ public abstract class PhyphoxFile {
     private static class scaleBlockParser extends xmlBlockParser {
         private final ScaleElement scale;
 
-        scaleBlockParser(XmlPullParser xpp, PhyphoxExperiment experiment, Experiment parent, ScaleElement scale) {
+        scaleBlockParser(XmlPullParser xpp, PhyphoxExperiment experiment, ExperimentActivity parent, ScaleElement scale) {
             super(xpp, experiment, parent);
             this.scale = scale;
         }
@@ -2510,7 +2510,7 @@ public abstract class PhyphoxFile {
     private static class transformBlockParser extends viewBlockParser {
         private final TransformElement transform;
 
-        transformBlockParser(XmlPullParser xpp, PhyphoxExperiment experiment, Experiment parent, Vector<ExpViewElement> target, TransformElement transform) {
+        transformBlockParser(XmlPullParser xpp, PhyphoxExperiment experiment, ExperimentActivity parent, Vector<ExpViewElement> target, TransformElement transform) {
             super(xpp, experiment, parent, target, Container.transform);
             this.transform = transform;
         }
@@ -2542,7 +2542,7 @@ public abstract class PhyphoxFile {
     //Blockparser for the input block
     private static class inputBlockParser extends xmlBlockParser {
 
-        inputBlockParser(XmlPullParser xpp, PhyphoxExperiment experiment, Experiment parent) {
+        inputBlockParser(XmlPullParser xpp, PhyphoxExperiment experiment, ExperimentActivity parent) {
             super(xpp, experiment, parent);
         }
 
@@ -2958,7 +2958,7 @@ public abstract class PhyphoxFile {
     //Blockparser for the network block
     private static class networkBlockParser extends xmlBlockParser {
 
-        networkBlockParser(XmlPullParser xpp, PhyphoxExperiment experiment, Experiment parent) {
+        networkBlockParser(XmlPullParser xpp, PhyphoxExperiment experiment, ExperimentActivity parent) {
             super(xpp, experiment, parent);
         }
 
@@ -3106,7 +3106,7 @@ public abstract class PhyphoxFile {
         Map<String, NetworkConnection.NetworkSendableData> send;
         Map<String, NetworkConnection.NetworkReceivableData> receive;
 
-        networkConnectionBlockParser(XmlPullParser xpp, PhyphoxExperiment experiment, Experiment parent, Map<String, NetworkConnection.NetworkSendableData> send, Map<String, NetworkConnection.NetworkReceivableData> receive) {
+        networkConnectionBlockParser(XmlPullParser xpp, PhyphoxExperiment experiment, ExperimentActivity parent, Map<String, NetworkConnection.NetworkSendableData> send, Map<String, NetworkConnection.NetworkReceivableData> receive) {
             super(xpp, experiment, parent);
             this.send = send;
             this.receive = receive;
@@ -3190,7 +3190,7 @@ public abstract class PhyphoxFile {
     //Blockparser for the analysis block
     private static class analysisBlockParser extends xmlBlockParser {
 
-        analysisBlockParser(XmlPullParser xpp, PhyphoxExperiment experiment, Experiment parent) {
+        analysisBlockParser(XmlPullParser xpp, PhyphoxExperiment experiment, ExperimentActivity parent) {
             super(xpp, experiment, parent);
         }
 
@@ -4111,7 +4111,7 @@ public abstract class PhyphoxFile {
     //Blockparser for the output block
     private static class outputBlockParser extends xmlBlockParser {
 
-        outputBlockParser(XmlPullParser xpp, PhyphoxExperiment experiment, Experiment parent) {
+        outputBlockParser(XmlPullParser xpp, PhyphoxExperiment experiment, ExperimentActivity parent) {
             super(xpp, experiment, parent);
         }
 
@@ -4176,7 +4176,7 @@ public abstract class PhyphoxFile {
     //Blockparser for the export block
     private static class exportBlockParser extends xmlBlockParser {
 
-        exportBlockParser(XmlPullParser xpp, PhyphoxExperiment experiment, Experiment parent) {
+        exportBlockParser(XmlPullParser xpp, PhyphoxExperiment experiment, ExperimentActivity parent) {
             super(xpp, experiment, parent);
         }
 
@@ -4204,7 +4204,7 @@ public abstract class PhyphoxFile {
         private DataExport.ExportSet set;
 
         //This constructor takes an additional argument: The export set to be filled
-        setBlockParser(XmlPullParser xpp, PhyphoxExperiment experiment, Experiment parent, DataExport.ExportSet set) {
+        setBlockParser(XmlPullParser xpp, PhyphoxExperiment experiment, ExperimentActivity parent, DataExport.ExportSet set) {
             super(xpp, experiment, parent);
             this.set = set;
         }
@@ -4228,7 +4228,7 @@ public abstract class PhyphoxFile {
     }
 
     //Load a phyphoxExperiment from an opened PhyphoxStream. Public because the corpus tests use it.
-    public static PhyphoxExperiment loadExperiment(PhyphoxStream input, Experiment parent) {
+    public static PhyphoxExperiment loadExperiment(PhyphoxStream input, ExperimentActivity parent) {
         //Reset translation state here too for callers that bypass openXMLInputStream
         languageRating = 0;
         translation = new HashMap<>();
@@ -4353,11 +4353,11 @@ public abstract class PhyphoxFile {
     //onExperimentLoaded of the activity given in the constructor.
     protected static class loadXMLAsyncTask extends AsyncTask<String, Void, PhyphoxExperiment> {
         private Intent intent;
-        private WeakReference<Experiment> parent;
+        private WeakReference<ExperimentActivity> parent;
 
-        loadXMLAsyncTask(Intent intent, Experiment parent) {
+        loadXMLAsyncTask(Intent intent, ExperimentActivity parent) {
             this.intent = intent;
-            this.parent = new WeakReference<Experiment>(parent);
+            this.parent = new WeakReference<ExperimentActivity>(parent);
         }
 
         //Load the file from the intent
@@ -4378,12 +4378,12 @@ public abstract class PhyphoxFile {
     //It calls onCopyXMLCompleted of the activity given in the constructor when it's done.
     protected static class CopyXMLTask extends AsyncTask<String, Void, String> {
         private Intent intent; //The intent to read from
-        private WeakReference<Experiment> parent; //The calling Activity
+        private WeakReference<ExperimentActivity> parent; //The calling Activity
 
         //The constructor takes the intent to copy from and the parent activity to call back when finished.
-        CopyXMLTask(Intent intent, Experiment parent) {
+        CopyXMLTask(Intent intent, ExperimentActivity parent) {
             this.intent = intent;
-            this.parent = new WeakReference<Experiment>(parent);
+            this.parent = new WeakReference<ExperimentActivity>(parent);
         }
 
         //Copying is done on a second thread...

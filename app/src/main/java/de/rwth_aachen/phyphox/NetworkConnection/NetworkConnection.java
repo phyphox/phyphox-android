@@ -357,7 +357,7 @@ public class NetworkConnection implements NetworkService.RequestCallback, Networ
                         mainHandler.post(new Runnable() {
                             @Override
                             public void run() {
-                                androidx.core.app.ActivityCompat.requestPermissions(activity, new String[]{android.Manifest.permission.ACCESS_LOCAL_NETWORK}, de.rwth_aachen.phyphox.Experiment.REQUEST_LOCAL_NETWORK_CONNECTIONS);
+                                androidx.core.app.ActivityCompat.requestPermissions(activity, new String[]{android.Manifest.permission.ACCESS_LOCAL_NETWORK}, de.rwth_aachen.phyphox.ExperimentActivity.REQUEST_LOCAL_NETWORK_CONNECTIONS);
                             }
                         });
                     }

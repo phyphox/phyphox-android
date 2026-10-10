@@ -18,7 +18,7 @@ import java.util.List;
 import java.util.Objects;
 import java.util.UUID;
 
-import de.rwth_aachen.phyphox.Experiment;
+import de.rwth_aachen.phyphox.ExperimentActivity;
 import de.rwth_aachen.phyphox.R;
 
 public class SimpleExperimentCreator {
@@ -96,7 +96,7 @@ public class SimpleExperimentCreator {
 
     public void startIntent(){
 
-        Intent intent = new Intent(context, Experiment.class);
+        Intent intent = new Intent(context, ExperimentActivity.class);
         intent.putExtra(EXPERIMENT_XML, fileName);
         intent.putExtra(EXPERIMENT_ISASSET, false);
         intent.setAction(Intent.ACTION_VIEW);

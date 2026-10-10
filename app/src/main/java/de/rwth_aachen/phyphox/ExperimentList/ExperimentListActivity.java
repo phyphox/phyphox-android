@@ -94,7 +94,7 @@ import java.util.zip.CRC32;
 import de.rwth_aachen.phyphox.Bluetooth.BluetoothExperimentLoader;
 import de.rwth_aachen.phyphox.Bluetooth.BluetoothNameFilter;
 import de.rwth_aachen.phyphox.Bluetooth.BluetoothScanDialog;
-import de.rwth_aachen.phyphox.Experiment;
+import de.rwth_aachen.phyphox.ExperimentActivity;
 import de.rwth_aachen.phyphox.ExperimentList.datasource.AssetExperimentLoader;
 import de.rwth_aachen.phyphox.ExperimentList.handler.BluetoothScanner;
 import de.rwth_aachen.phyphox.ExperimentList.handler.CopyIntentHandler;
@@ -815,7 +815,7 @@ public class ExperimentListActivity extends AppCompatActivity {
                 Toast.makeText(this, "Error: A saved state must contain exactly one experiment.", Toast.LENGTH_LONG).show();
             } else if (files.size() == 1) {
                 //Create an intent for this file
-                Intent intent = new Intent(this, Experiment.class);
+                Intent intent = new Intent(this, ExperimentActivity.class);
                 intent.setData(Uri.fromFile(files.iterator().next()));
                 if (preselectedDevice != null)
                     intent.putExtra(EXPERIMENT_PRESELECTED_BLUETOOTH_ADDRESS, preselectedDevice.getAddress());
@@ -930,7 +930,7 @@ public class ExperimentListActivity extends AppCompatActivity {
                 @Override
                 public void success(Uri experimentUri, boolean isZip) {
                     dismiss();
-                    Intent intent = new Intent(parent, Experiment.class);
+                    Intent intent = new Intent(parent, ExperimentActivity.class);
                     intent.setData(experimentUri);
                     intent.setAction(Intent.ACTION_VIEW);
                     if (isZip) {
@@ -973,7 +973,7 @@ public class ExperimentListActivity extends AppCompatActivity {
                 showError("Invalid experiment asset path.");
                 return;
             }
-            Intent assetIntent = new Intent(this, Experiment.class);
+            Intent assetIntent = new Intent(this, ExperimentActivity.class);
             assetIntent.putExtra(EXPERIMENT_XML, path);
             assetIntent.putExtra(EXPERIMENT_ISASSET, true);
             assetIntent.setAction(Intent.ACTION_VIEW);
@@ -1013,7 +1013,7 @@ public class ExperimentListActivity extends AppCompatActivity {
             if (!isZip) {
                 //This is just a single experiment - Start the Experiment activity and let it handle the intent
                 Intent forwardedIntent = new Intent(intent);
-                forwardedIntent.setClass(this, Experiment.class);
+                forwardedIntent.setClass(this, ExperimentActivity.class);
                 this.startActivity(forwardedIntent);
                 finishIfViewIntentDispatcher();
             } else {
@@ -1190,7 +1190,7 @@ public class ExperimentListActivity extends AppCompatActivity {
             if (textResult.toLowerCase().startsWith("http://") || textResult.toLowerCase().startsWith("https://") || textResult.toLowerCase().startsWith("phyphox://")) {
                 //This is an URL, open it
                 //Create an intent for this new file
-                Intent URLintent = new Intent(this, Experiment.class);
+                Intent URLintent = new Intent(this, ExperimentActivity.class);
                 URLintent.setData(Uri.parse("phyphox://" + textResult.split("//", 2)[1]));
                 URLintent.setAction(Intent.ACTION_VIEW);
                 handleIntent(URLintent);
@@ -1280,7 +1280,7 @@ public class ExperimentListActivity extends AppCompatActivity {
                     currentQRsize = -1;
                     currentQRcrc32 = -1;
 
-                    Intent zipIntent = new Intent(this, Experiment.class);
+                    Intent zipIntent = new Intent(this, ExperimentActivity.class);
                     zipIntent.setData(Uri.fromFile(zipFile));
                     zipIntent.setAction(Intent.ACTION_VIEW);
                     new ZipIntentHandler(zipIntent, this).execute();

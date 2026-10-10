@@ -128,7 +128,7 @@ import de.rwth_aachen.phyphox.ExperimentView.ExpViewElement;
 
 // Experiments are performed in this activity, which reacts to various intents.
 // The intent has to provide a *.phyphox file which defines the experiment
-public class Experiment extends AppCompatActivity implements View.OnClickListener,
+public class ExperimentActivity extends AppCompatActivity implements View.OnClickListener,
         NetworkConnection.ScanDialogDismissedDelegate,
         NetworkConnection.NetworkConnectionDataPolicyInfoDelegate, UpdateConnectedDeviceDelegate,
         BluetoothCommandDelegate {
@@ -305,7 +305,7 @@ public class Experiment extends AppCompatActivity implements View.OnClickListene
                     f.requestLeaveExclusive();
                     return;
                 }
-                leaveExperiment(Experiment.this::shutdownAndFinish);
+                leaveExperiment(ExperimentActivity.this::shutdownAndFinish);
             }
         };
         getOnBackPressedDispatcher().addCallback(this, backCallback);
@@ -554,8 +554,8 @@ public class Experiment extends AppCompatActivity implements View.OnClickListene
                     .setTitle(R.string.save_locally)
                     .setPositiveButton(R.string.save_locally_button, new DialogInterface.OnClickListener() {
                         public void onClick(DialogInterface dialog, int id) {
-                            progress = ProgressDialog.show(Experiment.this, res.getString(R.string.loadingTitle), res.getString(R.string.loadingText), true);
-                            new PhyphoxFile.CopyXMLTask(intent, Experiment.this).execute();
+                            progress = ProgressDialog.show(ExperimentActivity.this, res.getString(R.string.loadingTitle), res.getString(R.string.loadingText), true);
+                            new PhyphoxFile.CopyXMLTask(intent, ExperimentActivity.this).execute();
                             saveLocallyDismissed = true;
                             experiment.isLocal = true;
                             showInitialDialogs();
@@ -918,7 +918,7 @@ public class Experiment extends AppCompatActivity implements View.OnClickListene
                 if (networkConnection.needsLocalNetwork()) {
                     localNetworkPermissionAskedForConnections = true;
                     Helper.requestLocalNetworkPermission(this, R.string.permissionRequired, getString(R.string.localNetworkExperimentMessage), REQUEST_LOCAL_NETWORK_CONNECTIONS, () -> {
-                        Toast.makeText(Experiment.this, getString(R.string.localNetworkDeniedHint), Toast.LENGTH_LONG).show();
+                        Toast.makeText(ExperimentActivity.this, getString(R.string.localNetworkDeniedHint), Toast.LENGTH_LONG).show();
                         connectNetworkConnections();
                     });
                     return;
@@ -955,7 +955,7 @@ public class Experiment extends AppCompatActivity implements View.OnClickListene
             isBluetoothConnectionSuccessful = false;
             // connect all bluetooth devices with an asyncTask
             final Bluetooth.ConnectBluetoothTask btTask = new Bluetooth.ConnectBluetoothTask();
-            btTask.progress = ProgressDialog.show(Experiment.this, getResources().getString(R.string.loadingTitle), getResources().getString(R.string.loadingBluetoothConnectionText), true);
+            btTask.progress = ProgressDialog.show(ExperimentActivity.this, getResources().getString(R.string.loadingTitle), getResources().getString(R.string.loadingBluetoothConnectionText), true);
 
             // define onSuccess
             btTask.onSuccess = () -> {
@@ -972,7 +972,7 @@ public class Experiment extends AppCompatActivity implements View.OnClickListene
             };
 
             // set attributes of errorDialog
-            Bluetooth.errorDialog.context = Experiment.this;
+            Bluetooth.errorDialog.context = ExperimentActivity.this;
             Bluetooth.errorDialog.cancel = () -> btTask.progress.dismiss();
             Bluetooth.errorDialog.tryAgain = () -> {
                 // start a new task with the same attributes
@@ -1492,14 +1492,14 @@ public class Experiment extends AppCompatActivity implements View.OnClickListene
                         .setTitle(R.string.remoteServerWarningTitle)
                         .setPositiveButton(R.string.ok, new DialogInterface.OnClickListener() {
                             public void onClick(DialogInterface dialog, int id) {
-                                if (!Helper.needsLocalNetworkPermission(Experiment.this)) {
+                                if (!Helper.needsLocalNetworkPermission(ExperimentActivity.this)) {
                                     itemRef.setChecked(true);
                                     serverEnabled = true;
                                     startRemoteServer();
-                                } else if (ActivityCompat.shouldShowRequestPermissionRationale(Experiment.this, Manifest.permission.ACCESS_LOCAL_NETWORK)) {
-                                    Helper.requestLocalNetworkPermission(Experiment.this, R.string.permissionRequired, getString(R.string.localNetworkRationaleMessage), REQUEST_LOCAL_NETWORK_SCAN, null);
+                                } else if (ActivityCompat.shouldShowRequestPermissionRationale(ExperimentActivity.this, Manifest.permission.ACCESS_LOCAL_NETWORK)) {
+                                    Helper.requestLocalNetworkPermission(ExperimentActivity.this, R.string.permissionRequired, getString(R.string.localNetworkRationaleMessage), REQUEST_LOCAL_NETWORK_SCAN, null);
                                 } else {
-                                    ActivityCompat.requestPermissions(Experiment.this, new String[]{Manifest.permission.ACCESS_LOCAL_NETWORK}, REQUEST_LOCAL_NETWORK_SCAN);
+                                    ActivityCompat.requestPermissions(ExperimentActivity.this, new String[]{Manifest.permission.ACCESS_LOCAL_NETWORK}, REQUEST_LOCAL_NETWORK_SCAN);
                                 }
                             }
                         })
@@ -1723,7 +1723,7 @@ public class Experiment extends AppCompatActivity implements View.OnClickListene
             stopMeasurement(); // stop experiment
             // show an error dialog
             Bluetooth.errorDialog.message = e.getMessage();
-            Bluetooth.errorDialog.context = Experiment.this;
+            Bluetooth.errorDialog.context = ExperimentActivity.this;
             // try to connect the bluetooth devices again when the user clicks "try again"
             Bluetooth.errorDialog.tryAgain = new Runnable() {
               @Override
@@ -1822,7 +1822,7 @@ public class Experiment extends AppCompatActivity implements View.OnClickListene
         if (notConnectedDevice != null) {
             // show an error dialog
             Bluetooth.errorDialog.message = getResources().getString(R.string.bt_exception_no_connection)+Bluetooth.BluetoothException.getMessage(notConnectedDevice);
-            Bluetooth.errorDialog.context = Experiment.this;
+            Bluetooth.errorDialog.context = ExperimentActivity.this;
             // try to connect the bluetooth devices again when the user clicks "try again"
             Bluetooth.errorDialog.tryAgain = new Runnable() {
                 @Override
@@ -2422,11 +2422,11 @@ public class Experiment extends AppCompatActivity implements View.OnClickListene
                 updateUIForProgress(true, buttonShare);
                 FileOutputStream output = new FileOutputStream(file);
 
-                experiment.writeStateFileAsync(Experiment.this, customTitleET.getText().toString(), output, new WriteStateFileCallback() {
+                experiment.writeStateFileAsync(ExperimentActivity.this, customTitleET.getText().toString(), output, new WriteStateFileCallback() {
                     @Override
                     public void onSuccess() {
                         updateUIForProgress(false, buttonShare);
-                        DataExportUtility.startPhyphoxFileSharing(Experiment.this, file, DataExportUtility.MIME_TYPE_STATE);
+                        DataExportUtility.startPhyphoxFileSharing(ExperimentActivity.this, file, DataExportUtility.MIME_TYPE_STATE);
                         bottomSheetDialog.dismiss();
                     }
 
@@ -2450,11 +2450,11 @@ public class Experiment extends AppCompatActivity implements View.OnClickListene
                 updateUIForProgress(true, buttonDownload);
                 FileOutputStream output = new FileOutputStream(file);
 
-                experiment.writeStateFileAsync(Experiment.this, customTitleET.getText().toString(), output, new WriteStateFileCallback() {
+                experiment.writeStateFileAsync(ExperimentActivity.this, customTitleET.getText().toString(), output, new WriteStateFileCallback() {
                     @Override
                     public void onSuccess() {
                         updateUIForProgress(false, buttonDownload);
-                        DataExportUtility.createFileInDownloads(file, filename, DataExportUtility.MIME_TYPE_STATE, Experiment.this);
+                        DataExportUtility.createFileInDownloads(file, filename, DataExportUtility.MIME_TYPE_STATE, ExperimentActivity.this);
                         bottomSheetDialog.dismiss();
                     }
 
@@ -2479,7 +2479,7 @@ public class Experiment extends AppCompatActivity implements View.OnClickListene
                 //The collection keeps the extracted container tree in a directory of its own
                 File dir = new File(getFilesDir(), UUID.randomUUID().toString().replaceAll("-", "") + SavedState.DIRECTORY_SUFFIX);
 
-                experiment.writeStateDirectoryAsync(Experiment.this, customTitleET.getText().toString(), dir, new WriteStateFileCallback() {
+                experiment.writeStateDirectoryAsync(ExperimentActivity.this, customTitleET.getText().toString(), dir, new WriteStateFileCallback() {
                     @Override
                     public void onSuccess() {
                         updateUIForProgress(false,  buttonToCollection);

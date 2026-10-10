@@ -42,7 +42,7 @@ import java.util.Vector;
 
 import de.rwth_aachen.phyphox.BuildConfig;
 import de.rwth_aachen.phyphox.helper.DataExportUtility;
-import de.rwth_aachen.phyphox.Experiment;
+import de.rwth_aachen.phyphox.ExperimentActivity;
 import de.rwth_aachen.phyphox.ExperimentList.datasource.ExperimentRepository;
 import de.rwth_aachen.phyphox.ExperimentList.model.ExperimentShortInfo;
 import de.rwth_aachen.phyphox.helper.Helper;
@@ -107,7 +107,7 @@ public class ExperimentItemAdapter extends BaseAdapter {
     //It takes the index and the view that has been clicked (just for the animation)
     public void start(int position, View v) {
         //Create the intent and place the experiment location in it
-        Intent intent = new Intent(v.getContext(), Experiment.class);
+        Intent intent = new Intent(v.getContext(), ExperimentActivity.class);
         intent.putExtra(EXPERIMENT_XML, experimentShortInfos.get(position).xmlFile);
         intent.putExtra(EXPERIMENT_ISTEMP, experimentShortInfos.get(position).isTemp);
         intent.putExtra(EXPERIMENT_ISASSET, experimentShortInfos.get(position).isAsset);
