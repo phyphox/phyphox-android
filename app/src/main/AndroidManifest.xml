@@ -88,7 +88,7 @@
             </intent-filter>
         </activity>
         <activity
-            android:name="de.rwth_aachen.phyphox.Experiment"
+            android:name="de.rwth_aachen.phyphox.ExperimentActivity"
             android:label="@string/title_activity_experiment"
             android:configChanges="keyboard|keyboardHidden|orientation|screenSize|mcc|mnc"
             android:windowSoftInputMode="adjustPan"

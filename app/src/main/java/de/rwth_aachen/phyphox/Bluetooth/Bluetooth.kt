@@ -19,7 +19,7 @@ import android.widget.TextView
 import android.widget.Toast
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.view.ContextThemeWrapper
-import de.rwth_aachen.phyphox.Experiment
+import de.rwth_aachen.phyphox.ExperimentActivity
 import de.rwth_aachen.phyphox.ExperimentTimeReference
 import de.rwth_aachen.phyphox.PhyphoxFile
 import de.rwth_aachen.phyphox.R
@@ -519,7 +519,7 @@ open class Bluetooth(
         @Suppress("DEPRECATION", "OVERRIDE_DEPRECATION")
         override fun onCharacteristicChanged(gatt: BluetoothGatt, characteristic: BluetoothGattCharacteristic) {
             val now = System.currentTimeMillis()
-            if (Experiment.isBluetoothConnectionSuccessful && now - lastRssiRequest >= RSSI_INTERVAL_MS) {
+            if (ExperimentActivity.isBluetoothConnectionSuccessful && now - lastRssiRequest >= RSSI_INTERVAL_MS) {
                 lastRssiRequest = now
                 queue?.enqueue(BleOp.ReadRssi())?.let { deferred ->
                     bleScope.launch {
@@ -552,7 +552,7 @@ open class Bluetooth(
     private fun updateConnectedDeviceInfo(rssi: Int) {
         connectedDeviceInformation.signalStrength = rssi
         mainHandler.post {
-            Experiment.updateConnectedDeviceDelegate?.updateConnectedDevice(arrayListOf(connectedDeviceInformation))
+            ExperimentActivity.updateConnectedDeviceDelegate?.updateConnectedDevice(arrayListOf(connectedDeviceInformation))
         }
     }
 

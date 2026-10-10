@@ -22,7 +22,7 @@ import de.rwth_aachen.phyphox.DataBuffer;
 import de.rwth_aachen.phyphox.DataExport;
 import de.rwth_aachen.phyphox.DataOutput;
 import de.rwth_aachen.phyphox.ExpViewFragment;
-import de.rwth_aachen.phyphox.Experiment;
+import de.rwth_aachen.phyphox.ExperimentActivity;
 import de.rwth_aachen.phyphox.ExperimentTimeReference;
 import de.rwth_aachen.phyphox.ExperimentTimeReferenceSet;
 import de.rwth_aachen.phyphox.ExperimentView.GraphView.GraphView;
@@ -417,7 +417,7 @@ public class GraphElement extends ExpViewElement implements Serializable {
         interactiveGV.setLabel(this.label);
         interactiveGV.setShowColorScale(showColorScale);
 
-        if (act instanceof Experiment) {
+        if (act instanceof ExperimentActivity) {
             DataExport dataExport = new DataExport(experiment);
 
             DataExport.ExportSet set = dataExport.new ExportSet(this.label);

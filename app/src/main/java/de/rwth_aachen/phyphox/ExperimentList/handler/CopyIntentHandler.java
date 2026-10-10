@@ -11,7 +11,7 @@ import java.io.FileOutputStream;
 import java.lang.ref.WeakReference;
 import java.util.UUID;
 
-import de.rwth_aachen.phyphox.Experiment;
+import de.rwth_aachen.phyphox.ExperimentActivity;
 import de.rwth_aachen.phyphox.ExperimentList.ExperimentListActivity;
 import de.rwth_aachen.phyphox.PhyphoxFile;
 
@@ -85,7 +85,7 @@ public class CopyIntentHandler extends AsyncTask<String, Void, String> {
         }
 
         //Create an intent for this file
-        Intent intent = new Intent(parent.get(), Experiment.class);
+        Intent intent = new Intent(parent.get(), ExperimentActivity.class);
         intent.setData(Uri.fromFile(file));
         intent.putExtra(EXPERIMENT_ISTEMP, "temp");
         intent.setAction(Intent.ACTION_VIEW);

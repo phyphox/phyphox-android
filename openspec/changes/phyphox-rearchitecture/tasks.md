@@ -3,11 +3,11 @@
 ## Phase 0: Foundation (Priority: HIGH)
 
 ### 0.1 Rename Experiment.java → ExperimentActivity.java
-- [ ] Rename file from `Experiment.java` to `ExperimentActivity.java`
-- [ ] Update class declaration from `public class Experiment` to `class ExperimentActivity`
-- [ ] Update AndroidManifest.xml activity name reference
-- [ ] Update all import statements referencing Experiment
-- [ ] Verify build succeeds with rename
+- [x] Rename file from `Experiment.java` to `ExperimentActivity.java`
+- [x] Update class declaration from `public class Experiment` to `class ExperimentActivity`
+- [x] Update AndroidManifest.xml activity name reference
+- [x] Update all import statements referencing Experiment
+- [x] Verify build succeeds with rename
 
 ### 0.2 Add Metro Dependency Injection
 - [ ] Add Metro runtime dependency to app/build.gradle
