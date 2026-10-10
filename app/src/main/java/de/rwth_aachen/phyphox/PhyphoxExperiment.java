@@ -582,7 +582,7 @@ public class PhyphoxExperiment implements Serializable, ExperimentTimeReference.
     }
 
     //The state writers (SavedState) run off the UI thread; the callback comes back on it
-    public void writeStateFileAsync(Context ctx, String customTitle, OutputStream os, Experiment.WriteStateFileCallback writeStateFileCallback) {
+    public void writeStateFileAsync(Context ctx, String customTitle, OutputStream os, ExperimentActivity.WriteStateFileCallback writeStateFileCallback) {
         runStateWriter(() -> {
             String result = writeStateFile(ctx, customTitle, os);
             try {
@@ -596,7 +596,7 @@ public class PhyphoxExperiment implements Serializable, ExperimentTimeReference.
     }
 
     //The collection keeps the extracted tree; a failed write leaves no half directory behind
-    public void writeStateDirectoryAsync(Context ctx, String customTitle, File dir, Experiment.WriteStateFileCallback writeStateFileCallback) {
+    public void writeStateDirectoryAsync(Context ctx, String customTitle, File dir, ExperimentActivity.WriteStateFileCallback writeStateFileCallback) {
         runStateWriter(() -> {
             try {
                 SavedState.writeDirectory(this, customTitle, ctx, dir);
@@ -608,7 +608,7 @@ public class PhyphoxExperiment implements Serializable, ExperimentTimeReference.
         }, writeStateFileCallback);
     }
 
-    private void runStateWriter(Callable<String> writer, Experiment.WriteStateFileCallback writeStateFileCallback) {
+    private void runStateWriter(Callable<String> writer, ExperimentActivity.WriteStateFileCallback writeStateFileCallback) {
         ExecutorService stateWriterExecutor = Executors.newSingleThreadExecutor();
         Handler mainThreadHandler = new Handler(Looper.getMainLooper());
         stateWriterExecutor.execute(() -> {
