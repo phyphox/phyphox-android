@@ -35,7 +35,7 @@ public class ExpViewFragment extends Fragment {
 
     //Apply zoom to all graphs on the current page.
     public void applyZoom(double min, double max, boolean follow, Unit unit, String buffer, boolean yAxis, boolean absoluteTime) {
-        for (ExpViewElement element : ((Experiment) getActivity()).experiment.experimentViews.elementAt(index).flatElements()) {
+        for (ExpViewElement element : ((ExperimentActivity) getActivity()).experiment.experimentViews.elementAt(index).flatElements()) {
             if (element.getClass() == GraphElement.class) {
                 GraphElement ge = (GraphElement)element;
                 ge.applyZoom(min, max, follow, unit, buffer, yAxis, absoluteTime);
@@ -57,8 +57,8 @@ public class ExpViewFragment extends Fragment {
     }
 
     private void notifyExclusiveChanged() {
-        if (getActivity() instanceof Experiment)
-            ((Experiment) getActivity()).updateBackCallbackState();
+        if (getActivity() instanceof ExperimentActivity)
+            ((ExperimentActivity) getActivity()).updateBackCallbackState();
     }
 
     public void requestExclusive(ExpViewElement caller) {
@@ -76,7 +76,7 @@ public class ExpViewFragment extends Fragment {
         LinearLayout ll = (LinearLayout)root.findViewById(R.id.experimentView);
         ll.setLayoutTransition(layoutTransition);
         //The top-level element holding the caller stretches to the full height (groups pass this down to the leaf), all others hide
-        for (ExpViewElement element : ((Experiment) getActivity()).experiment.experimentViews.elementAt(index).elements) {
+        for (ExpViewElement element : ((ExperimentActivity) getActivity()).experiment.experimentViews.elementAt(index).elements) {
             if (element.contains(caller)) {
                 element.maximizePath(caller);
             } else {
@@ -107,8 +107,8 @@ public class ExpViewFragment extends Fragment {
     }
 
     private void requestLeaveExclusiveKeepingAction() {
-        if (getActivity() instanceof Experiment && ((Experiment) getActivity()).experiment != null && ((Experiment) getActivity()).experiment.experimentViews.size() > index) {
-            for (ExpViewElement element : ((Experiment) getActivity()).experiment.experimentViews.elementAt(index).flatElements()) {
+        if (getActivity() instanceof ExperimentActivity && ((ExperimentActivity) getActivity()).experiment != null && ((ExperimentActivity) getActivity()).experiment.experimentViews.size() > index) {
+            for (ExpViewElement element : ((ExperimentActivity) getActivity()).experiment.experimentViews.elementAt(index).flatElements()) {
                 if (element.state == ExpView.State.maximized && element.getChildren() == null) { //the leaf, not a group on the path to it
                     element.requestLeaveExclusive();
                     return;
@@ -132,7 +132,7 @@ public class ExpViewFragment extends Fragment {
         layoutTransition.setStartDelay(LayoutTransition.CHANGING, 0);
         LinearLayout ll = (LinearLayout)root.findViewById(R.id.experimentView);
         ll.setLayoutTransition(layoutTransition);
-        for (ExpViewElement element : ((Experiment) getActivity()).experiment.experimentViews.elementAt(index).elements) {
+        for (ExpViewElement element : ((ExperimentActivity) getActivity()).experiment.experimentViews.elementAt(index).elements) {
             element.restore();
         }
         ll.setLayoutTransition(null);
@@ -167,8 +167,8 @@ public class ExpViewFragment extends Fragment {
         if (root == null)
             return;
         LinearLayout ll = (LinearLayout)root.findViewById(R.id.experimentView);
-        if (((Experiment)getActivity()).experiment != null && ((Experiment)getActivity()).experiment.experimentViews.size() > index) {
-            for (ExpViewElement element : ((Experiment) getActivity()).experiment.experimentViews.elementAt(index).elements) {
+        if (((ExperimentActivity)getActivity()).experiment != null && ((ExperimentActivity)getActivity()).experiment.experimentViews.size() > index) {
+            for (ExpViewElement element : ((ExperimentActivity) getActivity()).experiment.experimentViews.elementAt(index).elements) {
                 element.destroyView();
             }
         }
@@ -177,22 +177,22 @@ public class ExpViewFragment extends Fragment {
         root.setFillViewport(false);
         hasExclusive = false;
 
-        if (((Experiment)getActivity()).experiment != null && ((Experiment)getActivity()).experiment.experimentViews.size() > index) {
-            for (ExpViewElement element : ((Experiment) getActivity()).experiment.experimentViews.elementAt(index).elements) {
-                element.createView(ll, getContext(), getResources(), this, ((Experiment) getActivity()).experiment);
+        if (((ExperimentActivity)getActivity()).experiment != null && ((ExperimentActivity)getActivity()).experiment.experimentViews.size() > index) {
+            for (ExpViewElement element : ((ExperimentActivity) getActivity()).experiment.experimentViews.elementAt(index).elements) {
+                element.createView(ll, getContext(), getResources(), this, ((ExperimentActivity) getActivity()).experiment);
             }
         }
 
-        if (((Experiment)getActivity()).experiment != null)
-            ((Experiment) getActivity()).experiment.updateViews(index, true);
+        if (((ExperimentActivity)getActivity()).experiment != null)
+            ((ExperimentActivity) getActivity()).experiment.updateViews(index, true);
     }
 
     @Override
     public void setUserVisibleHint(boolean isVisibleToUser) {
         super.setUserVisibleHint(isVisibleToUser);
         if(isVisibleToUser) {
-            if (getActivity() != null && ((Experiment)getActivity()).experiment != null)
-                ((Experiment) getActivity()).experiment.updateViews(index, true);
+            if (getActivity() != null && ((ExperimentActivity)getActivity()).experiment != null)
+                ((ExperimentActivity) getActivity()).experiment.updateViews(index, true);
         } else if (hasExclusive) {
             leaveExclusive(); //the fragment really goes away; a user's tab change is held back in Experiment.selectPage
         }
@@ -231,8 +231,8 @@ public class ExpViewFragment extends Fragment {
         if(getActivity() == null){
             return;
         }
-        if (((Experiment)getActivity()).experiment != null && ((Experiment)getActivity()).experiment.experimentViews.size() > index) {
-            for (ExpViewElement element : ((Experiment) getActivity()).experiment.experimentViews.elementAt(index).elements) {
+        if (((ExperimentActivity)getActivity()).experiment != null && ((ExperimentActivity)getActivity()).experiment.experimentViews.size() > index) {
+            for (ExpViewElement element : ((ExperimentActivity) getActivity()).experiment.experimentViews.elementAt(index).elements) {
                 element.destroyView();
             }
         }
@@ -247,9 +247,9 @@ public class ExpViewFragment extends Fragment {
         LinearLayout ll = (LinearLayout)root.findViewById(R.id.experimentView);
         ll.removeAllViews();
 
-        if (((Experiment)getActivity()).experiment != null && ((Experiment)getActivity()).experiment.experimentViews.size() > index) {
-            for (ExpViewElement element : ((Experiment) getActivity()).experiment.experimentViews.elementAt(index).elements) {
-                element.onFragmentStop(((Experiment) getActivity()).experiment);
+        if (((ExperimentActivity)getActivity()).experiment != null && ((ExperimentActivity)getActivity()).experiment.experimentViews.size() > index) {
+            for (ExpViewElement element : ((ExperimentActivity) getActivity()).experiment.experimentViews.elementAt(index).elements) {
+                element.onFragmentStop(((ExperimentActivity) getActivity()).experiment);
             }
         }
 
