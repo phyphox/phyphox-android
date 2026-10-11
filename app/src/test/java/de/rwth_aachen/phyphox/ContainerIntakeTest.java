@@ -47,7 +47,7 @@ public class ContainerIntakeTest {
 
     private File fixtures;
     private ExperimentListActivity listActivity;
-    private Experiment experimentActivity;
+    private ExperimentActivity experimentActivity;
 
     @Before
     public void createActivity() {
@@ -117,7 +117,7 @@ public class ContainerIntakeTest {
         collection.handleIntent(viewIntent(bare));
         Intent forwarded = Shadows.shadowOf(collection).getNextStartedActivity();
         assertNotNull("a bare experiment file was not forwarded anywhere", forwarded);
-        assertEquals(Experiment.class.getName(), forwarded.getComponent().getClassName());
+        assertEquals(ExperimentActivity.class.getName(), forwarded.getComponent().getClassName());
 
         //...while the PK\x03\x04 signature routes it into the zip handler, which unpacks before it decides.
         collection.handleIntent(viewIntent(fixture("two-experiments.zip")));
@@ -158,7 +158,7 @@ public class ContainerIntakeTest {
         //A single experiment inside is opened straight away rather than offered in a chooser.
         Intent opened = Shadows.shadowOf(listActivity).getNextStartedActivity();
         assertNotNull("the single experiment in the container was not opened", opened);
-        assertEquals(Experiment.class.getName(), opened.getComponent().getClassName());
+        assertEquals(ExperimentActivity.class.getName(), opened.getComponent().getClassName());
         assertEquals("temp_zip", opened.getStringExtra(Const.EXPERIMENT_ISTEMP));
 
         //res/ entries travel with it; everything else in an archive is dropped on purpose.
@@ -312,10 +312,10 @@ public class ContainerIntakeTest {
         Intent forwarded = Shadows.shadowOf(listActivity).getNextStartedActivity();
         assertNotNull("the file was not routed anywhere at all", forwarded);
         assertEquals("a partial zip opened as a file was treated as a container",
-                Experiment.class.getName(), forwarded.getComponent().getClassName());
+                ExperimentActivity.class.getName(), forwarded.getComponent().getClassName());
 
         //Nor does it pass as bare XML: the descriptor after the payload is not part of the document.
-        Experiment activity = CorpusTestEnvironment.fullyEquippedActivity();
+        ExperimentActivity activity = CorpusTestEnvironment.fullyEquippedActivity();
         PhyphoxFile.PhyphoxStream stream = PhyphoxFile.openXMLInputStream(forwarded, activity);
         PhyphoxExperiment experiment = PhyphoxFile.loadExperiment(stream, activity);
         assertFalse("a partial zip opened as a file loaded as an experiment - the compact form is "

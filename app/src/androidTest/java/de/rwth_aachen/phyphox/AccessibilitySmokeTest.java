@@ -71,7 +71,7 @@ public class AccessibilitySmokeTest {
     }
 
     private View decorViewOfTheForeground() {
-        Experiment experiment = FixtureExperiment.activity();
+        ExperimentActivity experiment = FixtureExperiment.activity();
         assertTrue("no phyphox screen is in the foreground", experiment != null);
         return experiment.getWindow().getDecorView();
     }

@@ -173,8 +173,8 @@ public class SaveToCollectionTest {
     }
 
     //Waits until the experiment is really gone, or the next lookup finds the one still on screen.
-    private Experiment backToCollection() {
-        Experiment open = FixtureExperiment.activity();
+    private ExperimentActivity backToCollection() {
+        ExperimentActivity open = FixtureExperiment.activity();
         FixtureExperiment.close(open);
         long deadline = System.currentTimeMillis() + 10000;
         while (FixtureExperiment.activity() != null && System.currentTimeMillis() < deadline)
@@ -185,9 +185,9 @@ public class SaveToCollectionTest {
 
     //Through the collection's list, so a save that never registers its entry fails here. Retried:
     //the list rebuilds in onResume, so an entry can go stale under the tap and a tap can be swallowed.
-    private Experiment openFromCollection(String title) {
+    private ExperimentActivity openFromCollection(String title) {
         FixtureExperiment.suppressHints();
-        Experiment previous = backToCollection();
+        ExperimentActivity previous = backToCollection();
 
         boolean everListed = false;
         long deadline = System.currentTimeMillis() + 40000;
@@ -203,7 +203,7 @@ public class SaveToCollectionTest {
             } catch (StaleObjectException e) {
                 continue; //the list rebuilt under the tap - look it up again
             }
-            Experiment opened = awaitOpened(previous, 8000);
+            ExperimentActivity opened = awaitOpened(previous, 8000);
             if (opened != null)
                 return opened;
             FixtureExperiment.bringToForeground(); //the tap did not take, try once more
@@ -214,10 +214,10 @@ public class SaveToCollectionTest {
     }
 
     //By identity, not title: a reopened experiment has the same title as the one just closed.
-    private Experiment awaitOpened(Experiment previous, long millis) {
+    private ExperimentActivity awaitOpened(ExperimentActivity previous, long millis) {
         long deadline = System.currentTimeMillis() + millis;
         while (System.currentTimeMillis() < deadline) {
-            Experiment activity = FixtureExperiment.activity();
+            ExperimentActivity activity = FixtureExperiment.activity();
             if (activity != null && activity != previous
                     && activity.experiment != null && activity.experiment.loaded)
                 return activity;
@@ -258,7 +258,7 @@ public class SaveToCollectionTest {
         openContainer("with-resource.zip");
 
         //A single experiment opens straight away and, coming from outside, offers to be kept.
-        Experiment opened = FixtureExperiment.awaitLoaded();
+        ExperimentActivity opened = FixtureExperiment.awaitLoaded();
         long crc32 = opened.experiment.crc32;
         UiObject2 offer = device().wait(Until.findObject(By.textContains("experiment collection")),
                 20000);
@@ -275,7 +275,7 @@ public class SaveToCollectionTest {
         assertTrue("the bundled resource was not extracted into " + resourceFolder,
                 awaitFile(new File(resourceFolder, "pic.png"), 20000));
 
-        Experiment reopened = openFromCollection("Container fixture with resource");
+        ExperimentActivity reopened = openFromCollection("Container fixture with resource");
         assertEquals("Container fixture with resource", reopened.experiment.title);
         assertTrue("a saved experiment still counts as external", reopened.experiment.isLocal);
         assertEquals("the saved experiment lost its resource folder", resourceFolder.getPath(),
@@ -304,7 +304,7 @@ public class SaveToCollectionTest {
                 awaitNewExperiments(2).size());
 
         for (String title : new String[]{"Container fixture A", "Container fixture B"}) {
-            Experiment reopened = openFromCollection(title);
+            ExperimentActivity reopened = openFromCollection(title);
             assertEquals(title, reopened.experiment.title);
             assertTrue("a saved experiment still counts as external", reopened.experiment.isLocal);
         }

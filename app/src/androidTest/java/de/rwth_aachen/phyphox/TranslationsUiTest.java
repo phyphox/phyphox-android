@@ -251,7 +251,7 @@ public class TranslationsUiTest {
                             language)));
 
             //a shipped experiment: the fixtures are English on purpose
-            Experiment experiment = FixtureExperiment.launchAsset("accelerometer.phyphox");
+            ExperimentActivity experiment = FixtureExperiment.launchAsset("accelerometer.phyphox");
             Thread.sleep(1000);
             if (experiment == null || !experiment.experiment.loaded) {
                 unrendered.add(language + ": the experiment did not open");

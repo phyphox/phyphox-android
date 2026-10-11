@@ -39,7 +39,7 @@ public class LinkEntryTest {
     //The same file without the attribute is a broken experiment and must stay one.
     private static final String NOT_A_LINK = LINK_ENTRY.replace(" isLink=\"true\"", "");
 
-    private PhyphoxExperiment load(String content, Experiment activity) {
+    private PhyphoxExperiment load(String content, ExperimentActivity activity) {
         return CorpusTestEnvironment.load(
                 new ByteArrayInputStream(content.getBytes(StandardCharsets.UTF_8)), activity);
     }
@@ -62,7 +62,7 @@ public class LinkEntryTest {
     }
 
     //So that the link intent resolves the way it does on a real device.
-    private void installBrowser(Experiment activity, String url) {
+    private void installBrowser(ExperimentActivity activity, String url) {
         ResolveInfo browser = new ResolveInfo();
         browser.activityInfo = new ActivityInfo();
         browser.activityInfo.packageName = "com.example.browser";
@@ -73,7 +73,7 @@ public class LinkEntryTest {
 
     @Test
     public void openingALinkEntryOpensItsLinkAndLeaves() {
-        Experiment activity = Robolectric.buildActivity(Experiment.class).setup().get();
+        ExperimentActivity activity = Robolectric.buildActivity(ExperimentActivity.class).setup().get();
         installBrowser(activity, "https://phyphox.org/contribute");
         PhyphoxExperiment experiment = load(LINK_ENTRY, activity);
         assertTrue(experiment.loaded);
@@ -90,7 +90,7 @@ public class LinkEntryTest {
     //A URL the app cannot open is not silently swallowed.
     @Test
     public void aLinkEntryWithAnUnusableUrlComplains() {
-        Experiment activity = Robolectric.buildActivity(Experiment.class).setup().get();
+        ExperimentActivity activity = Robolectric.buildActivity(ExperimentActivity.class).setup().get();
         PhyphoxExperiment experiment = load(
                 LINK_ENTRY.replace("https://phyphox.org/contribute", "ftp://phyphox.org/nope"),
                 activity);

@@ -54,7 +54,7 @@ public class CorpusToleratedAttributesLoadTest {
                 !CorpusTestEnvironment.CORPUS_MISSING.equals(relativePath));
 
         File file = new File(CorpusTestEnvironment.findCorpus(), relativePath);
-        Experiment activity = CorpusTestEnvironment.fullyEquippedActivity();
+        ExperimentActivity activity = CorpusTestEnvironment.fullyEquippedActivity();
         PhyphoxExperiment experiment = CorpusTestEnvironment.load(file, activity);
         assertTrue(relativePath + " must load (expected.yml classifies it as \"parser: accepts\": its"
                 + " defects are unknown/misapplied attributes, tolerated per unknown-attribute-ignored)"

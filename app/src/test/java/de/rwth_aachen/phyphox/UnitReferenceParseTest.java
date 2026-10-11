@@ -37,17 +37,19 @@ public class UnitReferenceParseTest {
                 + "</view></views></phyphox>";
     }
 
-    private Experiment activity; //one simulated device per test: the environment cannot be equipped twice
+    private ExperimentActivity activity; //one simulated device per test: the environment cannot be equipped twice
 
-    private Experiment activity() {
+    private ExperimentActivity activity() {
         if (activity == null)
             activity = CorpusTestEnvironment.fullyEquippedActivity();
         return activity;
     }
 
     private PhyphoxExperiment load(String version, String unit) {
-        Experiment activity = activity();
-        PhyphoxExperiment experiment = CorpusTestEnvironment.load(new ByteArrayInputStream(xml(version, unit).getBytes(StandardCharsets.UTF_8)), activity);
+        ExperimentActivity activity = activity();
+        PhyphoxExperiment experiment = CorpusTestEnvironment.load(
+                new ByteArrayInputStream(xml(version, unit)
+                        .getBytes(StandardCharsets.UTF_8)), activity);
         assertThat(experiment.message).isEmpty();
         assertThat(experiment.loaded).isTrue();
         return experiment;
@@ -110,7 +112,7 @@ public class UnitReferenceParseTest {
     public void theCorpusFilesOfTheRuleLoadAsSpecified() throws Exception {
         File corpus = CorpusTestEnvironment.findCorpus();
         assumeTrue("No phyphox-docs checkout found next to this repository - corpus skipped.", corpus != null);
-        Experiment activity = activity();
+        ExperimentActivity activity = activity();
 
         PhyphoxExperiment references = CorpusTestEnvironment.load(new File(corpus, "generated/unit-references.phyphox"), activity);
         assertThat(references.loaded).isTrue();

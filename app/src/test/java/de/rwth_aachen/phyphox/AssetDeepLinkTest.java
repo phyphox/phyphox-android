@@ -45,12 +45,12 @@ public class AssetDeepLinkTest {
     public void opensBundledExperimentEndToEnd() throws Exception {
         Intent started = deepLink("phyphox://asset=accelerometer.phyphox");
 
-        assertEquals(Experiment.class.getName(), started.getComponent().getClassName());
+        assertEquals(ExperimentActivity.class.getName(), started.getComponent().getClassName());
         assertEquals("accelerometer.phyphox", started.getStringExtra(Const.EXPERIMENT_XML));
         assertTrue(started.getBooleanExtra(Const.EXPERIMENT_ISASSET, false));
 
         //The forwarded intent must load the bundled experiment through the real loading path
-        Experiment activity = CorpusTestEnvironment.fullyEquippedActivity();
+        ExperimentActivity activity = CorpusTestEnvironment.fullyEquippedActivity();
         PhyphoxFile.PhyphoxStream stream = PhyphoxFile.openXMLInputStream(started, activity);
         PhyphoxExperiment experiment = PhyphoxFile.loadExperiment(stream, activity);
         assertTrue("The bundled experiment failed to load: " + experiment.message, experiment.loaded);
@@ -63,7 +63,7 @@ public class AssetDeepLinkTest {
 
         assertEquals("bluetooth/phyphox_m_bmp581.phyphox", started.getStringExtra(Const.EXPERIMENT_XML));
 
-        Experiment activity = CorpusTestEnvironment.fullyEquippedActivity();
+        ExperimentActivity activity = CorpusTestEnvironment.fullyEquippedActivity();
         PhyphoxFile.PhyphoxStream stream = PhyphoxFile.openXMLInputStream(started, activity);
         PhyphoxExperiment experiment = PhyphoxFile.loadExperiment(stream, activity);
         assertTrue("The bundled experiment failed to load: " + experiment.message, experiment.loaded);
@@ -91,7 +91,7 @@ public class AssetDeepLinkTest {
         //Validation only guards the path shape; an unknown file fails in the normal loading path.
         Intent started = deepLink("phyphox://asset=doesnotexist.phyphox");
 
-        Experiment activity = CorpusTestEnvironment.fullyEquippedActivity();
+        ExperimentActivity activity = CorpusTestEnvironment.fullyEquippedActivity();
         PhyphoxFile.PhyphoxStream stream = PhyphoxFile.openXMLInputStream(started, activity);
         PhyphoxExperiment experiment = PhyphoxFile.loadExperiment(stream, activity);
         assertTrue("An unknown asset path must fail to load", !experiment.loaded && !experiment.message.isEmpty());

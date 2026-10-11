@@ -71,7 +71,7 @@ public class SwitchBypassedUiTest {
     @Test
     public void theMenuToggleEnablesRemoteAccess() throws Exception {
         assumeTrue(FixtureExperiment.available("values.phyphox"));
-        Experiment activity = FixtureExperiment.launch("values.phyphox");
+        ExperimentActivity activity = FixtureExperiment.launch("values.phyphox");
         try {
             assertTrue("the remote API answers although no switch is set and the menu toggle was "
                     + "not used", !remoteApiAnswers());
@@ -102,7 +102,7 @@ public class SwitchBypassedUiTest {
     @Test
     public void theNetworkPrivacyNoticeIsInformational() throws Exception {
         assumeTrue(FixtureExperiment.available("http-error-down.phyphox"));
-        Experiment activity = FixtureExperiment.launch("http-error-down.phyphox");
+        ExperimentActivity activity = FixtureExperiment.launch("http-error-down.phyphox");
         try {
             UiObject2 notice = device().wait(Until.findObject(By.text("Privacy warning")), 10000);
             assertNotNull("opening a network experiment showed no privacy notice", notice);

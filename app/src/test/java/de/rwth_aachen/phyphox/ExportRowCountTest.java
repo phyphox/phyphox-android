@@ -48,7 +48,7 @@ public class ExportRowCountTest {
                     + "</export>"
                     + "</phyphox>";
 
-    private PhyphoxExperiment load(Experiment activity) {
+    private PhyphoxExperiment load(ExperimentActivity activity) {
         PhyphoxExperiment experiment = CorpusTestEnvironment.load(
                 new ByteArrayInputStream(EXPERIMENT.getBytes(StandardCharsets.UTF_8)), activity);
         assertTrue("Test experiment failed to load: " + experiment.message, experiment.loaded);
@@ -81,7 +81,7 @@ public class ExportRowCountTest {
 
     @Test
     public void csvHoldsAsManyRowsAsTheLongestColumn() throws Exception {
-        Experiment activity = CorpusTestEnvironment.fullyEquippedActivity();
+        ExperimentActivity activity = CorpusTestEnvironment.fullyEquippedActivity();
         PhyphoxExperiment experiment = load(activity);
 
         File file = experiment.exporter.exportDirect(experiment.exporter.exportFormats[1],
@@ -100,7 +100,7 @@ public class ExportRowCountTest {
 
     @Test
     public void xlsxHoldsAsManyRowsAsTheLongestColumn() throws Exception {
-        Experiment activity = CorpusTestEnvironment.fullyEquippedActivity();
+        ExperimentActivity activity = CorpusTestEnvironment.fullyEquippedActivity();
         PhyphoxExperiment experiment = load(activity);
 
         File file = experiment.exporter.exportDirect(experiment.exporter.exportFormats[0],
@@ -122,7 +122,7 @@ public class ExportRowCountTest {
         org.junit.Assume.assumeTrue("The experiment collection submodule is not checked out",
                 asset.isFile());
 
-        Experiment activity = CorpusTestEnvironment.fullyEquippedActivity();
+        ExperimentActivity activity = CorpusTestEnvironment.fullyEquippedActivity();
         PhyphoxExperiment experiment = CorpusTestEnvironment.load(asset, activity);
         assertTrue(experiment.message, experiment.loaded);
 

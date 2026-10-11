@@ -166,7 +166,7 @@ public abstract class CorpusTestEnvironment {
     }
 
     //A simulated device with every sensor and capability the corpus needs, so only parse errors can fail a file.
-    public static Experiment fullyEquippedActivity() {
+    public static ExperimentActivity fullyEquippedActivity() {
         Application application = ApplicationProvider.getApplicationContext();
 
         Shadows.shadowOf(application).grantPermissions(
@@ -226,7 +226,7 @@ public abstract class CorpusTestEnvironment {
 
         //Attached but not started: the parser uses the activity only as a Context and for sensorManager,
         //and onCreate would start loading an experiment itself.
-        Experiment activity = Robolectric.buildActivity(Experiment.class).get();
+        ExperimentActivity activity = Robolectric.buildActivity(ExperimentActivity.class).get();
         if (activity.getBaseContext() == null)
             Shadows.shadowOf(activity).callAttach(new Intent());
         activity.sensorManager = sensorManager;
@@ -269,13 +269,13 @@ public abstract class CorpusTestEnvironment {
     }
 
     //The real loading path, as loadXMLAsyncTask runs it once the stream is open.
-    public static PhyphoxExperiment load(File file, Experiment activity) throws IOException {
+    public static PhyphoxExperiment load(File file, ExperimentActivity activity) throws IOException {
         try (InputStream inputStream = new FileInputStream(file)) {
             return load(inputStream, activity);
         }
     }
 
-    static PhyphoxExperiment load(InputStream inputStream, Experiment activity) {
+    static PhyphoxExperiment load(InputStream inputStream, ExperimentActivity activity) {
         PhyphoxFile.PhyphoxStream stream = new PhyphoxFile.PhyphoxStream();
         stream.inputStream = inputStream;
         stream.isLocal = true;

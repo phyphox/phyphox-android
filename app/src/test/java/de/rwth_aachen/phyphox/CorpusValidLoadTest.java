@@ -58,7 +58,7 @@ public class CorpusValidLoadTest {
 
         String expectation = CorpusTestEnvironment.androidExpectation(corpus, relativePath);
 
-        Experiment activity = CorpusTestEnvironment.fullyEquippedActivity();
+        ExperimentActivity activity = CorpusTestEnvironment.fullyEquippedActivity();
         PhyphoxExperiment experiment = CorpusTestEnvironment.load(file, activity);
 
         if ("rejects".equals(expectation))

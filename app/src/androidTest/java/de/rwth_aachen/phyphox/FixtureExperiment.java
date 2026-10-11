@@ -58,12 +58,12 @@ final class FixtureExperiment {
 
     //Starts the fixture and returns the activity once its experiment is loaded. Not ActivityScenario:
     //a running experiment redraws every 40 ms, so the main looper never idles and it would hang.
-    static Experiment launch(String fixture) throws IOException {
+    static ExperimentActivity launch(String fixture) throws IOException {
         Context app = getInstrumentation().getTargetContext();
         suppressHints();
         copyToPrivateDir(fixture, app);
 
-        Intent intent = new Intent(app, Experiment.class);
+        Intent intent = new Intent(app, ExperimentActivity.class);
         intent.setAction(Intent.ACTION_VIEW);
         intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
         intent.putExtra(Const.EXPERIMENT_XML, fixture);
@@ -77,7 +77,7 @@ final class FixtureExperiment {
         return "10.0.2.2:8115";
     }
 
-    static Experiment launchAsset(String asset) {
+    static ExperimentActivity launchAsset(String asset) {
         launchAssetWithoutWaiting(asset);
         return awaitLoaded();
     }
@@ -86,7 +86,7 @@ final class FixtureExperiment {
     static void launchAssetWithoutWaiting(String asset) {
         Context app = getInstrumentation().getTargetContext();
         suppressHints();
-        Intent intent = new Intent(app, Experiment.class);
+        Intent intent = new Intent(app, ExperimentActivity.class);
         intent.setAction(Intent.ACTION_VIEW);
         intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
         intent.putExtra(Const.EXPERIMENT_XML, asset);
@@ -104,7 +104,7 @@ final class FixtureExperiment {
         app.startActivity(intent);
     }
 
-    static void close(Experiment activity) {
+    static void close(ExperimentActivity activity) {
         if (activity != null)
             getInstrumentation().runOnMainSync(activity::finish);
     }
@@ -120,22 +120,22 @@ final class FixtureExperiment {
     }
 
     //Via runOnMainSync, not ActivityScenario.onActivity: the main looper never idles (see launch).
-    static Experiment activity() {
-        final Experiment[] holder = new Experiment[1];
+    static ExperimentActivity activity() {
+        final ExperimentActivity[] holder = new ExperimentActivity[1];
         getInstrumentation().runOnMainSync(() -> {
             for (Activity activity : ActivityLifecycleMonitorRegistry.getInstance()
                     .getActivitiesInStage(Stage.RESUMED)) {
-                if (activity instanceof Experiment)
-                    holder[0] = (Experiment) activity;
+                if (activity instanceof ExperimentActivity)
+                    holder[0] = (ExperimentActivity) activity;
             }
         });
         return holder[0];
     }
 
-    static Experiment awaitLoaded() {
+    static ExperimentActivity awaitLoaded() {
         final long deadline = System.currentTimeMillis() + 30000;
         while (System.currentTimeMillis() < deadline) {
-            Experiment activity = activity();
+            ExperimentActivity activity = activity();
             if (activity != null && activity.experiment != null && activity.experiment.loaded)
                 return activity;
             try {

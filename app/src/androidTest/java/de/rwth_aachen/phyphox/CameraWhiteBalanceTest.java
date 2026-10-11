@@ -41,7 +41,7 @@ public class CameraWhiteBalanceTest {
     private static final String TEMPERATURE = "camera-white-balance-temperature.phyphox";
     private static final String UNLOCKED = "camera-rgb.phyphox";
 
-    private Experiment activity;
+    private ExperimentActivity activity;
 
     @After
     public void closeFixture() {

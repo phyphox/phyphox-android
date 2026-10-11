@@ -44,14 +44,14 @@ public class ExclusiveNavigationTest {
             + "<view label=\"two\"><graph label=\"g2\" labelX=\"t\" unitX=\"s\" labelY=\"a\" unitY=\"m/s²\"><input axis=\"x\">x</input><input axis=\"y\">y</input></graph></view>"
             + "</views></phyphox>";
 
-    private static ActivityController<Experiment> launch() throws Exception {
+    private static ActivityController<ExperimentActivity> launch() throws Exception {
         File target = new File(RuntimeEnvironment.getApplication().getFilesDir(), "exclusive-test.phyphox");
         Files.write(target.toPath(), XML.getBytes(StandardCharsets.UTF_8));
-        Intent intent = new Intent(RuntimeEnvironment.getApplication(), Experiment.class);
+        Intent intent = new Intent(RuntimeEnvironment.getApplication(), ExperimentActivity.class);
         intent.setAction(Intent.ACTION_VIEW);
         intent.putExtra(Const.EXPERIMENT_XML, "exclusive-test.phyphox");
         intent.putExtra(Const.EXPERIMENT_ISASSET, false);
-        ActivityController<Experiment> controller = Robolectric.buildActivity(Experiment.class, intent).setup();
+        ActivityController<ExperimentActivity> controller = Robolectric.buildActivity(ExperimentActivity.class, intent).setup();
         long deadline = System.currentTimeMillis() + 30000;
         while (System.currentTimeMillis() < deadline) {
             ShadowLooper.idleMainLooper();
@@ -63,7 +63,7 @@ public class ExclusiveNavigationTest {
         throw new AssertionError("did not load: " + (controller.get().experiment == null ? "no experiment" : controller.get().experiment.message));
     }
 
-    private static GraphElement maximizeFirstGraph(Experiment activity) {
+    private static GraphElement maximizeFirstGraph(ExperimentActivity activity) {
         GraphElement graph = (GraphElement) activity.experiment.experimentViews.get(0).elements.get(0);
         activity.getCurrentExpViewFragment().requestExclusive(graph);
         ShadowLooper.idleMainLooper();
@@ -73,9 +73,9 @@ public class ExclusiveNavigationTest {
 
     @Test
     public void theToolbarArrowClosesTheExclusiveViewFirstAndLeavesOnlyAfterwards() throws Exception {
-        ActivityController<Experiment> controller = launch();
+        ActivityController<ExperimentActivity> controller = launch();
         try {
-            Experiment activity = controller.get();
+            ExperimentActivity activity = controller.get();
             maximizeFirstGraph(activity);
             activity.onOptionsItemSelected(new RoboMenuItem(android.R.id.home));
             ShadowLooper.idleMainLooper();
@@ -91,9 +91,9 @@ public class ExclusiveNavigationTest {
 
     @Test
     public void systemBackClosesTheExclusiveViewFirstAndLeavesOnlyAfterwards() throws Exception {
-        ActivityController<Experiment> controller = launch();
+        ActivityController<ExperimentActivity> controller = launch();
         try {
-            Experiment activity = controller.get();
+            ExperimentActivity activity = controller.get();
             maximizeFirstGraph(activity);
             activity.getOnBackPressedDispatcher().onBackPressed();
             ShadowLooper.idleMainLooper();
@@ -109,9 +109,9 @@ public class ExclusiveNavigationTest {
 
     @Test
     public void theZoomAndFollowStateSurviveARecreatedView() throws Exception {
-        ActivityController<Experiment> controller = launch();
+        ActivityController<ExperimentActivity> controller = launch();
         try {
-            Experiment activity = controller.get();
+            ExperimentActivity activity = controller.get();
             GraphElement graph = (GraphElement) activity.experiment.experimentViews.get(0).elements.get(0);
             graph.applyZoom(2, 4, true, null, null, false, false); //keep and follow new data
             graph.getZoomState().previouslyKept = true;
@@ -127,9 +127,9 @@ public class ExclusiveNavigationTest {
 
     @Test
     public void aTabChangeWaitsForTheExclusiveViewAndAZoomedGraphAsksFirst() throws Exception {
-        ActivityController<Experiment> controller = launch();
+        ActivityController<ExperimentActivity> controller = launch();
         try {
-            Experiment activity = controller.get();
+            ExperimentActivity activity = controller.get();
             assertThat(activity.pager.getCurrentItem()).isEqualTo(0);
             //not zoomed: the tab change closes the view and moves on at once
             maximizeFirstGraph(activity);

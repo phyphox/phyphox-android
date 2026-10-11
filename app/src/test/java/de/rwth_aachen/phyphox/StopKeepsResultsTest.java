@@ -39,7 +39,7 @@ public class StopKeepsResultsTest {
                     + "<export><set name=\"Data\"><data name=\"peak\">peak</data></set></export>"
                     + "</phyphox>";
 
-    private Experiment activity;
+    private ExperimentActivity activity;
 
     private PhyphoxExperiment load() {
         activity = CorpusTestEnvironment.fullyEquippedActivity();

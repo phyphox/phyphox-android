@@ -175,7 +175,7 @@ public class TranslationSelectionTest {
     private static final File LIGHT = new File("src/main/assets/experiments/light.phyphox");
 
     private static ExperimentShortInfo scan(java.io.InputStream input) {
-        Experiment activity = org.robolectric.Robolectric.buildActivity(Experiment.class).setup().get();
+        ExperimentActivity activity = org.robolectric.Robolectric.buildActivity(ExperimentActivity.class).setup().get();
         return AssetExperimentLoader.loadExperimentShortInfo(
                 new ExperimentLoadInfoData(input, "test.phyphox", null, false), new ExperimentListEnvironment(activity));
     }

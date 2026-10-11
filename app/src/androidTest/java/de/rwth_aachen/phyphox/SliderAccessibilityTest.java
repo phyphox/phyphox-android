@@ -65,7 +65,7 @@ public class SliderAccessibilityTest {
         assumeTrue("No phyphox-docs checkout was present at build time - fixtures skipped.",
                 FixtureExperiment.available(FIXTURE));
 
-        Experiment activity = FixtureExperiment.launch(FIXTURE);
+        ExperimentActivity activity = FixtureExperiment.launch(FIXTURE);
         try {
             List<String> nodes = awaitSliderNodes(15000);
             long sliders = sliderNodes(nodes);

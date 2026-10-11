@@ -165,8 +165,8 @@ public class SavedStateCollectionTest {
         throw new AssertionError("no state directory appeared in the collection");
     }
 
-    private Experiment backToCollection() {
-        Experiment open = FixtureExperiment.activity();
+    private ExperimentActivity backToCollection() {
+        ExperimentActivity open = FixtureExperiment.activity();
         FixtureExperiment.close(open);
         long deadline = System.currentTimeMillis() + 10000;
         while (FixtureExperiment.activity() != null && System.currentTimeMillis() < deadline)
@@ -197,9 +197,9 @@ public class SavedStateCollectionTest {
         }
     }
 
-    private Experiment openFromCollection(String title) {
+    private ExperimentActivity openFromCollection(String title) {
         FixtureExperiment.suppressHints();
-        Experiment previous = backToCollection();
+        ExperimentActivity previous = backToCollection();
         long deadline = System.currentTimeMillis() + 40000;
         while (System.currentTimeMillis() < deadline) {
             UiObject2 entry = listed(title);
@@ -208,7 +208,7 @@ public class SavedStateCollectionTest {
             } catch (StaleObjectException e) {
                 continue;
             }
-            Experiment opened = awaitOpened(previous, 8000);
+            ExperimentActivity opened = awaitOpened(previous, 8000);
             if (opened != null)
                 return opened;
             FixtureExperiment.bringToForeground();
@@ -216,10 +216,10 @@ public class SavedStateCollectionTest {
         throw new AssertionError("tapping \"" + title + "\" in the collection never opened it");
     }
 
-    private Experiment awaitOpened(Experiment previous, long millis) {
+    private ExperimentActivity awaitOpened(ExperimentActivity previous, long millis) {
         long deadline = System.currentTimeMillis() + millis;
         while (System.currentTimeMillis() < deadline) {
-            Experiment activity = FixtureExperiment.activity();
+            ExperimentActivity activity = FixtureExperiment.activity();
             if (activity != null && activity != previous
                     && activity.experiment != null && activity.experiment.loaded)
                 return activity;
@@ -306,7 +306,7 @@ public class SavedStateCollectionTest {
     @Test
     public void aStateSavedToTheCollectionRoundTripsRenamesSharesAndDeletes() throws Exception {
         openContainer("with-resource.zip");
-        Experiment opened = FixtureExperiment.awaitLoaded();
+        ExperimentActivity opened = FixtureExperiment.awaitLoaded();
         byte[] source = opened.experiment.source;
         assertNotNull("the loaded experiment keeps no source", source);
 
@@ -345,7 +345,7 @@ public class SavedStateCollectionTest {
         assertTrue(device().wait(Until.gone(By.res(app().getPackageName(), "editTextMeasurementName")), 10000));
 
         //Listed under "Saved experiment states" with the given title and reopened with its data
-        Experiment reopened = openFromCollection(STATE_TITLE);
+        ExperimentActivity reopened = openFromCollection(STATE_TITLE);
         assertEquals(STATE_TITLE, reopened.experiment.stateTitle);
         assertEquals(EXPERIMENT_TITLE, reopened.experiment.title);
         assertTrue("a collected state does not count as local", reopened.experiment.isLocal);

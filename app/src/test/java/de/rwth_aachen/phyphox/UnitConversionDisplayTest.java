@@ -47,7 +47,7 @@ import de.rwth_aachen.phyphox.ExperimentView.ValueElement;
 @Config(sdk = 35, qualifiers = "en-rUS-w411dp-h891dp-normal-port-notnight-mdpi")
 public class UnitConversionDisplayTest {
 
-    private ActivityController<Experiment> controller;
+    private ActivityController<ExperimentActivity> controller;
 
     @After
     public void close() {
@@ -60,20 +60,20 @@ public class UnitConversionDisplayTest {
         PreferenceManager.getDefaultSharedPreferences(RuntimeEnvironment.getApplication()).edit().putString(Units.Setting.PREF_KEY, value).commit();
     }
 
-    private Experiment launchCorpusFixture() throws Exception {
+    private ExperimentActivity launchCorpusFixture() throws Exception {
         File corpus = CorpusTestEnvironment.findCorpus();
         assumeTrue("No phyphox-docs checkout found next to this repository - fixture skipped.", corpus != null);
         return launch(new String(Files.readAllBytes(new File(corpus, "generated/unit-references.phyphox").toPath()), StandardCharsets.UTF_8));
     }
 
-    private Experiment launch(String xml) throws Exception {
+    private ExperimentActivity launch(String xml) throws Exception {
         File target = new File(RuntimeEnvironment.getApplication().getFilesDir(), "units-test.phyphox");
         Files.write(target.toPath(), xml.getBytes(StandardCharsets.UTF_8));
-        Intent intent = new Intent(RuntimeEnvironment.getApplication(), Experiment.class);
+        Intent intent = new Intent(RuntimeEnvironment.getApplication(), ExperimentActivity.class);
         intent.setAction(Intent.ACTION_VIEW);
         intent.putExtra(Const.EXPERIMENT_XML, "units-test.phyphox");
         intent.putExtra(Const.EXPERIMENT_ISASSET, false);
-        controller = Robolectric.buildActivity(Experiment.class, intent).setup();
+        controller = Robolectric.buildActivity(ExperimentActivity.class, intent).setup();
         long deadline = System.currentTimeMillis() + 30000;
         while (System.currentTimeMillis() < deadline) {
             ShadowLooper.idleMainLooper();
@@ -85,18 +85,18 @@ public class UnitConversionDisplayTest {
         throw new AssertionError("did not load: " + (controller.get().experiment == null ? "no experiment" : controller.get().experiment.message));
     }
 
-    private static <T extends ExpViewElement> T element(Experiment activity, int i, Class<T> type) {
+    private static <T extends ExpViewElement> T element(ExperimentActivity activity, int i, Class<T> type) {
         return type.cast(activity.experiment.experimentViews.get(0).elements.get(i));
     }
 
     //Renders the element from its buffer, as the main loop does every 40 ms
-    private static String shown(Experiment activity, ValueElement value) {
+    private static String shown(ExperimentActivity activity, ValueElement value) {
         value.notifyUpdate(false, false);
         value.onMayReadFromBuffers(activity.experiment);
         return value.displayedText().toString();
     }
 
-    private static String shown(Experiment activity, EditElement edit) {
+    private static String shown(ExperimentActivity activity, EditElement edit) {
         edit.onMayReadFromBuffers(activity.experiment);
         return edit.displayedText().toString();
     }
@@ -128,14 +128,14 @@ public class UnitConversionDisplayTest {
         return igv.popupWindowText == null ? null : igv.popupWindowText.getText().toString();
     }
 
-    private static double[] buffers(Experiment activity) {
+    private static double[] buffers(ExperimentActivity activity) {
         return new double[]{activity.experiment.getBuffer("distance").value, activity.experiment.getBuffer("temperature").value, activity.experiment.getBuffer("length").value};
     }
 
     @Test
     public void experimentSettingShowsTheUnitsAsTheFileNamesThem() throws Exception {
         setting("experiment");
-        Experiment activity = launchCorpusFixture();
+        ExperimentActivity activity = launchCorpusFixture();
         double[] before = buffers(activity);
         ValueElement distance = element(activity, 0, ValueElement.class);
         assertThat(shown(activity, distance)).isEqualTo("150.0 cm");
@@ -159,7 +159,7 @@ public class UnitConversionDisplayTest {
     @Test
     public void imperialSettingConvertsEveryConvertibleElementAndSkipsTheRest() throws Exception {
         setting("imperial");
-        Experiment activity = launchCorpusFixture();
+        ExperimentActivity activity = launchCorpusFixture();
         double[] before = buffers(activity);
         //cm with one decimal shows two in inches (the precision rule)
         assertThat(shown(activity, element(activity, 0, ValueElement.class))).isEqualTo("59.06 in");
@@ -187,7 +187,7 @@ public class UnitConversionDisplayTest {
     @Test
     public void metricSettingLeavesMetricUnitsAlone() throws Exception {
         setting("metric");
-        Experiment activity = launchCorpusFixture();
+        ExperimentActivity activity = launchCorpusFixture();
         assertThat(shown(activity, element(activity, 0, ValueElement.class))).isEqualTo("150.0 cm");
         assertThat(shown(activity, element(activity, 1, ValueElement.class))).isEqualTo("21.5 °C");
         assertThat(graphView(element(activity, 4, GraphElement.class)).getLabelAndUnitY()).isEqualTo("a (m/s²)");
@@ -196,7 +196,7 @@ public class UnitConversionDisplayTest {
     @Test
     public void aSwitchedUnitChangesWhatTheElementShowsButNotItsData() throws Exception {
         setting("experiment");
-        Experiment activity = launchCorpusFixture();
+        ExperimentActivity activity = launchCorpusFixture();
         double[] before = buffers(activity);
 
         ValueElement distance = element(activity, 0, ValueElement.class);
@@ -274,7 +274,7 @@ public class UnitConversionDisplayTest {
     @Test
     public void theExclusionsOfferNoConversion() throws Exception {
         setting("imperial");
-        Experiment activity = launch("<phyphox xmlns=\"http://phyphox.org/xml\" version=\"1.21\" locale=\"en\">"
+        ExperimentActivity activity = launch("<phyphox xmlns=\"http://phyphox.org/xml\" version=\"1.21\" locale=\"en\">"
                 + "<title>t</title><category>c</category><description>d</description>"
                 + "<data-containers><container size=\"1\" init=\"1.5\">v</container><container size=\"1\" init=\"3\">n</container></data-containers>"
                 + "<views><view label=\"v\">"

@@ -56,7 +56,7 @@ public class ViewDrawingTest {
     private static final String FIXTURE = "view-drawing.phyphox";
     private static final int WIDTH_DP = 411;
 
-    private ActivityController<Experiment> controller;
+    private ActivityController<ExperimentActivity> controller;
 
     @After
     public void close() {
@@ -65,20 +65,20 @@ public class ViewDrawingTest {
         PreferenceManager.getDefaultSharedPreferences(RuntimeEnvironment.getApplication()).edit().remove(Units.Setting.PREF_KEY).commit();
     }
 
-    private Experiment launchCorpusFixture() throws Exception {
+    private ExperimentActivity launchCorpusFixture() throws Exception {
         File corpus = CorpusTestEnvironment.findCorpus();
         assumeTrue("No phyphox-docs checkout found next to this repository - fixture skipped.", corpus != null);
         return launch(new String(Files.readAllBytes(new File(corpus, "generated/" + FIXTURE).toPath()), StandardCharsets.UTF_8));
     }
 
-    private Experiment launch(String xml) throws Exception {
+    private ExperimentActivity launch(String xml) throws Exception {
         File target = new File(RuntimeEnvironment.getApplication().getFilesDir(), "drawing-test.phyphox");
         Files.write(target.toPath(), xml.getBytes(StandardCharsets.UTF_8));
-        Intent intent = new Intent(RuntimeEnvironment.getApplication(), Experiment.class);
+        Intent intent = new Intent(RuntimeEnvironment.getApplication(), ExperimentActivity.class);
         intent.setAction(Intent.ACTION_VIEW);
         intent.putExtra(Const.EXPERIMENT_XML, "drawing-test.phyphox");
         intent.putExtra(Const.EXPERIMENT_ISASSET, false);
-        controller = Robolectric.buildActivity(Experiment.class, intent).setup();
+        controller = Robolectric.buildActivity(ExperimentActivity.class, intent).setup();
         long deadline = System.currentTimeMillis() + 30000;
         while (System.currentTimeMillis() < deadline) {
             ShadowLooper.idleMainLooper();
@@ -97,14 +97,14 @@ public class ViewDrawingTest {
         SettingsFragment.setApplicationTheme(setting);
     }
 
-    private static int windowBackground(Experiment activity) {
+    private static int windowBackground(ExperimentActivity activity) {
         android.util.TypedValue value = new android.util.TypedValue();
         if (activity.getTheme().resolveAttribute(android.R.attr.colorBackground, value, true))
             return value.data;
         return android.graphics.Color.BLACK;
     }
 
-    private static ExpViewElement top(Experiment activity, int i) {
+    private static ExpViewElement top(ExperimentActivity activity, int i) {
         return activity.experiment.experimentViews.get(0).elements.get(i);
     }
 
@@ -116,7 +116,7 @@ public class ViewDrawingTest {
     //Every top-level group of the "Drawing" view, in both themes, against the goldens
     private void snapshots(String configuration, String setting, String qualifiers) throws Exception {
         theme(setting, qualifiers);
-        Experiment activity = launchCorpusFixture();
+        ExperimentActivity activity = launchCorpusFixture();
         activity.experiment.updateViews(0, true); //applies the transforms and reads the bound containers
         int widthPx = Math.round(WIDTH_DP * activity.getResources().getDisplayMetrics().density);
         int background = windowBackground(activity);
@@ -146,7 +146,7 @@ public class ViewDrawingTest {
 
     @Test
     public void theBoxIsTheFullWidthAndWidthOverAspectRatioTall() throws Exception {
-        Experiment activity = launchCorpusFixture();
+        ExperimentActivity activity = launchCorpusFixture();
         GroupElement vertical = (GroupElement) top(activity, 1);
         layout(vertical.rootView, 800);
         GeometryElement trough = (GeometryElement) vertical.getChildren().get(0);
@@ -162,7 +162,7 @@ public class ViewDrawingTest {
 
     @Test
     public void aBoundContainerReRangesTheTicsButNotTheBaseline() throws Exception {
-        Experiment activity = launchCorpusFixture();
+        ExperimentActivity activity = launchCorpusFixture();
         GroupElement grid = (GroupElement) top(activity, 3);
         ScaleElement bound = (ScaleElement) grid.getChildren().get(2); //min from "lower" (-10), max from "upper" (250)
         activity.experiment.updateViews(0, true);
@@ -212,7 +212,7 @@ public class ViewDrawingTest {
 
     @Test
     public void aTapOnTheLabelOfAnUntransformedScaleInAStackOpensTheUnitDialogAndNothingElseDoes() throws Exception {
-        Experiment activity = launch("<phyphox xmlns=\"http://phyphox.org/xml\" version=\"1.21\" locale=\"en\">"
+        ExperimentActivity activity = launch("<phyphox xmlns=\"http://phyphox.org/xml\" version=\"1.21\" locale=\"en\">"
                 + "<title>t</title><category>c</category><description>d</description>"
                 + "<data-containers><container size=\"1\" init=\"0.5\">v</container></data-containers>"
                 + "<views><view label=\"v\">"
@@ -291,7 +291,7 @@ public class ViewDrawingTest {
 
     @Test
     public void aTextUnitHasNoTapTarget() throws Exception {
-        Experiment activity = launchCorpusFixture();
+        ExperimentActivity activity = launchCorpusFixture();
         GroupElement gauge = (GroupElement) top(activity, 0);
         GroupElement.StackLayout layout = (GroupElement.StackLayout) gauge.rootView;
         layout(layout, 400);

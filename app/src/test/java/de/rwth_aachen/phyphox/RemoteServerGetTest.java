@@ -48,7 +48,7 @@ public class RemoteServerGetTest {
 
     @Before
     public void startServer() {
-        Experiment activity = CorpusTestEnvironment.fullyEquippedActivity();
+        ExperimentActivity activity = CorpusTestEnvironment.fullyEquippedActivity();
         experiment = CorpusTestEnvironment.load(
                 new ByteArrayInputStream(EXPERIMENT.getBytes(StandardCharsets.UTF_8)), activity);
         assertTrue("Test experiment failed to load: " + experiment.message, experiment.loaded);

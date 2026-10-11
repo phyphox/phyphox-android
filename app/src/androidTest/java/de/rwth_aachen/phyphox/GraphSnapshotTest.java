@@ -84,7 +84,7 @@ public class GraphSnapshotTest {
         List<String> findings = new ArrayList<>();
         FixtureExperiment.applyThemeSetting(themeSetting);
 
-        Experiment activity = FixtureExperiment.launch(fixture);
+        ExperimentActivity activity = FixtureExperiment.launch(fixture);
         try {
             Thread.sleep(SETTLE_MILLIS);
             String stem = fixture.replace(".phyphox", "");

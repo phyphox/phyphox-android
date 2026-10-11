@@ -113,7 +113,7 @@ public class AppChromeTest {
 
     @Test
     public void theExperimentMenuOffersItsActions() throws Exception {
-        Experiment activity = FixtureExperiment.launchAsset("accelerometer.phyphox");
+        ExperimentActivity activity = FixtureExperiment.launchAsset("accelerometer.phyphox");
         try {
             UiObject2 overflow = device().wait(Until.findObject(By.desc("More options")), 10000);
             assertNotNull("the experiment has no menu", overflow);
@@ -156,7 +156,7 @@ public class AppChromeTest {
 
     @Test
     public void anExperimentSurvivesRotation() throws Exception {
-        Experiment activity = FixtureExperiment.launchAsset("accelerometer.phyphox");
+        ExperimentActivity activity = FixtureExperiment.launchAsset("accelerometer.phyphox");
         try {
             device().setOrientationLeft();
             Thread.sleep(2000);

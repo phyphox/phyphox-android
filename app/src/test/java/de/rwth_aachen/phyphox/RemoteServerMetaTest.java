@@ -46,7 +46,7 @@ public class RemoteServerMetaTest {
 
     @Before
     public void startServer() {
-        Experiment activity = CorpusTestEnvironment.fullyEquippedActivity();
+        ExperimentActivity activity = CorpusTestEnvironment.fullyEquippedActivity();
         //Robolectric's simulated camera lacks the characteristics the /meta camera report reads,
         //so run without cameras; the sensor half does not depend on it.
         CameraManager cameraManager = (CameraManager) activity.getSystemService(Context.CAMERA_SERVICE);

@@ -75,7 +75,7 @@ public class AnalysisGoldenVectorTest {
         JSONObject expected = readJson(new File(corpus,
                 relativePath.substring(0, relativePath.length() - ".phyphox".length()) + ".expected.json"));
 
-        Experiment activity = CorpusTestEnvironment.fullyEquippedActivity();
+        ExperimentActivity activity = CorpusTestEnvironment.fullyEquippedActivity();
         PhyphoxExperiment experiment = CorpusTestEnvironment.load(file, activity);
         assertTrue(relativePath + " failed to load: " + experiment.message, experiment.loaded);
 

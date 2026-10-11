@@ -110,7 +110,7 @@ public class BleCompatConnectTest {
         if (loadFromDevice != null)
             loadFromDevice.click();
 
-        Experiment experiment = awaitLoaded(90000);
+        ExperimentActivity experiment = awaitLoaded(90000);
         assertNotNull("the experiment the device offers did not load within 90 s", experiment);
         assertTrue("the experiment arrived but did not parse: " + experiment.experiment.message,
                 experiment.experiment.loaded);
@@ -149,10 +149,10 @@ public class BleCompatConnectTest {
     }
 
     //FixtureExperiment.awaitLoaded throws on a fixed deadline; the BLE transfer needs its own.
-    private Experiment awaitLoaded(long millis) {
+    private ExperimentActivity awaitLoaded(long millis) {
         long deadline = System.currentTimeMillis() + millis;
         while (System.currentTimeMillis() < deadline) {
-            Experiment activity = FixtureExperiment.activity();
+            ExperimentActivity activity = FixtureExperiment.activity();
             if (activity != null && activity.experiment != null && activity.experiment.loaded)
                 return activity;
             try {

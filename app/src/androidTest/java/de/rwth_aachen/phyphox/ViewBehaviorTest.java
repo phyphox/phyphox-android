@@ -110,7 +110,7 @@ public class ViewBehaviorTest {
     // -------------------------------------------------------------- the views
 
     //Polls: awaitLoaded() returns once parsed, and the views are built later when the pager inflates.
-    private <T extends View> T viewOf(Experiment activity, String label, Class<T> type)
+    private <T extends View> T viewOf(ExperimentActivity activity, String label, Class<T> type)
             throws InterruptedException {
         long deadline = System.currentTimeMillis() + 5000;
         while (true) {
@@ -125,7 +125,7 @@ public class ViewBehaviorTest {
                 + "\" after 5 s. Elements with a view: " + laidOutLabels(activity));
     }
 
-    private <T extends View> T findViewOf(Experiment activity, String label, Class<T> type) {
+    private <T extends View> T findViewOf(ExperimentActivity activity, String label, Class<T> type) {
         for (ExpView view : activity.experiment.experimentViews)
             for (ExpViewElement element : view.elements)
                 if (label.equals(element.label) && element.rootView != null) {
@@ -136,7 +136,7 @@ public class ViewBehaviorTest {
         return null;
     }
 
-    private String laidOutLabels(Experiment activity) {
+    private String laidOutLabels(ExperimentActivity activity) {
         StringBuilder labels = new StringBuilder();
         for (ExpView view : activity.experiment.experimentViews)
             for (ExpViewElement element : view.elements)
@@ -221,7 +221,7 @@ public class ViewBehaviorTest {
     // --------------------------------------------------------------- the tests
 
     //Swaps the page and lets it settle; no waitForIdleSync(), the main looper never idles
-    private void page(Experiment activity, int index) throws Exception {
+    private void page(ExperimentActivity activity, int index) throws Exception {
         activity.runOnUiThread(() ->
                 ((ViewPager) activity.findViewById(R.id.view_pager)).setCurrentItem(index, false));
         Thread.sleep(1500);
@@ -231,7 +231,7 @@ public class ViewBehaviorTest {
     @Test
     public void containerInitBeatsAControlsDefault() throws Exception {
         assumeTrue(FixtureExperiment.available("init-vs-default.phyphox"));
-        Experiment activity = FixtureExperiment.launch("init-vs-default.phyphox");
+        ExperimentActivity activity = FixtureExperiment.launch("init-vs-default.phyphox");
         try {
             assertBuffer("toggle_init", 1);
             assertBuffer("dropdown_init", 2);
@@ -264,7 +264,7 @@ public class ViewBehaviorTest {
     @Test
     public void aNanIsReplacedByTheDefault() throws Exception {
         assumeTrue(FixtureExperiment.available("nan-vs-default.phyphox"));
-        Experiment activity = FixtureExperiment.launch("nan-vs-default.phyphox");
+        ExperimentActivity activity = FixtureExperiment.launch("nan-vs-default.phyphox");
         try {
             assertBuffer("toggle_nan", 1);
             assertBuffer("dropdown_nan", 2);
@@ -279,7 +279,7 @@ public class ViewBehaviorTest {
     @Test
     public void editsWriteWhatTheyAccept() throws Exception {
         assumeTrue(FixtureExperiment.available("edits.phyphox"));
-        Experiment activity = FixtureExperiment.launch("edits.phyphox");
+        ExperimentActivity activity = FixtureExperiment.launch("edits.phyphox");
         try {
             EditText plain = viewOf(activity, "plain", EditText.class);
             type(plain, "2.75");
@@ -317,7 +317,7 @@ public class ViewBehaviorTest {
     @Test
     public void buttonsWriteTheirBuffers() throws Exception {
         assumeTrue(FixtureExperiment.available("buttons-toggles.phyphox"));
-        Experiment activity = FixtureExperiment.launch("buttons-toggles.phyphox");
+        ExperimentActivity activity = FixtureExperiment.launch("buttons-toggles.phyphox");
         try {
             tap(viewOf(activity, "write 7", View.class));
             assertBuffer("target", 7);
@@ -340,7 +340,7 @@ public class ViewBehaviorTest {
     @Test
     public void togglesWriteTheirBuffers() throws Exception {
         assumeTrue(FixtureExperiment.available("buttons-toggles.phyphox"));
-        Experiment activity = FixtureExperiment.launch("buttons-toggles.phyphox");
+        ExperimentActivity activity = FixtureExperiment.launch("buttons-toggles.phyphox");
         try {
             tap(viewOf(activity, "on by default", View.class));
             assertBuffer("switch1", 0);
@@ -355,7 +355,7 @@ public class ViewBehaviorTest {
     @Test
     public void slidersWriteTheirBuffers() throws Exception {
         assumeTrue(FixtureExperiment.available("sliders-dropdowns.phyphox"));
-        Experiment activity = FixtureExperiment.launch("sliders-dropdowns.phyphox");
+        ExperimentActivity activity = FixtureExperiment.launch("sliders-dropdowns.phyphox");
         try {
             //The plain slider sits at 2.5 of 0..5; drag the thumb right.
             View plain = viewOf(activity, "plain",
@@ -396,7 +396,7 @@ public class ViewBehaviorTest {
     @Test
     public void theDropdownWritesItsBuffer() throws Exception {
         assumeTrue(FixtureExperiment.available("sliders-dropdowns.phyphox"));
-        Experiment activity = FixtureExperiment.launch("sliders-dropdowns.phyphox");
+        ExperimentActivity activity = FixtureExperiment.launch("sliders-dropdowns.phyphox");
         try {
             //Material's exposed menu (AutoCompleteTextView, not a Spinner): the list is its own popup.
             AutoCompleteTextView dropdown = viewOf(activity, "mode", AutoCompleteTextView.class);

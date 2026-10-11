@@ -27,7 +27,7 @@ public class CameraColorChannelsTest {
     private static final String SPECTRUM = "camera-rgb-spectrum.phyphox";
     private static final int FRAMES = 10;
 
-    private Experiment activity;
+    private ExperimentActivity activity;
 
     @After
     public void closeFixture() {

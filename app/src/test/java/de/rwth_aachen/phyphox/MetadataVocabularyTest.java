@@ -18,7 +18,7 @@ public class MetadataVocabularyTest {
 
     @Test
     public void everySensorIdentifierIsAccepted() {
-        Experiment activity = CorpusTestEnvironment.fullyEquippedActivity();
+        ExperimentActivity activity = CorpusTestEnvironment.fullyEquippedActivity();
         for (SensorInput.SensorName sensor : Metadata.sensorsWithMetadata())
             for (Metadata.SensorMetadata sensorMetadata : Metadata.SensorMetadata.values()) {
                 String identifier = sensor.name() + sensorMetadata.toString();
@@ -32,7 +32,7 @@ public class MetadataVocabularyTest {
 
     @Test
     public void theCustomSensorIsNotPartOfTheVocabulary() {
-        Experiment activity = CorpusTestEnvironment.fullyEquippedActivity();
+        ExperimentActivity activity = CorpusTestEnvironment.fullyEquippedActivity();
         assertFalse("Custom sensors are selected by nameFilter, so their metadata is ambiguous",
                 Metadata.sensorsWithMetadata().contains(SensorInput.SensorName.custom));
         boolean rejected = false;

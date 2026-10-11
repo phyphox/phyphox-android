@@ -144,9 +144,9 @@ public class ViewSnapshotTest {
                 .commit();
         SettingsFragment.setApplicationTheme(configuration.themeSetting);
 
-        ActivityController<Experiment> controller = launch();
+        ActivityController<ExperimentActivity> controller = launch();
         try {
-            Experiment activity = controller.get();
+            ExperimentActivity activity = controller.get();
             int widthPx = Math.round(configuration.widthDp
                     * activity.getResources().getDisplayMetrics().density);
             int background = windowBackground(activity);
@@ -182,7 +182,7 @@ public class ViewSnapshotTest {
         }
     }
 
-    private static int windowBackground(Experiment activity) {
+    private static int windowBackground(ExperimentActivity activity) {
         android.util.TypedValue value = new android.util.TypedValue();
         if (activity.getTheme().resolveAttribute(android.R.attr.colorBackground, value, true))
             return value.data;
@@ -190,25 +190,25 @@ public class ViewSnapshotTest {
     }
 
     //The real experiment activity lays the elements out exactly as a user would see them.
-    private ActivityController<Experiment> launch() throws IOException {
+    private ActivityController<ExperimentActivity> launch() throws IOException {
         File source = new File(ViewFixtures.directory(), fixture);
         File target = new File(RuntimeEnvironment.getApplication().getFilesDir(), fixture);
         Files.copy(source.toPath(), target.toPath(),
                 java.nio.file.StandardCopyOption.REPLACE_EXISTING);
 
-        Intent intent = new Intent(RuntimeEnvironment.getApplication(), Experiment.class);
+        Intent intent = new Intent(RuntimeEnvironment.getApplication(), ExperimentActivity.class);
         intent.setAction(Intent.ACTION_VIEW);
         intent.putExtra(Const.EXPERIMENT_XML, fixture);
         intent.putExtra(Const.EXPERIMENT_ISASSET, false);
 
-        ActivityController<Experiment> controller =
-                Robolectric.buildActivity(Experiment.class, intent).setup();
+        ActivityController<ExperimentActivity> controller =
+                Robolectric.buildActivity(ExperimentActivity.class, intent).setup();
         awaitLoaded(controller);
         return controller;
     }
 
     //The experiment is loaded on a background task; its result lands on the main looper.
-    private void awaitLoaded(ActivityController<Experiment> controller) {
+    private void awaitLoaded(ActivityController<ExperimentActivity> controller) {
         long deadline = System.currentTimeMillis() + 30000;
         while (System.currentTimeMillis() < deadline) {
             ShadowLooper.idleMainLooper();

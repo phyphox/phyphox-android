@@ -9,6 +9,9 @@ import android.view.ViewGroup;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 
+import com.google.android.material.switchmaterial.SwitchMaterial;
+import com.google.android.material.textfield.TextInputLayout;
+
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.robolectric.Robolectric;
@@ -19,14 +22,10 @@ import org.robolectric.annotation.Config;
 import org.robolectric.annotation.GraphicsMode;
 import org.robolectric.shadows.ShadowLooper;
 
+import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
-
-import com.google.android.material.switchmaterial.SwitchMaterial;
-import com.google.android.material.textfield.TextInputLayout;
-
-import java.io.ByteArrayInputStream;
 
 import de.rwth_aachen.phyphox.ExperimentList.model.Const;
 import de.rwth_aachen.phyphox.ExperimentView.ExpViewElement;
@@ -53,14 +52,14 @@ public class ViewLabelLayoutTest {
             + "<input></input><analysis></analysis><views><view label=\"v\">";
     private static final String TAIL = "</view></views></phyphox>";
 
-    private static ActivityController<Experiment> launch(String body) throws Exception {
+    private static ActivityController<ExperimentActivity> launch(String body) throws Exception {
         File target = new File(RuntimeEnvironment.getApplication().getFilesDir(), "labels-test.phyphox");
         Files.write(target.toPath(), (HEAD + body + TAIL).getBytes(StandardCharsets.UTF_8));
-        Intent intent = new Intent(RuntimeEnvironment.getApplication(), Experiment.class);
+        Intent intent = new Intent(RuntimeEnvironment.getApplication(), ExperimentActivity.class);
         intent.setAction(Intent.ACTION_VIEW);
         intent.putExtra(Const.EXPERIMENT_XML, "labels-test.phyphox");
         intent.putExtra(Const.EXPERIMENT_ISASSET, false);
-        ActivityController<Experiment> controller = Robolectric.buildActivity(Experiment.class, intent).setup();
+        ActivityController<ExperimentActivity> controller = Robolectric.buildActivity(ExperimentActivity.class, intent).setup();
         long deadline = System.currentTimeMillis() + 30000;
         while (System.currentTimeMillis() < deadline) {
             ShadowLooper.idleMainLooper();
@@ -77,7 +76,7 @@ public class ViewLabelLayoutTest {
         view.layout(0, 0, view.getMeasuredWidth(), view.getMeasuredHeight());
     }
 
-    private static ExpViewElement top(Experiment activity, int i) {
+    private static ExpViewElement top(ExperimentActivity activity, int i) {
         return activity.experiment.experimentViews.get(0).elements.get(i);
     }
 
@@ -92,7 +91,7 @@ public class ViewLabelLayoutTest {
 
     @Test
     public void verticalLayoutStacksLabelAboveTheControlLeftAligned() throws Exception {
-        ActivityController<Experiment> controller = launch(
+        ActivityController<ExperimentActivity> controller = launch(
                 "<value label=\"Frequency\" unit=\"Hz\" verticalLayout=\"true\"><input>v</input></value>"
                         + "<edit label=\"Length\" unit=\"m\" verticalLayout=\"true\"><output>v</output></edit>"
                         + "<toggle label=\"Run\" verticalLayout=\"true\"><output>run</output></toggle>"
@@ -100,7 +99,7 @@ public class ViewLabelLayoutTest {
                         + "<slider label=\"Level\" minValue=\"0\" maxValue=\"10\" showValue=\"true\" verticalLayout=\"true\"><output>v</output></slider>"
                         + "<value label=\"Default\" unit=\"Hz\"><input>v</input></value>");
         try {
-            Experiment activity = controller.get();
+            ExperimentActivity activity = controller.get();
             for (int i = 0; i < 5; i++) {
                 ExpViewElement element = top(activity, i);
                 layout(element.rootView, 600);
@@ -131,7 +130,7 @@ public class ViewLabelLayoutTest {
 
     @Test
     public void withoutALabelTheControlTakesTheRowAndInfoAndButtonKeepTheirSize() throws Exception {
-        ActivityController<Experiment> controller = launch(
+        ActivityController<ExperimentActivity> controller = launch(
                 "<value unit=\"Hz\"><input>v</input></value>"
                         + "<edit unit=\"m\"><output>v</output></edit>"
                         + "<toggle><output>run</output></toggle>"
@@ -144,7 +143,7 @@ public class ViewLabelLayoutTest {
                         + "<button label=\"Start\"><input type=\"value\">1</input><output>run</output></button>"
                         + "<value label=\"With\" unit=\"Hz\" verticalLayout=\"true\"><input>v</input></value>");
         try {
-            Experiment activity = controller.get();
+            ExperimentActivity activity = controller.get();
             for (int i = 0; i < 5; i++) {
                 ExpViewElement element = top(activity, i);
                 assertThat(element.hasLabel()).isFalse();
@@ -190,7 +189,7 @@ public class ViewLabelLayoutTest {
 
     @Test
     public void alignPositionsLabelAndControlInTheFullWidthLayoutsOnly() throws Exception {
-        ActivityController<Experiment> controller = launch(
+        ActivityController<ExperimentActivity> controller = launch(
                 "<value label=\"Centred\" unit=\"Hz\" verticalLayout=\"true\" align=\"center\"><input>v</input></value>"
                         + "<edit label=\"Right\" unit=\"m\" verticalLayout=\"true\" align=\"RIGHT\"><output>v</output></edit>"
                         + "<toggle label=\"Run\" verticalLayout=\"true\" align=\"right\"><output>run</output></toggle>"
@@ -201,7 +200,7 @@ public class ViewLabelLayoutTest {
                         + "<value label=\"Side\" unit=\"Hz\" align=\"right\"><input>v</input></value>"
                         + "<value label=\"Left\" unit=\"Hz\" verticalLayout=\"true\" align=\"Left\"><input>v</input></value>");
         try {
-            Experiment activity = controller.get();
+            ExperimentActivity activity = controller.get();
             for (int i = 0; i < 9; i++)
                 layout(top(activity, i).rootView, 600);
 
@@ -279,7 +278,7 @@ public class ViewLabelLayoutTest {
 
     @Test
     public void anUnknownAlignRejectsTheFileOnEveryElementThatHasIt() throws Exception {
-        Experiment activity = CorpusTestEnvironment.fullyEquippedActivity();
+        ExperimentActivity activity = CorpusTestEnvironment.fullyEquippedActivity();
         String[] elements = {
                 "<value label=\"v\" align=\"middle\"><input>v</input></value>",
                 "<edit label=\"e\" align=\"middle\"><output>v</output></edit>",
@@ -288,7 +287,10 @@ public class ViewLabelLayoutTest {
                 "<slider label=\"s\" minValue=\"0\" maxValue=\"10\" align=\"middle\"><output>v</output></slider>",
                 "<info label=\"i\" align=\"middle\" />"};
         for (String element : elements) {
-            PhyphoxExperiment experiment = CorpusTestEnvironment.load(new ByteArrayInputStream((HEAD + element + TAIL).getBytes(StandardCharsets.UTF_8)), activity);
+            PhyphoxExperiment experiment = CorpusTestEnvironment.load(
+                    new ByteArrayInputStream(
+                            (HEAD + element + TAIL)
+                                    .getBytes(StandardCharsets.UTF_8)), activity);
             assertThat(experiment.loaded).isFalse();
             assertThat(experiment.message).contains("align");
         }
@@ -302,7 +304,7 @@ public class ViewLabelLayoutTest {
     @Test
     public void gridScreenUnitCountsColumnsInWindowShorterSides() throws Exception {
         //A phone window of 411 x 891 px (the qualifiers): maxWidth 1 screen = 411 px
-        ActivityController<Experiment> controller = launch(
+        ActivityController<ExperimentActivity> controller = launch(
                 "<grid maxWidth=\"1\" maxWidthUnit=\"screen\">"
                         + "<info label=\"a\" /><info label=\"b\" /><info label=\"c\" /><info label=\"d\" />"
                         + "</grid>"
@@ -310,7 +312,7 @@ public class ViewLabelLayoutTest {
                         + "<info label=\"a\" /><info label=\"b\" />"
                         + "</grid>");
         try {
-            Experiment activity = controller.get();
+            ExperimentActivity activity = controller.get();
             GroupElement grid = (GroupElement) top(activity, 0);
             assertThat(grid.getMaxWidthScreenUnit()).isTrue();
             GroupElement.GridGroupLayout layout = (GroupElement.GridGroupLayout) grid.rootView;
@@ -335,11 +337,11 @@ public class ViewLabelLayoutTest {
 
     @Test
     public void gridTextUnitIsTheDefault() throws Exception {
-        ActivityController<Experiment> controller = launch(
+        ActivityController<ExperimentActivity> controller = launch(
                 "<grid maxWidth=\"10\" maxWidthUnit=\"text\"><info label=\"a\" /></grid>"
                         + "<grid maxWidth=\"10\"><info label=\"a\" /></grid>");
         try {
-            Experiment activity = controller.get();
+            ExperimentActivity activity = controller.get();
             assertThat(((GroupElement) top(activity, 0)).getMaxWidthScreenUnit()).isFalse();
             assertThat(((GroupElement) top(activity, 1)).getMaxWidthScreenUnit()).isFalse();
             assertThat(((GroupElement.GridGroupLayout) top(activity, 1).rootView).maxWidthPx()).isWithin(0.5f).of(140f); //10 lines of 14 sp at mdpi

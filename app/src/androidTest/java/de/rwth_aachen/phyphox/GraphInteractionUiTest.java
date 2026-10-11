@@ -48,7 +48,7 @@ public class GraphInteractionUiTest {
     private static final String FIXTURE = "graphs-interaction.phyphox";
     private static final int PORT = 8080;
 
-    private Experiment activity;
+    private ExperimentActivity activity;
 
     @Before
     public void launchFixture() throws Exception {

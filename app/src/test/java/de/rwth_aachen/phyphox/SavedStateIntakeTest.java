@@ -56,7 +56,7 @@ public class SavedStateIntakeTest {
     private File fixtures;
     private File corpus;
     private ExperimentListActivity listActivity;
-    private Experiment experimentActivity;
+    private ExperimentActivity experimentActivity;
 
     @Before
     public void createActivity() {
@@ -93,7 +93,7 @@ public class SavedStateIntakeTest {
         return new File(listActivity.getFilesDir(), "temp_zip");
     }
 
-    private Experiment experimentActivity() {
+    private ExperimentActivity experimentActivity() {
         if (experimentActivity == null)
             experimentActivity = CorpusTestEnvironment.fullyEquippedActivity();
         return experimentActivity;
@@ -118,7 +118,7 @@ public class SavedStateIntakeTest {
         //One experiment, opened straight away, with the whole tree extracted around it
         Intent opened = Shadows.shadowOf(listActivity).getNextStartedActivity();
         assertNotNull("the state was not opened", opened);
-        assertEquals(Experiment.class.getName(), opened.getComponent().getClassName());
+        assertEquals(ExperimentActivity.class.getName(), opened.getComponent().getClassName());
         assertEquals("temp_zip", opened.getStringExtra(Const.EXPERIMENT_ISTEMP));
         assertEquals("experiment.phyphox", opened.getData().getLastPathSegment());
         for (String entry : new String[]{"data/index.csv", "data/max_x__m_s__.bin", "meta/time.csv", "meta/state.csv", "res/pic.png"})

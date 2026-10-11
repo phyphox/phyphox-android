@@ -61,14 +61,14 @@ public class ViewGroupsTest {
 
     // ------------------------------------------------------------------ helpers
 
-    private static ActivityController<Experiment> launch(String body) throws Exception {
+    private static ActivityController<ExperimentActivity> launch(String body) throws Exception {
         File target = new File(RuntimeEnvironment.getApplication().getFilesDir(), "groups-test.phyphox");
         Files.write(target.toPath(), (HEAD + body + TAIL).getBytes(StandardCharsets.UTF_8));
-        Intent intent = new Intent(RuntimeEnvironment.getApplication(), Experiment.class);
+        Intent intent = new Intent(RuntimeEnvironment.getApplication(), ExperimentActivity.class);
         intent.setAction(Intent.ACTION_VIEW);
         intent.putExtra(Const.EXPERIMENT_XML, "groups-test.phyphox");
         intent.putExtra(Const.EXPERIMENT_ISASSET, false);
-        ActivityController<Experiment> controller = Robolectric.buildActivity(Experiment.class, intent).setup();
+        ActivityController<ExperimentActivity> controller = Robolectric.buildActivity(ExperimentActivity.class, intent).setup();
         long deadline = System.currentTimeMillis() + 30000;
         while (System.currentTimeMillis() < deadline) {
             ShadowLooper.idleMainLooper();
@@ -86,7 +86,7 @@ public class ViewGroupsTest {
         view.layout(0, 0, view.getMeasuredWidth(), view.getMeasuredHeight());
     }
 
-    private static ExpViewElement top(Experiment activity, int i) {
+    private static ExpViewElement top(ExperimentActivity activity, int i) {
         return activity.experiment.experimentViews.get(0).elements.get(i);
     }
 
@@ -94,7 +94,7 @@ public class ViewGroupsTest {
 
     @Test
     public void horizontalSplitsTheRowByWeightAndAHiddenChildGivesUpItsSpace() throws Exception {
-        ActivityController<Experiment> controller = launch(
+        ActivityController<ExperimentActivity> controller = launch(
                 "<horizontal>"
                         + "<value label=\"two\" weight=\"2\"><input>v</input></value>"
                         + "<value label=\"one\"><input>v</input></value>"
@@ -106,7 +106,7 @@ public class ViewGroupsTest {
                         + "<value label=\"right\"><input>v</input></value>"
                         + "</horizontal>");
         try {
-            Experiment activity = controller.get();
+            ExperimentActivity activity = controller.get();
             activity.experiment.updateViews(0, true); //applies the visibility buffers
             GroupElement row = (GroupElement) top(activity, 0);
             layout(row.rootView, 1000);
@@ -136,7 +136,7 @@ public class ViewGroupsTest {
     @Test
     public void gridChoosesItsColumnsFromTheWidthAndFillsTheLastRowOnRequest() throws Exception {
         //maxWidth 10 text lines of 14 sp at mdpi = 140 px: one column up to 140 px, two up to 280, three up to 420
-        ActivityController<Experiment> controller = launch(
+        ActivityController<ExperimentActivity> controller = launch(
                 "<grid maxWidth=\"10\" fillLastRow=\"true\">"
                         + "<info label=\"a\" /><info label=\"b\" /><info label=\"c\" /><info label=\"d\" />"
                         + "</grid>"
@@ -144,7 +144,7 @@ public class ViewGroupsTest {
                         + "<info label=\"a\" /><info label=\"b\" /><info label=\"c\" />"
                         + "</grid>");
         try {
-            Experiment activity = controller.get();
+            ExperimentActivity activity = controller.get();
             GroupElement fill = (GroupElement) top(activity, 0);
             GroupElement keep = (GroupElement) top(activity, 1);
             List<ExpViewElement> c = fill.getChildren();
@@ -180,7 +180,7 @@ public class ViewGroupsTest {
     @Test
     public void spacingSeparatesVisibleChildrenAndComesOffTheWidthFirst() throws Exception {
         //a text line is 14 px here (14 sp at mdpi): spacing 1 = 14 px, 0.5 = 7 px
-        ActivityController<Experiment> controller = launch(
+        ActivityController<ExperimentActivity> controller = launch(
                 "<horizontal spacing=\"1\">"
                         + "<value label=\"two\" weight=\"2\"><input>v</input></value>"
                         + "<value label=\"one\"><input>v</input></value>"
@@ -203,7 +203,7 @@ public class ViewGroupsTest {
                         + "<value label=\"b\"><input>v</input></value>"
                         + "</horizontal>");
         try {
-            Experiment activity = controller.get();
+            ExperimentActivity activity = controller.get();
             activity.experiment.updateViews(0, true); //applies the visibility buffers
 
             //horizontal: two gaps of 14 px between the three visible children come off the 1000 px first, 972 px are shared 2:1:1
@@ -272,7 +272,7 @@ public class ViewGroupsTest {
     public void docsFixtureLoadsAndNestsAsWritten() throws Exception {
         File corpus = CorpusTestEnvironment.findCorpus();
         assumeTrue("No phyphox-docs checkout found next to this repository - fixture skipped.", corpus != null);
-        Experiment activity = CorpusTestEnvironment.fullyEquippedActivity();
+        ExperimentActivity activity = CorpusTestEnvironment.fullyEquippedActivity();
         PhyphoxExperiment experiment = CorpusTestEnvironment.load(new File(corpus, "generated/view-groups.phyphox"), activity);
         assertThat(experiment.loaded).isTrue();
         ExpView groups = experiment.experimentViews.get(0);
@@ -326,7 +326,7 @@ public class ViewGroupsTest {
 
     @Test
     public void stackSharesOneRectangleAndTheTransformFollowsItsContainers() throws Exception {
-        ActivityController<Experiment> controller = launch(
+        ActivityController<ExperimentActivity> controller = launch(
                 "<stack>"
                         + "<separator height=\"6\" color=\"39a2ff40\" />"
                         + "<transform originX=\"0.5\" originY=\"0.8\">"
@@ -341,7 +341,7 @@ public class ViewGroupsTest {
                         + "</transform>"
                         + "</stack>");
         try {
-            Experiment activity = controller.get();
+            ExperimentActivity activity = controller.get();
             GroupElement stack = (GroupElement) top(activity, 0);
             assertThat(stack.rootView).isInstanceOf(GroupElement.StackLayout.class);
             layout(stack.rootView, 600);
@@ -399,14 +399,14 @@ public class ViewGroupsTest {
 
     @Test
     public void graphInAStackIsStaticAndAFixedPlotAreaPinsThePlot() throws Exception {
-        ActivityController<Experiment> controller = launch(
+        ActivityController<ExperimentActivity> controller = launch(
                 "<stack>"
                         + "<separator height=\"1\" />"
                         + "<graph label=\"Overlay\" plotLeft=\"0.1\" plotBottom=\"0.9\"><input axis=\"x\">v</input><input axis=\"y\">v</input></graph>"
                         + "</stack>"
                         + "<graph label=\"Plain\"><input axis=\"x\">v</input><input axis=\"y\">v</input></graph>");
         try {
-            Experiment activity = controller.get();
+            ExperimentActivity activity = controller.get();
             GroupElement stack = (GroupElement) top(activity, 0);
             GraphElement overlay = (GraphElement) stack.getChildren().get(1);
             GraphElement plain = (GraphElement) top(activity, 1);
@@ -449,13 +449,13 @@ public class ViewGroupsTest {
         assertThat(adjusted.hexString()).endsWith("40");
         assertThat(adjusted.r() + adjusted.g() + adjusted.b()).isNotEqualTo(0xe7 + 0xe0 + 0x9b);
 
-        ActivityController<Experiment> controller = launch(
+        ActivityController<ExperimentActivity> controller = launch(
                 "<value label=\"a\" color=\"ff7e2280\"><input>v</input></value>"
                         + "<separator height=\"1\" color=\"39a2ff40\" />"
                         + "<graph label=\"g\" color=\"#2bfb4cc0\" mapColor1=\"0000ff00\" mapColor2=\"ff0000c0\"><input axis=\"x\">v</input><input axis=\"y\" color=\"edf668ff\">v</input></graph>"
                         + "<value label=\"b\" color=\"ff7e22\"><input>v</input></value>");
         try {
-            Experiment activity = controller.get();
+            ExperimentActivity activity = controller.get();
             ValueElement value = (ValueElement) top(activity, 0);
             assertThat(value.getViewHTML(0)).contains("color:#ff7e2280");
             assertThat(((ValueElement) top(activity, 3)).getViewHTML(3)).contains("color:#ff7e22\"");

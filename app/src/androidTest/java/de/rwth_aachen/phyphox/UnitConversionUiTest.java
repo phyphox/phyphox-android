@@ -55,7 +55,7 @@ public class UnitConversionUiTest {
     private static final String FIXTURE = "unit-references.phyphox";
     private static final int PORT = 8080;
 
-    private Experiment activity;
+    private ExperimentActivity activity;
 
     @Before
     public void prepare() throws Exception {

@@ -158,7 +158,7 @@ public class LifecycleTest {
         FixtureExperiment.close(FixtureExperiment.activity());
         Thread.sleep(1500);
 
-        Experiment second = FixtureExperiment.launch("edits.phyphox");
+        ExperimentActivity second = FixtureExperiment.launch("edits.phyphox");
         awaitApi();
         assertTrue("the second experiment did not take over: " + api("/config").getString("title"),
                 api("/config").getString("title").contains("edit"));

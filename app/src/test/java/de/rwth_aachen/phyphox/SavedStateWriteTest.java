@@ -53,7 +53,7 @@ public class SavedStateWriteTest {
 
     private File fixtures;
     private ExperimentListActivity listActivity;
-    private Experiment experimentActivity;
+    private ExperimentActivity experimentActivity;
 
     @Before
     public void createActivity() {

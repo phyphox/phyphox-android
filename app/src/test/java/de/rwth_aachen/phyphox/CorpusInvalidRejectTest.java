@@ -61,7 +61,7 @@ public class CorpusInvalidRejectTest {
                 classification);
 
         File file = new File(corpus, relativePath);
-        Experiment activity = CorpusTestEnvironment.fullyEquippedActivity();
+        ExperimentActivity activity = CorpusTestEnvironment.fullyEquippedActivity();
         PhyphoxExperiment experiment = CorpusTestEnvironment.load(file, activity);
         assertFalse(relativePath + " loaded although expected.yml classifies it as \"parser: rejects\"",
                 experiment.loaded);

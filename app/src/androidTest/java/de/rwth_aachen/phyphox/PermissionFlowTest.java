@@ -50,7 +50,7 @@ public class PermissionFlowTest {
     }
 
     private void grantedPathLoadsTheExperiment() {
-        Experiment activity = FixtureExperiment.launchAsset(AUDIO_EXPERIMENT);
+        ExperimentActivity activity = FixtureExperiment.launchAsset(AUDIO_EXPERIMENT);
         assertTrue("with the microphone granted the audio experiment must load: "
                 + activity.experiment.message, activity.experiment.loaded);
     }

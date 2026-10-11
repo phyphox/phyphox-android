@@ -29,7 +29,7 @@ public class CorpusVersionGateTest {
     }
 
     private PhyphoxExperiment load(String xml) {
-        Experiment activity = CorpusTestEnvironment.fullyEquippedActivity();
+        ExperimentActivity activity = CorpusTestEnvironment.fullyEquippedActivity();
         return CorpusTestEnvironment.load(new ByteArrayInputStream(xml.getBytes(StandardCharsets.UTF_8)), activity);
     }
 

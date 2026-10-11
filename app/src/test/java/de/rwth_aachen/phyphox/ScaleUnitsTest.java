@@ -38,7 +38,7 @@ import de.rwth_aachen.phyphox.ExperimentView.ScaleElement;
 @Config(sdk = 35, qualifiers = "en-rUS-w411dp-h891dp-normal-port-notnight-mdpi")
 public class ScaleUnitsTest {
 
-    private ActivityController<Experiment> controller;
+    private ActivityController<ExperimentActivity> controller;
 
     @After
     public void close() {
@@ -51,20 +51,20 @@ public class ScaleUnitsTest {
         PreferenceManager.getDefaultSharedPreferences(RuntimeEnvironment.getApplication()).edit().putString(Units.Setting.PREF_KEY, value).commit();
     }
 
-    private Experiment launchCorpusFixture() throws Exception {
+    private ExperimentActivity launchCorpusFixture() throws Exception {
         File corpus = CorpusTestEnvironment.findCorpus();
         assumeTrue("No phyphox-docs checkout found next to this repository - fixture skipped.", corpus != null);
         return launch(new String(Files.readAllBytes(new File(corpus, "generated/view-drawing.phyphox").toPath()), StandardCharsets.UTF_8));
     }
 
-    private Experiment launch(String xml) throws Exception {
+    private ExperimentActivity launch(String xml) throws Exception {
         File target = new File(RuntimeEnvironment.getApplication().getFilesDir(), "scale-units-test.phyphox");
         Files.write(target.toPath(), xml.getBytes(StandardCharsets.UTF_8));
-        Intent intent = new Intent(RuntimeEnvironment.getApplication(), Experiment.class);
+        Intent intent = new Intent(RuntimeEnvironment.getApplication(), ExperimentActivity.class);
         intent.setAction(Intent.ACTION_VIEW);
         intent.putExtra(Const.EXPERIMENT_XML, "scale-units-test.phyphox");
         intent.putExtra(Const.EXPERIMENT_ISASSET, false);
-        controller = Robolectric.buildActivity(Experiment.class, intent).setup();
+        controller = Robolectric.buildActivity(ExperimentActivity.class, intent).setup();
         long deadline = System.currentTimeMillis() + 30000;
         while (System.currentTimeMillis() < deadline) {
             ShadowLooper.idleMainLooper();
@@ -77,11 +77,11 @@ public class ScaleUnitsTest {
     }
 
     //The scales of the fixture: the Celsius thermometer in the vertical group, the text-unit scale in the horizontal one
-    private static ScaleElement celsius(Experiment activity) {
+    private static ScaleElement celsius(ExperimentActivity activity) {
         return (ScaleElement) ((GroupElement) activity.experiment.experimentViews.get(0).elements.get(1)).getChildren().get(1);
     }
 
-    private static ScaleElement textUnit(Experiment activity) {
+    private static ScaleElement textUnit(ExperimentActivity activity) {
         return (ScaleElement) ((GroupElement) activity.experiment.experimentViews.get(0).elements.get(2)).getChildren().get(1);
     }
 
@@ -112,7 +112,7 @@ public class ScaleUnitsTest {
     @Test
     public void experimentSettingLaysTheTicsOutFromMinByTicStepWithTheDecimalsOfTheStep() throws Exception {
         setting("experiment");
-        Experiment activity = launchCorpusFixture();
+        ExperimentActivity activity = launchCorpusFixture();
         ScaleElement celsius = celsius(activity);
         assertThat(celsius.isConvertible()).isTrue();
         assertThat(celsius.isConverted()).isFalse();
@@ -133,7 +133,7 @@ public class ScaleUnitsTest {
     @Test
     public void imperialSettingShowsFahrenheitAtAutomaticTicsInTheSameGeometry() throws Exception {
         setting("imperial");
-        Experiment activity = launchCorpusFixture();
+        ExperimentActivity activity = launchCorpusFixture();
         ScaleElement celsius = celsius(activity);
         assertThat(celsius.isConverted()).isTrue();
         assertThat(celsius.getDisplayUnitId()).isEqualTo("degree_fahrenheit");
@@ -163,7 +163,7 @@ public class ScaleUnitsTest {
     @Test
     public void metricSettingLeavesAMetricScaleAlone() throws Exception {
         setting("metric");
-        Experiment activity = launchCorpusFixture();
+        ExperimentActivity activity = launchCorpusFixture();
         ScaleElement celsius = celsius(activity);
         assertThat(celsius.isConverted()).isFalse();
         assertThat(celsius.labelText()).isEqualTo("Temperature (°C)");
@@ -173,7 +173,7 @@ public class ScaleUnitsTest {
     @Test
     public void anExplicitPrecisionFollowsThePrecisionRuleAndTheValueEveryRhythmStaysWithTheExperimentUnit() throws Exception {
         setting("experiment");
-        Experiment activity = launch("<phyphox xmlns=\"http://phyphox.org/xml\" version=\"1.21\" locale=\"en\">"
+        ExperimentActivity activity = launch("<phyphox xmlns=\"http://phyphox.org/xml\" version=\"1.21\" locale=\"en\">"
                 + "<title>t</title><category>c</category><description>d</description>"
                 + "<data-containers><container size=\"1\">v</container></data-containers>"
                 + "<views><view label=\"v\">"
