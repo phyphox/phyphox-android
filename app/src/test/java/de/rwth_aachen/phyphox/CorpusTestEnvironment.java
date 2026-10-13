@@ -15,6 +15,7 @@ import android.hardware.camera2.CameraCharacteristics;
 import android.hardware.camera2.CameraManager;
 import android.hardware.camera2.CameraMetadata;
 import android.graphics.ImageFormat;
+import android.location.LocationManager;
 import android.util.Range;
 import android.util.Size;
 
@@ -224,12 +225,13 @@ public abstract class CorpusTestEnvironment {
         //The depth input and the device metadata read this cache without a null check.
         CameraHelper.updateCameraList(cameraManager);
 
-        //Attached but not started: the parser uses the activity only as a Context and for sensorManager,
-        //and onCreate would start loading an experiment itself.
+        //Attached but not started: the parser uses the activity only as a Context and for its sensor and location
+        //managers, and onCreate would start loading an experiment itself.
         Experiment activity = Robolectric.buildActivity(Experiment.class).get();
         if (activity.getBaseContext() == null)
             Shadows.shadowOf(activity).callAttach(new Intent());
         activity.sensorManager = sensorManager;
+        activity.locationManager = (LocationManager) application.getSystemService(Context.LOCATION_SERVICE);
         return activity;
     }
 

@@ -212,7 +212,8 @@ public class Experiment extends AppCompatActivity implements View.OnClickListene
 
     //Others...
     private Resources res; //Helper to easily access resources
-    public SensorManager sensorManager; //The sensor manager
+    public SensorManager sensorManager; //The application's, see onCreate
+    public LocationManager locationManager; //The same
     Intent intent; //Another helper to easily access the data of the intent that triggered this activity
     ProgressDialog progress; //Holds a progress dialog when a file is being loaded
     Bundle savedInstanceState = null; //Holds the saved instance state, so it can be handled outside onCreate
@@ -319,7 +320,10 @@ public class Experiment extends AppCompatActivity implements View.OnClickListene
 
         intent = getIntent(); //Store the intent for easy access
         res = getResources(); //The same for resources
-        sensorManager = (SensorManager)getSystemService(SENSOR_SERVICE); //The sensor manager will probably be needed...
+        //The application's managers, not this screen's: a run outlives the screen that started it, and a sensor listener
+        //can only be unregistered through the SensorManager that registered it, of which each Context has its own
+        sensorManager = (SensorManager)getApplicationContext().getSystemService(SENSOR_SERVICE);
+        locationManager = (LocationManager)getApplicationContext().getSystemService(LOCATION_SERVICE);
 
         this.savedInstanceState = savedInstanceState; //Store savedInstanceState so it can be accessed after loading the experiment in a second thread
         setContentView(R.layout.activity_experiment); //Setup the views...
@@ -718,7 +722,7 @@ public class Experiment extends AppCompatActivity implements View.OnClickListene
             tabLayout.setVisibility(View.GONE);
 
         try {
-            experiment.init(sensorManager, (LocationManager)this.getSystemService(Context.LOCATION_SERVICE));
+            experiment.init(sensorManager, locationManager);
         } catch (Exception e) {
             Toast.makeText(getApplicationContext(), e.getMessage(), Toast.LENGTH_LONG).show();
         }

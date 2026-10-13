@@ -43,12 +43,13 @@ import java.util.regex.Pattern;
 
 // phyphox-test: lifecycle
 //A running experiment under rotation, recreation, backgrounding, removal of its screen, a second experiment
-//and quick start/stop, observed through the remote API, the run itself and the system's service records.
+//and quick start/stop, observed through the remote API, the run itself and the system's service and sensor records.
 @RunWith(AndroidJUnit4.class)
 public class LifecycleTest {
 
     private static final int PORT = 8080;
     private static final String FIXTURE = "values.phyphox";
+    private static final String SENSOR_EXPERIMENT = "accelerometer.phyphox"; //The fixture uses no sensor
 
     private interface Check {
         boolean holds() throws Exception;
@@ -173,6 +174,23 @@ public class LifecycleTest {
             return false;
         int end = power.indexOf("\n\n", start);
         return power.substring(start, end < 0 ? power.length() : end).contains("'phyphox:measuring'");
+    }
+
+    //A sensor that phyphox listens to now: the dump lists each open connection by its listener's class, followed by a
+    //line per sensor it has enabled. Its log of earlier registrations names the listener too, but not in this form.
+    private boolean sensorsHeld() throws Exception {
+        String dump = device().executeShellCommand("dumpsys sensorservice");
+        return Pattern.compile("^\\t " + Pattern.quote(SensorInput.class.getName()) + " \\|.*\\n\\t .* 0x\\p{XDigit}{8} \\|",
+                Pattern.MULTILINE).matcher(dump).find();
+    }
+
+    //What Recents trimming or a swipe does to the task of a screen
+    private void removeTask(Experiment screen) {
+        int taskId = screen.getTaskId();
+        ActivityManager manager = getInstrumentation().getTargetContext().getSystemService(ActivityManager.class);
+        for (ActivityManager.AppTask task : manager.getAppTasks())
+            if (task.getTaskInfo().taskId == taskId)
+                task.finishAndRemoveTask();
     }
 
     private Notification.Action notificationAction(int index) {
@@ -477,11 +495,7 @@ public class LifecycleTest {
 
         goHome();
         Thread.sleep(1500);
-        int taskId = first.getTaskId();
-        ActivityManager manager = getInstrumentation().getTargetContext().getSystemService(ActivityManager.class);
-        for (ActivityManager.AppTask task : manager.getAppTasks())
-            if (task.getTaskInfo().taskId == taskId)
-                task.finishAndRemoveTask();
+        removeTask(first);
         assertTrue("the screen survived the removal of its task", eventually(() -> experimentActivities().isEmpty()));
         Thread.sleep(1000);
         assertTrue("the run ended with its screen", runMeasuring());
@@ -499,6 +513,51 @@ public class LifecycleTest {
         api("/control?cmd=stop");
         awaitMeasuring(false);
         assertTrue("the foreground service outlived the run", eventually(() -> !serviceRunning()));
+    }
+
+    //A screen that takes over a run must release its sensors when it stops it. Found on a phone: started, Home, the
+    //task swiped away, back through the notification and stopped there, the accelerometer stayed on.
+    @Test
+    public void aRunStoppedFromTheScreenOfTheNotificationReleasesItsSensors() throws Exception {
+        assumeTrue("TaskInfo.taskId", Build.VERSION.SDK_INT >= 29);
+        setBackgroundMeasurement(true);
+        Experiment first = FixtureExperiment.launchAsset(SENSOR_EXPERIMENT);
+        awaitApi();
+        api("/control?cmd=start");
+        awaitMeasuring(true);
+        assertTrue("the run listens to no sensor", eventually(this::sensorsHeld));
+
+        goHome();
+        Thread.sleep(1500);
+        removeTask(first);
+        assertTrue("the screen survived the removal of its task", eventually(() -> experimentActivities().isEmpty()));
+        tapNotification();
+        FixtureExperiment.awaitLoaded();
+        awaitApi();
+
+        api("/control?cmd=stop");
+        awaitMeasuring(false);
+        assertTrue("the sensors outlived the run", eventually(() -> !sensorsHeld()));
+    }
+
+    @Test
+    public void aRunStoppedFromItsRecreatedScreenReleasesItsSensors() throws Exception {
+        Experiment first = FixtureExperiment.launchAsset(SENSOR_EXPERIMENT);
+        awaitApi();
+        api("/control?cmd=start");
+        awaitMeasuring(true);
+        assertTrue("the run listens to no sensor", eventually(this::sensorsHeld));
+
+        getInstrumentation().runOnMainSync(first::recreate);
+        assertTrue("the screen was not recreated", eventually(() -> {
+            Experiment current = FixtureExperiment.activity();
+            return current != null && current != first;
+        }));
+        awaitApi();
+
+        api("/control?cmd=stop");
+        awaitMeasuring(false);
+        assertTrue("the sensors outlived the run", eventually(() -> !sensorsHeld()));
     }
 
     @Test

@@ -12,7 +12,6 @@ import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.content.res.AssetManager;
 import android.hardware.camera2.CameraManager;
-import android.location.LocationManager;
 import android.media.AudioFormat;
 import android.media.AudioRecord;
 import android.net.Uri;
@@ -2625,7 +2624,7 @@ public abstract class PhyphoxFile {
                     (new ioBlockParser(xpp, experiment, parent, null, outputs, null, outputMapping, "component")).process(); //Load inputs and outputs
 
                     experiment.gpsIn = new GpsInput(outputs, experiment.dataLock, experiment.experimentTimeReference);
-                    experiment.gpsIn.attachLocationManager((LocationManager)parent.getSystemService(Context.LOCATION_SERVICE));
+                    experiment.gpsIn.attachLocationManager(parent.locationManager);
 
                     if (!GpsInput.isAvailable(parent)) {
                         throw new phyphoxFileException(parent.getResources().getString(R.string.sensorNotAvailableWarningText1) + " " + parent.getResources().getString(R.string.location) + " " + parent.getResources().getString(R.string.sensorNotAvailableWarningText2));
