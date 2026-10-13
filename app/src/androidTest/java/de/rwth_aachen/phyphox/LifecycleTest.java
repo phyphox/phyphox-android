@@ -12,6 +12,7 @@ import android.app.Activity;
 import android.app.ActivityManager;
 import android.app.Notification;
 import android.app.NotificationManager;
+import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
 import android.os.Build;
@@ -37,6 +38,8 @@ import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.Callable;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 // phyphox-test: lifecycle
 //A running experiment under rotation, recreation, backgrounding, removal of its screen, a second experiment
@@ -130,18 +133,26 @@ public class LifecycleTest {
         return onMain(() -> MeasurementRun.current() != null && MeasurementRun.current().isFinishedUnseen());
     }
 
-    //The system's record of the service, not the app's own bookkeeping
+    //The system's record of the service, not the app's own bookkeeping: the part of the dump about phyphox's
+    //MeasurementService, or null. The dump also holds the "Last ANR service" of any app whatever the filter (a
+    //SystemUI ANR on a slow first boot), so only a ServiceRecord of this very component counts.
     private String serviceRecord() throws Exception {
-        return device().executeShellCommand("dumpsys activity services MeasurementService");
+        String dump = device().executeShellCommand("dumpsys activity services MeasurementService");
+        String component = new ComponentName(getInstrumentation().getTargetContext(), MeasurementService.class).flattenToShortString();
+        Matcher own = Pattern.compile("ServiceRecord\\{\\p{XDigit}+ u\\d+ " + Pattern.quote(component) + "[ }]").matcher(dump);
+        if (!own.find())
+            return null;
+        int next = dump.indexOf("ServiceRecord{", own.end());
+        return dump.substring(own.start(), next < 0 ? dump.length() : next);
     }
 
     private boolean serviceRunning() throws Exception {
-        return serviceRecord().contains("ServiceRecord{");
+        return serviceRecord() != null;
     }
 
     private boolean serviceInForeground() throws Exception {
         String record = serviceRecord();
-        return record.contains("ServiceRecord{") && record.contains("isForeground=true");
+        return record != null && record.contains("isForeground=true");
     }
 
     private String notificationText() {
