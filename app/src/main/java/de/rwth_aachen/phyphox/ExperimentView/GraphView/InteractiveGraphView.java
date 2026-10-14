@@ -6,6 +6,7 @@ import android.content.ContextWrapper;
 import android.content.DialogInterface;
 import android.content.res.ColorStateList;
 import android.graphics.Point;
+import android.graphics.drawable.GradientDrawable;
 import android.graphics.Typeface;
 import android.text.InputType;
 import android.util.AttributeSet;
@@ -737,13 +738,15 @@ public class InteractiveGraphView extends RelativeLayout implements GraphView.Po
                     ViewGroup.LayoutParams.WRAP_CONTENT,
                     ViewGroup.LayoutParams.WRAP_CONTENT);
 
-            if(Helper.isDarkTheme(getResources())){
-                pointInfoView.setBackgroundColor(getResources().getColor(R.color.phyphox_white_100));
-                popupWindowText.setTextColor(getResources().getColor(R.color.phyphox_black_100));
-            } else{
-                pointInfoView.setBackgroundColor(getResources().getColor(R.color.phyphox_black_100));
-                popupWindowText.setTextColor(getResources().getColor(R.color.phyphox_white_100));
-            }
+            //Follows the interface mode with an outline against the plot, as the iOS readout (GraphLayoutManager.createMarkerLabelFrame)
+            boolean dark = Helper.isDarkTheme(getResources());
+            GradientDrawable frame = new GradientDrawable();
+            frame.setColor(getResources().getColor(dark ? R.color.phyphox_black_40 : R.color.phyphox_white_80));
+            frame.setCornerRadius(TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, 8, getResources().getDisplayMetrics()));
+            frame.setStroke(Math.max(1, Math.round(getResources().getDisplayMetrics().density)), getResources().getColor(R.color.phyphox_white_50_black_50));
+            pointInfoView.setBackground(frame);
+            pointInfoView.setClipToOutline(true);
+            popupWindowText.setTextColor(getResources().getColor(dark ? R.color.phyphox_white_100 : R.color.phyphox_black_100));
 
             popupWindowInfo.setFocusable(false);
             popupWindowInfo.setOutsideTouchable(false);
