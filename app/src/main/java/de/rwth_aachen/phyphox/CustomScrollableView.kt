@@ -21,6 +21,21 @@ class CustomScrollableView @JvmOverloads constructor(
         isSwipeEnabled = enabled
     }
 
+    //Exclusive mode sets fillViewport: the content must fit the viewport exactly. ScrollView itself only stretches content
+    //that is shorter, so a maximized graph whose toolbar is taller than a small viewport kept a plot of zero height.
+    override fun onMeasure(widthMeasureSpec: Int, heightMeasureSpec: Int) {
+        super.onMeasure(widthMeasureSpec, heightMeasureSpec)
+        if (!isFillViewport || childCount == 0 || MeasureSpec.getMode(heightMeasureSpec) == MeasureSpec.UNSPECIFIED)
+            return
+        val child = getChildAt(0)
+        val lp = child.layoutParams as MarginLayoutParams
+        val height = measuredHeight - paddingTop - paddingBottom - lp.topMargin - lp.bottomMargin
+        if (child.measuredHeight <= height)
+            return
+        val widthSpec = getChildMeasureSpec(widthMeasureSpec, paddingLeft + paddingRight + lp.leftMargin + lp.rightMargin, lp.width)
+        child.measure(widthSpec, MeasureSpec.makeMeasureSpec(height, MeasureSpec.EXACTLY))
+    }
+
 
     override fun onTouchEvent(event: MotionEvent): Boolean {
         return if (isSwipeEnabled) {
