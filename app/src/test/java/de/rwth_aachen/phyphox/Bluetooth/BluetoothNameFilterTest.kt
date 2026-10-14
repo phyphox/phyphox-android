@@ -11,8 +11,8 @@ import java.util.regex.PatternSyntaxException
 
 // phyphox-test: ble-name-regex-match
 //Rule ble-name-regex (phyphox-docs, spec/rules.yml): nameRegex has to match the whole device name,
-// case-sensitively, name stays a substring test, both have to hold when given, and a pattern that does
-// not compile refuses the file.
+// after stripping surrounding whitespace, case-sensitively, name stays a substring test, both have to hold
+// when given, and a pattern that does not compile refuses the file.
 @RunWith(RobolectricTestRunner::class)
 @Config(sdk = [35])
 class BluetoothNameFilterTest {
@@ -36,6 +36,16 @@ class BluetoothNameFilterTest {
         assertThat(alternatives.matches("phyphox:m")).isTrue()
         assertThat(alternatives.matches("phyphox:mini")).isTrue()
         assertThat(alternatives.matches("phyphox:max")).isFalse()
+    }
+
+    @Test
+    fun surroundingWhitespaceIsStrippedBeforeMatching() {
+        val filter = BluetoothNameFilter(null, "phyphox:m( \\d+)?")
+        assertThat(filter.matches("phyphox:m 131\n")).isTrue() //as the phyphox:m advertises itself
+        assertThat(filter.matches(" phyphox:m 131 \t")).isTrue()
+        assertThat(filter.matches("phyphox:m  131")).isFalse() //inner whitespace is part of the name
+        assertThat(BluetoothNameFilter("phyphox:m 131", null).matches("phyphox:m 131\n")).isTrue()
+        assertThat(BluetoothNameFilter("131 ", null).matches("phyphox:m 131\n")).isFalse()
     }
 
     @Test

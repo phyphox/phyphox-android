@@ -6,7 +6,7 @@ import java.util.regex.PatternSyntaxException
 
 /**
  * The name criteria of a bluetooth element: `name` is a substring test, `nameRegex` has to match the whole
- * device name (rule ble-name-regex). Every criterion given has to hold. Equality is by the two pattern
+ * device name (rule ble-name-regex). Both see the name with surrounding whitespace stripped. Every criterion given has to hold. Equality is by the two pattern
  * strings, so a filter can key a map.
  */
 data class BluetoothNameFilter @Throws(PatternSyntaxException::class) constructor(val name: String?, val regex: String?) : Serializable {
@@ -15,7 +15,8 @@ data class BluetoothNameFilter @Throws(PatternSyntaxException::class) constructo
 
     val isEmpty: Boolean get() = name.isNullOrEmpty() && pattern == null
 
-    fun matches(deviceName: String): Boolean {
+    fun matches(reportedName: String): Boolean {
+        val deviceName = reportedName.trim() //Devices pad their names, e.g. the phyphox:m with a trailing newline
         if (!name.isNullOrEmpty() && !deviceName.contains(name))
             return false
         if (pattern != null && !pattern.matcher(deviceName).matches())
