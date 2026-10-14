@@ -243,4 +243,5 @@
     <string name="privacyPolicyURL">https://phyphox.org/politicadeprivacidad</string>
     <string name="error">Error</string>
     <string name="invalidValue">Valor no Valido</string>
+    <string name="download">Descargar</string>
 </resources>
