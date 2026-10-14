@@ -459,4 +459,9 @@
     <string name="localNetworkDeniedHint">Ohne die Berechtigung für den Zugriff auf das lokale Netzwerk können keine Verbindungen zu Geräten in deinem lokalen Netzwerk hergestellt werden.</string>
     <string name="remoteServerPortInUseTitle">Konnte Fernzugriff nicht aktivieren</string>
     <string name="remoteServerPortInUse">Der Fernzugriff konnte nicht aktiviert werden, da der Port bereits von einer anderen App auf diesem Gerät verwendet wird. Beende die App, die den Port verwendet, oder lege in den phyphox-Einstellungen einen anderen Port fest.</string>
+    <string name="savedToDownloadsError">Konnte die Datei nicht in Downloads speichern:</string>
+    <string name="graph_no_data">Keine Daten</string>
+    <string name="graph_no_valid_data">Keine gültigen Daten</string>
+    <string name="graph_no_data_in_range">Keine Daten im Bereich</string>
+    <string name="applyZoomQuestionTitle">Diese Ansicht beibehalten?</string>
 </resources>
