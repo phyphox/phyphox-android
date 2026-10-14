@@ -368,9 +368,6 @@
     <string name="common_musical_note_gb7">F#7 / Gb7</string>
     <string name="common_musical_note_g7">G7</string>
     <string name="common_musical_note_ab7">G#7 / Ab7</string>
-    <string name="creditsApache" translatable="false"/>
-    <string name="creditsZxing" translatable="false"/>
-    <string name="creditsPahoMQTT" translatable="false"/>
     <string name="sensorDepth">Tiefe (LiDAR/ToF)</string>
     <string name="sensorCamera">Kamera</string>
     <string name="remoteDepthGUIWarning">Vorschau und Steuerung des LiDAR/ToF-Sensors wird im Fernzugriff nicht unterstützt.</string>
