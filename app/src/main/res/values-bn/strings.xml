@@ -373,4 +373,6 @@
     <string name="open_bluetooth_assets_title">ব্লুটুথ ডিভাইস এর জন্য পরীক্ষা</string>
     <string name="timedRun">সময় চালু</string>
     <string name="pick_exportFormat">ডাটা সজ্জা নির্বাচন করুন।</string>
+    <string name="error">ভুল</string>
+    <string name="invalidValue">অবাস্তব মান</string>
 </resources>
