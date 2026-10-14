@@ -241,4 +241,6 @@
     <string name="remoteDepthGUIWarning">Vista previa y control del sensor LiDAR/ToF no esta habilitado para la interfaz remota.</string>
     <string name="sensorGravity">Gravedad</string>
     <string name="privacyPolicyURL">https://phyphox.org/politicadeprivacidad</string>
+    <string name="error">Error</string>
+    <string name="invalidValue">Valor no Valido</string>
 </resources>
