@@ -76,7 +76,21 @@ public class CameraWhiteBalanceTest {
     private String shownWhiteBalance() {
         TextView text = activity.findViewById(R.id.textWhiteBalance);
         assertNotNull("the camera-gui's white balance label", text);
-        return text.getText().toString();
+        String[] shown = new String[1];
+        getInstrumentation().runOnMainSync(() -> shown[0] = text.getText().toString());
+        return shown[0];
+    }
+
+    //The label follows the state once the UI has collected it, which can lag the state on a slow device
+    private void assertShown(String message, String expected) throws InterruptedException {
+        long deadline = System.currentTimeMillis() + 5000;
+        while (!expected.equals(shownWhiteBalance()) && System.currentTimeMillis() < deadline)
+            Thread.sleep(100);
+        assertEquals(message, expected, shownWhiteBalance());
+    }
+
+    private void assertShown(String expected) throws InterruptedException {
+        assertShown(null, expected);
     }
 
     //The main controls are only laid out in the maximized view, where the enabled flags reach the views. The
@@ -98,7 +112,7 @@ public class CameraWhiteBalanceTest {
         CameraSettingState before = input.getCameraSettingState().getValue();
         assertEquals(WhiteBalanceMode.LOCKED, before.getWhiteBalanceMode());
         assertFalse("automatic until the first start", before.getWhiteBalanceFrozen());
-        assertEquals("Locked", shownWhiteBalance());
+        assertShown("Locked");
 
         getInstrumentation().runOnMainSync(activity::startMeasurement);
         await("the lock was not engaged at the first start", () -> input.getCameraSettingState().getValue().getWhiteBalanceFrozen());
@@ -123,7 +137,7 @@ public class CameraWhiteBalanceTest {
         int upper = state.getWhiteBalanceTemperatureRange().getLast();
         int expected = Math.max(lower, Math.min(upper, 3200));
         assertEquals("clamped to what the camera reaches", expected, state.getWhiteBalanceTemperatureInEffect());
-        assertEquals(expected + " K", shownWhiteBalance());
+        assertShown(expected + " K");
 
         getInstrumentation().runOnMainSync(activity::startMeasurement);
         awaitFrames("linearRed", 5);
@@ -150,11 +164,11 @@ public class CameraWhiteBalanceTest {
         CameraInput input = launch(UNLOCKED);
         assertEquals(WhiteBalanceMode.AUTO, input.getCameraSettingState().getValue().getWhiteBalanceMode());
         assertFalse(input.getCameraSettingState().getValue().getWhiteBalanceLockedByFile());
-        assertEquals("Auto", shownWhiteBalance());
+        assertShown("Auto");
 
         getInstrumentation().runOnMainSync(() -> input.setWhiteBalanceMode(WhiteBalanceMode.LOCKED));
         await("a lock chosen in the GUI freezes at once", () -> input.getCameraSettingState().getValue().getWhiteBalanceFrozen());
-        assertEquals("Locked", shownWhiteBalance());
+        assertShown("Locked");
 
         getInstrumentation().runOnMainSync(() -> {
             input.setWhiteBalanceMode(WhiteBalanceMode.TEMPERATURE);
@@ -164,12 +178,12 @@ public class CameraWhiteBalanceTest {
         CameraSettingState state = input.getCameraSettingState().getValue();
         int upper = state.getWhiteBalanceTemperatureRange().getLast();
         assertEquals("clamped to the top of the range", upper, state.getWhiteBalanceTemperatureInEffect());
-        assertEquals("shown as clamped", upper + " K", shownWhiteBalance());
+        assertShown("shown as clamped", upper + " K");
 
         getInstrumentation().runOnMainSync(() -> input.setWhiteBalanceMode(WhiteBalanceMode.AUTO));
         await("automatic again", () -> !input.getCameraSettingState().getValue().getWhiteBalanceFrozen()
                 && input.getCameraSettingState().getValue().getWhiteBalanceMode() == WhiteBalanceMode.AUTO);
-        assertEquals("Auto", shownWhiteBalance());
+        assertShown("Auto");
 
         maximizePreview();
         assertTrue("the white balance control is enabled at level 3", activity.findViewById(R.id.lnrWhiteBalance).isEnabled());
