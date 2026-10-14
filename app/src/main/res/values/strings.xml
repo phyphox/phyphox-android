@@ -1,180 +1,343 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <!-- Top levels  -->
+    <!-- Name of the app, shown below its icon on the home screen. Brand name: do not translate, keep it in lower case. -->
     <string name="app_name">phyphox</string>
+    <!-- Web address opened by "Privacy policy" in the help menu of the main screen. Keep the URL unless phyphox.org has a version of this page in your language. -->
     <string name="privacyPolicyURL">https://phyphox.org/privacy</string>
+    <!-- Not shown by the Android app at the moment; translating it does no harm. Means the settings of the app. -->
     <string name="action_settings">Settings</string>
+    <!-- Name of the screen that runs an experiment, shown by Android for example in the list of recent apps. Brand name: do not translate. -->
     <string name="title_activity_experiment">phyphox</string>
+    <!-- Entry in the help menu of the main screen (the "i" icon at the top). Opens the phyphox website with ideas and instructions for experiments. -->
     <string name="experimentsPhyphoxOrg">Experiment ideas and instructions</string>
+    <!-- Web address opened by "Experiment ideas and instructions" in the help menu. Keep the URL unless phyphox.org has a version of this page in your language. -->
     <string name="experimentsPhyphoxOrgURL">http://phyphox.org/experiments</string>
+    <!-- Entry in the help menu of the main screen. Opens the FAQ page on the phyphox website. -->
     <string name="faqPhyphoxOrg">Frequently asked questions</string>
+    <!-- Web address opened by "Frequently asked questions" in the help menu. Keep the URL unless phyphox.org has a version of this page in your language. -->
     <string name="faqPhyphoxOrgURL">http://phyphox.org/faq</string>
     <!-- Generals  -->
+    <!-- Not shown by the Android app at the moment; translating it does no harm. A generic title for error messages. -->
     <string name="error">Error</string>
+    <!-- Short error shown when the user typed something that is not a number, for example the reference value of a picked data point in a graph. Also shown in the remote web interface. -->
     <string name="invalidValue">Invalid Value</string>
+    <!-- Message of a generic error dialog, shown when no more specific explanation is available. -->
     <string name="generalErrorDialog">An error has occurred.</string>
+    <!-- Not shown by the Android app at the moment; translating it does no harm. Means "help and information about the app". -->
     <string name="help">Help and info</string>
+    <!-- Web address opened by the "Translation" entry in the settings. Replace the language code after # with the code of your language (for example #de, #fr), so the page opens at your language. -->
     <string name="translationToWebsiteURL">http://phyphox.org/languages#en</string>
+    <!-- Entry in the help menu of the main screen and title of the dialog it opens. The dialog lists technical details of the phone (model, Android version, sensors) that users can send to the developers when reporting a problem. -->
     <string name="deviceInfo">Device info</string>
+    <!-- Button in the "Device info" dialog. Copies the listed technical details to the clipboard. -->
     <string name="copyToClipboard">Copy to clipboard</string>
+    <!-- Short confirmation (toast) after the device info has been copied to the clipboard. -->
     <string name="deviceInfoCopied">The device info has been copied to your clipboard.</string>
+    <!-- Title of the dialog with the warning not to damage the phone, shown when the app starts until the user ticks "Do not show again". -->
     <string name="warning">Warning</string>
+    <!-- Checkbox in the warning dialog at app start. If ticked, the warning is not shown again. -->
     <string name="donotshowagain">Do not show again</string>
+    <!-- Text of the warning dialog shown when the app starts. Reminds the user that phyphox experiments move the phone around (dropping, swinging, magnets). -->
     <string name="damageWarning">Please be careful not to damage your phone while experimenting. Please take special care to avoid dropping it on hard surfaces and do not expose it to excessive magnetic fields. The authors of phyphox are not responsible for any damage to your phone.</string>
+    <!-- Accessibility label (read aloud by screen readers, not visible) of the "i" icon at the top of the main screen, which opens the help menu. -->
     <string name="info">Info</string>
+    <!-- Generic confirmation button in dialogs. -->
     <string name="ok">OK</string>
+    <!-- Button in an error dialog that repeats the failed action, for example a QR code scan or a Bluetooth connection. -->
     <string name="tryagain">Try again</string>
+    <!-- Generic button that continues to the next step, for example after an explanation before a permission request or after scanning one of several QR codes. -->
     <string name="doContinue">Continue</string>
+    <!-- Button that closes a dialog, for example the credits or the device info. -->
     <string name="close">Close</string>
+    <!-- Not shown by the Android app at the moment; translating it does no harm. A button that moves to the next step. -->
     <string name="next">Next</string>
+    <!-- Generic button that closes a dialog without doing anything. -->
     <string name="cancel">Cancel</string>
+    <!-- Placeholder when something has no name: a Bluetooth device that does not report a name, a sensor of unknown type, or the category of an experiment file that could not be read. Lower case, as it may appear in a sentence. -->
     <string name="unknown">unknown</string>
+    <!-- Entry in the context menu of a saved experiment state in the experiment list, and title and confirmation button of the dialog in which the user types the new title. -->
     <string name="rename">Rename</string>
+    <!-- Entry in the context menu of an experiment in the user's collection, and confirmation button of the dialog asking whether to delete it. -->
     <string name="delete">Delete</string>
+    <!-- Question in the dialog shown before an experiment (or saved state) is removed from the user's collection on the main screen. -->
     <string name="confirmDelete">Do you want to delete this experiment from your collection?</string>
+    <!-- Title of the dialog shown before an experiment is removed from the user's collection. -->
     <string name="confirmDeleteTitle">Confirm delete?</string>
+    <!-- Pause button in the toolbar of a running experiment (also read by screen readers). Stops the measurement; the recorded data is kept. Keep it short. -->
     <string name="stop">Stop</string>
+    <!-- Play button in the toolbar of an experiment (also read by screen readers). Starts or resumes the measurement. Keep it short. -->
     <string name="start">Start</string>
+    <!-- Menu entry of an experiment (and button in the dialog asking for confirmation) that deletes all data recorded so far. Also used in the remote web interface. -->
     <string name="clear_data">Clear data</string>
+    <!-- Title of the confirmation dialog shown before the recorded data is cleared. Also used in the remote web interface. -->
     <string name="clear_data_question">Clear recorded data?</string>
+    <!-- Title of the confirmation dialog shown before the recorded data is cleared, when the experiment offers additional optional items (listed with checkboxes below) that can be cleared as well, for example calibration values. Also used in the remote web interface. -->
     <string name="clear_data_question_select">Clear recorded data and the following optional items?</string>
+    <!-- Not shown by the Android app at the moment; translating it does no harm. A button that deletes recorded data. -->
     <string name="clear">Clear</string>
+    <!-- Not shown by the Android app at the moment; translating it does no harm. Title for leaving a running experiment. -->
     <string name="leave_experiment">Leave experiment</string>
+    <!-- Question shown when the user leaves an experiment that has been measuring for more than a few seconds. Leaving discards the data unless it was exported or saved. -->
     <string name="leave_experiment_question">Leave this experiment and discard recorded data?</string>
+    <!-- Button in the dialog "Leave this experiment and discard recorded data?". Leaves the experiment. -->
     <string name="leave">Leave</string>
+    <!-- Toolbar button (and screen-reader label) that stops a timed run, i.e. a measurement that starts and stops automatically after set delays. Keep it short. Use the same term for "timed run" throughout. -->
     <string name="timed_stop">Stop timed run</string>
+    <!-- Toolbar button (and screen-reader label) that starts a timed run, i.e. a measurement that starts and stops automatically after set delays. Keep it short. -->
     <string name="timed_start">Start timed run</string>
+    <!-- Title of the progress dialog shown while an experiment is loaded or saved. -->
     <string name="loadingTitle">Loading</string>
+    <!-- Message of the progress dialog shown while an experiment is loaded. -->
     <string name="loadingText">Loading experiment…</string>
+    <!-- Message of the progress dialog shown while the app connects to the Bluetooth device(s) an experiment needs. -->
     <string name="loadingBluetoothConnectionText">Connecting to Bluetooth device…</string>
+    <!-- Title of the dialog in which the user sets up a timed run: a measurement that starts after a delay and stops automatically after a set duration. -->
     <string name="timedRunDialogTitle">Timed Run</string>
+    <!-- Label of the input field in the timed run dialog: seconds to wait after pressing start before the measurement begins. (s) means seconds. -->
     <string name="timedRunStartDelay">Start delay (s)</string>
+    <!-- Label of the input field in the timed run dialog: how long the measurement runs, in seconds. (s) means seconds. -->
     <string name="timedRunStopDelay">Experiment duration (s)</string>
+    <!-- Switch at the top of the timed run dialog that turns the timed run mode on or off. -->
     <string name="enableTimedRun">Do a timed run</string>
+    <!-- Menu entry of an experiment and title of the sheet in which the user exports the recorded data as a file (CSV, Excel, …). Also used in the menu of the remote web interface. -->
     <string name="export">Export Data</string>
+    <!-- Message shown when the user tries to export but the experiment file defines nothing to export. "Configuration" means the experiment file. -->
     <string name="export_empty">This experiment configuration does not define any data to be exported. If this is an error, please contact the source of the QR code or configuration file.</string>
+    <!-- Subject line used when exported data is shared, for example by e-mail. -->
     <string name="export_subject">Data from phyphox</string>
+    <!-- Not shown by the Android app at the moment; translating it does no harm. Title of the system menu in which the user picks an app to receive exported data. -->
     <string name="export_pick_share">Pick an export method</string>
+    <!-- Menu entry of an experiment. Takes a screenshot of the current screen and shares it with another app. -->
     <string name="share">Share screenshot</string>
+    <!-- Button in the export and save-state sheets, and entry in the menu of an experiment or saved state in the user's collection: saves the file to the Downloads folder of the phone. -->
     <string name="download">Download</string>
+    <!-- Short confirmation (toast) after a file has been saved to the Downloads folder. -->
     <string name="savedToDownloadsMessage">File saved to Downloads</string>
+    <!-- Error shown when a file could not be saved to the Downloads folder. The technical reason (in English) is appended after a space. -->
     <string name="savedToDownloadsError">Could not save the file to Downloads:</string>
+    <!-- Shown on older Android versions when the user did not grant the storage permission needed to save a file to Downloads. -->
     <string name="permissionRequiredToSaveToDownloads">Storage permission is needed to save files to Downloads</string>
+    <!-- Error shown when saving the experiment state failed. A technical reason is appended. -->
     <string name="errorWritingStateFile">Error writing state file: </string>
+    <!-- Subject line used when a screenshot of phyphox is shared, for example by e-mail. -->
     <string name="share_subject">Screenshot from phyphox</string>
+    <!-- Title of the Android menu in which the user picks the app to share a screenshot, an export or a saved state with. -->
     <string name="share_pick_share">Pick a share method</string>
+    <!-- Entry in the menu of the remote web interface (the experiment opened in a computer's web browser). Shows the experiment in one narrow column like on a phone. -->
     <string name="switchToPhoneLayout">View: Narrow</string>
+    <!-- Entry in the menu of the remote web interface. Arranges the experiment's elements in one wide column. -->
     <string name="switchColumns1">View: 1 column</string>
+    <!-- Entry in the menu of the remote web interface. Arranges the experiment's elements in two columns. -->
     <string name="switchColumns2">View: 2 columns</string>
+    <!-- Entry in the menu of the remote web interface. Arranges the experiment's elements in three columns. -->
     <string name="switchColumns3">View: 3 columns</string>
+    <!-- Entry in the menu of the remote web interface. Switches between a dark and a bright colour scheme, for example for projectors. -->
     <string name="toggleBrightMode">Bright mode</string>
+    <!-- Entry in the menu of the remote web interface, followed by buttons to make the text smaller or larger. -->
     <string name="fontSize">Font size</string>
+    <!-- Menu entry (info icon) of an experiment. Shows the description and instructions written by the author of the experiment. Use the same term as in the hint "Check experiment info …". -->
     <string name="show_description">Experiment info</string>
+    <!-- Menu entry of an experiment opened from outside the app (a file, link or QR code), and title of the dialog offering to keep it. Adds the experiment to the user's own list on the main screen ("collection"). -->
     <string name="save_locally">Add experiment to collection</string>
+    <!-- Confirmation after an experiment from outside has been added to the user's collection. -->
     <string name="save_locally_done">Experiment successfully added to collection.</string>
+    <!-- Shown when an experiment opened from a file, link or QR code is started, offering to keep it in the user's collection (the list on the main screen). -->
     <string name="save_locally_message">This experiment has been opened from a remote source. Do you want to add it to your experiment collection?</string>
+    <!-- Button in the dialog offering to add an experiment from outside to the user's collection. -->
     <string name="save_locally_button">Save to collection</string>
+    <!-- Menu entry of an experiment and title of the sheet that saves its "state": the experiment together with all data recorded so far, so it can be reopened later. -->
     <string name="save_state">Save experiment state</string>
+    <!-- Heading of the category in the experiment list that holds the experiment states the user has saved (experiments including their recorded data). -->
     <string name="save_state_category">Saved experiment states</string>
+    <!-- Explanation in the "Save experiment state" sheet. A state is the experiment including the recorded data. -->
     <string name="save_state_message">You can save the state of this experiment including your data to your collection or share it with a third-party app.</string>
+    <!-- Not shown by the Android app at the moment; translating it does no harm. Label of the field for the title of a saved experiment state. -->
     <string name="save_state_title">Title</string>
+    <!-- Button in the "Save experiment state" sheet that saves the state to the user's collection on the main screen. Keep it short (button with icon). -->
     <string name="save_state_save">To collection</string>
+    <!-- Button in the export and save-state sheets, and entry in the menu of an experiment or saved state in the user's collection: sends the file to another app. Keep it short (button with icon). -->
     <string name="save_state_share">Share</string>
+    <!-- Not shown by the Android app at the moment; translating it does no harm. Subject line when a saved experiment state is shared. -->
     <string name="save_state_subject">Experiment state for phyphox</string>
+    <!-- Default title suggested for a saved experiment state (grey hint in the empty title field). A short noun for one recording. -->
     <string name="save_state_default_title">Measurement</string>
+    <!-- Confirmation after an experiment state has been saved to the collection. -->
     <string name="save_state_success">State has been saved to your collection.</string>
+    <!-- Title of the dialog shown when a file or QR code contains several experiments at once. -->
     <string name="open_zip_title">Opening a set of experiments</string>
+    <!-- Text of the dialog shown when a file contains several experiments. A list of the experiments follows below; "collection" is the user's list on the main screen. -->
     <string name="open_zip_dialog_instructions">This resource contains multiple experiments. You can either pick one to open it and optionally save it to your collection or use the button below to save them all to your collection at once.</string>
+    <!-- Button that adds all offered experiments to the user's collection at once. -->
     <string name="open_save_all">Save all</string>
+    <!-- Title of the dialog listing the experiments phyphox has for a Bluetooth device the user selected after a scan. -->
     <string name="open_bluetooth_assets_title">Experiments for Bluetooth device</string>
+    <!-- Text of the dialog listing the experiments phyphox has for a selected Bluetooth device. The list follows below. -->
     <string name="open_bluetooth_assets">The following experiments for your device are available from phyphox. You can either just open and use them or add them all to your collection to easily access them from the main menu.</string>
+    <!-- Menu entry (timer icon) of an experiment that opens the timed run settings: a measurement that starts after a delay and stops after a set duration. -->
     <string name="timedRun">Timed run</string>
+    <!-- Not shown by the Android app at the moment; translating it does no harm. Asks the user to select which data sets to export. -->
     <string name="pick_exportSets">Pick the data sets to export.</string>
+    <!-- Heading in the export sheet above the list of file formats (CSV, Excel, …). -->
     <string name="pick_exportFormat">Choose the data format.</string>
+    <!-- Not shown by the Android app at the moment; translating it does no harm. Means there is no data that could be shown in a graph. -->
     <string name="noDrawableData">No drawable data.</string>
+    <!-- Heading of the category in the experiment list that holds the simple experiments the user created in the app. The text is written into each created experiment as its category. -->
     <string name="categoryNewExperiment">Simple custom experiments</string>
+    <!-- Heading of the category of experiments that show the plain data of one sensor (Accelerometer, Gyroscope, …). Must be exactly the same text as the translation of the category "Raw Sensors" in the experiments component, otherwise the app cannot recognise this category. -->
     <string name="categoryRawSensor">Raw Sensors</string>
+    <!-- Heading of the last category in the experiment list, with links to support phyphox (donations, survey, website). -->
     <string name="categoryPhyphoxOrg">Contribute to phyphox</string>
+    <!-- Hint bubble shown once on the main screen after an update, pointing down to the "Contribute to phyphox" category at the end of the list. -->
     <string name="categoryPhyphoxOrgHint">There are new options to support phyphox at the bottom of the list.</string>
+    <!-- Hint bubble shown when an experiment is opened for the first time, pointing at the info icon in the toolbar that shows the experiment's instructions. -->
     <string name="experimentinfo_hint">Check experiment info to learn how to use this experiment.</string>
+    <!-- Hint bubble pointing at the start button (a triangle pointing right, "play") in the toolbar of an experiment. -->
     <string name="start_hint">Touch the triangle to start the experiment.</string>
+    <!-- Heading in the timed run dialog above the switches that turn the acoustic signals (beeps) on or off. -->
     <string name="timedRunBeeps">Acoustic signals</string>
+    <!-- Switch in the timed run dialog: a beep every second while waiting for the delayed start. -->
     <string name="beeperCountdown">Countdown sounds</string>
+    <!-- Switch in the timed run dialog: a beep when the measurement starts. -->
     <string name="beeperStart">Start sound</string>
+    <!-- Switch in the timed run dialog: a short beep every second while the measurement is running. -->
     <string name="beeperRunning">Running sounds</string>
+    <!-- Switch in the timed run dialog: a beep when the measurement stops. -->
     <string name="beeperStop">Stop sound</string>
+    <!-- Button in the timed run dialog that turns all acoustic signals on. -->
     <string name="activate_all">Activate all</string>
+    <!-- Button in the timed run dialog that turns all acoustic signals off. -->
     <string name="deactivate_all">Deactivate all</string>
+    <!-- Title of the warning shown before an experiment that makes the flashlight blink quickly. -->
     <string name="warning_photosensitivity">Photosensitivity Warning</string>
+    <!-- Warning shown before an experiment that makes the flashlight blink quickly (e.g. a stroboscope). Keep the line breaks. -->
     <string name="warning_photosensitivity_message">This experiment may produce high-frequency light pulses. It may trigger discomfort or seizures for individuals with photosensitive epilepsy.
 \n
 \nAvoid staring directly at the light source.</string>
+    <!-- Title of a warning shown when the phone gets too warm while the flashlight is used by an experiment. -->
     <string name="device_overheating">Device Overheating</string>
+    <!-- Shown when the phone gets too warm while an experiment uses the flashlight; the app has switched the flashlight off. -->
     <string name="device_heating_serious">The device is getting very warm. The flashlight has been turned off to cool down.</string>
     <!-- Graph  -->
+    <!-- Tool button below a graph shown in full screen (tap a graph to get there): in this mode, dragging moves the graph and pinching zooms. Also used in the remote web interface. Keep it short. -->
     <string name="graph_tools_pan_and_zoom">Pan and zoom</string>
+    <!-- Tool button below a full-screen graph: in this mode, tapping the graph selects a data point and shows its values. Experiments can rename it. Also used in the remote web interface. Keep it short. -->
     <string name="graph_tools_pick">Pick data</string>
+    <!-- Tool button below a full-screen graph that opens a menu with further graph tools. Keep it short. -->
     <string name="graph_tools_more">More tools</string>
+    <!-- Entry in the graph tools menu: shows the time axis as clock time (time of day) instead of seconds since the start of the measurement. Also used in the remote web interface. -->
     <string name="graph_tools_system_time">Convert to system time</string>
+    <!-- Entry in the graph tools menu: undoes zooming and panning so the graph shows all data again. Also used in the remote web interface. -->
     <string name="graph_tools_reset">Reset zoom</string>
+    <!-- Entry in the graph tools menu: keeps the zoomed section but moves it along with new incoming data. Also used in the remote web interface. -->
     <string name="graph_tools_follow">Follow new data</string>
+    <!-- Entry in the graph tools menu: fits a straight line (y = a x + b) to the visible data. -->
     <string name="graph_tools_linear_fit">Linear fit</string>
+    <!-- Entry in the graph tools menu: exports only the data of this graph. -->
     <string name="graph_tools_export">Export this dataset</string>
+    <!-- Entry in the graph tools menu: switches the x axis (horizontal) to a logarithmic scale. Also used in the remote web interface. -->
     <string name="graph_tools_log_x">Logarithmic x axis</string>
+    <!-- Entry in the graph tools menu: switches the y axis (vertical) to a logarithmic scale. Also used in the remote web interface. -->
     <string name="graph_tools_log_y">Logarithmic y axis</string>
+    <!-- Heading in the read-out box of a full-screen graph in pick mode, above the coordinates of the selected data point. Also used in the remote web interface. -->
     <string name="graph_point_label">Point</string>
+    <!-- Heading in the read-out box of a full-screen graph when two data points are selected, above the slope (rise over run) between them. Also used in the remote web interface. -->
     <string name="graph_slope_label">Slope</string>
+    <!-- Heading in the read-out box of a full-screen graph when two data points are selected, above the differences of their x and y values. Also used in the remote web interface. -->
     <string name="graph_difference_label">Difference</string>
+    <!-- Heading of the result box of the linear fit in a full-screen graph; the values of a and b follow below. Keep the formula y = a x + b unchanged, as the following lines refer to a and b. -->
     <string name="graph_fit_label">Linear fit: y = a x + b</string>
+    <!-- Shown in the middle of an empty graph before any data has been recorded. Also used in the remote web interface. -->
     <string name="graph_no_data">No data</string>
+    <!-- Shown in the middle of a graph whose data contains no plottable numbers (for example only invalid values, or only values that cannot be shown on a logarithmic axis). Also used in the remote web interface. -->
     <string name="graph_no_valid_data">No valid data</string>
+    <!-- Shown in the middle of a graph when there is data, but none of it lies in the zoomed section. Also used in the remote web interface. -->
     <string name="graph_no_data_in_range">No data in range</string>
     <!-- Spectroscopy camera UI -->
+    <!-- Button in the camera settings of the spectroscopy experiment that opens the dialog to choose how the spectrum lies in the camera image. Keep it short. -->
     <string name="spectrum_orientation">Orientation</string>
+    <!-- Question in the spectroscopy settings dialog: does the spectrum (the rainbow of colours seen through the diffraction grating) run along the long or the short side of the camera image? -->
     <string name="which_spectrum_orientation">What is your device\'s orientation in regard to the spectrum?</string>
+    <!-- Option in the spectroscopy settings: the phone is held upright (portrait) relative to the spectrum. -->
     <string name="portrait_orientation">Portrait</string>
+    <!-- Option in the spectroscopy settings: the phone is held sideways (landscape) relative to the spectrum. -->
     <string name="landscape_orientation">Landscape</string>
+    <!-- Title of the settings dialog of the spectroscopy (camera spectrum) analysis. -->
     <string name="spectrum_analysis_setting">Spectrum Analysis Settings</string>
     <!-- Graph Zooms  -->
     <!-- Title of the dialog shown when the user closes the full-screen view of a graph after zooming or panning it. The dialog asks whether the graph should keep showing the zoomed section. Short dialog title. -->
     <string name="applyZoomQuestionTitle">Keep this view?</string>
+    <!-- Text of the "Keep this view?" dialog, shown when the user closes the full-screen view of a graph after zooming or panning it. "Return" means coming back to the normal view of the experiment. -->
     <string name="applyZoomQuestion">You zoomed in. Should the graph keep showing this section when you return?</string>
     <!-- One line in the "Keep this view?" dialog describing the zoomed range of one graph axis. %1$s is the axis label from the experiment (e.g. "Acceleration"), %2$s and %3$s are the lower and upper limit as formatted numbers with their unit (e.g. "2.5 s"), or clock times on a time axis. Example: "Time: 2.5 s to 7.0 s". -->
     <string name="applyZoomRange">%1$s: %2$s to %3$s</string>
+    <!-- Button or option in the "Keep this view?" dialog: discard the zoom so the graph shows all data again. -->
     <string name="applyZoomActionReset">Reset zoom</string>
+    <!-- Button or option in the "Keep this view?" dialog: keep showing the zoomed section of the graph. -->
     <string name="applyZoomActionKeep">Keep this section</string>
+    <!-- Option in the "Keep this view?" dialog: keep the zoomed width but let it move along with new incoming data (offered for the x axis only). -->
     <string name="applyZoomActionFollow">Keep and follow new data</string>
+    <!-- Button in the "Keep this view?" dialog that expands per-axis options. -->
     <string name="applyZoomMoreOptions">More options…</string>
+    <!-- Label in the expanded "Keep this view?" dialog, followed by a drop-down with one of the options "this graph only", "the same data", "the same unit (…)" or "any … axis". Ends with an ellipsis because the selected option completes the sentence. -->
     <string name="applyZoomAlsoApply">Also apply to other graphs with…</string>
+    <!-- Option completing "Also apply to other graphs with…": the zoom applies to this graph only. Lower case, as it continues the sentence. -->
     <string name="applyZoomTargetThis">this graph only</string>
+    <!-- Option completing "Also apply to other graphs with…": also zoom other graphs that show the same data on this axis. Lower case, as it continues the sentence. -->
     <string name="applyZoomTargetSameData">the same data</string>
+    <!-- Option completing "Also apply to other graphs with…": also zoom other graphs whose axis has the same unit. %s is the unit symbol, e.g. "s" or "m/s²". Lower case, as it continues the sentence. -->
     <string name="applyZoomTargetSameUnit">the same unit (%s)</string>
+    <!-- Option completing "Also apply to other graphs with…": also zoom every other graph on this axis. %s is the axis name, "x" or "y". Lower case, as it continues the sentence. -->
     <string name="applyZoomTargetSameAxis">any %s axis</string>
     <!-- Creating new experiments  -->
+    <!-- Label of the round + button at the bottom right of the main screen, and title of the dialog it opens, which offers the ways to add an experiment (simple experiment, QR code, Bluetooth device). -->
     <string name="newExperiment">Add experiments</string>
+    <!-- Option of the + button on the main screen, and title of the dialog in which the user creates a simple experiment by choosing sensors and a rate. -->
     <string name="newExperimentSimple">Add simple experiment</string>
+    <!-- Note at the top of the "Add simple experiment" dialog, pointing to the phyphox website for more elaborate experiments. -->
     <string name="newExperimentPhyphoxInfo">Visit phyphox.org to create more advanced experiments including data analysis and share them with colleagues, students and friends.</string>
+    <!-- Label of (and grey hint inside) the field for the title of a new simple experiment. -->
     <string name="newExperimentInputTitle">Title</string>
+    <!-- Not shown by the Android app at the moment; translating it does no harm. Label of a field for how many values a new simple experiment stores. -->
     <string name="newExperimentInputBufferSize">Buffer size (number of values to be stored)</string>
+    <!-- Label of (and grey hint inside) the field for the sensor rate of a new simple experiment: how many values per second (Hz) the sensors deliver. 0 means as fast as the sensor can. -->
     <string name="newExperimentInputRate">Sensor rate (in Hz, 0 = as fast as possible)</string>
+    <!-- Heading above the list of sensor checkboxes in the "Add simple experiment" dialog. -->
     <string name="newExperimentInputSensors">Active sensors</string>
+    <!-- Option of the + button on the main screen, and title of the dialog after a Bluetooth scan: open an experiment for a Bluetooth Low Energy device such as a sensor box or a microcontroller. -->
     <string name="newExperimentBluetooth">Add experiment for Bluetooth device</string>
+    <!-- Title of the error dialog when the Bluetooth scan for new experiments failed. -->
     <string name="newExperimentBluetoothErrorTitle">Bluetooth scan error</string>
+    <!-- Button in the dialog after selecting a Bluetooth device that sends its own experiment to the phone. Downloads that experiment from the device. -->
     <string name="newExperimentBluetoothLoadFromDevice">Load from device</string>
+    <!-- Text in the dialog after selecting a Bluetooth device that sends its own experiment. "load from device" quotes the button; use the same words as your translation of that button. -->
     <string name="newExperimentBluetoothLoadFromDeviceInfo">This device provides its own phyphox experiment. Select "load from device" to open it.</string>
+    <!-- Option of the + button on the main screen, and title of the dialog after a scan: add an experiment by scanning a QR code with the camera. -->
     <string name="newExperimentQR">Add experiment from QR code</string>
+    <!-- Instruction shown at the bottom of the camera view while scanning a QR code. -->
     <string name="newExperimentQRscan">Scan a QR code that contains a phyphox experiment.</string>
+    <!-- Title of the error dialog when a scanned QR code could not be used. -->
     <string name="newExperimentQRErrorTitle">QR code error.</string>
+    <!-- Error shown when a scanned QR code contains neither an experiment nor a link to one. -->
     <string name="newExperimentQRNoExperiment">Could not find a QR code that contains a phyphox experiment.</string>
+    <!-- Error shown when a large experiment is split over several QR codes and the user scanned a code that belongs to a different experiment. -->
     <string name="newExperimentQRcrcMismatch">The QR code you just scanned does not seem to match to the previous codes. Please make sure to only scan the codes belonging to the same experiment.</string>
+    <!-- First part of a message shown when a large experiment is split over several QR codes. Assembled as: [this text] [total number of codes] [second part] [list of the missing code numbers], e.g. "The QR code you just scanned is part of a set of 3 codes. Please press continue to scan the remaining codes. Codes still missing: 2, 3". -->
     <string name="newExperimentQRCodesMissing1">The QR code you just scanned is part of a set of</string>
+    <!-- Second part of a message shown when an experiment is split over several QR codes, placed after the total number of codes and followed by the numbers of the codes still missing. See newExperimentQRCodesMissing1 for the full sentence. -->
     <string name="newExperimentQRCodesMissing2">codes. Please press continue to scan the remaining codes. Codes still missing: </string>
+    <!-- Error shown when the data read from a QR code is damaged (the checksum does not match). -->
     <string name="newExperimentQRBadCRC">Invalid checksum. This means that either the QR code is bad or something went wrong while scanning it.</string>
+    <!-- Title of the error dialog when an experiment could not be received from a Bluetooth device. -->
     <string name="newExperimentBTReadErrorTitle">Bluetooth experiment error.</string>
+    <!-- Error shown when the experiment a Bluetooth device sent to the phone arrived incomplete or damaged. A technical reason in English is appended in brackets. -->
     <string name="newExperimentBTReadErrorCorrupted">The transmitted experiment data is corrupted.</string>
     <!-- Credits  -->
+    <!-- Entry in the help menu of the main screen and title of the dialog listing the authors and the software libraries used. -->
     <string name="credits">Credits</string>
+    <!-- First paragraph of the credits. Keep the ® sign and the institution's name; you may add the local name of the university if that is customary. -->
     <string name="creditsRWTH">phyphox® has been created at the 2nd Institute of Physics at the RWTH Aachen University.</string>
+    <!-- List of people in the credits. Translate only the role headings (the lines ending in a colon, which are shown in bold; keep the colon). Do not change the names and keep each name on its own line. -->
     <string name="creditsNames">Development and Concept:
 \nDr. Sebastian Staacks
 \nConcept:
@@ -184,10 +347,13 @@
 \nDominik Dorsel
 \nJonas Gessner
 \nCamilla Lummerzheim</string>
+    <!-- Licence note in the credits. Keep the product names "phyphox" and "RWTH Aachen" unchanged, they are registered trademarks. -->
     <string name="gpl">
         Phyphox® is open source software released under the GNU General Public Licence. Please visit http://phyphox.org for further information and to get access to its source code. However, the name \"phyphox\" and \"RWTH Aachen\" are registered trademarks.
     </string>
+    <!-- Credits for software libraries used by the app. Keep library names, copyright lines and web addresses unchanged. -->
     <string name="creditsLibs">The web-interface for remote access uses the Java Lightweight HTTP Server (jlhttp) under the GNU General Public Licence v2 and plots data with the JavaScript library \"Chart.js\" (http://chartjs.org), available under the MIT licence. For the fourier transform, we use the FFTW library (http://fftw.org), Copyright © 2003, 2007-11 Matteo Frigo, Copyright © 2003, 2007-11 Massachusetts Institute of Technology, which is available under the GNU General Public Licence (version 2 or later). GPS elevation data is converted from the WGS84 ellipsoid to the EGM84 geoid using EGM84 data (30\' resolution) and a ported function from the GographicLib (https://geographiclib.sourceforge.io/, MIT/X11 licence).</string>
+    <!-- Licence text of a library, shown in the credits. Not translatable: legal text stays in English. -->
     <string name="creditsApache" translatable="false">
         <![CDATA[
         <b>Apache POI</b><br />
@@ -207,6 +373,7 @@ This product contains parts of the eID Applet project (http://eid-applet.googlec
 <br />
         ]]>
     </string>
+    <!-- Licence text of a library, shown in the credits. Not translatable: legal text stays in English. -->
     <string name="creditsZxing" translatable="false">
         <![CDATA[
         <b>Zxing</b><br />
@@ -227,6 +394,7 @@ NOTICES FOR JCOMMANDER<br />
 Copyright 2010 Cedric Beust cedric@beust.com
 ]]>
     </string>
+    <!-- Licence text of a library, shown in the credits. Not translatable: legal text stays in English. -->
     <string name="creditsPahoMQTT" translatable="false">
         <![CDATA[
         <b>Paho MQTT</b><br />
@@ -248,309 +416,596 @@ THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND 
 ]]>
     </string>
     <!-- Sensors  -->
+    <!-- Name of a sensor: acceleration of the phone without the contribution of gravity (Android's linear acceleration sensor). Used as a checkbox in "Add simple experiment", in the "sensor not available" message and in the privacy note of network experiments. -->
     <string name="sensorLinearAcceleration">Linear Acceleration</string>
+    <!-- Name of a sensor: the direction and strength of gravity as estimated by the phone. Used as a checkbox in "Add simple experiment", in the "sensor not available" message and in the privacy note of network experiments. -->
     <string name="sensorGravity">Gravity</string>
+    <!-- Name of a sensor: the ambient light sensor (illuminance in lux). Used as a checkbox in "Add simple experiment", in the "sensor not available" message and in the privacy note of network experiments. -->
     <string name="sensorLight">Light</string>
+    <!-- Name of a sensor: the gyroscope (rotation rate). Used as a checkbox in "Add simple experiment", in the "sensor not available" message and in the privacy note of network experiments. -->
     <string name="sensorGyroscope">Gyroscope</string>
+    <!-- Name of a sensor: the accelerometer (acceleration including gravity). Used as a checkbox in "Add simple experiment", in the "sensor not available" message and in the privacy note of network experiments. -->
     <string name="sensorAccelerometer">Accelerometer</string>
+    <!-- Name of a sensor: the magnetometer (magnetic field strength). Used as a checkbox in "Add simple experiment", in the "sensor not available" message and in the privacy note of network experiments. -->
     <string name="sensorMagneticField">Magnetic Field</string>
+    <!-- Name of a sensor: the barometer (air pressure). Used as a checkbox in "Add simple experiment", in the "sensor not available" message and in the privacy note of network experiments. -->
     <string name="sensorPressure">Pressure</string>
+    <!-- Name of a sensor: the temperature sensor (few phones have one). Used as a checkbox in "Add simple experiment", in the "sensor not available" message and in the privacy note of network experiments. -->
     <string name="sensorTemperature">Temperature</string>
+    <!-- Name of a sensor: relative air humidity (few phones have one). Used as a checkbox in "Add simple experiment", in the "sensor not available" message and in the privacy note of network experiments. -->
     <string name="sensorHumidity">Humidity</string>
+    <!-- Name of a sensor: the proximity sensor near the earpiece, which detects whether something covers the screen. Used as a checkbox in "Add simple experiment", in the "sensor not available" message and in the privacy note of network experiments. -->
     <string name="sensorProximity">Proximity</string>
+    <!-- Name of a sensor: the orientation of the phone in space (attitude), computed from several sensors. Used as a checkbox in "Add simple experiment", in the "sensor not available" message and in the privacy note of network experiments. -->
     <string name="sensorAttitude">Attitude</string>
+    <!-- Shown as the sensor name for a sensor the phone manufacturer added and that Android does not classify. -->
     <string name="sensorVendor">Vendor specific</string>
+    <!-- Name of a sensor: the depth sensor that measures distances to objects (LiDAR or time-of-flight camera). Keep the abbreviations LiDAR and ToF. -->
     <string name="sensorDepth">Depth (LiDAR/ToF)</string>
+    <!-- Name of the camera as a data source, in the "sensor not available" message and in the privacy note of network experiments. -->
     <string name="sensorCamera">Camera</string>
+    <!-- Title of a warning shown when an experiment uses a sensor that only identifies itself through a manufacturer-specific name. -->
     <string name="vendorSensorTitle">Vendor-specific sensor</string>
+    <!-- First part of a warning, followed by the name of a sensor (e.g. "Pressure") and then vendorSensorWarning2: "The sensor Pressure does not report the correct sensor type …". -->
     <string name="vendorSensorWarning1">The sensor</string>
+    <!-- Second part of a warning, placed after "The sensor" and the sensor's name. See vendorSensorWarning1. -->
     <string name="vendorSensorWarning2">does not report the correct sensor type. It appears to be vendor-specific and we could only guess its type from its name. Therefore, it might not work as expected.</string>
+    <!-- Name of the location (GPS) data source. Used as a checkbox in "Add simple experiment" and in the "sensor not available" message. -->
     <string name="location">Location</string>
+    <!-- Title of the dialog shown when the user taps an experiment that needs a sensor this phone does not have (such experiments are greyed out in the list). -->
     <string name="sensorNotAvailableWarningTitle">Sensor not available.</string>
+    <!-- First part of a message, followed by a sensor name and then sensorNotAvailableWarningText2: "The sensor Pressure is not available. …". -->
     <string name="sensorNotAvailableWarningText1">The sensor</string>
+    <!-- Second part of a message, placed after "The sensor" and a sensor name. See sensorNotAvailableWarningText1. -->
     <string name="sensorNotAvailableWarningText2">is not available. Usually this means, that your device simply does not have this type of sensor.</string>
+    <!-- Button in the "Sensor not available" dialog that opens an explanation in the FAQ on the phyphox website. -->
     <string name="sensorNotAvailableWarningMoreInfo">More info</string>
+    <!-- Web address opened by "More info" in the "Sensor not available" dialog. Keep the URL unless phyphox.org has a version of this page in your language. -->
     <string name="sensorNotAvailableWarningMoreInfoURL">http://phyphox.org/faq/#faqMissingSensor</string>
+    <!-- Checkable menu entry of experiments using the magnetometer: use the values corrected by the phone's own calibration instead of the raw values. -->
     <string name="calibrated_magnetometer">Use calibrated magnetometer</string>
+    <!-- Checkable menu entry of experiments using the gyroscope: use the values corrected by the phone's own calibration instead of the raw values. -->
     <string name="calibrated_gyroscope">Use calibrated gyroscope</string>
+    <!-- Checkable menu entry of experiments using the accelerometer: use the values corrected by the phone's own calibration instead of the raw values. -->
     <string name="calibrated_accelerometer">Use calibrated accelerometer</string>
+    <!-- Checkable menu entry of the location (GPS) experiments: use only satellite positioning (GNSS) and ignore positions estimated from Wi-Fi or mobile networks. -->
     <string name="force_gnss">Satellite location only</string>
     <!-- Bluetooth  -->
+    <!-- Name of the Bluetooth Low Energy (BLE) technology, used in the "sensor not available" message when the phone does not support it. "Bluetooth Low Energy" is a technical name and usually stays in English. -->
     <string name="bluetooth">Bluetooth Low Energy</string>
+    <!-- Error shown when an experiment needs Bluetooth Low Energy and the phone does not support it. -->
     <string name="bt_android_version">Bluetooth Low Energy is not supported on this device.</string>
+    <!-- Title of the dialog that lists Bluetooth devices found by a scan, so the user can choose one. -->
     <string name="bt_pick_device">Please pick a device.</string>
+    <!-- Shown in the Bluetooth device list while the scan is running. Device ids may be appended in brackets. -->
     <string name="bt_scanning_generic">Scanning for Bluetooth devices…</string>
+    <!-- First part of the text shown while scanning for Bluetooth devices, followed by a device name in quotes and then bt_scanning_specific2: Scanning for Bluetooth devices with "phyphox" in their name… -->
     <string name="bt_scanning_specific1">Scanning for Bluetooth devices with</string>
+    <!-- Second part of the text shown while scanning, placed after a device name in quotes. See bt_scanning_specific1. -->
     <string name="bt_scanning_specific2">in their name…</string>
+    <!-- Shown below a Bluetooth device in the scan list when phyphox has no experiment for it. -->
     <string name="bt_device_not_supported">No experiment available.</string>
+    <!-- Explanation shown before Android asks for the location permission, which older Android versions require for Bluetooth scans. -->
     <string name="bt_location_explanation">Android requires a location permission for Bluetooth scans as the result could be used to derive location information. We will now request these permissions. You need to grant them in order to do a Bluetooth scan.</string>
+    <!-- Explanation shown when the location service of the phone is switched off, which older Android versions require for Bluetooth scans; the user is then taken to the system settings. -->
     <string name="bt_location_service_explanation">In addition to the permission to get location information, Android requires location services to be enabled for Bluetooth scans as the result could be used to derive location information. We will redirect you to your system settings.</string>
+    <!-- First part of an error message, followed by a technical identifier (UUID) and then bt_exception_uuid2: "Characteristic with UUID 1234… not found." A characteristic is a data channel of a Bluetooth Low Energy device; use the established technical term of your language or keep it. -->
     <string name="bt_exception_uuid">Characteristic with UUID</string>
+    <!-- Second part of an error message, placed after a UUID. See bt_exception_uuid. -->
     <string name="bt_exception_uuid2">not found.</string>
+    <!-- Error shown when Bluetooth is switched off on the phone. -->
     <string name="bt_exception_disabled">Bluetooth is disabled. Please enable bluetooth and try again.</string>
+    <!-- Error shown when the connection to a Bluetooth device could not be opened. -->
     <string name="bt_exception_connection">Bluetooth connection could not be opened.</string>
+    <!-- Error shown when the Bluetooth device an experiment needs could not be found. -->
     <string name="bt_exception_notfound">Bluetooth device not found.</string>
+    <!-- Error shown when Android refused to start a Bluetooth scan. A numeric error code is appended after a space. -->
     <string name="bt_scan_failed">The Bluetooth scan could not be started. Switching Bluetooth off and on again usually clears this. Android reported error code:</string>
+    <!-- Error shown when the app could not read which functions (services) a Bluetooth device offers. -->
     <string name="bt_exception_services">Services could not be discovered.</string>
+    <!-- Starts a line appended to Bluetooth error messages that names the device: [this text] address "…" name "…". For example: "Error for the device with address "AA:BB:…" name "phyphox"." -->
     <string name="bt_exception_device">Error for the device with</string>
+    <!-- Word inserted in the line naming a Bluetooth device in error messages, followed by the device's hardware address in quotes. See bt_exception_device. -->
     <string name="bt_exception_device_address">address</string>
+    <!-- Word inserted in the line naming a Bluetooth device in error messages, followed by the device's name in quotes. See bt_exception_device. -->
     <string name="bt_exception_device_name">name</string>
+    <!-- Error shown when the experiment file contains an invalid value for the attribute "rate" of a Bluetooth input. Keep "rate" in English: it is the attribute name in the file. -->
     <string name="bt_exception_rate">Invalid value for "rate".</string>
+    <!-- First part of an error message, followed by a technical identifier (UUID) and then bt_exception_notification_enable: "The notification for the characteristic with the UUID 1234… could not be enabled." Notifications let a Bluetooth device push new values to the phone. -->
     <string name="bt_exception_notification">The notification for the characteristic with the UUID</string>
+    <!-- Second part of an error message, placed after a UUID. See bt_exception_notification. -->
     <string name="bt_exception_notification_enable">could not be enabled.</string>
+    <!-- Not shown by the Android app at the moment; translating it does no harm. Second part of an error message, placed after a UUID. See bt_exception_notification. -->
     <string name="bt_exception_notification_disable">could not be disabled again.</string>
+    <!-- First part of an error message, followed by a technical identifier (UUID) and then bt_exception_notification_fail: "Turning on notifications for the Characteristic with the UUID 1234… was not successful." -->
     <string name="bt_exception_notification_fail_enable">Turning on notifications for the Characteristic with the UUID</string>
+    <!-- Second part of an error message, placed after a UUID. See bt_exception_notification_fail_enable. -->
     <string name="bt_exception_notification_fail">was not successful.</string>
+    <!-- Not shown by the Android app at the moment; translating it does no harm. First part of an error message, followed by a Bluetooth characteristic identifier and bt_exception_config2. -->
     <string name="bt_exception_config">The value for the characteristic</string>
+    <!-- Not shown by the Android app at the moment; translating it does no harm. Second part of an error message, placed after a Bluetooth characteristic identifier. -->
     <string name="bt_exception_config2">could not be set.</string>
+    <!-- Error shown when the measurement is started but a Bluetooth device it needs is not connected. A line naming the device may follow. -->
     <string name="bt_exception_no_connection">The Bluetooth device is not connected. Experiment can not be started.</string>
+    <!-- Error shown when the connection to a Bluetooth device was lost during an experiment. A line naming the device may follow. -->
     <string name="bt_exception_disconnected">The Bluetooth device has been disconnected.</string>
+    <!-- Generic error shown when something went wrong with a Bluetooth device and no more specific message is available. -->
     <string name="bt_default_error_message">There is an error with the Bluetooth device.</string>
+    <!-- Not shown by the Android app at the moment; translating it does no harm. Error message, followed by a technical identifier (UUID). -->
     <string name="bt_error_writing">Error while writing characteristic with UUID</string>
+    <!-- Not shown by the Android app at the moment; translating it does no harm. Error message, followed by a technical identifier (UUID). -->
     <string name="bt_error_reading">Error while reading characteristic with UUID</string>
+    <!-- Not shown by the Android app at the moment; translating it does no harm. Error while discovering the services of a Bluetooth device. -->
     <string name="bt_error_discovering">Error while discovering the services of the bluetooth device.</string>
+    <!-- Not shown by the Android app at the moment; translating it does no harm. Error after reading a value from a Bluetooth device failed. -->
     <string name="bt_fail_reading">The reading operation was not successful.</string>
+    <!-- Error shown when sending a value to a Bluetooth device failed. A line naming the device may follow. -->
     <string name="bt_fail_writing">The writing operation was not successful.</string>
+    <!-- Note at the top of the Bluetooth device list. "more info" quotes the button; use the same words as your translation of bt_more_info_link_button. -->
     <string name="bt_more_info_link_text">If your device is not supported, pick \"more info\" to learn more about the flexible Bluetooth Low Energy support in phyphox on our website.</string>
+    <!-- Button in the Bluetooth device list that opens the page about Bluetooth support on the phyphox website. -->
     <string name="bt_more_info_link_button">More info</string>
+    <!-- Web address opened by "More info" in the Bluetooth device list. Keep the URL unless phyphox.org has a version of this page in your language. -->
     <string name="bt_more_info_link_url">https://phyphox.org/ble</string>
+    <!-- Title of a dialog shown when the user has permanently denied the permission to scan for Bluetooth devices. -->
     <string name="bl_scan_permission_required_title">Bluetooth Scan Permission Needed</string>
+    <!-- Text of a dialog shown when the user has permanently denied the Bluetooth scan permission. "Nearby Devices" is the name of the permission in Android's settings; use the name Android shows in your language. -->
     <string name="bt_scan_permission_needed">You have permanently disabled bluetooth scan access. Please enable Nearby Devices in your device settings to discover bluetooth devices.</string>
+    <!-- Short confirmation (toast) after the user granted the Bluetooth permission, so they can now open the scan again. -->
     <string name="bt_permission_granted">Permission granted: You can open the scan dialog now..</string>
     <!-- Networks and Remotes  -->
+    <!-- Title of the privacy notice shown before an experiment sends data to a server on the network (for example a school's data collection). -->
     <string name="networkPrivacyWarning">Privacy warning</string>
+    <!-- Button label (not a web address): opens a privacy policy. Used in the privacy notice of network experiments (opens the policy of the experiment's author) and in the help menu of the main screen (opens the phyphox policy). -->
     <string name="networkVisitPrivacyURL">Privacy policy</string>
+    <!-- Text of the privacy notice shown before a network experiment starts. It is followed by a bullet list of the data that may be sent (the strings networkPrivacyUniqueID, networkPrivacySensorData, …). -->
     <string name="networkPrivacyInfo">This experiment uses a network connection, which means that experiment data can be transmitted to a network service. You can find more details by clicking the privacy policy button below, which will take you to a website with a privacy policy provided by the creator of this experiment. If the network service is not a local device, you should be aware that phyphox may transmit the following information if you start this experiment:</string>
+    <!-- Item in the bullet list of the network privacy notice: an anonymous id is sent that lets the server recognise data from this phone. -->
     <string name="networkPrivacyUniqueID">An id that is unique to this device and the network service, which allows to match all data sent from this device through this experiment configuration.</string>
+    <!-- Item in the bullet list of the network privacy notice, followed by a comma-separated list of sensor names. -->
     <string name="networkPrivacySensorData">Data from the following sensors:</string>
+    <!-- Item in the bullet list of the network privacy notice: audio from the microphone may be sent. -->
     <string name="networkPrivacySensorMicrophone">Recordings or data derived from recordings from the microphone.</string>
+    <!-- Item in the bullet list of the network privacy notice: location data may be sent. -->
     <string name="networkPrivacySensorLocation">Location data (GPS data or similar).</string>
+    <!-- Item in the bullet list of the network privacy notice: the phone model and app version may be sent. -->
     <string name="networkPrivacyDeviceInfo">Detailed information about the model of your device and/or the version of phyphox.</string>
+    <!-- Item in the bullet list of the network privacy notice, followed by a comma-separated list of sensor names whose technical details (range, resolution, …) may be sent. -->
     <string name="networkPrivacySensorInfo">Technical details about the following sensors:</string>
+    <!-- Warning shown before "remote access" is switched on. Remote access makes the running experiment available in any web browser on the same network, so it can be watched and controlled from a computer. Keep the paragraph breaks (\n\n). -->
     <string name="remoteServerWarning">You are about to enable remote access to the acquired data. You should only do so on a trusted network! Also note, that direct access between devices may not be possible on many corporate or university networks.\n\nFor best security and performance you should connect to this device via a tethering option (mobile hotspot).\n\nAfter pressing ok, you can access your measurement from any web browser on the same network.</string>
+    <!-- Title of the warning shown before remote access is switched on. -->
     <string name="remoteServerWarningTitle">Security warning!</string>
+    <!-- Shown in the bar at the bottom of an experiment when remote access is on but the phone is not connected to any Wi-Fi network or hotspot. -->
     <string name="remoteServerNoNetwork">You need to set up a Wifi connection to the remote device first. Please enable Wifi or create a mobile hotspot.</string>
+    <!-- Title of the error dialog when remote access could not be switched on. -->
     <string name="remoteServerPortInUseTitle">Could not enable remote access</string>
+    <!-- Error shown when remote access could not start because another app uses the same network port. The port number is appended in brackets: "(Port 8080)". -->
     <string name="remoteServerPortInUse">Remote access could not be enabled because the port is already in use by another app on this device. Stop the app that is using the port or set a different port in the phyphox settings.</string>
+    <!-- Shown in the bar at the bottom of an experiment while remote access is on. %1$s is replaced with one or more web addresses (e.g. http://192.168.0.5:8080), one per line, that can be opened in a browser. Keep the line break before %1$s. -->
     <string name="remoteServerActive">Remote access enabled. Access this experiment from the following URL:
 \n%1$s</string>
+    <!-- Button in the remote access warning that opens Android's settings for the mobile hotspot (sharing the phone's connection over Wi-Fi). Use the term Android uses in your language. -->
     <string name="hotspotSettings">Hotspot Settings</string>
+    <!-- Help text below graphs in the remote web interface (the experiment opened in a computer's web browser), explaining mouse and touch gestures. "shift" is the keyboard key; use the name printed on keyboards in your language. -->
     <string name="remoteGraphZoomHint">Mouse: drag to pan, hold shift and drag to zoom into a region, wheel to zoom. Touch: pinch to zoom, drag to pan.</string>
+    <!-- Warning shown in the remote web interface for colour map graphs (graphs that use colour as a third axis), which the browser can only approximate. -->
     <string name="remoteColorMapWarning">The color plot in the remote interface is only an approximation. In contrast to the in-app plot, at the moment it cannot handle non-equidistant data or logarithmic scaling on the x and y axis. So, data at varying intervals may appear at the wrong location.</string>
+    <!-- Shown in the remote web interface in place of the depth sensor controls, which only work on the phone. Keep LiDAR and ToF. -->
     <string name="remoteDepthGUIWarning">Previewing and controlling the LiDAR/ToF sensor on the remote interface is not supported.</string>
+    <!-- Shown in the remote web interface in place of the camera preview, which only works on the phone. -->
     <string name="remoteCameraPreviewWarning">Previewing and controlling the camera on the remote interface is not supported.</string>
+    <!-- Entry in the help menu of the main screen that opens the website page about remote access (controlling an experiment from a web browser). -->
     <string name="remotePhyphoxOrg">Remote control help</string>
+    <!-- Web address opened by "Remote control help" in the help menu. Keep the URL unless phyphox.org has a version of this page in your language. -->
     <string name="remotePhyphoxOrgURL">http://phyphox.org/remote-control</string>
+    <!-- Checkable menu entry of an experiment that switches remote access on: the experiment can then be watched and controlled in a web browser on another device in the same network. -->
     <string name="remoteServer">Allow remote access</string>
+    <!-- Title of dialogs about the permission to access devices in the local network (needed on recent Android versions for remote access and network experiments). -->
     <string name="localNetworkPermission">Local Network Permission Needed</string>
+    <!-- Shown when the user has permanently denied the local network permission. "Nearby Devices" is the name of the permission in Android's settings; use the name Android shows in your language. -->
     <string name="localNetworkPermissionMessage">You have permanently disabled local network access. Please enable Nearby Devices in your device settings to discover local hardware.</string>
+    <!-- Explanation shown before Android asks for the local network permission, when the user switches on remote access. -->
     <string name="localNetworkRationaleMessage">Local network access is required to connect to the remote server. Please grant the permission.</string>
+    <!-- Shown below an error when an experiment could not be loaded from a web address, offering to ask for the local network permission and try again. -->
     <string name="localNetworkLoadMessage">The experiment could not be loaded from this address. If it is served from a device on your local network, phyphox needs permission to access the local network. Grant the permission and try again?</string>
+    <!-- Explanation shown before Android asks for the local network permission, when an experiment connects to a device in the local network. -->
     <string name="localNetworkExperimentMessage">This experiment uses a connection to a device on your local network. phyphox needs permission to access the local network to reach it.</string>
+    <!-- Short hint (toast) after the local network permission was denied. -->
     <string name="localNetworkDeniedHint">Without local network permission, connections to devices on your local network will fail.</string>
+    <!-- Button in a dialog about a denied permission that opens the app's page in Android's settings. -->
     <string name="gotoSetting">Go to Settings</string>
+    <!-- Title of a dialog explaining why a permission is needed before Android asks for it. -->
     <string name="permissionRequired">Permission Required</string>
     <!-- Camera Feature -->
+    <!-- Title of the drop-down in the depth sensor (LiDAR/ToF) controls: how the distances inside the selected region are combined into one value. -->
     <string name="depthAggregationMode">Aggregation mode</string>
+    <!-- Not shown by the Android app at the moment; translating it does no harm. Explains the drop-down for combining depth values within the selected region. -->
     <string name="depthAggregationModePrompt">Select the method to aggregate depth information within the selected region.</string>
+    <!-- Option in the depth sensor drop-down: use the closest distance in the selected region. -->
     <string name="depthAggregationModeClosest">Closest</string>
+    <!-- Option in the depth sensor drop-down: use the average distance in the selected region. -->
     <string name="depthAggregationModeAverage">Average</string>
+    <!-- Option in the depth sensor drop-down: use an average weighted by the sensor's confidence in each distance. -->
     <string name="depthAggregationModeWeighted">Weighted</string>
+    <!-- Option in the camera selection of the depth sensor controls: the camera on the screen side of the phone. -->
     <string name="cameraFrontFacing">Front facing camera</string>
+    <!-- Label of the button in the camera preview that switches between front and back camera, while the front (screen side) camera is used. Keep it very short. -->
     <string name="cameraFront">Front</string>
+    <!-- Option in the camera selection of the depth sensor controls: the main camera on the back of the phone. -->
     <string name="cameraBackFacing">Back facing camera</string>
+    <!-- Label of the button in the camera preview that switches between front and back camera, while the back camera is used. Keep it very short. -->
     <string name="cameraBack">Back</string>
+    <!-- Label of the camera zoom control in the camera settings (the zoom factor is shown next to it). Keep it very short. -->
     <string name="cameraZoom">Zoom</string>
+    <!-- Option in the camera selection of the depth sensor controls: a camera connected by USB. -->
     <string name="cameraExternal">External camera</string>
+    <!-- White balance option in the camera settings: the camera adjusts colours automatically. Keep it very short (segmented button). -->
     <string name="wb_auto">Auto</string>
+    <!-- White balance option in the camera settings: the current colour correction is frozen. Keep it very short (segmented button). -->
     <string name="wb_locked">Locked</string>
+    <!-- White balance option in the camera settings: the user sets a colour temperature in kelvin. Keep it very short (segmented button). -->
     <string name="wb_temperature">Temperature</string>
+    <!-- Label of the tint slider in the camera's white balance settings (shift between green and magenta), followed by the value. -->
     <string name="wb_tint">Tint</string>
+    <!-- Not shown by the Android app at the moment; translating it does no harm. The state "switched off". -->
     <string name="off">Off</string>
+    <!-- Not shown by the Android app at the moment; translating it does no harm. The state "switched on". -->
     <string name="on">On</string>
+    <!-- Heading of the camera preview panel in camera experiments, which can be expanded and collapsed. -->
     <string name="camera_preview">Camera Preview</string>
+    <!-- Not shown by the Android app at the moment; translating it does no harm. Shown while the camera is starting. -->
     <string name="camera_not_ready">Camera Not Ready</string>
     <!-- App Settings -->
+    <!-- First entry of the app language list in the settings: use the language of the phone's system. -->
     <string name="settingsDefault">Default</string>
+    <!-- Entry in the help menu of the main screen and title of the settings screen. -->
     <string name="settings">Settings</string>
+    <!-- Section heading in the settings. -->
     <string name="settingsHeadLanguage">Language</string>
+    <!-- Setting (and title of its selection list) for the language of the app, independent of the phone's system language. -->
     <string name="settingsLanguage">App language</string>
+    <!-- Entry in the settings that opens the phyphox website page about translations. -->
     <string name="settingsTranslation">Translation</string>
+    <!-- Description below "Translation" in the settings. -->
     <string name="settingsTranslationMore">Learn more about available languages and how you can help.</string>
+    <!-- Section heading in the settings. -->
     <string name="settingsHeadAdvanced">Advanced</string>
+    <!-- Switch in the settings: turn the screen off while the proximity sensor is covered. -->
     <string name="settingsProximityLock">Proximity lock</string>
+    <!-- Description of the proximity lock switch in the settings. -->
     <string name="settingsProximityLockDetail">Disable the screen when the proximity sensor is triggered to avoid unintended inputs for example in a pocket.</string>
+    <!-- Setting for the network port number used by remote access (default 8080). Technical term; keep "port" if your language uses the English word. -->
     <string name="settingsPort">Remote access port</string>
+    <!-- Setting for the template of file names used for exports, screenshots and saved states. -->
     <string name="settingsFileNameFormat">Default file names</string>
+    <!-- Explanation in the dialog of the file name setting. Do NOT translate the placeholders in curly braces ({title}, {date}, {time}, {startDate}, {startTime}, {duration}): they must be typed exactly like this. Keep the line breaks (\n). -->
     <string name="settingsFileNameFormatDetail">Template for default file names when exporting data, sharing a screenshot or saving a state. Available placeholders:\n{title} – experiment title\n{date} – current date\n{time} – current time\n{startDate} – date at the start of the measurement\n{startTime} – time at the start of the measurement\n{duration} – measurement duration</string>
+    <!-- Not shown by the Android app at the moment; translating it does no harm. An option for the dark mode setting. -->
     <string name="settings_theme_night">Default</string>
+    <!-- Not shown by the Android app at the moment; translating it does no harm. An option for the dark mode setting: light colours. -->
     <string name="settings_theme_no_night">Light mode </string>
+    <!-- Not shown by the Android app at the moment; translating it does no harm. An option for the dark mode setting: follow the system. -->
     <string name="settings_theme_sync_setting">Sync with system</string>
+    <!-- Section heading in the settings for appearance options (dark mode, graph size, unit system). -->
     <string name="settingGraphViewEdit">User interface</string>
+    <!-- Setting with a slider: the height of graphs in experiments. -->
     <string name="settingGraphSize">Graph size</string>
+    <!-- Description of the graph size slider in the settings. -->
     <string name="settingGraphSizeSubTitle">Make graph size bigger or smaller</string>
+    <!-- Setting for the dark colour scheme of the app. -->
     <string name="settings_theme_title">Dark mode</string>
+    <!-- Option of the dark mode setting: dark colours (the app's default). -->
     <string name="settings_mode_dark">On (Default)</string>
+    <!-- Option of the dark mode setting: light colours. -->
     <string name="settings_mode_no_dark">Off </string>
+    <!-- Option of the dark mode setting: follow the phone's system setting. -->
     <string name="settings_mode_dark_system">As system</string>
+    <!-- Setting (and title of its selection list) for the units in which values are shown. -->
     <string name="settingsUnitSystem">Unit system</string>
+    <!-- Description below the unit system setting (shown after the current choice). Units can also be changed one by one by tapping a unit shown in an experiment. -->
     <string name="settingsUnitSystemDetail">Show units as defined by the experiment or converted to a unit system; tap a unit in the experiment to change it individually.</string>
+    <!-- Option of the unit system setting: show the units the author of each experiment chose. -->
     <string name="settingsUnitSystemExperiment">As defined by the experiment</string>
+    <!-- Option of the unit system setting: convert to metric (SI) units such as m, m/s, Pa. Also a heading in the unit picker. -->
     <string name="settingsUnitSystemMetric">Metric (SI)</string>
+    <!-- Option of the unit system setting: convert to imperial / US customary units such as ft, mph, psi. Also a heading in the unit picker. -->
     <string name="settingsUnitSystemImperial">Imperial / US customary</string>
+    <!-- The options of the unit system setting, taken from the strings above. Nothing to translate here. -->
     <string-array name="settingsUnitSystemEntries">
         <item>@string/settingsUnitSystemExperiment</item>
         <item>@string/settingsUnitSystemMetric</item>
         <item>@string/settingsUnitSystemImperial</item>
     </string-array>
+    <!-- Internal values of the unit system setting. Not translatable. -->
     <string-array name="settingsUnitSystemValues" translatable="false">
         <item>experiment</item>
         <item>metric</item>
         <item>imperial</item>
     </string-array>
+    <!-- Title of the dialog that opens when the user taps a unit in an experiment (for example "m/s" next to a value) to choose another unit. Also used in the remote web interface. -->
     <string name="unit_dialog_title">Unit</string>
+    <!-- Appended in brackets to the unit the experiment's author chose, in the unit picker: "m/s (default)". Lower case. Also used in the remote web interface. -->
     <string name="unit_dialog_experiment_default">default</string>
+    <!-- Heading in the unit picker above units that are neither metric nor imperial (e.g. "g" for multiples of Earth's gravity). Also used in the remote web interface. -->
     <string name="unit_dialog_other">Other</string>
-    <!-- Units: the symbols shown for unit references (@id) and the [[unit_short_id]] placeholders. Keep the Latin symbols
-         unless your national standard or school practice prescribes native designations (as in Russian or Ukrainian);
-         a few entries (rpm, arb. unit) are language-dependent abbreviations rather than symbols. -->
+    <!-- Units, quantity symbols, compass directions and musical notes for experiment files -->
+    <!-- Abbreviation of "arbitrary unit": a quantity measured on a scale without a physical unit (e.g. the raw amplitude of a sound recording). Shown after numbers and on graph axes. This is a language-dependent abbreviation, not a symbol: translate it. -->
     <string name="common_unit_short_arbitrary_unit">arb. unit</string>
+    <!-- Symbol of the unit second (time), shown after numbers and on graph axes and offered in the unit picker. Keep the international symbol unless your national standard or school practice uses a native designation (as Russian and Ukrainian do). -->
     <string name="common_unit_short_second">s</string>
+    <!-- Symbol of the unit millisecond, shown after numbers and on graph axes and offered in the unit picker. Keep the international symbol unless your national standard or school practice uses a native designation (as Russian and Ukrainian do). -->
     <string name="common_unit_short_milli_second">ms</string>
+    <!-- Symbol of the unit hertz (frequency), shown after numbers and on graph axes and offered in the unit picker. Keep the international symbol unless your national standard or school practice uses a native designation (as Russian and Ukrainian do). -->
     <string name="common_unit_short_hertz">Hz</string>
+    <!-- Symbol of the unit microtesla (magnetic field), shown after numbers and on graph axes and offered in the unit picker. Keep the international symbol unless your national standard or school practice uses a native designation (as Russian and Ukrainian do). -->
     <string name="common_unit_short_micro_tesla">µT</string>
+    <!-- Symbol of the unit lux (illuminance), shown after numbers and on graph axes and offered in the unit picker. Keep the international symbol unless your national standard or school practice uses a native designation (as Russian and Ukrainian do). -->
     <string name="common_unit_short_lux">lx</string>
+    <!-- Symbol of the unit degree (angle), shown after numbers and on graph axes and offered in the unit picker. Keep the international symbol unless your national standard or school practice uses a native designation (as Russian and Ukrainian do). -->
     <string name="common_unit_short_degree">°</string>
+    <!-- Symbol of the unit degree Celsius (temperature), shown after numbers and on graph axes and offered in the unit picker. Keep the international symbol unless your national standard or school practice uses a native designation (as Russian and Ukrainian do). -->
     <string name="common_unit_short_degree_celsius">°C</string>
+    <!-- Symbol of the unit metre, shown after numbers and on graph axes and offered in the unit picker. Keep the international symbol unless your national standard or school practice uses a native designation (as Russian and Ukrainian do). -->
     <string name="common_unit_short_meter">m</string>
+    <!-- Symbol of the unit nanometre, shown after numbers and on graph axes and offered in the unit picker. Keep the international symbol unless your national standard or school practice uses a native designation (as Russian and Ukrainian do). -->
     <string name="common_unit_short_nano_meter">nm</string>
+    <!-- Symbol of the unit micrometre, shown after numbers and on graph axes and offered in the unit picker. Keep the international symbol unless your national standard or school practice uses a native designation (as Russian and Ukrainian do). -->
     <string name="common_unit_short_micro_meter">µm</string>
+    <!-- Symbol of the unit millimetre, shown after numbers and on graph axes and offered in the unit picker. Keep the international symbol unless your national standard or school practice uses a native designation (as Russian and Ukrainian do). -->
     <string name="common_unit_short_milli_meter">mm</string>
+    <!-- Symbol of the unit centimetre, shown after numbers and on graph axes and offered in the unit picker. Keep the international symbol unless your national standard or school practice uses a native designation (as Russian and Ukrainian do). -->
     <string name="common_unit_short_centi_meter">cm</string>
+    <!-- Symbol of the unit kilometre, shown after numbers and on graph axes and offered in the unit picker. Keep the international symbol unless your national standard or school practice uses a native designation (as Russian and Ukrainian do). -->
     <string name="common_unit_short_kilo_meter">km</string>
+    <!-- Symbol of the unit metre per second (velocity), shown after numbers and on graph axes and offered in the unit picker. Keep the international symbol unless your national standard or school practice uses a native designation (as Russian and Ukrainian do). -->
     <string name="common_unit_short_meter_per_second">m/s</string>
+    <!-- Symbol of the unit kilometre per hour, shown after numbers and on graph axes and offered in the unit picker. Keep the international symbol unless your national standard or school practice uses a native designation (as Russian and Ukrainian do). -->
     <string name="common_unit_short_kilo_meter_per_hour">km/h</string>
+    <!-- Symbol of the unit metre per second squared (acceleration), shown after numbers and on graph axes and offered in the unit picker. Keep the international symbol unless your national standard or school practice uses a native designation (as Russian and Ukrainian do). -->
     <string name="common_unit_short_meter_per_square_second">m/s²</string>
+    <!-- Symbol of the unit radian per second (angular velocity), shown after numbers and on graph axes and offered in the unit picker. Keep the international symbol unless your national standard or school practice uses a native designation (as Russian and Ukrainian do). -->
     <string name="common_unit_short_radian_per_second">rad/s</string>
+    <!-- Symbol of the unit hectopascal (pressure), shown after numbers and on graph axes and offered in the unit picker. Keep the international symbol unless your national standard or school practice uses a native designation (as Russian and Ukrainian do). -->
     <string name="common_unit_short_hecto_pascal">hPa</string>
+    <!-- Symbol of the unit decibel (sound level), shown after numbers and on graph axes and offered in the unit picker. Keep the international symbol unless your national standard or school practice uses a native designation (as Russian and Ukrainian do). -->
     <string name="common_unit_short_decibel">dB</string>
+    <!-- Symbol of the unit percent, shown after numbers and on graph axes and offered in the unit picker. Keep the international symbol unless your national standard or school practice uses a native designation (as Russian and Ukrainian do). -->
     <string name="common_unit_short_percent">%</string>
+    <!-- Symbol of the unit microsecond, shown after numbers and on graph axes and offered in the unit picker. Keep the international symbol unless your national standard or school practice uses a native designation (as Russian and Ukrainian do). -->
     <string name="common_unit_short_micro_second">µs</string>
+    <!-- Symbol of the unit minute (time), shown after numbers and on graph axes and offered in the unit picker. Keep the international symbol unless your national standard or school practice uses a native designation (as Russian and Ukrainian do). -->
     <string name="common_unit_short_minute">min</string>
+    <!-- Symbol of the unit hour, shown after numbers and on graph axes and offered in the unit picker. Keep the international symbol unless your national standard or school practice uses a native designation (as Russian and Ukrainian do). -->
     <string name="common_unit_short_hour">h</string>
+    <!-- Symbol of the unit kilohertz, shown after numbers and on graph axes and offered in the unit picker. Keep the international symbol unless your national standard or school practice uses a native designation (as Russian and Ukrainian do). -->
     <string name="common_unit_short_kilo_hertz">kHz</string>
+    <!-- Symbol of the unit per minute (rate, e.g. heartbeats), shown after numbers and on graph axes and offered in the unit picker. Keep the international symbol unless your national standard or school practice uses a native designation (as Russian and Ukrainian do). -->
     <string name="common_unit_short_per_minute">1/min</string>
+    <!-- Symbol of the unit inch, shown after numbers and on graph axes and offered in the unit picker. Keep the international symbol unless your national standard or school practice uses a native designation (as Russian and Ukrainian do). -->
     <string name="common_unit_short_inch">in</string>
+    <!-- Symbol of the unit foot, shown after numbers and on graph axes and offered in the unit picker. Keep the international symbol unless your national standard or school practice uses a native designation (as Russian and Ukrainian do). -->
     <string name="common_unit_short_foot">ft</string>
+    <!-- Symbol of the unit yard, shown after numbers and on graph axes and offered in the unit picker. Keep the international symbol unless your national standard or school practice uses a native designation (as Russian and Ukrainian do). -->
     <string name="common_unit_short_yard">yd</string>
+    <!-- Symbol of the unit mile, shown after numbers and on graph axes and offered in the unit picker. Keep the international symbol unless your national standard or school practice uses a native designation (as Russian and Ukrainian do). -->
     <string name="common_unit_short_mile">mi</string>
+    <!-- Symbol of the unit foot per second, shown after numbers and on graph axes and offered in the unit picker. Keep the international symbol unless your national standard or school practice uses a native designation (as Russian and Ukrainian do). -->
     <string name="common_unit_short_foot_per_second">ft/s</string>
+    <!-- Symbol of the unit mile per hour, shown after numbers and on graph axes and offered in the unit picker. Keep the international symbol unless your national standard or school practice uses a native designation (as Russian and Ukrainian do). -->
     <string name="common_unit_short_mile_per_hour">mph</string>
+    <!-- Symbol of the unit foot per second squared (acceleration), shown after numbers and on graph axes and offered in the unit picker. Keep the international symbol unless your national standard or school practice uses a native designation (as Russian and Ukrainian do). -->
     <string name="common_unit_short_foot_per_square_second">ft/s²</string>
+    <!-- Symbol of the unit standard gravity (acceleration as a multiple of Earth's gravity, 1 g = 9.81 m/s²), shown after numbers and on graph axes and offered in the unit picker. Keep the international symbol unless your national standard or school practice uses a native designation (as Russian and Ukrainian do). -->
     <string name="common_unit_short_standard_gravity">g</string>
+    <!-- Symbol of the unit degree per second (angular velocity), shown after numbers and on graph axes and offered in the unit picker. Keep the international symbol unless your national standard or school practice uses a native designation (as Russian and Ukrainian do). -->
     <string name="common_unit_short_degree_per_second">°/s</string>
+    <!-- Abbreviation of "revolutions per minute" (rotation rate), shown after numbers and offered in the unit picker. A language-dependent abbreviation rather than a symbol: use the one customary in your language (e.g. U/min in German). -->
     <string name="common_unit_short_revolution_per_minute">rpm</string>
+    <!-- Symbol of the unit radian (angle), shown after numbers and on graph axes and offered in the unit picker. Keep the international symbol unless your national standard or school practice uses a native designation (as Russian and Ukrainian do). -->
     <string name="common_unit_short_radian">rad</string>
+    <!-- Symbol of the unit millitesla, shown after numbers and on graph axes and offered in the unit picker. Keep the international symbol unless your national standard or school practice uses a native designation (as Russian and Ukrainian do). -->
     <string name="common_unit_short_milli_tesla">mT</string>
+    <!-- Symbol of the unit tesla (magnetic field), shown after numbers and on graph axes and offered in the unit picker. Keep the international symbol unless your national standard or school practice uses a native designation (as Russian and Ukrainian do). -->
     <string name="common_unit_short_tesla">T</string>
+    <!-- Symbol of the unit gauss (magnetic field), shown after numbers and on graph axes and offered in the unit picker. Keep the international symbol unless your national standard or school practice uses a native designation (as Russian and Ukrainian do). -->
     <string name="common_unit_short_gauss">G</string>
+    <!-- Symbol of the unit foot-candle (illuminance), shown after numbers and on graph axes and offered in the unit picker. Keep the international symbol unless your national standard or school practice uses a native designation (as Russian and Ukrainian do). -->
     <string name="common_unit_short_foot_candle">fc</string>
+    <!-- Symbol of the unit pascal (pressure), shown after numbers and on graph axes and offered in the unit picker. Keep the international symbol unless your national standard or school practice uses a native designation (as Russian and Ukrainian do). -->
     <string name="common_unit_short_pascal">Pa</string>
+    <!-- Symbol of the unit kilopascal, shown after numbers and on graph axes and offered in the unit picker. Keep the international symbol unless your national standard or school practice uses a native designation (as Russian and Ukrainian do). -->
     <string name="common_unit_short_kilo_pascal">kPa</string>
+    <!-- Symbol of the unit millibar, shown after numbers and on graph axes and offered in the unit picker. Keep the international symbol unless your national standard or school practice uses a native designation (as Russian and Ukrainian do). -->
     <string name="common_unit_short_milli_bar">mbar</string>
+    <!-- Symbol of the unit bar (pressure), shown after numbers and on graph axes and offered in the unit picker. Keep the international symbol unless your national standard or school practice uses a native designation (as Russian and Ukrainian do). -->
     <string name="common_unit_short_bar">bar</string>
+    <!-- Symbol of the unit inch of mercury (pressure), shown after numbers and on graph axes and offered in the unit picker. Keep the international symbol unless your national standard or school practice uses a native designation (as Russian and Ukrainian do). -->
     <string name="common_unit_short_inch_of_mercury">inHg</string>
+    <!-- Symbol of the unit pound per square inch (pressure), shown after numbers and on graph axes and offered in the unit picker. Keep the international symbol unless your national standard or school practice uses a native designation (as Russian and Ukrainian do). -->
     <string name="common_unit_short_psi">psi</string>
+    <!-- Symbol of the unit kelvin (temperature), shown after numbers and on graph axes and offered in the unit picker. Keep the international symbol unless your national standard or school practice uses a native designation (as Russian and Ukrainian do). -->
     <string name="common_unit_short_kelvin">K</string>
+    <!-- Symbol of the unit degree Fahrenheit (temperature), shown after numbers and on graph axes and offered in the unit picker. Keep the international symbol unless your national standard or school practice uses a native designation (as Russian and Ukrainian do). -->
     <string name="common_unit_short_degree_fahrenheit">°F</string>
+    <!-- Symbol of the physical quantity time, used as a short axis label in graphs of the bundled experiments, e.g. "t (s)". Use the letter customary in physics teaching in your language; usually keep the international symbol. -->
     <string name="common_quantity_short_time">t</string>
+    <!-- Symbol of the physical quantity angular velocity, used as a short axis label in graphs of the bundled experiments, e.g. "ω (rad/s)". Use the letter customary in physics teaching in your language; usually keep the international symbol. -->
     <string name="common_quantity_short_angular_velocity">ω</string>
+    <!-- Symbol of the physical quantity magnetic flux density (magnetic field), used as a short axis label in graphs of the bundled experiments, e.g. "B (µT)". Use the letter customary in physics teaching in your language; usually keep the international symbol. -->
     <string name="common_quantity_short_magnetic_field">B</string>
+    <!-- Symbol of the physical quantity illuminance, used as a short axis label in graphs of the bundled experiments, e.g. "Ev (lx)". Use the letter customary in physics teaching in your language; usually keep the international symbol. -->
     <string name="common_quantity_short_illuminance">Ev</string>
+    <!-- Symbol of the physical quantity acceleration, used as a short axis label in graphs of the bundled experiments, e.g. "a (m/s²)". Use the letter customary in physics teaching in your language; usually keep the international symbol. -->
     <string name="common_quantity_short_acceleration">a</string>
+    <!-- Symbol of the physical quantity amplitude, used as a short axis label in graphs of the bundled experiments. Use the letter customary in physics teaching in your language; usually keep the international symbol. -->
     <string name="common_quantity_short_amplitude">A</string>
+    <!-- Symbol of the physical quantity height, used as a short axis label in graphs of the bundled experiments, e.g. "h (m)". Use the letter customary in physics teaching in your language; usually keep the international symbol. -->
     <string name="common_quantity_short_height">h</string>
+    <!-- Symbol of the physical quantity velocity, used as a short axis label in graphs of the bundled experiments, e.g. "v (m/s)". Use the letter customary in physics teaching in your language; usually keep the international symbol. -->
     <string name="common_quantity_short_velocity">v</string>
+    <!-- Symbol of the physical quantity pressure, used as a short axis label in graphs of the bundled experiments, e.g. "p (hPa)". Use the letter customary in physics teaching in your language; usually keep the international symbol. -->
     <string name="common_quantity_short_pressure">p</string>
+    <!-- Symbol of the physical quantity gravitational acceleration, used as a short axis label in graphs of the bundled experiments, e.g. "g (m/s²)". Use the letter customary in physics teaching in your language; usually keep the international symbol. -->
     <string name="common_quantity_short_earth_acceleration">g</string>
+    <!-- Symbol of the physical quantity distance, used as a short axis label in graphs of the bundled experiments, e.g. "d (m)". Use the letter customary in physics teaching in your language; usually keep the international symbol. -->
     <string name="common_quantity_short_distance">d</string>
+    <!-- Abbreviation of "sound pressure level", used as a short axis label in the bundled audio experiments, e.g. "SPL (dB)". Use the abbreviation customary in your language or keep SPL. -->
     <string name="common_quantity_short_sound_pressure_level">SPL</string>
+    <!-- Symbol of the physical quantity latitude (GPS), used as a short axis label in graphs of the bundled experiments, e.g. "φ (°)". Use the letter customary in physics teaching in your language; usually keep the international symbol. -->
     <string name="common_quantity_short_latitude">φ</string>
+    <!-- Symbol of the physical quantity longitude (GPS), used as a short axis label in graphs of the bundled experiments, e.g. "λ (°)". Use the letter customary in physics teaching in your language; usually keep the international symbol. -->
     <string name="common_quantity_short_longitude">λ</string>
+    <!-- Symbol of the physical quantity altitude (GPS), used as a short axis label in graphs of the bundled experiments, e.g. "z (m)". Use the letter customary in physics teaching in your language; usually keep the international symbol. -->
     <string name="common_quantity_short_altitude">z</string>
+    <!-- Symbol of the physical quantity luminance, used as a short axis label in graphs of the bundled experiments. Use the letter customary in physics teaching in your language; usually keep the international symbol. -->
     <string name="common_quantity_short_luminance">Lv</string>
+    <!-- Symbol of the physical quantity luma (brightness of a camera image), used as a short axis label in graphs of the bundled experiments. Use the letter customary in physics teaching in your language; usually keep the international symbol. -->
     <string name="common_quantity_short_luma">Y\'</string>
+    <!-- Symbol of the physical quantity wavelength, used as a short axis label in graphs of the bundled experiments, e.g. "λ (nm)". Use the letter customary in physics teaching in your language; usually keep the international symbol. -->
     <string name="common_quantity_short_wavelength">λ</string>
+    <!-- The word "percent", available to experiment files as the placeholder [[quantity_percentage]] for labels. Not used by the bundled experiments at the moment. -->
     <string name="common_quantity_percentage">Percent</string>
+    <!-- Abbreviation of the compass direction north, shown after a latitude or longitude in the GPS experiment, e.g. "50.78° N". Use the abbreviation customary in your language (e.g. O for east in German). -->
     <string name="common_direction_short_north">N</string>
+    <!-- Abbreviation of the compass direction south, shown after a latitude or longitude in the GPS experiment, e.g. "50.78° S". Use the abbreviation customary in your language (e.g. O for east in German). -->
     <string name="common_direction_short_south">S</string>
+    <!-- Abbreviation of the compass direction east, shown after a latitude or longitude in the GPS experiment, e.g. "50.78° E". Use the abbreviation customary in your language (e.g. O for east in German). -->
     <string name="common_direction_short_east">E</string>
+    <!-- Abbreviation of the compass direction west, shown after a latitude or longitude in the GPS experiment, e.g. "50.78° W". Use the abbreviation customary in your language (e.g. O for east in German). -->
     <string name="common_direction_short_west">W</string>
+    <!-- Abbreviation of the compass direction north-east, shown after a latitude or longitude in the GPS experiment, e.g. "50.78° NE". Use the abbreviation customary in your language (e.g. O for east in German). -->
     <string name="common_direction_short_north_east">NE</string>
+    <!-- Abbreviation of the compass direction south-east, shown after a latitude or longitude in the GPS experiment, e.g. "50.78° SE". Use the abbreviation customary in your language (e.g. O for east in German). -->
     <string name="common_direction_short_south_east">SE</string>
+    <!-- Abbreviation of the compass direction north-west, shown after a latitude or longitude in the GPS experiment, e.g. "50.78° NW". Use the abbreviation customary in your language (e.g. O for east in German). -->
     <string name="common_direction_short_north_west">NW</string>
+    <!-- Abbreviation of the compass direction south-west, shown after a latitude or longitude in the GPS experiment, e.g. "50.78° SW". Use the abbreviation customary in your language (e.g. O for east in German). -->
     <string name="common_direction_short_south_west">SW</string>
+    <!-- Name of a musical note in scientific pitch notation (letter plus octave number; A4 is the 440 Hz concert pitch), shown by the audio spectrum and autocorrelation experiments as the note closest to the measured frequency. Use your language's note names if they differ (e.g. H for B and B for Bb in German, or do-re-mi) and keep the octave number. -->
     <string name="common_musical_note_a2">A2</string>
+    <!-- Name of a musical note in scientific pitch notation (letter plus octave number; A4 is the 440 Hz concert pitch), shown by the audio spectrum and autocorrelation experiments as the note closest to the measured frequency. Use your language's note names if they differ (e.g. H for B and B for Bb in German, or do-re-mi) and keep the octave number. # is sharp, b is flat; both names of the same note are given. -->
     <string name="common_musical_note_bb2">A#2 / Bb2</string>
+    <!-- Name of a musical note in scientific pitch notation (letter plus octave number; A4 is the 440 Hz concert pitch), shown by the audio spectrum and autocorrelation experiments as the note closest to the measured frequency. Use your language's note names if they differ (e.g. H for B and B for Bb in German, or do-re-mi) and keep the octave number. -->
     <string name="common_musical_note_b2">B2</string>
+    <!-- Name of a musical note in scientific pitch notation (letter plus octave number; A4 is the 440 Hz concert pitch), shown by the audio spectrum and autocorrelation experiments as the note closest to the measured frequency. Use your language's note names if they differ (e.g. H for B and B for Bb in German, or do-re-mi) and keep the octave number. -->
     <string name="common_musical_note_a3">A3</string>
+    <!-- Name of a musical note in scientific pitch notation (letter plus octave number; A4 is the 440 Hz concert pitch), shown by the audio spectrum and autocorrelation experiments as the note closest to the measured frequency. Use your language's note names if they differ (e.g. H for B and B for Bb in German, or do-re-mi) and keep the octave number. # is sharp, b is flat; both names of the same note are given. -->
     <string name="common_musical_note_bb3">A#3 / Bb3</string>
+    <!-- Name of a musical note in scientific pitch notation (letter plus octave number; A4 is the 440 Hz concert pitch), shown by the audio spectrum and autocorrelation experiments as the note closest to the measured frequency. Use your language's note names if they differ (e.g. H for B and B for Bb in German, or do-re-mi) and keep the octave number. -->
     <string name="common_musical_note_b3">B3</string>
+    <!-- Name of a musical note in scientific pitch notation (letter plus octave number; A4 is the 440 Hz concert pitch), shown by the audio spectrum and autocorrelation experiments as the note closest to the measured frequency. Use your language's note names if they differ (e.g. H for B and B for Bb in German, or do-re-mi) and keep the octave number. -->
     <string name="common_musical_note_c3">C3</string>
+    <!-- Name of a musical note in scientific pitch notation (letter plus octave number; A4 is the 440 Hz concert pitch), shown by the audio spectrum and autocorrelation experiments as the note closest to the measured frequency. Use your language's note names if they differ (e.g. H for B and B for Bb in German, or do-re-mi) and keep the octave number. # is sharp, b is flat; both names of the same note are given. -->
     <string name="common_musical_note_db3">C#3 / Db3</string>
+    <!-- Name of a musical note in scientific pitch notation (letter plus octave number; A4 is the 440 Hz concert pitch), shown by the audio spectrum and autocorrelation experiments as the note closest to the measured frequency. Use your language's note names if they differ (e.g. H for B and B for Bb in German, or do-re-mi) and keep the octave number. -->
     <string name="common_musical_note_d3">D3</string>
+    <!-- Name of a musical note in scientific pitch notation (letter plus octave number; A4 is the 440 Hz concert pitch), shown by the audio spectrum and autocorrelation experiments as the note closest to the measured frequency. Use your language's note names if they differ (e.g. H for B and B for Bb in German, or do-re-mi) and keep the octave number. # is sharp, b is flat; both names of the same note are given. -->
     <string name="common_musical_note_eb3">D#3 / Eb3</string>
+    <!-- Name of a musical note in scientific pitch notation (letter plus octave number; A4 is the 440 Hz concert pitch), shown by the audio spectrum and autocorrelation experiments as the note closest to the measured frequency. Use your language's note names if they differ (e.g. H for B and B for Bb in German, or do-re-mi) and keep the octave number. -->
     <string name="common_musical_note_e3">E3</string>
+    <!-- Name of a musical note in scientific pitch notation (letter plus octave number; A4 is the 440 Hz concert pitch), shown by the audio spectrum and autocorrelation experiments as the note closest to the measured frequency. Use your language's note names if they differ (e.g. H for B and B for Bb in German, or do-re-mi) and keep the octave number. -->
     <string name="common_musical_note_f3">F3</string>
+    <!-- Name of a musical note in scientific pitch notation (letter plus octave number; A4 is the 440 Hz concert pitch), shown by the audio spectrum and autocorrelation experiments as the note closest to the measured frequency. Use your language's note names if they differ (e.g. H for B and B for Bb in German, or do-re-mi) and keep the octave number. # is sharp, b is flat; both names of the same note are given. -->
     <string name="common_musical_note_gb3">F#3 / Gb3</string>
+    <!-- Name of a musical note in scientific pitch notation (letter plus octave number; A4 is the 440 Hz concert pitch), shown by the audio spectrum and autocorrelation experiments as the note closest to the measured frequency. Use your language's note names if they differ (e.g. H for B and B for Bb in German, or do-re-mi) and keep the octave number. -->
     <string name="common_musical_note_g3">G3</string>
+    <!-- Name of a musical note in scientific pitch notation (letter plus octave number; A4 is the 440 Hz concert pitch), shown by the audio spectrum and autocorrelation experiments as the note closest to the measured frequency. Use your language's note names if they differ (e.g. H for B and B for Bb in German, or do-re-mi) and keep the octave number. # is sharp, b is flat; both names of the same note are given. -->
     <string name="common_musical_note_ab3">G#3 / Ab3</string>
+    <!-- Name of a musical note in scientific pitch notation (letter plus octave number; A4 is the 440 Hz concert pitch), shown by the audio spectrum and autocorrelation experiments as the note closest to the measured frequency. Use your language's note names if they differ (e.g. H for B and B for Bb in German, or do-re-mi) and keep the octave number. -->
     <string name="common_musical_note_a4">A4</string>
+    <!-- Name of a musical note in scientific pitch notation (letter plus octave number; A4 is the 440 Hz concert pitch), shown by the audio spectrum and autocorrelation experiments as the note closest to the measured frequency. Use your language's note names if they differ (e.g. H for B and B for Bb in German, or do-re-mi) and keep the octave number. # is sharp, b is flat; both names of the same note are given. -->
     <string name="common_musical_note_bb4">A#4 / Bb4</string>
+    <!-- Name of a musical note in scientific pitch notation (letter plus octave number; A4 is the 440 Hz concert pitch), shown by the audio spectrum and autocorrelation experiments as the note closest to the measured frequency. Use your language's note names if they differ (e.g. H for B and B for Bb in German, or do-re-mi) and keep the octave number. -->
     <string name="common_musical_note_b4">B4</string>
+    <!-- Name of a musical note in scientific pitch notation (letter plus octave number; A4 is the 440 Hz concert pitch), shown by the audio spectrum and autocorrelation experiments as the note closest to the measured frequency. Use your language's note names if they differ (e.g. H for B and B for Bb in German, or do-re-mi) and keep the octave number. -->
     <string name="common_musical_note_c4">C4</string>
+    <!-- Name of a musical note in scientific pitch notation (letter plus octave number; A4 is the 440 Hz concert pitch), shown by the audio spectrum and autocorrelation experiments as the note closest to the measured frequency. Use your language's note names if they differ (e.g. H for B and B for Bb in German, or do-re-mi) and keep the octave number. # is sharp, b is flat; both names of the same note are given. -->
     <string name="common_musical_note_db4">C#4 / Db4</string>
+    <!-- Name of a musical note in scientific pitch notation (letter plus octave number; A4 is the 440 Hz concert pitch), shown by the audio spectrum and autocorrelation experiments as the note closest to the measured frequency. Use your language's note names if they differ (e.g. H for B and B for Bb in German, or do-re-mi) and keep the octave number. -->
     <string name="common_musical_note_d4">D4</string>
+    <!-- Name of a musical note in scientific pitch notation (letter plus octave number; A4 is the 440 Hz concert pitch), shown by the audio spectrum and autocorrelation experiments as the note closest to the measured frequency. Use your language's note names if they differ (e.g. H for B and B for Bb in German, or do-re-mi) and keep the octave number. # is sharp, b is flat; both names of the same note are given. -->
     <string name="common_musical_note_eb4">D#4 / Eb4</string>
+    <!-- Name of a musical note in scientific pitch notation (letter plus octave number; A4 is the 440 Hz concert pitch), shown by the audio spectrum and autocorrelation experiments as the note closest to the measured frequency. Use your language's note names if they differ (e.g. H for B and B for Bb in German, or do-re-mi) and keep the octave number. -->
     <string name="common_musical_note_e4">E4</string>
+    <!-- Name of a musical note in scientific pitch notation (letter plus octave number; A4 is the 440 Hz concert pitch), shown by the audio spectrum and autocorrelation experiments as the note closest to the measured frequency. Use your language's note names if they differ (e.g. H for B and B for Bb in German, or do-re-mi) and keep the octave number. -->
     <string name="common_musical_note_f4">F4</string>
+    <!-- Name of a musical note in scientific pitch notation (letter plus octave number; A4 is the 440 Hz concert pitch), shown by the audio spectrum and autocorrelation experiments as the note closest to the measured frequency. Use your language's note names if they differ (e.g. H for B and B for Bb in German, or do-re-mi) and keep the octave number. # is sharp, b is flat; both names of the same note are given. -->
     <string name="common_musical_note_gb4">F#4 / Gb4</string>
+    <!-- Name of a musical note in scientific pitch notation (letter plus octave number; A4 is the 440 Hz concert pitch), shown by the audio spectrum and autocorrelation experiments as the note closest to the measured frequency. Use your language's note names if they differ (e.g. H for B and B for Bb in German, or do-re-mi) and keep the octave number. -->
     <string name="common_musical_note_g4">G4</string>
+    <!-- Name of a musical note in scientific pitch notation (letter plus octave number; A4 is the 440 Hz concert pitch), shown by the audio spectrum and autocorrelation experiments as the note closest to the measured frequency. Use your language's note names if they differ (e.g. H for B and B for Bb in German, or do-re-mi) and keep the octave number. # is sharp, b is flat; both names of the same note are given. -->
     <string name="common_musical_note_ab4">G#4 / Ab4</string>
+    <!-- Name of a musical note in scientific pitch notation (letter plus octave number; A4 is the 440 Hz concert pitch), shown by the audio spectrum and autocorrelation experiments as the note closest to the measured frequency. Use your language's note names if they differ (e.g. H for B and B for Bb in German, or do-re-mi) and keep the octave number. -->
     <string name="common_musical_note_a5">A5</string>
+    <!-- Name of a musical note in scientific pitch notation (letter plus octave number; A4 is the 440 Hz concert pitch), shown by the audio spectrum and autocorrelation experiments as the note closest to the measured frequency. Use your language's note names if they differ (e.g. H for B and B for Bb in German, or do-re-mi) and keep the octave number. # is sharp, b is flat; both names of the same note are given. -->
     <string name="common_musical_note_bb5">A#5 / Bb5</string>
+    <!-- Name of a musical note in scientific pitch notation (letter plus octave number; A4 is the 440 Hz concert pitch), shown by the audio spectrum and autocorrelation experiments as the note closest to the measured frequency. Use your language's note names if they differ (e.g. H for B and B for Bb in German, or do-re-mi) and keep the octave number. -->
     <string name="common_musical_note_b5">B5</string>
+    <!-- Name of a musical note in scientific pitch notation (letter plus octave number; A4 is the 440 Hz concert pitch), shown by the audio spectrum and autocorrelation experiments as the note closest to the measured frequency. Use your language's note names if they differ (e.g. H for B and B for Bb in German, or do-re-mi) and keep the octave number. -->
     <string name="common_musical_note_c5">C5</string>
+    <!-- Name of a musical note in scientific pitch notation (letter plus octave number; A4 is the 440 Hz concert pitch), shown by the audio spectrum and autocorrelation experiments as the note closest to the measured frequency. Use your language's note names if they differ (e.g. H for B and B for Bb in German, or do-re-mi) and keep the octave number. # is sharp, b is flat; both names of the same note are given. -->
     <string name="common_musical_note_db5">C#5 / Db5</string>
+    <!-- Name of a musical note in scientific pitch notation (letter plus octave number; A4 is the 440 Hz concert pitch), shown by the audio spectrum and autocorrelation experiments as the note closest to the measured frequency. Use your language's note names if they differ (e.g. H for B and B for Bb in German, or do-re-mi) and keep the octave number. -->
     <string name="common_musical_note_d5">D5</string>
+    <!-- Name of a musical note in scientific pitch notation (letter plus octave number; A4 is the 440 Hz concert pitch), shown by the audio spectrum and autocorrelation experiments as the note closest to the measured frequency. Use your language's note names if they differ (e.g. H for B and B for Bb in German, or do-re-mi) and keep the octave number. # is sharp, b is flat; both names of the same note are given. -->
     <string name="common_musical_note_eb5">D#5 / Eb5</string>
+    <!-- Name of a musical note in scientific pitch notation (letter plus octave number; A4 is the 440 Hz concert pitch), shown by the audio spectrum and autocorrelation experiments as the note closest to the measured frequency. Use your language's note names if they differ (e.g. H for B and B for Bb in German, or do-re-mi) and keep the octave number. -->
     <string name="common_musical_note_e5">E5</string>
+    <!-- Name of a musical note in scientific pitch notation (letter plus octave number; A4 is the 440 Hz concert pitch), shown by the audio spectrum and autocorrelation experiments as the note closest to the measured frequency. Use your language's note names if they differ (e.g. H for B and B for Bb in German, or do-re-mi) and keep the octave number. -->
     <string name="common_musical_note_f5">F5</string>
+    <!-- Name of a musical note in scientific pitch notation (letter plus octave number; A4 is the 440 Hz concert pitch), shown by the audio spectrum and autocorrelation experiments as the note closest to the measured frequency. Use your language's note names if they differ (e.g. H for B and B for Bb in German, or do-re-mi) and keep the octave number. # is sharp, b is flat; both names of the same note are given. -->
     <string name="common_musical_note_gb5">F#5 / Gb5</string>
+    <!-- Name of a musical note in scientific pitch notation (letter plus octave number; A4 is the 440 Hz concert pitch), shown by the audio spectrum and autocorrelation experiments as the note closest to the measured frequency. Use your language's note names if they differ (e.g. H for B and B for Bb in German, or do-re-mi) and keep the octave number. -->
     <string name="common_musical_note_g5">G5</string>
+    <!-- Name of a musical note in scientific pitch notation (letter plus octave number; A4 is the 440 Hz concert pitch), shown by the audio spectrum and autocorrelation experiments as the note closest to the measured frequency. Use your language's note names if they differ (e.g. H for B and B for Bb in German, or do-re-mi) and keep the octave number. # is sharp, b is flat; both names of the same note are given. -->
     <string name="common_musical_note_ab5">G#5 / Ab5</string>
+    <!-- Name of a musical note in scientific pitch notation (letter plus octave number; A4 is the 440 Hz concert pitch), shown by the audio spectrum and autocorrelation experiments as the note closest to the measured frequency. Use your language's note names if they differ (e.g. H for B and B for Bb in German, or do-re-mi) and keep the octave number. -->
     <string name="common_musical_note_a6">A6</string>
+    <!-- Name of a musical note in scientific pitch notation (letter plus octave number; A4 is the 440 Hz concert pitch), shown by the audio spectrum and autocorrelation experiments as the note closest to the measured frequency. Use your language's note names if they differ (e.g. H for B and B for Bb in German, or do-re-mi) and keep the octave number. # is sharp, b is flat; both names of the same note are given. -->
     <string name="common_musical_note_bb6">A#6 / Bb6</string>
+    <!-- Name of a musical note in scientific pitch notation (letter plus octave number; A4 is the 440 Hz concert pitch), shown by the audio spectrum and autocorrelation experiments as the note closest to the measured frequency. Use your language's note names if they differ (e.g. H for B and B for Bb in German, or do-re-mi) and keep the octave number. -->
     <string name="common_musical_note_b6">B6</string>
+    <!-- Name of a musical note in scientific pitch notation (letter plus octave number; A4 is the 440 Hz concert pitch), shown by the audio spectrum and autocorrelation experiments as the note closest to the measured frequency. Use your language's note names if they differ (e.g. H for B and B for Bb in German, or do-re-mi) and keep the octave number. -->
     <string name="common_musical_note_c6">C6</string>
+    <!-- Name of a musical note in scientific pitch notation (letter plus octave number; A4 is the 440 Hz concert pitch), shown by the audio spectrum and autocorrelation experiments as the note closest to the measured frequency. Use your language's note names if they differ (e.g. H for B and B for Bb in German, or do-re-mi) and keep the octave number. # is sharp, b is flat; both names of the same note are given. -->
     <string name="common_musical_note_db6">C#6 / Db6</string>
+    <!-- Name of a musical note in scientific pitch notation (letter plus octave number; A4 is the 440 Hz concert pitch), shown by the audio spectrum and autocorrelation experiments as the note closest to the measured frequency. Use your language's note names if they differ (e.g. H for B and B for Bb in German, or do-re-mi) and keep the octave number. -->
     <string name="common_musical_note_d6">D6</string>
+    <!-- Name of a musical note in scientific pitch notation (letter plus octave number; A4 is the 440 Hz concert pitch), shown by the audio spectrum and autocorrelation experiments as the note closest to the measured frequency. Use your language's note names if they differ (e.g. H for B and B for Bb in German, or do-re-mi) and keep the octave number. # is sharp, b is flat; both names of the same note are given. -->
     <string name="common_musical_note_eb6">D#6 / Eb6</string>
+    <!-- Name of a musical note in scientific pitch notation (letter plus octave number; A4 is the 440 Hz concert pitch), shown by the audio spectrum and autocorrelation experiments as the note closest to the measured frequency. Use your language's note names if they differ (e.g. H for B and B for Bb in German, or do-re-mi) and keep the octave number. -->
     <string name="common_musical_note_e6">E6</string>
+    <!-- Name of a musical note in scientific pitch notation (letter plus octave number; A4 is the 440 Hz concert pitch), shown by the audio spectrum and autocorrelation experiments as the note closest to the measured frequency. Use your language's note names if they differ (e.g. H for B and B for Bb in German, or do-re-mi) and keep the octave number. -->
     <string name="common_musical_note_f6">F6</string>
+    <!-- Name of a musical note in scientific pitch notation (letter plus octave number; A4 is the 440 Hz concert pitch), shown by the audio spectrum and autocorrelation experiments as the note closest to the measured frequency. Use your language's note names if they differ (e.g. H for B and B for Bb in German, or do-re-mi) and keep the octave number. # is sharp, b is flat; both names of the same note are given. -->
     <string name="common_musical_note_gb6">F#6 / Gb6</string>
+    <!-- Name of a musical note in scientific pitch notation (letter plus octave number; A4 is the 440 Hz concert pitch), shown by the audio spectrum and autocorrelation experiments as the note closest to the measured frequency. Use your language's note names if they differ (e.g. H for B and B for Bb in German, or do-re-mi) and keep the octave number. -->
     <string name="common_musical_note_g6">G6</string>
+    <!-- Name of a musical note in scientific pitch notation (letter plus octave number; A4 is the 440 Hz concert pitch), shown by the audio spectrum and autocorrelation experiments as the note closest to the measured frequency. Use your language's note names if they differ (e.g. H for B and B for Bb in German, or do-re-mi) and keep the octave number. # is sharp, b is flat; both names of the same note are given. -->
     <string name="common_musical_note_ab6">G#6 / Ab6</string>
+    <!-- Name of a musical note in scientific pitch notation (letter plus octave number; A4 is the 440 Hz concert pitch), shown by the audio spectrum and autocorrelation experiments as the note closest to the measured frequency. Use your language's note names if they differ (e.g. H for B and B for Bb in German, or do-re-mi) and keep the octave number. -->
     <string name="common_musical_note_a7">A7</string>
+    <!-- Name of a musical note in scientific pitch notation (letter plus octave number; A4 is the 440 Hz concert pitch), shown by the audio spectrum and autocorrelation experiments as the note closest to the measured frequency. Use your language's note names if they differ (e.g. H for B and B for Bb in German, or do-re-mi) and keep the octave number. # is sharp, b is flat; both names of the same note are given. -->
     <string name="common_musical_note_bb7">A#7 / Bb7</string>
+    <!-- Name of a musical note in scientific pitch notation (letter plus octave number; A4 is the 440 Hz concert pitch), shown by the audio spectrum and autocorrelation experiments as the note closest to the measured frequency. Use your language's note names if they differ (e.g. H for B and B for Bb in German, or do-re-mi) and keep the octave number. -->
     <string name="common_musical_note_b7">B7</string>
+    <!-- Name of a musical note in scientific pitch notation (letter plus octave number; A4 is the 440 Hz concert pitch), shown by the audio spectrum and autocorrelation experiments as the note closest to the measured frequency. Use your language's note names if they differ (e.g. H for B and B for Bb in German, or do-re-mi) and keep the octave number. -->
     <string name="common_musical_note_c7">C7</string>
+    <!-- Name of a musical note in scientific pitch notation (letter plus octave number; A4 is the 440 Hz concert pitch), shown by the audio spectrum and autocorrelation experiments as the note closest to the measured frequency. Use your language's note names if they differ (e.g. H for B and B for Bb in German, or do-re-mi) and keep the octave number. # is sharp, b is flat; both names of the same note are given. -->
     <string name="common_musical_note_db7">C#7 / Db7</string>
+    <!-- Name of a musical note in scientific pitch notation (letter plus octave number; A4 is the 440 Hz concert pitch), shown by the audio spectrum and autocorrelation experiments as the note closest to the measured frequency. Use your language's note names if they differ (e.g. H for B and B for Bb in German, or do-re-mi) and keep the octave number. -->
     <string name="common_musical_note_d7">D7</string>
+    <!-- Name of a musical note in scientific pitch notation (letter plus octave number; A4 is the 440 Hz concert pitch), shown by the audio spectrum and autocorrelation experiments as the note closest to the measured frequency. Use your language's note names if they differ (e.g. H for B and B for Bb in German, or do-re-mi) and keep the octave number. # is sharp, b is flat; both names of the same note are given. -->
     <string name="common_musical_note_eb7">D#7 / Eb7</string>
+    <!-- Name of a musical note in scientific pitch notation (letter plus octave number; A4 is the 440 Hz concert pitch), shown by the audio spectrum and autocorrelation experiments as the note closest to the measured frequency. Use your language's note names if they differ (e.g. H for B and B for Bb in German, or do-re-mi) and keep the octave number. -->
     <string name="common_musical_note_e7">E7</string>
+    <!-- Name of a musical note in scientific pitch notation (letter plus octave number; A4 is the 440 Hz concert pitch), shown by the audio spectrum and autocorrelation experiments as the note closest to the measured frequency. Use your language's note names if they differ (e.g. H for B and B for Bb in German, or do-re-mi) and keep the octave number. -->
     <string name="common_musical_note_f7">F7</string>
+    <!-- Name of a musical note in scientific pitch notation (letter plus octave number; A4 is the 440 Hz concert pitch), shown by the audio spectrum and autocorrelation experiments as the note closest to the measured frequency. Use your language's note names if they differ (e.g. H for B and B for Bb in German, or do-re-mi) and keep the octave number. # is sharp, b is flat; both names of the same note are given. -->
     <string name="common_musical_note_gb7">F#7 / Gb7</string>
+    <!-- Name of a musical note in scientific pitch notation (letter plus octave number; A4 is the 440 Hz concert pitch), shown by the audio spectrum and autocorrelation experiments as the note closest to the measured frequency. Use your language's note names if they differ (e.g. H for B and B for Bb in German, or do-re-mi) and keep the octave number. -->
     <string name="common_musical_note_g7">G7</string>
+    <!-- Name of a musical note in scientific pitch notation (letter plus octave number; A4 is the 440 Hz concert pitch), shown by the audio spectrum and autocorrelation experiments as the note closest to the measured frequency. Use your language's note names if they differ (e.g. H for B and B for Bb in German, or do-re-mi) and keep the octave number. # is sharp, b is flat; both names of the same note are given. -->
     <string name="common_musical_note_ab7">G#7 / Ab7</string>
 </resources>
