@@ -464,4 +464,10 @@
     <string name="graph_no_valid_data">Keine gültigen Daten</string>
     <string name="graph_no_data_in_range">Keine Daten im Bereich</string>
     <string name="applyZoomQuestionTitle">Diese Ansicht beibehalten?</string>
+    <string name="applyZoomQuestion">Du hast hineingezoomt. Soll das Diagramm weiterhin diesen Ausschnitt anzeigen, wenn du zurückkehrst?</string>
+    <string name="applyZoomRange">%1$s: %2$s bis %3$s</string>
+    <string name="applyZoomActionReset">Zoom zurücksetzen</string>
+    <string name="applyZoomActionKeep">Diesen Ausschnitt beibehalten</string>
+    <string name="applyZoomActionFollow">Beibehalten und neuen Daten folgen</string>
+    <string name="applyZoomMoreOptions">Weitere Optionen…</string>
 </resources>
