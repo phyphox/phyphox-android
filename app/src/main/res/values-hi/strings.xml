@@ -16,19 +16,8 @@
     <string name="graph_slope_label">ढाल</string>
     <string name="graph_difference_label">अंतर</string>
     <string name="graph_fit_label">रैखिक फिट: y = a x + b</string>
-    <string name="applyZoomTitle">ज़ूम करें</string>
-    <string name="applyZoomExplanation">आप इस ग्राफ़ के इंटरैक्टिव मोड को बंद कर रहे हैं | अगर आप अपना ज़ूम रखना चाहते हैं, तो विकल्प चुनें |</string>
-    <string name="applyZoomAdvanced">उन्नत (Advanced) विकल्प</string>
     <string name="settings">सेटिंग्स</string>
     <string name="settingsProximityLock">सामीप्य (proximity) लॉक</string>
-    <string name="applyZoomApply">पर लागू…</string>
-    <string name="applyZoomReset">डिफ़ॉल्ट पर रीसेट</string>
-    <string name="applyZoomKeep">चयनित के रूप में रखें</string>
-    <string name="applyZoomFollow">नया डेटा रखें और उसका पालन करें</string>
-    <string name="applyZoomThis">केवल यह ग्राफ</string>
-    <string name="applyZoomSameVariable">अन्य ग्राफ : वही चर</string>
-    <string name="applyZoomSameUnit">अन्य ग्राफ: वही इकाई</string>
-    <string name="applyZoomSameAxis">अन्य ग्राफ: वही अक्ष</string>
     <string name="newExperiment">प्रयोग जोड़ें</string>
     <string name="newExperimentSimple">सरल प्रयोग जोड़ें</string>
     <string name="newExperimentPhyphoxInfo">डेटा विश्लेषण सहित अधिक उन्नत प्रयोग बनाने के लिए phyphox.org पर जाएं और उन्हें सहकर्मियों, छात्रों और दोस्तों के साथ साझा करें।</string>
@@ -416,8 +405,4 @@
     <string name="permissionRequiredToSaveToDownloads">डाउनलोड्स में फाइल्स को सेव करने के लिए स्टोरेज अनुमति चाहिए</string>
     <string name="errorWritingStateFile">स्टेट फाइल को लिखने में त्रुटि:</string>
     <string name="wb_auto">स्वतः चालित</string>
-    <string name="wb_incandescent">दीप्त</string>
-    <string name="wb_fluorescent">स्फुरदीप्त</string>
-    <string name="wb_daylight">दिन का प्रकाश</string>
-    <string name="wb_cloudy">बादलों वाला</string>
 </resources>

@@ -124,17 +124,6 @@
     <string name="graph_slope_label">Helling</string>
     <string name="graph_difference_label">Verschil</string>
     <string name="graph_fit_label">Lineaire fit: y = a x + b</string>
-    <string name="applyZoomTitle">Pas de zoom toe</string>
-    <string name="applyZoomExplanation">Je sluit nu de interactieve modus van deze grafiek, je kan aangeven dat je je zoominstelling wenst te behouden.</string>
-    <string name="applyZoomAdvanced">Geavanceerde opties</string>
-    <string name="applyZoomApply">Pas toe op …</string>
-    <string name="applyZoomReset">Zet standaardinstelling terug</string>
-    <string name="applyZoomKeep">Bewaar je selectie</string>
-    <string name="applyZoomFollow">Sla op en volg nieuwe data</string>
-    <string name="applyZoomThis">Enkel deze grafiek</string>
-    <string name="applyZoomSameVariable">Andere grafieken: Zelfde variabele</string>
-    <string name="applyZoomSameUnit">Andere grafieken: Zelfde eenheid</string>
-    <string name="applyZoomSameAxis">Andere grafieken: Zelfde as</string>
     <string name="newExperimentSimple">Voeg een eenvoudig experiment toe</string>
     <string name="newExperimentBluetooth">Voeg een Bluetooth experiment toe</string>
     <string name="newExperimentBluetoothErrorTitle">Bluetooth scanfout</string>

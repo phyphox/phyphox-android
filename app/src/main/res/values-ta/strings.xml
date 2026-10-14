@@ -18,17 +18,6 @@
     <string name="graph_slope_label">சரிவு</string>
     <string name="graph_difference_label">வேறுபாடு</string>
     <string name="graph_fit_label">நேரியல் பொருத்தம்: y = ax + b</string>
-    <string name="applyZoomTitle">பெரிதாக்கத்தை செயல்படுத்து</string>
-    <string name="applyZoomExplanation">இந்த வரைபடத்தின் ஊடாடும் முறையை நீங்கள் மூடும்போது, உங்களின் பெரிதாக்கத்தை தக்கவைக்க விரும்பினால் நீங்கள் தேர்ந்தெடுக்கலாம்.</string>
-    <string name="applyZoomAdvanced">மேம்பட்ட விருப்பங்கள்</string>
-    <string name="applyZoomApply">இதற்கு அமை…</string>
-    <string name="applyZoomReset">இயல்புநிலைக்கு மாற்று</string>
-    <string name="applyZoomKeep">தேர்ந்தெடுத்தவாறு தொடர்க</string>
-    <string name="applyZoomFollow">வை &amp; புதிய தரவை தொடர்</string>
-    <string name="applyZoomThis">இந்த வரைபடத்திற்கு மட்டும்</string>
-    <string name="applyZoomSameVariable">மற்ற வரைபடத்திற்கு: இதே மாறி</string>
-    <string name="applyZoomSameUnit">மற்ற வரைபடத்திற்கு: இதே அலகு</string>
-    <string name="applyZoomSameAxis">மற்ற வரைபடத்திற்கு: இதே அச்சு</string>
     <string name="newExperiment">சோதனைகளைச் சேர்</string>
     <string name="newExperimentSimple">எளிய சோதனையைச் சேர்</string>
     <string name="newExperimentPhyphoxInfo">தரவுப் பகுப்பாய்வு உள்ளிட்ட மேம்பட்ட சோதனைகளை உருவாக்க phyphox.org ஐப் பார்வையிடவும், அவற்றை சக ஊழியர்கள், மாணவர்கள் மற்றும் நண்பர்களுடன் பகிர்ந்து கொள்ளவும்.</string>
@@ -417,10 +406,6 @@
     <string name="common_quantity_short_luma">Y\'</string>
     <string name="cameraZoom">பெரிதாக்கு</string>
     <string name="wb_auto">Auto</string>
-    <string name="wb_incandescent">இழைவிளக்கு</string>
-    <string name="wb_fluorescent">குழல்விளக்கு</string>
-    <string name="wb_daylight">பகல்</string>
-    <string name="wb_cloudy">மேகமூட்டம்</string>
     <string name="error">பிழை</string>
     <string name="invalidValue">தவறான மதிப்பு</string>
     <string name="clear_data_question_select">பதிவுசெய்யப்பட்ட தரவு மற்றும் பின்வரும் விருப்பத் தேர்வுகளை அழிக்கவா\?</string>

@@ -17,17 +17,6 @@
     <string name="graph_slope_label">Hældning</string>
     <string name="graph_difference_label">Forskel</string>
     <string name="graph_fit_label">Lineær regression: y = a x + b</string>
-    <string name="applyZoomTitle">Vælg zoom</string>
-    <string name="applyZoomExplanation">Når du forlader den interaktive tilstand, kan du vælge, om du vil beholde dine zoom indstillinger.</string>
-    <string name="applyZoomAdvanced">Avancerede indstillinger</string>
-    <string name="applyZoomApply">Anvend til…</string>
-    <string name="applyZoomReset">Nulstil til standardindstillingerne</string>
-    <string name="applyZoomKeep">Behold udvalg</string>
-    <string name="applyZoomFollow">Behold udvalg og følg nye data</string>
-    <string name="applyZoomThis">Kun denne graf</string>
-    <string name="applyZoomSameVariable">Andre grafer: samme variabel</string>
-    <string name="applyZoomSameUnit">Andre grafer: samme enhed</string>
-    <string name="applyZoomSameAxis">Andre grafer: samme akse</string>
     <string name="newExperiment">Nyt eksperiment</string>
     <string name="newExperimentSimple">Nyt enkelt eksperiment</string>
     <string name="newExperimentPhyphoxInfo">Besøg phyphox.org for at lave mere avancerede eksperimenter med dataanalyse, og dele dem med kollegaer, elever og venner.</string>

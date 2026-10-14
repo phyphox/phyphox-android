@@ -121,8 +121,6 @@
     <string name="graph_point_label">نقطه</string>
     <string name="graph_slope_label">شیب</string>
     <string name="graph_difference_label">اختلاف</string>
-    <string name="applyZoomAdvanced">گزینه‌های پیشرفته</string>
-    <string name="applyZoomReset">بازنشانی به پیش‌فرض</string>
     <string name="newExperimentSimple">افزودن آزمایش ساده</string>
     <string name="newExperimentBluetooth">افزودن آزمایش برای دستگاه دارای بلوتوث</string>
     <string name="newExperimentBluetoothErrorTitle">خطای پویش بلوتوث</string>
@@ -146,10 +144,6 @@
     <string name="bt_exception_notification_fail">ناموفق بود.</string>
     <string name="bt_more_info_link_button">اطلاعات بیشتر</string>
     <string name="bt_more_info_link_url">https://phyphox.org/ble</string>
-    <string name="applyZoomThis">تنها این نمودار</string>
-    <string name="applyZoomSameVariable">نمودارهای دیگر: متغیر یکسان</string>
-    <string name="applyZoomSameUnit">نمودارهای دیگر: یکای یکسان</string>
-    <string name="applyZoomSameAxis">نمودارهای دیگر: محور یکسان</string>
     <string name="deviceInfo">مشخصات دستگاه</string>
     <string name="vendorSensorWarning1">حسگر</string>
     <string name="vendorSensorWarning2">نوع درست حسگر را گزارش نمی‌کند. به نظر می‌رسد که منحصر به سازنده باشد و ما تنها می‌توانیم نوع آن را از روی نامش حدس بزنیم. بنابراین، ممکن است طبق آنچه که انتظار می‌رود کار نکند.</string>
@@ -179,11 +173,6 @@
     <string name="bt_fail_writing">فرایند نوشتن ناموفق بود.</string>
     <string name="bt_more_info_link_text">اگر دستگاه شما پشتیبانی نشده است، «اطلاعات بیشتر» را انتخاب کنید تا درباره پشتیبانی فیفاکس از بلوتوث کم‌انرژی و تنظیم‌پذیر بیشتر بیاموزید.</string>
     <string name="graph_tools_export">خروجی گرفتن از این مجموعه‌ی داده‌ها</string>
-    <string name="applyZoomTitle">اجرای بزرگنمایی</string>
-    <string name="applyZoomExplanation">هنگامی که حالت تعاملی این نمودار را می‌بندید، می‌توانید انتخاب کنید آیا می‌خواهید بزرگنمایی را نگهداری کنید.</string>
-    <string name="applyZoomApply">اجرا روی…</string>
-    <string name="applyZoomKeep">نگهداری آن‌چه انتخاب شده</string>
-    <string name="applyZoomFollow">نگهداری و دنبال کردن داده‌های جدید</string>
     <string name="sensorVendor">منحصر به سازنده</string>
     <string name="vendorSensorTitle">حسگر منحصر به سازنده</string>
     <string name="remoteServerNoNetwork">ابتدا باید اتصال وای-فای به دستگاه از راه دور را ایجاد کنید. لطفا وای-فای را فعال کنید یا یک هات‌اسپات موبایل ایجاد کنید.</string>

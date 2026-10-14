@@ -18,17 +18,6 @@
     <string name="graph_tools_linear_fit">Linearna regresija</string>
     <string name="graph_difference_label">Razlika</string>
     <string name="graph_fit_label">Linearna regresija: y = a x + b</string>
-    <string name="applyZoomTitle">Primjenite zumiranje</string>
-    <string name="applyZoomExplanation">Tijekom zatvaranja interaktivnog načina rada ovog grafa, možete izabrati želite li zadržati zumiranje.</string>
-    <string name="applyZoomAdvanced">Napredne opcije</string>
-    <string name="applyZoomApply">Primjenite na…</string>
-    <string name="applyZoomReset">Resetirajte na zadano se</string>
-    <string name="applyZoomKeep">Zadržite odabrano</string>
-    <string name="applyZoomFollow">Zadržite i pratite nove podatke</string>
-    <string name="applyZoomThis">Samo ovaj graf</string>
-    <string name="applyZoomSameVariable">Drugi grafovi: Ista varijabla</string>
-    <string name="applyZoomSameUnit">Drugi grafovi: Ista mjerna jedinica</string>
-    <string name="applyZoomSameAxis">Drugi grafovi: Ista os</string>
     <string name="newExperiment">Dodajte pokuse</string>
     <string name="newExperimentSimple">Dodajte jednostavni pokus</string>
     <string name="newExperimentPhyphoxInfo">Posjetite phyphox.org kako bi ste izradili napredne pokuse uključujući analizu podataka i podjelite ih s kolegama, studentima i prijateljima.</string>
@@ -417,10 +406,6 @@
     <string name="permissionRequiredToSaveToDownloads">Potrebna je dozvola za spremanje kako bi mogli spremiti datoteke u Preuzimanja</string>
     <string name="errorWritingStateFile">Greška pri zapisivanju datoteke stanja:</string>
     <string name="wb_auto">Automatski</string>
-    <string name="wb_incandescent">Žarulja</string>
-    <string name="wb_fluorescent">Fluorescentna svjetiljka</string>
-    <string name="wb_daylight">Dnevno svijetlo</string>
-    <string name="wb_cloudy">Oblačno</string>
     <string name="error">Pogreška</string>
     <string name="invalidValue">Nevažeća vrijednost</string>
     <string name="clear_data_question_select">Počistiti snimljene podatke i sljedeće opcionalne stavke\?</string>

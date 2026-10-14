@@ -17,17 +17,6 @@
     <string name="graph_slope_label">დახრა</string>
     <string name="graph_difference_label">განსხვავება</string>
     <string name="graph_fit_label">წრფივი ფიტირება: y = a x + b</string>
-    <string name="applyZoomTitle">მასშტაბის შეცვლა</string>
-    <string name="applyZoomExplanation">ინტერაქციული გრაფიკის დახურვისას, შეგიძლია მონიშნო გსურს თუ არა ამ მასშტაბის შენარჩუნება.</string>
-    <string name="applyZoomAdvanced">დამატებითი პარამეტრები</string>
-    <string name="applyZoomApply">მოარგე…</string>
-    <string name="applyZoomReset">საწყისზე გადატვირთვა</string>
-    <string name="applyZoomKeep">შეინარჩუნე მონიშნულები</string>
-    <string name="applyZoomFollow">დაიმახსვრე და გადადი ახალ მონაცემებზე</string>
-    <string name="applyZoomThis">მხოლოდ ეს გრაფიკი</string>
-    <string name="applyZoomSameVariable">სხვა გრაფიკი: იგივე ცვლადები</string>
-    <string name="applyZoomSameUnit">სხვა გრაფიკები: იგივე ერთეულები</string>
-    <string name="applyZoomSameAxis">სხვა გრაფიკები: იგივე ღერძები</string>
     <string name="newExperiment">დაამატე ექსპერიმენტი</string>
     <string name="newExperimentSimple">დაამატე მარტივი ექსპერიმენტი</string>
     <string name="newExperimentPhyphoxInfo">ეწვიე phyphox.org ვებგვერდს უფრო რთული ექსპერიმენტების შესაქმენლად, მანაცებეის ანალიზის ჩათვლით და გაუზიარე კოლეგებს, სტუდენტებს და მეგობრებს.</string>

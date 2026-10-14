@@ -123,15 +123,6 @@
     <string name="graph_slope_label">Sklon</string>
     <string name="graph_difference_label">Rozdíl</string>
     <string name="graph_fit_label">Lineární fitování: y= a x + b</string>
-    <string name="applyZoomTitle">Provést zoom</string>
-    <string name="applyZoomExplanation">Vzlehem k tomu, že vypínáte interaktivní verzi tohoto grafu, můžete se rozhodnout zachovat současné přiblížení grafu.</string>
-    <string name="applyZoomAdvanced">Pokročilé nastavení</string>
-    <string name="applyZoomApply">Aplikovat na…</string>
-    <string name="applyZoomReset">Nastavit výchozí nastavení</string>
-    <string name="applyZoomThis">Pouze tento graf</string>
-    <string name="applyZoomSameVariable">Ostatní grafy: Stejná proměnná</string>
-    <string name="applyZoomSameUnit">Ostatní grafy: Stejná jednotka</string>
-    <string name="applyZoomSameAxis">Ostatní grafy: Stejná osa</string>
     <string name="newExperimentSimple">Přidat experiment</string>
     <string name="newExperimentBluetooth">Přidat experiment pro bluetoothové zařízení</string>
     <string name="newExperimentBluetoothLoadFromDevice">Načíst ze zařízení</string>
@@ -202,8 +193,6 @@
     <string name="bt_more_info_link_button">Více informací</string>
     <string name="bt_more_info_link_url">https://phyphox.org/ble</string>
     <string name="graph_tools_follow">Sledovat nová data</string>
-    <string name="applyZoomKeep">Ponechat nastavení</string>
-    <string name="applyZoomFollow">Ponechat nastavení a sledovat nová data</string>
     <string name="newExperimentBluetoothErrorTitle">Chyba Bluetooth skenu</string>
     <string name="open_bluetooth_assets_title">Experimenty pro vybrané Bluetooth zařízení</string>
     <string name="bluetooth">Bluetooth Low Energy</string>

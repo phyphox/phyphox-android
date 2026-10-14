@@ -12,15 +12,6 @@
     <string name="graph_slope_label">Naklon</string>
     <string name="graph_difference_label">Razlika</string>
     <string name="graph_fit_label">Linearno prileganje: y = a x + b</string>
-    <string name="applyZoomTitle">Uporabi povečavo</string>
-    <string name="applyZoomAdvanced">Napredne možnosti</string>
-    <string name="applyZoomApply">Velja za …</string>
-    <string name="applyZoomReset">Ponastavi na privzeto</string>
-    <string name="applyZoomFollow">Ohrani in nadaljuj z novimi podatki</string>
-    <string name="applyZoomThis">Samo za ta graf</string>
-    <string name="applyZoomSameVariable">Drugi grafi: Ista spremenljivka</string>
-    <string name="applyZoomSameUnit">Drugi grafi: ista enota</string>
-    <string name="applyZoomSameAxis">Drugi grafi: ista os</string>
     <string name="newExperiment">Dodaj eksperimete</string>
     <string name="newExperimentSimple">Dodaj preprost eksperimet</string>
     <string name="newExperimentInputTitle">Naslov</string>

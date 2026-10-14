@@ -102,17 +102,6 @@
     <string name="graph_difference_label">Différence</string>
     <string name="graph_fit_label">Fit linéaire : y = a x + b</string>
     <string name="graph_tools_follow">Suivre nouvelles données</string>
-    <string name="applyZoomTitle">Conserver le zoom</string>
-    <string name="applyZoomExplanation">Vous quittez le mode interactif de ce graphe, vous pouvez choisir de conserver le zoom ou non.</string>
-    <string name="applyZoomAdvanced">Options avancées</string>
-    <string name="applyZoomApply">Appliquer à…</string>
-    <string name="applyZoomReset">Revenir aux valeurs par défaut</string>
-    <string name="applyZoomKeep">Conserver le zoom actuel</string>
-    <string name="applyZoomFollow">Conserver, et s\'adapter aux nouvelles mesures</string>
-    <string name="applyZoomThis">Ce graphe uniquement</string>
-    <string name="applyZoomSameVariable">Les graphes avec le même paramètre</string>
-    <string name="applyZoomSameUnit">Les graphes avec la même unité</string>
-    <string name="applyZoomSameAxis">Les graphes avec le même axes</string>
     <string name="newExperimentSimple">Ajouter une expérience simple</string>
     <string name="newExperimentBluetooth">Ajouter une expérience avec un appareil Bluetooth</string>
     <string name="newExperimentBluetoothErrorTitle">Recherche Bluetooth : erreur</string>
@@ -417,10 +406,6 @@
     <string name="permissionRequiredToSaveToDownloads">Une permission est nécessaire pour enregistrer des fichiers dans les Téléchargements</string>
     <string name="errorWritingStateFile">Erreur lors d\'écriture du fichier :</string>
     <string name="wb_auto">Auto</string>
-    <string name="wb_incandescent">Incandescence (filament)</string>
-    <string name="wb_fluorescent">Fluorescence</string>
-    <string name="wb_daylight">Lumière du jour</string>
-    <string name="wb_cloudy">Nuageux</string>
     <string name="error">Erreur</string>
     <string name="invalidValue">Valeur invalide</string>
     <string name="clear_data_question_select">Voulez-vous effacer les données mesurées et les items optionnels qui suivent \?</string>

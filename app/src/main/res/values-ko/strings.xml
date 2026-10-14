@@ -22,17 +22,6 @@
     <string name="graph_slope_label">기울기</string>
     <string name="graph_difference_label">차이</string>
     <string name="graph_fit_label">선형 피팅: y = a x + b</string>
-    <string name="applyZoomTitle">확대/축소 적용</string>
-    <string name="applyZoomExplanation">이 그래프의 대화형 모드를 닫을 때 확대/축소 상태를 유지할지 선택할 수 있습니다.</string>
-    <string name="applyZoomAdvanced">고급 옵션</string>
-    <string name="applyZoomApply">적용 대상…</string>
-    <string name="applyZoomReset">기본값으로 초기화</string>
-    <string name="applyZoomKeep">선택한 상태로 유지</string>
-    <string name="applyZoomFollow">새 데이터 유지 및 따라가기</string>
-    <string name="applyZoomThis">이 그래프만</string>
-    <string name="applyZoomSameVariable">다른 그래프: 동일한 변수</string>
-    <string name="applyZoomSameUnit">다른 그래프: 동일한 단위</string>
-    <string name="applyZoomSameAxis">다른 그래프: 동일한 축</string>
     <string name="newExperiment">실험 추가</string>
     <string name="newExperimentSimple">간단한 실험 추가</string>
     <string name="newExperimentPhyphoxInfo">데이터 분석을 포함한 더 고급 실험을 만들고 동료, 학생, 친구들과 공유하려면 phyphox.org를 방문하세요.</string>
@@ -417,10 +406,6 @@
     <string name="permissionRequiredToSaveToDownloads">다운로드 폴더에 파일을 저장하려면 저장용량에 대한 권한이 필요합니다</string>
     <string name="errorWritingStateFile">상태 파일 쓰기 오류:</string>
     <string name="wb_auto">자동</string>
-    <string name="wb_incandescent">백열등</string>
-    <string name="wb_fluorescent">형광등</string>
-    <string name="wb_daylight">태양광</string>
-    <string name="wb_cloudy">흐린 날</string>
     <string name="error">오류</string>
     <string name="invalidValue">유효하지 않은 값</string>
     <string name="clear_data_question_select">기록 데이터 및 다음 선택 항목을 지우시겠습니까\?</string>

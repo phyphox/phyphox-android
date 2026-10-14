@@ -157,17 +157,6 @@
     <string name="graph_slope_label">Steigung</string>
     <string name="graph_difference_label">Differenz</string>
     <string name="graph_fit_label">Ausgleichsgerade: y = a x + b</string>
-    <string name="applyZoomTitle">Zoom anwenden</string>
-    <string name="applyZoomExplanation">Beim Verlassen des interaktiven Modus kannst du auswählen, ob du den Zoom beibehalten möchtest.</string>
-    <string name="applyZoomAdvanced">Fortgeschrittene Optionen</string>
-    <string name="applyZoomApply">Anwenden auf…</string>
-    <string name="applyZoomReset">Auf Standard zurücksetzen</string>
-    <string name="applyZoomKeep">Auswahl behalten</string>
-    <string name="applyZoomFollow">Auswahl behalten und neuen Daten folgen</string>
-    <string name="applyZoomThis">Nur diesen Graph</string>
-    <string name="applyZoomSameVariable">Andere Graphen: Gleiche Variable</string>
-    <string name="applyZoomSameUnit">Andere Graphen: Gleiche Einheit</string>
-    <string name="applyZoomSameAxis">Andere Graphen: Gleiche Achse</string>
     <string name="newExperimentSimple">Neues einfaches Experiment</string>
     <string name="newExperimentBluetooth">Neues Experiment für Bluetooth-Gerät</string>
     <string name="newExperimentBluetoothErrorTitle">Bluetooth Scan Fehler</string>
@@ -413,10 +402,6 @@
     <string name="common_quantity_short_luma">Y\'</string>
     <string name="cameraZoom">Zoom</string>
     <string name="wb_auto">Auto</string>
-    <string name="wb_incandescent">Glühlampe</string>
-    <string name="wb_fluorescent">Leuchtstoffröhre</string>
-    <string name="wb_daylight">Tageslicht</string>
-    <string name="wb_cloudy">Bewölkt</string>
     <string name="download">Download</string>
     <string name="savedToDownloadsMessage">Datei in Dowloads gespeichert</string>
     <string name="permissionRequiredToSaveToDownloads">Die Zugriffsberechtigung für den Speicher wird benötigt um Dateien im Download-Ordner zu speichern</string>

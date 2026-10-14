@@ -16,17 +16,6 @@
     <string name="graph_slope_label">Нахил</string>
     <string name="graph_difference_label">Різниця</string>
     <string name="graph_fit_label">Лінійна модель: y = a x + b</string>
-    <string name="applyZoomTitle">Масштабувати</string>
-    <string name="applyZoomExplanation">Виходячи з інтерактивного режиму цього графіку, вирішіть чи зберігати масштабування.</string>
-    <string name="applyZoomAdvanced">Додаткові налаштування</string>
-    <string name="applyZoomApply">Застосувати до…</string>
-    <string name="applyZoomReset">Скинути до стандартного</string>
-    <string name="applyZoomKeep">Зберегти вибране</string>
-    <string name="applyZoomFollow">Зберегти і йти за новими даними</string>
-    <string name="applyZoomThis">Лише цього графіка</string>
-    <string name="applyZoomSameVariable">Інших графіків: Однакова змінна</string>
-    <string name="applyZoomSameUnit">Інших графіків: Однакова одиниця виміру</string>
-    <string name="applyZoomSameAxis">Інших графіків: Однакова вісь</string>
     <string name="newExperiment">Додати експерименти</string>
     <string name="newExperimentSimple">Додати простий експеримент</string>
     <string name="newExperimentPhyphoxInfo">Щоб створити складніші експерименти і поділитися ними з колегами, студентами та друзями - завітайте на phyphox.org.</string>

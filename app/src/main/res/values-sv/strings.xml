@@ -16,17 +16,6 @@
     <string name="graph_slope_label">Lutning</string>
     <string name="graph_difference_label">Skillnad</string>
     <string name="graph_fit_label">Linjär anpassning: y = a x + b</string>
-    <string name="applyZoomTitle">Välj zoom</string>
-    <string name="applyZoomExplanation">När du stänger din interaktiva mod för grafen kan du välja om du vill behålla din inzoomning.</string>
-    <string name="applyZoomAdvanced">Avancerade möjligheter</string>
-    <string name="applyZoomApply">Tillämpa för…</string>
-    <string name="applyZoomReset">Återställ till grundinställning</string>
-    <string name="applyZoomKeep">Behåll</string>
-    <string name="applyZoomFollow">Behåll och följ nya data</string>
-    <string name="applyZoomThis">Endast denna graf</string>
-    <string name="applyZoomSameVariable">Andra grafer: Samma variabel</string>
-    <string name="applyZoomSameUnit">Andra grafer: Samma enhet</string>
-    <string name="applyZoomSameAxis">Andra grafer: Samma axel</string>
     <string name="newExperiment">Lägg till experiment</string>
     <string name="newExperimentSimple">Lägg till ett enkelt experiment</string>
     <string name="newExperimentPhyphoxInfo">Besök phyphox.org för att skapa mer avancerade experiment, inklusive dataanalys, och dela med kolleger, studenter och vänner.</string>

@@ -124,17 +124,6 @@
     <string name="graph_slope_label">傾き</string>
     <string name="graph_difference_label">差分</string>
     <string name="graph_fit_label">直線近似式：y = ax + b</string>
-    <string name="applyZoomTitle">ズームの設定</string>
-    <string name="applyZoomExplanation">このインタラクティブモードでは，グラフのズーム状態維持に関する設定が行えます。</string>
-    <string name="applyZoomAdvanced">詳細設定</string>
-    <string name="applyZoomApply">適用範囲設定…</string>
-    <string name="applyZoomReset">デフォルト設定</string>
-    <string name="applyZoomKeep">現在の表示範囲を維持</string>
-    <string name="applyZoomFollow">新しいデータの範囲に従う</string>
-    <string name="applyZoomThis">このグラフのみ</string>
-    <string name="applyZoomSameVariable">同じ変数のグラフ</string>
-    <string name="applyZoomSameUnit">同じ単位のグラフ</string>
-    <string name="applyZoomSameAxis">同じ軸のグラフ</string>
     <string name="newExperimentSimple">新しい実験の追加</string>
     <string name="newExperimentBluetooth">Bluetooth接続されたデバイスから新しい実験の追加</string>
     <string name="newExperimentBluetoothErrorTitle">Bluetooth デバイスが見つかりません</string>

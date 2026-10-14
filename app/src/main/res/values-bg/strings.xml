@@ -12,15 +12,6 @@
     <string name="graph_slope_label">Наклон</string>
     <string name="graph_difference_label">Разлика</string>
     <string name="graph_fit_label">Линейна апроксимация: y = a x + b</string>
-    <string name="applyZoomExplanation">При напускане на интерактивния режим, ще може да изберете дали да запазите избрания мащаб.</string>
-    <string name="applyZoomAdvanced">Допълнителни настройки</string>
-    <string name="applyZoomApply">Приложи към…</string>
-    <string name="applyZoomReset">Възстанови начална конфигурация</string>
-    <string name="applyZoomKeep">Запази избора</string>
-    <string name="applyZoomThis">Само тази графика</string>
-    <string name="applyZoomSameVariable">Други графики: Същата променлива</string>
-    <string name="applyZoomSameUnit">Други графики: същата единица</string>
-    <string name="applyZoomSameAxis">Други графики: Същата ос</string>
     <string name="newExperiment">Добави експерименти</string>
     <string name="newExperimentSimple">Добави прост експеримент</string>
     <string name="newExperimentPhyphoxInfo">За да създадете други експерименти, включително анализ на данни, и за да ги споделите с колеги, ученици, студенти, и приятели посетете phyphox.org.</string>

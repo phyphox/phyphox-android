@@ -124,17 +124,6 @@
     <string name="graph_slope_label">Inclinação</string>
     <string name="graph_difference_label">Diferença</string>
     <string name="graph_fit_label">Ajuste Linear: y = a x + b</string>
-    <string name="applyZoomTitle">Aplicar zoom</string>
-    <string name="applyZoomExplanation">Como você está fechando o modo interativo deste gráfico, você pode selecionar se você quer manter o zoom.</string>
-    <string name="applyZoomAdvanced">Opções avançadas</string>
-    <string name="applyZoomApply">Aplicar a…</string>
-    <string name="applyZoomReset">Voltar ao padrão</string>
-    <string name="applyZoomKeep">Manter como selecionado</string>
-    <string name="applyZoomFollow">Manter e seguir novo dado</string>
-    <string name="applyZoomThis">Somente este gráfico</string>
-    <string name="applyZoomSameVariable">Outros gráficos: Mesma variável</string>
-    <string name="applyZoomSameUnit">Outros gráficos: Mesma unidade</string>
-    <string name="applyZoomSameAxis">Outros gráficos: Mesmos eixos</string>
     <string name="newExperimentSimple">Adicionar experimento simples</string>
     <string name="newExperimentBluetooth">Adicionar experimento para o dispositivo Bluetooth</string>
     <string name="newExperimentBluetoothErrorTitle">Erro escaneando Bluetooth</string>

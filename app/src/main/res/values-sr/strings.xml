@@ -122,17 +122,6 @@
     <string name="graph_slope_label">Nagib</string>
     <string name="graph_difference_label">Razlika</string>
     <string name="graph_fit_label">Linearan fit: y = a x + b</string>
-    <string name="applyZoomTitle">Primeni zumiranje</string>
-    <string name="applyZoomExplanation">Kako zatvarate interaktivni mod ovog grafika, ako želite možete izabrati da zadržite vaše zumiranje.</string>
-    <string name="applyZoomAdvanced">Napredne opcije</string>
-    <string name="applyZoomApply">Primeni na…</string>
-    <string name="applyZoomReset">Resetuj na početna podešavanja</string>
-    <string name="applyZoomKeep">Zadrži kao što je selektovano</string>
-    <string name="applyZoomFollow">Zadrži prati nove podatke</string>
-    <string name="applyZoomThis">Samo ovaj grafik</string>
-    <string name="applyZoomSameVariable">Ostali grafici: Iste promenljive</string>
-    <string name="applyZoomSameUnit">Ostali grafici: Iste jedinice</string>
-    <string name="applyZoomSameAxis">Ostali grafici: Iste ose</string>
     <string name="newExperimentSimple">Dodaj jednostavan eksperiment</string>
     <string name="newExperimentBluetooth">Dodaj eksperiment za blutut uređaj</string>
     <string name="newExperimentBluetoothErrorTitle">Blutut skener greška</string>

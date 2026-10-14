@@ -16,17 +16,6 @@
     <string name="graph_slope_label">Kemiringan</string>
     <string name="graph_difference_label">Beda</string>
     <string name="graph_fit_label">Pendekatan garis: y = a x + b</string>
-    <string name="applyZoomTitle">Perbesar</string>
-    <string name="applyZoomExplanation">Anda dapat memilih tampilan yang diinginkan, setelah menu interaktif ini ditutup.</string>
-    <string name="applyZoomAdvanced">Pilihan lanjutan</string>
-    <string name="applyZoomApply">Diterapkan pada…</string>
-    <string name="applyZoomReset">Reset ke awal</string>
-    <string name="applyZoomKeep">Tetap sesuai pilihan</string>
-    <string name="applyZoomFollow">Tetap dan tampilkan data baru</string>
-    <string name="applyZoomThis">Hanya grafik ini</string>
-    <string name="applyZoomSameVariable">Grafik lain: Variabel sama</string>
-    <string name="applyZoomSameUnit">Grafik lain: Satuan sama</string>
-    <string name="applyZoomSameAxis">Grafik lain: Sumbu sama</string>
     <string name="newExperiment">Tambah percobaan</string>
     <string name="newExperimentSimple">Tambah percobaan sederhana</string>
     <string name="newExperimentPhyphoxInfo">Untuk membuat percobaan lanjutan, termasuk analisa data dan berbagi dengan rekan kerja, siswa dan teman, kunjungi phyphox.org, termasuk.</string>

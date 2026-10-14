@@ -108,17 +108,6 @@
     <string name="graph_slope_label">斜率</string>
     <string name="graph_difference_label">差值</string>
     <string name="graph_fit_label">线性拟合：y = a x + b</string>
-    <string name="applyZoomTitle">采用缩放</string>
-    <string name="applyZoomExplanation">当关闭该图形的交互模式时，你可以选择是否保持你的缩放。</string>
-    <string name="applyZoomAdvanced">高级选项</string>
-    <string name="applyZoomApply">应用于…</string>
-    <string name="applyZoomReset">重置为默认值</string>
-    <string name="applyZoomKeep">保持选择</string>
-    <string name="applyZoomFollow">保持并跟踪新数据</string>
-    <string name="applyZoomThis">仅此图像</string>
-    <string name="applyZoomSameVariable">其他图像：相同变量</string>
-    <string name="applyZoomSameUnit">其他图像：相同单位</string>
-    <string name="applyZoomSameAxis">其他图像：相同坐标轴</string>
     <string name="newExperimentSimple">新建简易实验</string>
     <string name="newExperimentBluetooth">为蓝牙设备添加实验</string>
     <string name="newExperimentBluetoothErrorTitle">蓝牙扫描错误</string>
@@ -417,10 +406,6 @@
     <string name="permissionRequiredToSaveToDownloads">需要存储权限才能将文件保存到“下载”目录</string>
     <string name="errorWritingStateFile">写入状态文件时出错:</string>
     <string name="wb_auto">自动</string>
-    <string name="wb_incandescent">白炽灯</string>
-    <string name="wb_fluorescent">日光灯</string>
-    <string name="wb_daylight">自然光</string>
-    <string name="wb_cloudy">阴天</string>
     <string name="error">错误</string>
     <string name="invalidValue">无效值</string>
     <string name="clear_data_question_select">清除已记录数据以及以下可选项目？</string>

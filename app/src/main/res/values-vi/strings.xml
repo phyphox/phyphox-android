@@ -16,17 +16,6 @@
     <string name="graph_slope_label">Hệ số góc</string>
     <string name="graph_difference_label">Hiệu</string>
     <string name="graph_fit_label">Hồi quy y = a x + b</string>
-    <string name="applyZoomTitle">Áp dụng thu phóng</string>
-    <string name="applyZoomExplanation">Bạn đang đóng chế độ tương tác của đồ thị này, bạn có thể chọn giữ độ thu phóng nếu muốn.</string>
-    <string name="applyZoomAdvanced">Lựa chọn nâng cao</string>
-    <string name="applyZoomApply">Áp dụng cho…</string>
-    <string name="applyZoomReset">Cài đặt lại</string>
-    <string name="applyZoomKeep">Giữ nguyên lựa chọn</string>
-    <string name="applyZoomFollow">Giữ và theo dữ liệu mới</string>
-    <string name="applyZoomThis">Chỉ đồ thị này</string>
-    <string name="applyZoomSameVariable">Đồ thị khác: Cùng biến số</string>
-    <string name="applyZoomSameUnit">Đồ thị khác: Cùng đơn vị</string>
-    <string name="applyZoomSameAxis">Đồ thị khác: Cùng trục</string>
     <string name="newExperiment">Thêm thí nghiệm</string>
     <string name="newExperimentSimple">Thêm thí nghiệm đơn giản</string>
     <string name="newExperimentPhyphoxInfo">Vào phyphox.com để tạo thêm nhiều thí nghiệm nâng cao bao gồm phân tích dữ liệu và chia sẻ với đồng nghiệp, học sinh và bạn bè.</string>

@@ -124,17 +124,6 @@
     <string name="graph_slope_label">Κλίση</string>
     <string name="graph_difference_label">Διαφορά</string>
     <string name="graph_fit_label">Γραμμική παλινδρόμηση: y = a x + b</string>
-    <string name="applyZoomTitle">Εφαρμογή μεγέθυνσης</string>
-    <string name="applyZoomExplanation">Κλείνοντας τη διαδραστική λειτoυργία του γραφήματος μπορείτε να επιλέξετε αν θέλετε να διατηρήσετε το zoom.</string>
-    <string name="applyZoomAdvanced">Επιλογές για προχωρημένους</string>
-    <string name="applyZoomApply">Εφαρμογή σε…</string>
-    <string name="applyZoomReset">Επαναφορά</string>
-    <string name="applyZoomKeep">Διατήρηση επιλογής</string>
-    <string name="applyZoomFollow">Διατήρηση και παρακολούθηση νέων δεδομένων</string>
-    <string name="applyZoomThis">Μόνο αυτό το γράφημα</string>
-    <string name="applyZoomSameVariable">Άλλα γραφήματα: ίδια μεταβλητή</string>
-    <string name="applyZoomSameUnit">Άλλα γραφήματα: ίδια μονάδα</string>
-    <string name="applyZoomSameAxis">Άλλα γραφήματα: ίδιος άξονας</string>
     <string name="newExperimentSimple">Προσθήκη απλού πειράματος</string>
     <string name="newExperimentBluetooth">Προσθήκη πειράματος για συσκευή Bluetooth</string>
     <string name="newExperimentBluetoothErrorTitle">Σφάλμα ανίχνευσης Bluetooth</string>
@@ -417,10 +406,6 @@
     <string name="permissionRequiredToSaveToDownloads">Απαιτείται άδεια αποθήκευσης για να αποθηκευτεί το αρχείο στα Downloads</string>
     <string name="errorWritingStateFile">Σφάλμα κατά την εγγραφή του αρχείου κατάστασης:</string>
     <string name="wb_auto">Αυτόματα</string>
-    <string name="wb_incandescent">Πυρακτώσεως</string>
-    <string name="wb_fluorescent">Φθορισμού</string>
-    <string name="wb_daylight">Ημερήσιο Φως</string>
-    <string name="wb_cloudy">Συννεφιά</string>
     <string name="warning_photosensitivity_message">Αυτό το πείραμα ενδέχεται να παράγει παλμούς φωτός υψηλής συχνότητας. Μπορεί να προκαλέσει δυσφορία ή κρίσεις σε άτομα με φωτοευαίσθητη επιληψία.
 \n
 \nΑποφύγετε να κοιτάζετε κατευθείαν προς την πηγή φωτός.</string>

@@ -16,16 +16,6 @@
     <string name="graph_slope_label">Xəttin meyli</string>
     <string name="graph_difference_label">Fərq</string>
     <string name="graph_fit_label">Xətti reqressiya: y = a x + b</string>
-    <string name="applyZoomTitle">Miqyası dəyiş</string>
-    <string name="applyZoomExplanation">Əgər istəsəz, qrafikin interaktiv rejimini bağladıqda seçdiyiniz miqyasın saxlanılmasını seçə bilərsiniz.</string>
-    <string name="applyZoomAdvanced">Təkmilləşmiş seçimlər</string>
-    <string name="applyZoomApply">Buna tətbiq edin …</string>
-    <string name="applyZoomReset">Əvvəlcədən seçilmiş bir seçimə qaytarın</string>
-    <string name="applyZoomKeep">Seçimi saxla</string>
-    <string name="applyZoomThis">Sadəcə bu qrafik</string>
-    <string name="applyZoomSameVariable">Digər qrafiklər: Eyni dəyişənlər</string>
-    <string name="applyZoomSameUnit">Digər qrafiklər: Eyni vahidlər</string>
-    <string name="applyZoomSameAxis">Digər qrafiklər: Eyni ox</string>
     <string name="newExperiment">Təcrübələri əlavə et</string>
     <string name="newExperimentSimple">Sadə təcrübə əlavə et</string>
     <string name="newExperimentPhyphoxInfo">Verilənlərin təhlili də daxil olmaqla daha mürəkkəb təcrübələr aparmaq üçün phyphox.org saytını ziyarət edin və onları həmkarlarınız, tələbələriniz və dostlarınız ilə paylaşın.</string>
@@ -34,7 +24,6 @@
     <string name="newExperimentInputRate">Sensorun tezliyi (Hz-lə, 0 = mümkün qədər sürətli)</string>
     <string name="newExperimentInputSensors">Aktiv sensorlar</string>
     <string name="newExperimentBluetooth">Bluetooth cihazı üçün təcrübə əlavə et</string>
-    <string name="applyZoomFollow">Saxla və yeni verilənləri izlə</string>
     <string name="newExperimentBluetoothErrorTitle">Bluetooth axtarışı xətası</string>
     <string name="newExperimentBluetoothLoadFromDevice">Cihazdan yüklə</string>
     <string name="newExperimentBluetoothLoadFromDeviceInfo">Bu cihaz öz phyphox təcrübəsini təqdim edir. Onu açmaq üçün \"cihazdan yüklə\" seçin.</string>
@@ -417,10 +406,6 @@
     <string name="permissionRequiredToSaveToDownloads">Faylları Endirmələr qovluğuna saxlamaq üçün yaddaşa giriş icazəsi lazımdır</string>
     <string name="errorWritingStateFile">Vəziyyət faylı yazılarkən xəta:</string>
     <string name="wb_auto">Avtomatik</string>
-    <string name="wb_incandescent">Közərmə lampası</string>
-    <string name="wb_fluorescent">Flüoressent işıq</string>
-    <string name="wb_daylight">Gün işığı</string>
-    <string name="wb_cloudy">Buludlu</string>
     <string name="error">Xəta</string>
     <string name="invalidValue">Yanlış dəyər</string>
     <string name="clear_data_question_select">Qeydə alınmış verilənlər və aşağıdakı əlavə elementlər təmizlənsin\?</string>

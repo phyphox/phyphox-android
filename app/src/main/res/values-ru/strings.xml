@@ -124,17 +124,6 @@
     <string name="graph_slope_label">Наклон</string>
     <string name="graph_difference_label">Разница</string>
     <string name="graph_fit_label">Линейная функция: y = a x + b</string>
-    <string name="applyZoomTitle">Установить масштаб</string>
-    <string name="applyZoomExplanation">Когда вы закрываете интерактивный режим этого графика, вы можете выбрать сохранение масштаба.</string>
-    <string name="applyZoomAdvanced">Расширенные опции</string>
-    <string name="applyZoomApply">Применить к…</string>
-    <string name="applyZoomReset">Восстановление значений по умолчанию</string>
-    <string name="applyZoomKeep">Сохранить выбор</string>
-    <string name="applyZoomFollow">Сохранить и следовать новым данным</string>
-    <string name="applyZoomThis">Только этот график</string>
-    <string name="applyZoomSameVariable">Другие графики: одна и та же переменная</string>
-    <string name="applyZoomSameUnit">Другие графики: та же единица измерения</string>
-    <string name="applyZoomSameAxis">Другие графики: одна и та же ось</string>
     <string name="newExperimentSimple">Добавить простой эксперимент</string>
     <string name="newExperimentBluetooth">Добавить эксперимент для устройства Bluetooth</string>
     <string name="newExperimentBluetoothErrorTitle">Ошибка сканирования Bluetooth</string>
@@ -417,10 +406,6 @@
     <string name="permissionRequiredToSaveToDownloads">Для сохранения файлов в папку «Загрузки» требуется разрешение на доступ к хранилищу</string>
     <string name="errorWritingStateFile">Ошибка записи файла состояния:</string>
     <string name="wb_auto">Авто</string>
-    <string name="wb_incandescent">Лампа накаливания</string>
-    <string name="wb_fluorescent">Люминесцентная лампа</string>
-    <string name="wb_daylight">Дневной свет</string>
-    <string name="wb_cloudy">Облачно</string>
     <string name="error">Ошибка</string>
     <string name="invalidValue">Недопустимое значение</string>
     <string name="clear_data_question_select">Удалить записанные данные и следующие дополнительные элементы\?</string>

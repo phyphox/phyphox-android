@@ -119,14 +119,6 @@
     <string name="graph_slope_label">Pendenza</string>
     <string name="graph_difference_label">Differenza</string>
     <string name="graph_fit_label">Fit lineare: y = a x + b</string>
-    <string name="applyZoomTitle">Applica zoom</string>
-    <string name="applyZoomExplanation">Nel chiudere la modalità interattiva del grafico, puoi scegliere se mantenere le impostazioni dello zoom.</string>
-    <string name="applyZoomAdvanced">Opzioni avanzate</string>
-    <string name="applyZoomReset">Torna alle impostazioni di default</string>
-    <string name="applyZoomKeep">Mantieni l\'attuale configurazione</string>
-    <string name="applyZoomThis">Solo questo grafico</string>
-    <string name="applyZoomSameVariable">Altri grafici: stessa variabile</string>
-    <string name="applyZoomSameUnit">Altri grafici: stesse unità</string>
     <string name="newExperimentSimple">Aggiungi esperimento semplice</string>
     <string name="newExperimentBluetooth">Aggiungi esperimento per dispositivo Bluetooth</string>
     <string name="newExperimentBluetoothErrorTitle">Errore nella ricerca di dispositivi Bluetooth</string>
@@ -143,9 +135,6 @@
     <string name="graph_tools_reset">Zoom reset</string>
     <string name="graph_tools_follow">Aggiorna il grafico</string>
     <string name="graph_tools_export">Esporta questi dati</string>
-    <string name="applyZoomApply">Si applica…</string>
-    <string name="applyZoomFollow">Mantieni setup attuale e continua</string>
-    <string name="applyZoomSameAxis">Altri grafici: stessi assi</string>
     <string name="newExperimentBluetoothLoadFromDevice">Carica da dispositivo esterno</string>
     <string name="newExperimentBluetoothLoadFromDeviceInfo">Per questo dispositivo è previsto un esperimento dedicato. Usa \"Carica da dispositivo esterno\" per iniziare.</string>
     <string name="newExperimentQRcrcMismatch">Il codice QR scansionato non corrisponde a quello precedente. Assicurati di usare solo codici che appartengono allo stesso esperimento.</string>

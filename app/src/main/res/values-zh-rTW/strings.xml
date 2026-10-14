@@ -119,17 +119,6 @@
     <string name="graph_slope_label">斜率</string>
     <string name="graph_difference_label">差值</string>
     <string name="graph_fit_label">線性擬合：y=ax+b</string>
-    <string name="applyZoomTitle">套用此大小設定</string>
-    <string name="applyZoomExplanation">當關閉該圖形的互動模式時，您可以選擇是否維持您的縮放。</string>
-    <string name="applyZoomAdvanced">進階選項</string>
-    <string name="applyZoomApply">套用至…</string>
-    <string name="applyZoomReset">套用預設值</string>
-    <string name="applyZoomKeep">維持目前的設定</string>
-    <string name="applyZoomFollow">保持畫面並追蹤新數據</string>
-    <string name="applyZoomThis">只有這個圖形</string>
-    <string name="applyZoomSameVariable">其他圖表：相同變量</string>
-    <string name="applyZoomSameUnit">其他圖表：相同單位</string>
-    <string name="applyZoomSameAxis">其他圖表：相同座標</string>
     <string name="newExperimentSimple">新建簡易實驗</string>
     <string name="newExperimentBluetooth">新建藍芽設備實驗</string>
     <string name="newExperimentBluetoothErrorTitle">藍牙掃描錯誤</string>

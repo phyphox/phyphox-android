@@ -125,17 +125,6 @@
     <string name="graph_slope_label">ઢાળ</string>
     <string name="graph_difference_label">તફાવત</string>
     <string name="graph_fit_label">રેખીય ફિટ: y = a x + b</string>
-    <string name="applyZoomTitle">ઝૂમ લાગુ કરો</string>
-    <string name="applyZoomExplanation">જેમ જેમ તમે આ ગ્રાફનો ઇન્ટરેક્ટિવ મોડ બંધ કરી રહ્યા છો, તેમ તેમ તમે તમારા ઝૂમને રાખવા માંગો છો કે નહીં તે પસંદ કરી શકો છો.</string>
-    <string name="applyZoomAdvanced">અદ્યતન વિકલ્પો</string>
-    <string name="applyZoomApply">આને લાગુ કરો…</string>
-    <string name="applyZoomReset">ડિફોલ્ટ પર રીસેટ કરો</string>
-    <string name="applyZoomKeep">પસંદ કરેલ તરીકે રાખો</string>
-    <string name="applyZoomFollow">નવો ડેટા રાખો અને અનુસરો</string>
-    <string name="applyZoomThis">ફક્ત આ ગ્રાફ</string>
-    <string name="applyZoomSameVariable">અન્ય ગ્રાફ: સમાન ચલ</string>
-    <string name="applyZoomSameUnit">અન્ય ગ્રાફ: સમાન એકમ</string>
-    <string name="applyZoomSameAxis">અન્ય ગ્રાફ: સમાન અક્ષ</string>
     <string name="newExperiment">પ્રયોગો ઉમેરો</string>
     <string name="newExperimentSimple">સરળ પ્રયોગ ઉમેરો</string>
     <string name="newExperimentPhyphoxInfo">ડેટા વિશ્લેષણ સહિત વધુ અદ્યતન પ્રયોગો બનાવવા અને તેમને સહકર્મી, વિદ્યાર્થીઓ અને મિત્રો સાથે શેર કરવા માટે phyphox.org ની મુલાકાત લો.</string>
@@ -269,10 +258,6 @@
     <string name="cameraZoom">ઝૂમ કરો</string>
     <string name="cameraExternal">બાહ્ય કેમેરા</string>
     <string name="wb_auto">ઑટો</string>
-    <string name="wb_incandescent">અગ્નિથી પ્રકાશિત</string>
-    <string name="wb_fluorescent">ફ્લોરોસન્ટ</string>
-    <string name="wb_daylight">સૂર્યપ્રકાશ</string>
-    <string name="wb_cloudy">વાદળછાયું</string>
     <string name="camera_preview">કેમેરા પ્રિવ્યૂ</string>
     <string name="camera_not_ready">કેમેરા તૈયાર નથી</string>
     <string name="settingsDefault">ડિફોલ્ટ</string>

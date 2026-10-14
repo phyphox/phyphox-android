@@ -125,17 +125,6 @@
     <string name="graph_slope_label">Nachylenie</string>
     <string name="graph_difference_label">Różnica</string>
     <string name="graph_fit_label">Dopasowanie prostej: y = a x + b</string>
-    <string name="applyZoomTitle">Powiększ</string>
-    <string name="applyZoomExplanation">Gdy zamykasz tryb interaktywny dla tego wykresu, wówczas możesz wybrać, czy chcesz zachować powiększenie.</string>
-    <string name="applyZoomAdvanced">Opcje zaawansowane</string>
-    <string name="applyZoomApply">Zastosuj do…</string>
-    <string name="applyZoomReset">Przywróć standardowe</string>
-    <string name="applyZoomKeep">Utrzymaj wybrane</string>
-    <string name="applyZoomFollow">Utrzymaj i śledź nowe dane</string>
-    <string name="applyZoomThis">Tylko ten wykres</string>
-    <string name="applyZoomSameVariable">Inne wykresy: Te same zmienne</string>
-    <string name="applyZoomSameUnit">Inne wykresy: Te same jednostki</string>
-    <string name="applyZoomSameAxis">Inne wykresy: Te same osie</string>
     <string name="newExperimentSimple">Dodaj prosty eksperyment</string>
     <string name="newExperimentBluetooth">Dodaj eksperyment dla urządzenia Bluetooth</string>
     <string name="newExperimentBluetoothErrorTitle">Błąd skanowania Bluetooth</string>
@@ -418,8 +407,4 @@
     <string name="permissionRequiredToSaveToDownloads">Uprawnienia zapisu są konieczne do zapisania pliku w pobranych</string>
     <string name="errorWritingStateFile">Błąd zapisu statusu pliku:</string>
     <string name="wb_auto">Automatycznie</string>
-    <string name="wb_incandescent">Żarowy</string>
-    <string name="wb_fluorescent">Fluorescencyjny</string>
-    <string name="wb_daylight">Światło dzienne</string>
-    <string name="wb_cloudy">Pochmurne</string>
 </resources>

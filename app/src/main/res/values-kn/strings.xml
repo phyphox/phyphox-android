@@ -18,17 +18,6 @@
     <string name="graph_slope_label">ಇಳಿಜಾರು</string>
     <string name="graph_difference_label">ವ್ಯತ್ಯಾಸ</string>
     <string name="graph_fit_label">ರೇಖೀಯ ಫಿಟ್: y = a x + b</string>
-    <string name="applyZoomTitle">ಜೂಮ್ ಅನ್ನು ಅನ್ವಯಿಸಿ</string>
-    <string name="applyZoomExplanation">ನೀವು ಈ ಗ್ರಾಫ್‌ನ ಸಂವಾದಾತ್ಮಕ ಮೋಡ್ ಅನ್ನು ಮುಚ್ಚುತ್ತಿರುವಾಗ, ನಿಮ್ಮ ಜೂಮ್ ಅನ್ನು ಇರಿಸಿಕೊಳ್ಳಲು ನೀವು ಬಯಸಿದರೆ ನೀವು ಆಯ್ಕೆ ಮಾಡಬಹುದು.</string>
-    <string name="applyZoomAdvanced">ಸುಧಾರಿತ ಆಯ್ಕೆಗಳು</string>
-    <string name="applyZoomApply">ಇದಕ್ಕೆ ಅನ್ವಯಿಸು…</string>
-    <string name="applyZoomReset">ಡೀಫಾಲ್ಟ್‌ಗೆ ಮರುಹೊಂದಿಸಿ</string>
-    <string name="applyZoomKeep">ಆಯ್ಕೆ ಮಾಡಿದಂತೆ ಇರಿಸಿಕೊಳ್ಳಿ</string>
-    <string name="applyZoomFollow">ಹೊಸ ಡೇಟಾವನ್ನು ಇರಿಸಿ ಮತ್ತು ಅನುಸರಿಸಿ</string>
-    <string name="applyZoomThis">ಈ ಗ್ರಾಫ್ ಮಾತ್ರ</string>
-    <string name="applyZoomSameVariable">ಇತರ ಗ್ರಾಫ್‌ಗಳು: ಅದೇ ವೇರಿಯೇಬಲ್</string>
-    <string name="applyZoomSameUnit">ಇತರ ಗ್ರಾಫ್‌ಗಳು: ಅದೇ ಘಟಕ</string>
-    <string name="applyZoomSameAxis">ಇತರ ಗ್ರಾಫ್‌ಗಳು: ಅದೇ ಅಕ್ಷ</string>
     <string name="newExperiment">ಪ್ರಯೋಗಗಳನ್ನು ಸೇರಿಸಿ</string>
     <string name="newExperimentSimple">ಸರಳ ಪ್ರಯೋಗವನ್ನು ಸೇರಿಸಿ</string>
     <string name="newExperimentPhyphoxInfo">ಡೇಟಾ ವಿಶ್ಲೇಷಣೆ ಸೇರಿದಂತೆ ಹೆಚ್ಚು ಮುಂದುವರಿದ ಪ್ರಯೋಗಗಳನ್ನು ರಚಿಸಲು ಮತ್ತು ಅವುಗಳನ್ನು ಸಹೋದ್ಯೋಗಿಗಳು, ವಿದ್ಯಾರ್ಥಿಗಳು ಮತ್ತು ಸ್ನೇಹಿತರೊಂದಿಗೆ ಹಂಚಿಕೊಳ್ಳಲು www.phyphox.org ವೆಬ್‌ಸೈಟ್‌ಗೆ ಭೇಟಿ ನೀಡಿ.</string>

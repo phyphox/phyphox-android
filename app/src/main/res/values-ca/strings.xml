@@ -108,12 +108,6 @@
     <string name="graph_slope_label">Pendent</string>
     <string name="graph_difference_label">Diferència</string>
     <string name="graph_fit_label">Ajustament linial: y = a x + b</string>
-    <string name="applyZoomTitle">Aplicar zoom</string>
-    <string name="applyZoomExplanation">Donat que estàs tancant el mode interactiu, pots seleccionar si vols mantenir el zom</string>
-    <string name="applyZoomAdvanced">Opcions avançades</string>
-    <string name="applyZoomApply">Aplicar a…</string>
-    <string name="applyZoomReset">Restablecer a los predeterminados</string>
-    <string name="applyZoomKeep">Mantener como seleccionado</string>
     <string name="remoteColorMapWarning">El gráfico en la interfaz remota es sólo una aproximación. Al contrario de la gráfica en la aplicación, por el momento no es posible manejar datos no equidistantes o en escalas logarítmicas en los ejes x e y. Por ello, es posible que algunos datos aparezcan en ubicaciones erróneas en distintos intervalos.</string>
     <string name="calibrated_magnetometer">Utiliza un magnetómetro calibrado</string>
     <string name="force_gnss">Sólo ubicación satelital</string>
@@ -143,11 +137,6 @@
     <string name="open_bluetooth_assets">Los siguientes experimentos para tu dispositivo están disponibles desde phyphox. Puedes simplemente abrir uno y utilizarlo o agregarlos todos a tu colección para acceder fácilmente a ellos desde el menú principal.</string>
     <string name="timedRun">Ejecución cronometrada</string>
     <string name="pick_exportFormat">Elige el formato de datos.</string>
-    <string name="applyZoomFollow">Mantener y seguir nuevos datos</string>
-    <string name="applyZoomThis">Solo esta gráfica</string>
-    <string name="applyZoomSameVariable">Otros gráficos: Misma variable</string>
-    <string name="applyZoomSameUnit">Otros gráficos: Misma unidad</string>
-    <string name="applyZoomSameAxis">Otros gráficos: Mismo eje</string>
     <string name="newExperimentSimple">Añadir experimento simple</string>
     <string name="newExperimentBluetooth">Añadir experimento para dispositivo Bluetooth</string>
     <string name="newExperimentBluetoothErrorTitle">Error de escaneo de Bluetooth</string>

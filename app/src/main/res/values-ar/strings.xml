@@ -17,17 +17,6 @@
     <string name="graph_slope_label">الميل</string>
     <string name="graph_difference_label">الفرق</string>
     <string name="graph_fit_label">الملاءمة الخطية : y = a x + b</string>
-    <string name="applyZoomTitle">تطبيق التكبير</string>
-    <string name="applyZoomExplanation">بينما تقوم بإغلاق الوضع التفاعلي لهذا الرسم، يمكنك اختيار ما إذا كنت تريد الحفاظ على التكبير الحالي.</string>
-    <string name="applyZoomAdvanced">خيارات متقدمة</string>
-    <string name="applyZoomApply">تطبيق على …</string>
-    <string name="applyZoomReset">إستعادة الوضع الإفتراضي</string>
-    <string name="applyZoomKeep">الحفاظ على الإختيار الحالي</string>
-    <string name="applyZoomFollow">الحفاظ على الوضع الحالي ومتابعة البيانات الجديدة</string>
-    <string name="applyZoomThis">فقط هذا الرسم البياني</string>
-    <string name="applyZoomSameVariable">الرسوم البيانية الأخري : نفس المتغير</string>
-    <string name="applyZoomSameUnit">الرسوم البيانية الأخري : نفس الوحدة</string>
-    <string name="applyZoomSameAxis">الرسوم البيانية الأخري : نفس المحاور</string>
     <string name="newExperiment">إضافة تجارب</string>
     <string name="newExperimentSimple">إضافة تجارب بسيطة</string>
     <string name="newExperimentPhyphoxInfo">قم بزيارة phyphox.org لإنشاء تجارب أكثر تقدّمًا، بما في ذلك تحليل البيانات، ومشاركتها مع الزملاء ,الطلاب والأصدقاء.</string>
@@ -417,8 +406,4 @@
     <string name="common_quantity_short_luma">Y\'</string>
     <string name="cameraZoom">التقريب</string>
     <string name="wb_auto">تلقائي</string>
-    <string name="wb_incandescent">متوهّج</string>
-    <string name="wb_fluorescent">فلورسنت</string>
-    <string name="wb_daylight">ضوء النهار</string>
-    <string name="wb_cloudy">غائم</string>
 </resources>
