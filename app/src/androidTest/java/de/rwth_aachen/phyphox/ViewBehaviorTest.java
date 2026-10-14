@@ -270,7 +270,7 @@ public class ViewBehaviorTest {
             assertBuffer("dropdown_nan", 2);
             assertBuffer("edit_nan", 12);
             assertBuffer("slider_nan", 3);
-            assertTrue("replacing a NaN started the experiment", !activity.measuring);
+            assertTrue("replacing a NaN started the experiment", !activity.isMeasuring());
         } finally {
             FixtureExperiment.close(activity);
         }

@@ -116,7 +116,7 @@ public class BleCompatConnectTest {
                 experiment.experiment.loaded);
 
         assertFalse("the experiment must be left for the host to start, not started here",
-                experiment.measuring);
+                experiment.isMeasuring());
 
         //Instrumentation runs in the app's process: returning kills the remote server the host needs.
         if (holdForHost)

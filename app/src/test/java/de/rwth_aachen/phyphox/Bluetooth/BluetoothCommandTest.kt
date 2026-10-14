@@ -7,6 +7,7 @@ import org.junit.runner.RunWith
 import org.robolectric.Robolectric
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
+import java.lang.ref.WeakReference
 import java.util.Vector
 
 // phyphox-test: ble-command-dispatch
@@ -51,11 +52,25 @@ class BluetoothCommandTest {
     fun aNotificationReachesTheActivityAsACommandAndUnknownOnesDoNot() {
         val activity = Robolectric.buildActivity(CapturingActivity::class.java).create().get()
         val device = Bluetooth(null, BluetoothNameFilter("sim", null), null, null, false, activity, activity, Vector())
+        device.commandDelegate = WeakReference(activity)
         device.handleCommand(byteArrayOf(0x01))
         device.handleCommand(byteArrayOf(0x03))
         device.handleCommand(byteArrayOf())
         device.handleCommand(byteArrayOf(0x11, 0x55))
         device.handleCommand(byteArrayOf(0xF0.toByte()))
         assertThat(activity.received).containsExactly(BluetoothCommand.START, BluetoothCommand.CLEAR_ALL, BluetoothCommand.STATUS).inOrder()
+    }
+
+    //A run can outlive the screen that loaded the experiment: the commands go to the screen that shows the run now
+    @Test
+    fun commandsGoToTheScreenOfTheRunNotTheOneThatLoadedTheDevice() {
+        val loader = Robolectric.buildActivity(CapturingActivity::class.java).create().get()
+        val current = Robolectric.buildActivity(CapturingActivity::class.java).create().get()
+        val device = Bluetooth(null, BluetoothNameFilter("sim", null), null, null, false, loader, loader, Vector())
+        device.handleCommand(byteArrayOf(0x01))
+        device.commandDelegate = WeakReference(current)
+        device.handleCommand(byteArrayOf(0x00))
+        assertThat(loader.received).isEmpty()
+        assertThat(current.received).containsExactly(BluetoothCommand.PAUSE)
     }
 }

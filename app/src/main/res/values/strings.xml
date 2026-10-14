@@ -378,6 +378,13 @@ THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND 
     <string name="settingsHeadAdvanced">Advanced</string>
     <string name="settingsProximityLock">Proximity lock</string>
     <string name="settingsProximityLockDetail">Disable the screen when the proximity sensor is triggered to avoid unintended inputs for example in a pocket.</string>
+    <string name="settingsBackgroundMeasurement">Keep measuring in the background</string>
+    <string name="settingsBackgroundMeasurementDetail">Continue a running measurement when you leave phyphox, swipe it away or turn off the screen. A notification shows while it runs and lets you stop it. Camera experiments still pause.</string>
+    <string name="backgroundMeasurementChannel">Running measurement</string>
+    <string name="backgroundMeasurementNotification">Measuring in the background: %1$s</string>
+    <string name="backgroundMeasurementEnded">Measurement ended in the background: %1$s</string>
+    <string name="backgroundMeasurementOtherRunning">%1$s is still measuring in the background. Stop it and start this measurement?</string>
+    <string name="backgroundMeasurementOtherEnded">The measurement of %1$s ended in the background and has not been looked at. Close it and start this measurement?</string>
     <string name="settingsPort">Remote access port</string>
     <string name="settingsFileNameFormat">Default file names</string>
     <string name="settingsFileNameFormatDetail">Template for default file names when exporting data, sharing a screenshot or saving a state. Available placeholders:\n{title} – experiment title\n{date} – current date\n{time} – current time\n{startDate} – date at the start of the measurement\n{startTime} – time at the start of the measurement\n{duration} – measurement duration</string>

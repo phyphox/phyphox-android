@@ -20,6 +20,13 @@
     <uses-permission android:name="android.permission.SCHEDULE_EXACT_ALARM" />
     <uses-permission android:name="android.permission.FLASHLIGHT" />
     <uses-permission android:name="android.permission.ACCESS_LOCAL_NETWORK" />
+    <!-- Measuring in the background (MeasurementService): the foreground service, one permission per declared type, and its notification -->
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_SPECIAL_USE" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_LOCATION" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_MICROPHONE" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_CONNECTED_DEVICE" />
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
 
     <uses-feature android:glEsVersion="0x00020000" android:required="true" />
     <uses-feature android:name="android.hardware.camera" android:required="false" />
@@ -120,6 +127,15 @@
             <meta-data
                 android:name="autoStoreLocales"
                 android:value="true" />
+        </service>
+        <!-- Declares every type a measurement might need; the service only requests the ones the loaded experiment uses -->
+        <service
+            android:name="de.rwth_aachen.phyphox.MeasurementService"
+            android:exported="false"
+            android:foregroundServiceType="specialUse|location|microphone|connectedDevice">
+            <property
+                android:name="android.app.PROPERTY_SPECIAL_USE_FGS_SUBTYPE"
+                android:value="Continue a running sensor measurement of a physics experiment while the app is in the background" />
         </service>
     </application>
     <queries>

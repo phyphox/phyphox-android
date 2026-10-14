@@ -28,8 +28,8 @@ import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Build;
 import android.os.Bundle;
-import android.os.CountDownTimer;
 import android.os.Handler;
+import android.os.Looper;
 import android.os.PowerManager;
 import android.provider.ContactsContract;
 import android.text.Layout;
@@ -92,6 +92,7 @@ import com.journeyapps.barcodescanner.BarcodeEncoder;
 
 import java.io.File;
 import java.io.FileOutputStream;
+import java.lang.ref.WeakReference;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashSet;
@@ -109,8 +110,6 @@ import java.util.concurrent.TimeUnit;
 import de.rwth_aachen.phyphox.Bluetooth.Bluetooth;
 import de.rwth_aachen.phyphox.Bluetooth.BluetoothCommand;
 import de.rwth_aachen.phyphox.Bluetooth.BluetoothCommandDelegate;
-import de.rwth_aachen.phyphox.Bluetooth.BluetoothInput;
-import de.rwth_aachen.phyphox.Bluetooth.BluetoothOutput;
 import de.rwth_aachen.phyphox.Bluetooth.ConnectedBluetoothDeviceInfoAdapter;
 import de.rwth_aachen.phyphox.Bluetooth.ConnectedDeviceInfo;
 import de.rwth_aachen.phyphox.Bluetooth.UpdateConnectedDeviceDelegate;
@@ -131,7 +130,10 @@ import de.rwth_aachen.phyphox.ExperimentView.ExpViewElement;
 public class Experiment extends AppCompatActivity implements View.OnClickListener,
         NetworkConnection.ScanDialogDismissedDelegate,
         NetworkConnection.NetworkConnectionDataPolicyInfoDelegate, UpdateConnectedDeviceDelegate,
-        BluetoothCommandDelegate {
+        BluetoothCommandDelegate, MeasurementRun.Client {
+
+    //From the notification of a run that went on in the background (see MeasurementService.returnIntent)
+    static final String EXTRA_RETURN_TO_RUN = "de.rwth_aachen.phyphox.returnToRun";
 
     //String constants to identify values saved in onSaveInstanceState
     private static final String STATE_CURRENT_VIEW = "current_view"; //Which experiment view is selected?
@@ -160,12 +162,16 @@ public class Experiment extends AppCompatActivity implements View.OnClickListene
     final Handler updateViewsHandler = new Handler();
 
     //Status variables
-    boolean measuring = false; //Measurement running?
+    volatile MeasurementRun measurementRun = null; //The measurement shown here, created at the first start or attached to (see MeasurementRun); read by the remote server's thread
+    boolean takenOver = false; //Another Experiment activity attached to this one's run, which this one must no longer touch
+    boolean onScreen = false; //Between onStart and onStop
     boolean loadCompleted = false; //Set to true when an experiment has been loaded successfully
 
     float titleDefaultTextSize = 0f; //Size of the title before it has been fitted to the toolbar
     int titleFittedForWidth = -1; //Toolbar width the title has last been fitted to
-    boolean shutdown = false; //The activity should be stopped. Used to escape the measurement loop.
+    boolean shutdown = false; //The activity should be stopped. Used to escape the view loop.
+    boolean viewsPaused = false; //The screen is away while the run goes on (see MeasurementRun); the view loop only carries out remote commands until onRestart
+    boolean backgroundMeasurement = false; //Setting: keep a running measurement alive while the screen is not visible
     boolean beforeStart = true; //Experiment has not yet been started even once
     boolean menuHintDismissed = false; //Remember that the user has clicked away the hint to the menu
     boolean startHintDismissed = false; //Remember that the user has clicked away the hint to the start button
@@ -197,8 +203,6 @@ public class Experiment extends AppCompatActivity implements View.OnClickListene
     boolean timedRunBeepStart = false;
     boolean timedRunBeepRunning = false;
     boolean timedRunBeepStop = false;
-    CountDownTimer cdTimer = null; //This holds the timer used for timed runs. If it is not null, a timed run is running and at the end of the countdown the measurement state will change
-    long millisUntilFinished = 0; //This variable is used to cache the remaining countdown, so it is available outside the onTick-callback of the timer
 
     //The experiment
     PhyphoxExperiment experiment; //The experiment (definition and functionality) after it has been loaded.
@@ -208,7 +212,8 @@ public class Experiment extends AppCompatActivity implements View.OnClickListene
 
     //Others...
     private Resources res; //Helper to easily access resources
-    public SensorManager sensorManager; //The sensor manager
+    public SensorManager sensorManager; //The application's, see onCreate
+    public LocationManager locationManager; //The same
     Intent intent; //Another helper to easily access the data of the intent that triggered this activity
     ProgressDialog progress; //Holds a progress dialog when a file is being loaded
     Bundle savedInstanceState = null; //Holds the saved instance state, so it can be handled outside onCreate
@@ -219,13 +224,11 @@ public class Experiment extends AppCompatActivity implements View.OnClickListene
     PowerManager.WakeLock wakeLock = null;
 
     PopupWindow popupWindow = null;
-    AudioOutput audioOutput = null;
 
     public static boolean bluetoothConnectionSuccessful = false;
     ConnectedBluetoothDeviceInfoAdapter deviceInfoAdapter;
     ArrayList<ConnectedDeviceInfo> connectedDevices = new ArrayList<>();
 
-    public static UpdateConnectedDeviceDelegate updateConnectedDeviceDelegate;
     private  RecyclerView recyclerView;
 
     static final int REQUEST_LOCAL_NETWORK_SCAN  = 2;
@@ -315,11 +318,12 @@ public class Experiment extends AppCompatActivity implements View.OnClickListene
             overrideActivityTransition(OVERRIDE_TRANSITION_CLOSE, R.anim.hold, R.anim.exit_experiment);
         }
 
-        updateConnectedDeviceDelegate = this;
-
         intent = getIntent(); //Store the intent for easy access
         res = getResources(); //The same for resources
-        sensorManager = (SensorManager)getSystemService(SENSOR_SERVICE); //The sensor manager will probably be needed...
+        //The application's managers, not this screen's: a run outlives the screen that started it, and a sensor listener
+        //can only be unregistered through the SensorManager that registered it, of which each Context has its own
+        sensorManager = (SensorManager)getApplicationContext().getSystemService(SENSOR_SERVICE);
+        locationManager = (LocationManager)getApplicationContext().getSystemService(LOCATION_SERVICE);
 
         this.savedInstanceState = savedInstanceState; //Store savedInstanceState so it can be accessed after loading the experiment in a second thread
         setContentView(R.layout.activity_experiment); //Setup the views...
@@ -340,7 +344,16 @@ public class Experiment extends AppCompatActivity implements View.OnClickListene
             App app = (App) this.getApplicationContext();
             experiment = app.experiment;
             //experiment = (phyphoxExperiment) savedInstanceState.getSerializable(STATE_EXPERIMENT);
-        };
+        } else if (savedInstanceState == null && intent.getBooleanExtra(EXTRA_RETURN_TO_RUN, false)) {
+            //The notification of a run whose screen is gone: show the run as that screen last was
+            MeasurementRun running = MeasurementRun.current();
+            if (running == null) { //It has ended and been seen since
+                navigateUpToExperimentList();
+                return;
+            }
+            experiment = running.experiment;
+            this.savedInstanceState = running.screenState;
+        }
         if (experiment != null) {
             //We saved our experiment. Lets just retrieve it and continue
             onExperimentLoaded(experiment);
@@ -365,23 +378,35 @@ public class Experiment extends AppCompatActivity implements View.OnClickListene
         if (shutdown)
             return;
         shutdown = true; //Stop the loop
+        if (takenOver)
+            return; //The run and its connections belong to the activity that took it over
 
         stopMeasurement(); //Stop the measurement
 
-        if (experiment != null && experiment.loaded) {
-            for (NetworkConnection networkConnection : experiment.networkConnections) {
-                networkConnection.disconnect();
-                networkConnection.specificAddress = null;
-            }
-            //Close all bluetooth connections, when the activity is recreated, they will be reestablished while initializing the experiment
-            for (BluetoothInput bti : experiment.bluetoothInputs)
-                bti.closeConnection();
-            for (BluetoothOutput bti : experiment.bluetoothOutputs)
-                bti.closeConnection();
-            if (experiment.depthInput != null && Build.VERSION.SDK_INT >= Build.VERSION_CODES.M)
-                experiment.depthInput.stopCameras();
+        //Close all connections, when the activity is recreated, they will be reestablished while initializing the experiment
+        if (experiment != null)
+            experiment.closeConnections();
+    }
 
-        }
+    //Whether this screen's run goes on once the screen is gone (see MeasurementRun): with the service when the user
+    //leaves or Android removes the activity, and for a recreation (configuration change), after which the new
+    //activity attaches. Camera runs stop as they always did: the cameras close with the screen.
+    private boolean runGoesOnWithoutScreen(boolean destroying) {
+        MeasurementRun run = measurementRun;
+        if (run == null || takenOver || !run.isClient(this) || !run.isActive())
+            return false;
+        if (isChangingConfigurations())
+            return !MeasurementRun.usesCamera(experiment);
+        //An activity finished by code while visible means leaving; one destroyed in the background may be Recents trimming
+        return run.inBackground() && (destroying || !isFinishing());
+    }
+
+    @Override
+    protected void onStart() {
+        super.onStart();
+        onScreen = true;
+        if (measurementRun != null)
+            measurementRun.setClientVisible(this, true);
     }
 
     @Override
@@ -398,8 +423,20 @@ public class Experiment extends AppCompatActivity implements View.OnClickListene
             progress = null;
         }
 
-        stopRemoteServer(); //Remote server should stop when the app is not active
-        shutdownIO();
+        if (runGoesOnWithoutScreen(false)) {
+            //Inputs, connections and the analysis thread stay as they are, and the remote server keeps serving the
+            //run. The view loop only carries out remote commands, and the proximity lock would blank other apps.
+            viewsPaused = true;
+            releaseProximityLock();
+            if (isChangingConfigurations())
+                stopRemoteServer(); //The recreated activity starts its own
+        } else {
+            stopRemoteServer(); //Remote server should stop when the app is not active
+            shutdownIO();
+        }
+        onScreen = false;
+        if (measurementRun != null)
+            measurementRun.setClientVisible(this, false);
 
         if (popupWindow != null)
             popupWindow.dismiss();
@@ -414,6 +451,7 @@ public class Experiment extends AppCompatActivity implements View.OnClickListene
         super.onRestart();
 
         shutdown = false; //Deactivate shutdown variable
+        viewsPaused = false; //Back on screen: the view loop shows a run that went on in the background again
 
         if (experiment != null && experiment.depthInput != null && Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
             try {
@@ -424,11 +462,43 @@ public class Experiment extends AppCompatActivity implements View.OnClickListene
         }
 
         updateViewsHandler.postDelayed(updateViews, 40); //Start the "main loop" again
-        startRemoteServer();  //Restart the remote server (if it is activated)
+        if (remote == null)
+            startRemoteServer();  //Restart the remote server (if it is activated and did not serve a run in the background)
         //We do not start the measurement again automatically. If the user switched away, this might
         //   be confusing otherwise.
+        if (measurementRun != null && measurementRun.isActive())
+            setKeepScreenOn(true); //The proximity lock was released in the background
 
         invalidateOptionsMenu();
+    }
+
+    @Override
+    //A run that goes on without its screen detaches and waits for the next Experiment activity (see MeasurementRun)
+    protected void onDestroy() {
+        MeasurementRun run = measurementRun;
+        if (runGoesOnWithoutScreen(true))
+            run.detach(this);
+        else {
+            shutdownIO();
+            if (run != null)
+                run.detach(this);
+        }
+        stopRemoteServer();
+        updateViewsHandler.removeCallbacksAndMessages(null);
+        releaseProximityLock();
+        super.onDestroy();
+    }
+
+    @Override
+    //The notification of a run in the background returns here (see MeasurementService.returnIntent). If this
+    //screen shows another experiment, the run's screen opens on top of it.
+    protected void onNewIntent(Intent newIntent) {
+        super.onNewIntent(newIntent);
+        if (!newIntent.getBooleanExtra(EXTRA_RETURN_TO_RUN, false))
+            return;
+        MeasurementRun running = MeasurementRun.current();
+        if (running != null && running != measurementRun)
+            startActivity(new Intent(newIntent).setFlags(0));
     }
 
     @Override
@@ -652,7 +722,7 @@ public class Experiment extends AppCompatActivity implements View.OnClickListene
             tabLayout.setVisibility(View.GONE);
 
         try {
-            experiment.init(sensorManager, (LocationManager)this.getSystemService(Context.LOCATION_SERVICE));
+            experiment.init(sensorManager, locationManager);
         } catch (Exception e) {
             Toast.makeText(getApplicationContext(), e.getMessage(), Toast.LENGTH_LONG).show();
         }
@@ -691,9 +761,28 @@ public class Experiment extends AppCompatActivity implements View.OnClickListene
             return;
         }
 
+        //A run of this very experiment goes on (a recreation, or the notification of a run without screen): show it
+        MeasurementRun running = MeasurementRun.current();
+        boolean attached = experiment.loaded && running != null && running.experiment == experiment;
+        if (attached) {
+            measurementRun = running;
+            running.attach(this, onScreen);
+        }
+
         if (experiment.loaded) { //Everything went fine, no errors
             if (experiment.gpsIn != null) {
                 experiment.gpsIn.prepare(res);
+            }
+
+            //Battery and signal strength of the experiment's devices go to this screen (see updateConnectedDevice),
+            //and so do their commands (see onBluetoothCommand)
+            for (Bluetooth b : experiment.bluetoothInputs) {
+                b.connectedDeviceDelegate = new WeakReference<>(this);
+                b.commandDelegate = new WeakReference<>(this);
+            }
+            for (Bluetooth b : experiment.bluetoothOutputs) {
+                b.connectedDeviceDelegate = new WeakReference<>(this);
+                b.commandDelegate = new WeakReference<>(this);
             }
 
             timedRun = experiment.timedRun;
@@ -856,21 +945,41 @@ public class Experiment extends AppCompatActivity implements View.OnClickListene
         if (startHintDismissCount >= 3)
             startHintDismissed = true;
 
-        if (!menuHintDismissed)
+        if (attached)
+            beforeStart = false; //The run began on another screen, which went through the hints and dialogs already
+        else if (!menuHintDismissed)
             showMenuHint();
         else if (!startHintDismissed)
             showStartHint();
 
         settings =  PreferenceManager.getDefaultSharedPreferences(this);
         proximityLock = settings.getBoolean("proximityLock", false);
+        backgroundMeasurement = settings.getBoolean("backgroundMeasurement", false);
         if (proximityLock) {
             PowerManager powerManager = (PowerManager) getBaseContext().getSystemService(Context.POWER_SERVICE);
             if (powerManager.isWakeLockLevelSupported(PowerManager.PROXIMITY_SCREEN_OFF_WAKE_LOCK))
                 wakeLock = powerManager.newWakeLock(PowerManager.PROXIMITY_SCREEN_OFF_WAKE_LOCK, "phyphox:measuring");
         }
 
-        //All done. Almost. Now let's resolve anything the user needs to know or needs to decide
-        showInitialDialogs();
+        if (attached) {
+            if (running.isActive())
+                setKeepScreenOn(true);
+            if (anyBluetoothConnected())
+                showBluetoothConnectedDeviceInfo();
+            invalidateOptionsMenu();
+        } else
+            //All done. Almost. Now let's resolve anything the user needs to know or needs to decide
+            showInitialDialogs();
+    }
+
+    private boolean anyBluetoothConnected() {
+        for (Bluetooth b : experiment.bluetoothInputs)
+            if (b.isConnected())
+                return true;
+        for (Bluetooth b : experiment.bluetoothOutputs)
+            if (b.isConnected())
+                return true;
+        return false;
     }
 
     private void showSensorWarning(SensorInput sensor) {
@@ -1210,10 +1319,12 @@ public class Experiment extends AppCompatActivity implements View.OnClickListene
 
         //If a timed run timer is active, we show either timed_play or timed_pause. otherwise we show play or pause
         //The pause version is shown when we are measuring, the play version otherwise
-        timed_play.setVisible(!measuring && cdTimer != null);
-        timed_pause.setVisible(measuring && cdTimer != null);
-        play.setVisible(!measuring && cdTimer == null);
-        pause.setVisible(measuring && cdTimer == null);
+        boolean measuring = isMeasuring();
+        boolean timerRunning = measurementRun != null && measurementRun.timerRunning();
+        timed_play.setVisible(!measuring && timerRunning);
+        timed_pause.setVisible(measuring && timerRunning);
+        play.setVisible(!measuring && !timerRunning);
+        pause.setVisible(measuring && !timerRunning);
 
         //If the experiment has not yet been started, highlight the play button
         if (beforeStart) {
@@ -1268,8 +1379,8 @@ public class Experiment extends AppCompatActivity implements View.OnClickListene
 
         //If the timedRun is active, we have to set the value of the countdown
         if (timedRun) {
-            if (cdTimer != null) { //Timer running? Show the last known value of millisUntilFinished
-                timer.setTitle(String.format(Locale.getDefault(), "%.1f", millisUntilFinished / 1000.0));
+            if (timerRunning) { //Timer running? Show the last known value of millisUntilFinished
+                timer.setTitle(String.format(Locale.getDefault(), "%.1f", countdownMillis() / 1000.0));
             } else { //No timer running? Show the start value of the next timer, which is...
                 if (measuring) //...the stop delay if we are already measuring
                     timer.setTitle(String.format(Locale.getDefault(), "%.1f", timedRunStopDelay));
@@ -1565,33 +1676,7 @@ public class Experiment extends AppCompatActivity implements View.OnClickListene
     //   overridden version of the run() function. But it feels better to write the whole thing down
     //   like a function...
 
-    //The updateData runnable runs on a second thread and performs the heavy math (if defined in the
-    // experiment)
-    Runnable updateData = new Runnable() {
-        @Override
-        public void run() {
-            //Do the analysis. All of these elements might fire exceptions,
-            // especially on badly defined experiments. So let's be save and catch anything that
-            // gets through to here.
-            while (measuring && !shutdown) {
-                if (experiment != null) { //This only makes sense if there is an experiment
-                    try {
-                        //time for some analysis?
-                        if (measuring) {
-                            experiment.processAnalysis(true); //Do the math.
-                        }
-                    } catch (Exception e) {
-                        Log.e("updateData", "Unhandled exception.", e);
-                    }
-                }
-                try {
-                    Thread.sleep(10);
-                } catch (Exception e) {
-                    Log.w("updateData", "Sleep interrupted");
-                }
-            }
-        }
-    };
+    //The heavy math of a running measurement runs on a thread of its MeasurementRun
 
     //The updateViews runnable does everything UI related and hence runs on the UI thread
     Runnable updateViews = new Runnable() {
@@ -1624,13 +1709,20 @@ public class Experiment extends AppCompatActivity implements View.OnClickListene
                 }
             }
 
+            if (viewsPaused) {
+                //The screen is away while the run goes on: only the remote commands above are carried out
+                if (!shutdown)
+                    updateViewsHandler.postDelayed(this, 400);
+                return;
+            }
+
             updateBackCallbackState();
 
             if (experiment != null) {
                 try {
                     //Get values from input views only if there isn't fresh data from the remote server which might get overridden
                     if (!remoteInput) {
-                        experiment.handleInputViews(measuring);
+                        experiment.handleInputViews(isMeasuring());
                     }
                     //Update all the views currently visible
                     if (experiment.updateViews(tabLayout.getSelectedTabPosition(), false)) {
@@ -1645,8 +1737,8 @@ public class Experiment extends AppCompatActivity implements View.OnClickListene
                     Log.e("updateViews", "Unhandled exception.", e);
                 } finally {
                     //If we are not supposed to stop, let's do it again in a short while
-                    if (!shutdown) {
-                        if (measuring)
+                    if (!shutdown && !viewsPaused) {
+                        if (isMeasuring())
                             updateViewsHandler.postDelayed(this, 40);
                         else
                             updateViewsHandler.postDelayed(this, 400); //As there is no experiment running, we can take our time and maybe save some battery
@@ -1713,93 +1805,85 @@ public class Experiment extends AppCompatActivity implements View.OnClickListene
 
     //Returns false if the experiment refused to start, which the remote interface reports back
     public boolean startMeasurement() {
+        if (shutdown || experiment == null)
+            return false; //The screen has shut down: a remote start queued before it left must not start a run
+        if (anotherRunIsHeld(this::startMeasurement))
+            return false;
         //Disable play-button highlight
         beforeStart = false;
 
-        //Start the sensors
+        //Start the sensors. With the setting on, the service starts too: now, while the activity is visible, or
+        //Android refuses it the location and microphone types (see MeasurementRun and MeasurementService).
         try {
-            experiment.startAllIO();
-        } catch (Bluetooth.BluetoothException e) {
-            stopMeasurement(); // stop experiment
+            ownRun().start(backgroundAllowed(), timedRun ? timing() : null);
+        } catch (Bluetooth.BluetoothException | DepthInput.DepthInputException e) {
+            showStartFailure(e);
+            return false;
+        }
+        return true;
+    }
+
+    //Why the inputs did not start, for a start from here or at the end of a countdown
+    private void showStartFailure(Exception e) {
+        if (e instanceof Bluetooth.BluetoothException) {
             // show an error dialog
             Bluetooth.errorDialog.message = e.getMessage();
             Bluetooth.errorDialog.context = Experiment.this;
             // try to connect the bluetooth devices again when the user clicks "try again"
-            Bluetooth.errorDialog.tryAgain = new Runnable() {
-              @Override
-                 public void run() {
-                  connectBluetoothDevices(true, false);
-              }
-             };
-             Bluetooth.errorDialog.run();
-             return false;
-        } catch (DepthInput.DepthInputException e) {
-            stopMeasurement(); // stop experiment
+            Bluetooth.errorDialog.tryAgain = () -> connectBluetoothDevices(true, false);
+            Bluetooth.errorDialog.run();
+        } else {
             AlertDialog.Builder builder = new AlertDialog.Builder(this);
             builder.setMessage(e.getMessage())
                     .setPositiveButton(R.string.ok, null);
             AlertDialog dialog = builder.create();
             dialog.show();
         }
+    }
 
-        //Set measurement state
-        measuring = true;
-
-        //No more turning off during the measurement
-        setKeepScreenOn(true);
-
-        //Start the analysis "loop"
-        Thread t = new Thread(updateData);
-        t.start();
-
-        //If this is a timed run, we have to start the countdown which stops it again later.
-        if (timedRun) {
-
-            millisUntilFinished = Math.round(timedRunStopDelay * 1000);
-            cdTimer = new CountDownTimer(millisUntilFinished, 20) {
-
-                int nextBeep = -1;
-                boolean relative = false;
-
-                public void onTick(long muf) {
-                    //On each tick update the menu to show the remaining time
-                    if (timedRunBeepRunning || timedRunBeepStop) {
-                        if (nextBeep < 0)
-                            nextBeep = (int)(Math.floor(muf/1000. - 0.6));
-                        if (muf/1000. < nextBeep + 0.4) {
-                            if (nextBeep == 0 && timedRunBeepStop) {
-                                if (relative)
-                                    audioOutput.beepRelative(800, 0.5, 1.0);
-                                else {
-                                    audioOutput.beep(800, 0.5, muf / 1000. - nextBeep);
-                                    relative = true;
-                                }
-                            } else if (nextBeep > 0 && timedRunBeepRunning) {
-                                if (relative)
-                                    audioOutput.beepRelative(1000, 0.1, 1.0);
-                                else {
-                                    audioOutput.beep(1000, 0.1, muf / 1000. - nextBeep);
-                                    relative = true;
-                                }
-                            }
-                            nextBeep--;
-                        }
-                    }
-                    millisUntilFinished = muf;
-                    invalidateOptionsMenu();
-                }
-
-                public void onFinish() {
-                    stopMeasurement();
-                }
-            }.start();
+    //The run of this screen's experiment, created at its first start
+    private MeasurementRun ownRun() {
+        if (measurementRun == null) {
+            measurementRun = new MeasurementRun(this, experiment, getIntent());
+            measurementRun.attach(this, onScreen);
         }
-        invalidateOptionsMenu();
+        return measurementRun;
+    }
+
+    //Camera experiments pause in the background as they always did: the cameras close with the screen
+    private boolean backgroundAllowed() {
+        return backgroundMeasurement && !MeasurementRun.usesCamera(experiment);
+    }
+
+    private MeasurementRun.Timing timing() {
+        return new MeasurementRun.Timing(timedRunStartDelay, timedRunStopDelay, timedRunBeepCountdown, timedRunBeepStart, timedRunBeepRunning, timedRunBeepStop);
+    }
+
+    //One run at a time goes on without its screen (the service and its notification serve one). If another one
+    //does, the user decides whether it ends for this one.
+    private boolean anotherRunIsHeld(Runnable startThisOne) {
+        MeasurementRun other = MeasurementRun.current();
+        if (other == null || other == measurementRun)
+            return false;
+        int message = other.isActive() ? R.string.backgroundMeasurementOtherRunning : R.string.backgroundMeasurementOtherEnded;
+        new AlertDialog.Builder(this)
+                .setMessage(getString(message, other.experiment.title))
+                .setPositiveButton(R.string.start, (dialog, id) -> {
+                    other.release();
+                    startThisOne.run();
+                })
+                .setNegativeButton(R.string.cancel, null)
+                .show();
         return true;
     }
 
     //Returns true once the countdown runs (openapi: "begin measuring, or begin the countdown if timed run is on")
     public boolean startTimedMeasurement() {
+        if (shutdown || experiment == null)
+            return false; //See startMeasurement
+        if (anotherRunIsHeld(this::startTimedMeasurement))
+            return false;
+
         //No more turning off during the measurement
         setKeepScreenOn(true);
 
@@ -1834,78 +1918,22 @@ public class Experiment extends AppCompatActivity implements View.OnClickListene
             return false;
         }
 
-        if (timedRunBeepCountdown || timedRunBeepStart || timedRunBeepRunning || timedRunBeepStop) {
-            if (experiment.audioOutput == null) {
-                if (audioOutput == null) {
-                    audioOutput = new AudioOutput(false, 48000, true);
-                    try {
-                        audioOutput.init();
-                    } catch (Exception e) {
-                        return false;
-                    }
-                }
-            } else
-                audioOutput = experiment.audioOutput;
-            audioOutput.start(true);
-            audioOutput.play();
-        }
-
-        //Not much more to do here. Just set up a countdown that will start the measurement
-        millisUntilFinished = Math.round(timedRunStartDelay*1000);
-        cdTimer = new CountDownTimer(millisUntilFinished, 20) {
-            int nextBeep = -1;
-            boolean relative = false;
-
-            public void onTick(long muf) {
-                //On each tick update the menu to show the remaining time
-                if (timedRunBeepCountdown || timedRunBeepStart) {
-                    if (nextBeep < 0)
-                        nextBeep = (int)(Math.floor(muf/1000. - 0.5));
-                    if (muf/1000. < nextBeep + 0.4) {
-                        if (nextBeep == 0 && timedRunBeepStart) {
-                            if (relative)
-                                audioOutput.beepRelative(1000, 0.5, 1.0);
-                            else {
-                                audioOutput.beep(1000, 0.5, muf / 1000. - nextBeep);
-                                relative = true;
-                            }
-                        } else if (nextBeep > 0 && timedRunBeepCountdown) {
-                            if (relative)
-                                audioOutput.beepRelative(800, 0.1, 1.0);
-                            else {
-                                audioOutput.beep(800, 0.1, muf / 1000. - nextBeep);
-                                relative = true;
-                            }
-                        }
-                        nextBeep--;
-                    }
-                }
-                millisUntilFinished = muf;
-                invalidateOptionsMenu();
-            }
-
-            public void onFinish() {
-                startMeasurement();
-            }
-        }.start();
+        //Not much more to do here. Just set up a countdown that will start the measurement. The service starts with
+        //it, while the screen is visible, so the run goes on if the screen goes away during the countdown.
+        if (!ownRun().startCountdown(backgroundAllowed(), timing()))
+            return false; //The beeper cannot play
         invalidateOptionsMenu();
         return true;
     }
 
-    //Stop the measurement
+    //Stop the measurement. Any thread: the remote server's clear calls it from its own.
     public void stopMeasurement() {
-        measuring = false; //Set the state
-
-        //Lift the restrictions, so the screen may turn off again and the user may rotate the device (unless remote server is active)
-        if (!serverEnabled) {
-            setKeepScreenOn(false);
-        }
-
-        //Deactivate any timer
-        if (cdTimer != null) {
-            cdTimer.cancel();
-            cdTimer = null;
-            millisUntilFinished = 0;
+        if (takenOver)
+            return; //The run belongs to another screen now
+        MeasurementRun run = measurementRun;
+        if (run != null && run.isActive()) {
+            run.stop(); //Reports back through onRunStopped
+            return;
         }
 
         //Stop any inputs (Sensors, microphone) or outputs (speaker) that might still be running
@@ -1914,8 +1942,61 @@ public class Experiment extends AppCompatActivity implements View.OnClickListene
             experiment.stopAllIO();
         }
 
-        //refresh the options menu
+        //Lift the restrictions, so the screen may turn off again and the user may rotate the device (unless remote server is active)
+        if (!serverEnabled && Looper.myLooper() == Looper.getMainLooper())
+            setKeepScreenOn(false);
+    }
+
+    //Whether the run shown here measures (the remote server asks from its own thread)
+    boolean isMeasuring() {
+        MeasurementRun run = measurementRun;
+        return run != null && run.measuring;
+    }
+
+    //The remaining time of a timed run's running countdown in ms (the remote server asks from its own thread)
+    long countdownMillis() {
+        MeasurementRun run = measurementRun;
+        return run != null ? run.millisUntilFinished : 0;
+    }
+
+    @Override
+    public void onRunStarted() {
+        beforeStart = false; //Disable play-button highlight
+        if (onScreen)
+            setKeepScreenOn(true); //No more turning off during the measurement (in the background it would take the proximity lock)
         invalidateOptionsMenu();
+    }
+
+    @Override
+    public void onRunStopped(boolean seen) {
+        //Lift the restrictions, so the screen may turn off again and the user may rotate the device (unless remote server is active)
+        if (!serverEnabled)
+            setKeepScreenOn(false);
+        invalidateOptionsMenu();
+        if (!seen) {
+            //It ended while the screen was away (its timer, the notification, a remote stop): leave everything as
+            //leaving the screen does, the connections included
+            stopRemoteServer();
+            shutdownIO();
+        }
+    }
+
+    @Override
+    public void onRunCountdownChanged() {
+        invalidateOptionsMenu(); //Shows the remaining time
+    }
+
+    @Override
+    public void onRunStartFailed(Exception e) {
+        showStartFailure(e);
+    }
+
+    @Override
+    public void onRunTakenOver() {
+        takenOver = true;
+        measurementRun = null;
+        stopRemoteServer(); //Now, not in onDestroy: the new screen starts its own on the same port
+        finish();
     }
 
     public void clearData(List<String> clearGroups) {
@@ -2050,7 +2131,7 @@ public class Experiment extends AppCompatActivity implements View.OnClickListene
 
     //Stop the remote server (see remoteServer class)
     private void stopRemoteServer() {
-        if (!measuring) {
+        if (!isMeasuring()) {
             setKeepScreenOn(false);
         }
         //Announce this to the user, so he knows why the webinterface stopped working.
@@ -2096,12 +2177,12 @@ public class Experiment extends AppCompatActivity implements View.OnClickListene
         try {
             if (!verdict.await(REMOTE_START_TIMEOUT_MS, TimeUnit.MILLISECONDS)) {
                 remoteStartVerdict = null;
-                return measuring; //never processed - report what is actually the case
+                return isMeasuring(); //never processed - report what is actually the case
             }
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
             remoteStartVerdict = null;
-            return measuring;
+            return isMeasuring();
         }
         return remoteStartSucceeded;
     }
@@ -2113,9 +2194,10 @@ public class Experiment extends AppCompatActivity implements View.OnClickListene
     @Override
     public void onBluetoothCommand(BluetoothCommand command, Bluetooth device) {
         runOnUiThread(() -> {
-            if (experiment == null || !experiment.loaded)
+            if (takenOver || experiment == null || !experiment.loaded)
                 return;
-            boolean active = measuring || cdTimer != null;
+            MeasurementRun run = measurementRun;
+            boolean active = run != null && run.isActive();
             switch (command) {
                 case START:
                     if (!active && isBluetoothConnectionSuccessful)
@@ -2138,7 +2220,7 @@ public class Experiment extends AppCompatActivity implements View.OnClickListene
                     clearData(Arrays.asList(experiment.getClearGroups()));
                     break;
                 case STATUS:
-                    device.writeStatusEvent(measuring, experiment.experimentTimeReference.getExperimentTime());
+                    device.writeStatusEvent(isMeasuring(), experiment.experimentTimeReference.getExperimentTime());
                     break;
             }
         });
@@ -2200,6 +2282,11 @@ public class Experiment extends AppCompatActivity implements View.OnClickListene
             outState.putBoolean(STATE_SENSOR_WARNING_DISMISSED, sensorWarningDismissed);
             outState.putBoolean(STATE_DATA_POLICY_DISMISSED, dataPolicyDismissed);
             outState.putBoolean(STATE_PHOTOSENSITIVITY_DISMISSED, photosensitivityWarningDismissed);
+
+            //A run that goes on without this screen continues from this state in the next one (see MeasurementRun)
+            MeasurementRun run = measurementRun;
+            if (run != null && run.isClient(this))
+                run.screenState = new Bundle(outState);
         } catch (Exception e) {
             //Something went wrong?
             //Discard all the data to get a clean new activity and start fresh.
@@ -2218,11 +2305,14 @@ public class Experiment extends AppCompatActivity implements View.OnClickListene
             }
         } else {
             getWindow().clearFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
-            if (proximityLock && wakeLock.isHeld()) {
-                if (wakeLock != null)
-                    wakeLock.release();
-            }
+            releaseProximityLock();
         }
+    }
+
+    //The proximity lock turns off the screen whichever app shows, so it is only held for this screen
+    private void releaseProximityLock() {
+        if (wakeLock != null && wakeLock.isHeld())
+            wakeLock.release();
     }
 
     Runnable runDeviceUpdate = new Runnable() {
@@ -2365,7 +2455,7 @@ public class Experiment extends AppCompatActivity implements View.OnClickListene
                         timedRunBeepRunning = cbTimedRunBeeperRunning.isChecked();
                         timedRunBeepStop = cbTimedRunBeeperStop.isChecked();
 
-                        if (timedRun && measuring)
+                        if (timedRun && isMeasuring())
                             stopMeasurement();
                         else
                             invalidateOptionsMenu();
