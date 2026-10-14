@@ -35,6 +35,8 @@ public class ImageElement extends ExpViewElement implements Serializable {
     }
 
     private String src;
+    private String lightSrc = null; //Shown instead of src in light or dark mode (file format 1.21), null if not given
+    private String darkSrc = null;
     public Drawable drawable;
     private float scale = 1.0f;
     private ImageFilter darkFilter = ImageFilter.none;
@@ -48,6 +50,17 @@ public class ImageElement extends ExpViewElement implements Serializable {
 
     public void setScale(float scale) {
         this.scale = scale;
+    }
+
+    public void setModeSources(String lightSrc, String darkSrc) {
+        this.lightSrc = lightSrc;
+        this.darkSrc = darkSrc;
+    }
+
+    //No fallback to src if the file of the mode cannot be opened (rules.yml, image-mode-src)
+    public String srcForMode(boolean dark) {
+        String modeSrc = dark ? darkSrc : lightSrc;
+        return modeSrc != null ? modeSrc : src;
     }
 
     public void setFilters(ImageFilter darkFilter, ImageFilter lightFilter) {
@@ -66,17 +79,20 @@ public class ImageElement extends ExpViewElement implements Serializable {
     public void createView(LinearLayout ll, Context c, Resources res, ExpViewFragment parent, PhyphoxExperiment experiment){
         super.createView(ll, c, res, parent, experiment);
 
-        try (InputStream is = Helper.openResource(c, experiment.resourceFolder, src)) {
+        boolean dark = Helper.isDarkTheme(res);
+        String shown = srcForMode(dark);
+        drawable = null;
+        try (InputStream is = Helper.openResource(c, experiment.resourceFolder, shown)) {
             Bitmap bmp = is == null ? null : BitmapFactory.decodeStream(is);
             if (bmp != null)
                 drawable = new BitmapDrawable(bmp);
             else
-                Log.e("imageView", "Failed to open image: " + src);
+                Log.e("imageView", "Failed to open image: " + shown);
         } catch (Exception e) {
-            Log.e("imageView", "Failed to open image: " + src);
+            Log.e("imageView", "Failed to open image: " + shown);
         }
         if (drawable != null) {
-            applyFilter(Helper.isDarkTheme(res) ? darkFilter : lightFilter);
+            applyFilter(dark ? darkFilter : lightFilter);
 
             ImageView iv = new ImageView(c);
             iv.setImageDrawable(drawable);
@@ -176,14 +192,20 @@ public class ImageElement extends ExpViewElement implements Serializable {
     //  <img ... />
     //</div>
     protected String createViewHTML(){
-        //The resource name is a query value of /res (RemoteServer.handleRes decodes it before the lookup)
-        String encodedSrc;
+        //The web interface picks the file by its own bright mode from the data attributes (webinterface readme, "Image elements")
+        String modes = "";
+        if (lightSrc != null || darkSrc != null)
+            modes = " data-light-src=\"" + resURL(srcForMode(false)) + "\" data-dark-src=\"" + resURL(srcForMode(true)) + "\"";
+        return "<div class=\"imageElement\" id=\"element" + htmlID + "\"><img style=\"width: " + (100.0*scale) + "%\" class=\"lightFilter_" + lightFilter.toString() + " darkFilter_" + darkFilter.toString() + "\" src=\"" + resURL(src) + "\"" + modes + "></div>";
+    }
+
+    //The resource name is a query value of /res (RemoteServer.handleRes decodes it before the lookup)
+    private static String resURL(String name) {
         try {
-            encodedSrc = URLEncoder.encode(src, "UTF-8");
+            return "res?src=" + URLEncoder.encode(name, "UTF-8");
         } catch (UnsupportedEncodingException e) {
-            encodedSrc = src;
+            return "res?src=" + name;
         }
-        return "<div class=\"imageElement\" id=\"element" + htmlID + "\"><img style=\"width: " + (100.0*scale) + "%\" class=\"lightFilter_" + lightFilter.toString() + " darkFilter_" + darkFilter.toString() + "\" src=\"res?src=" + encodedSrc + "\"></div>";
     }
 
     @Override

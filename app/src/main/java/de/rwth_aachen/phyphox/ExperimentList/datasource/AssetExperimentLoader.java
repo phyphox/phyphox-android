@@ -317,8 +317,11 @@ public class AssetExperimentLoader {
                             case "image":
                                 if (!inView)
                                     break;
-                                String src = xpp.getAttributeValue(null, "src");
-                                shortInfo.resources.add(src);
+                                for (String attribute : new String[]{"src", "lightSrc", "darkSrc"}) {
+                                    String src = xpp.getAttributeValue(null, attribute);
+                                    if (src != null && !src.isEmpty())
+                                        shortInfo.resources.add(src);
+                                }
                                 break;
                             case "sensor":
                                 if (!inInput || shortInfo.unavailableSensor >= 0)

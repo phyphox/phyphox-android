@@ -2182,6 +2182,15 @@ public abstract class PhyphoxFile {
 
                     ImageElement img = new ImageElement(null, visibility,null, parent.getResources(), src); //No inputs (for now?)
 
+                    //A file per interface mode (file format 1.21, rules.yml image-mode-src); empty counts as absent
+                    String lightSrc = getStringAttribute("lightSrc");
+                    String darkSrc = getStringAttribute("darkSrc");
+                    if (lightSrc != null && lightSrc.isEmpty())
+                        lightSrc = null;
+                    if (darkSrc != null && darkSrc.isEmpty())
+                        darkSrc = null;
+                    img.setModeSources(lightSrc, darkSrc);
+
                     float scale = (float)getDoubleAttribute("scale", 1.0);
                     img.setScale(scale);
 
@@ -2205,6 +2214,10 @@ public abstract class PhyphoxFile {
 
                     add(weight, img);
                     experiment.resources.add(src);
+                    if (lightSrc != null)
+                        experiment.resources.add(lightSrc);
+                    if (darkSrc != null)
+                        experiment.resources.add(darkSrc);
                     break;
                 }
                 case "geometry": { //A static shape (file format 1.21, drawing.md); label has no effect
