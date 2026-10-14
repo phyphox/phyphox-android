@@ -136,8 +136,10 @@
     <string name="landscape_orientation">Landscape</string>
     <string name="spectrum_analysis_setting">Spectrum Analysis Settings</string>
     <!-- Graph Zooms  -->
+    <!-- Title of the dialog shown when the user closes the full-screen view of a graph after zooming or panning it. The dialog asks whether the graph should keep showing the zoomed section. Short dialog title. -->
     <string name="applyZoomQuestionTitle">Keep this view?</string>
     <string name="applyZoomQuestion">You zoomed in. Should the graph keep showing this section when you return?</string>
+    <!-- One line in the "Keep this view?" dialog describing the zoomed range of one graph axis. %1$s is the axis label from the experiment (e.g. "Acceleration"), %2$s and %3$s are the lower and upper limit as formatted numbers with their unit (e.g. "2.5 s"), or clock times on a time axis. Example: "Time: 2.5 s to 7.0 s". -->
     <string name="applyZoomRange">%1$s: %2$s to %3$s</string>
     <string name="applyZoomActionReset">Reset zoom</string>
     <string name="applyZoomActionKeep">Keep this section</string>
