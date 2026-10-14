@@ -244,4 +244,5 @@
     <string name="error">Error</string>
     <string name="invalidValue">Valor no Valido</string>
     <string name="download">Descargar</string>
+    <string name="clear_data_question_select">¿Borrar los datos grabados y los siguientes elementos opcionales?</string>
 </resources>
