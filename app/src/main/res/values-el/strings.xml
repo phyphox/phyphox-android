@@ -478,4 +478,7 @@
     <string name="calibrated_gyroscope">Χρήση βαθμονομημένου γυροσκοπίου</string>
     <string name="calibrated_accelerometer">Χρήση θαβμονομημένου επιταχυνσιομέτρου</string>
     <string name="bt_scan_failed">H ανίχνευση Bluetooth δεν μπορεί να ξεκινήσει. Ανοιγοκλείνοντας το Bluetooth συνήθως το επιλύει. O κωδικός σφάλματος του Android είναι:</string>
+    <string name="remoteGraphZoomHint">Mε ποντίκι: σύρετε για μετακίνηση, κρατήστε πατημένο το πλήκτρο Shift και σύρετε για μεγέθυνση περιοχής, χρησιμοποιήστε τον τροχό για μεγέθυνση. Με τα δάχτυλα : πιέστε για μεγέθυνση, σύρετε για μετακίνηση.</string>
+    <string name="wb_locked">Κλειδωμένο</string>
+    <string name="wb_temperature">Θερμοκρασία</string>
 </resources>
