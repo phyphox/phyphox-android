@@ -488,4 +488,6 @@
     <string name="settingsUnitSystemExperiment">Όπως έχει οριστεί στο πείραμα</string>
     <string name="settingsUnitSystemMetric">Διεθνές Σύστημα (SI)</string>
     <string name="settingsUnitSystemImperial">Imperial / US customary</string>
+    <string name="unit_dialog_title">Μονάδα</string>
+    <string name="unit_dialog_experiment_default">προκαθορισμένη</string>
 </resources>
