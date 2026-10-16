@@ -481,4 +481,6 @@
     <string name="remoteGraphZoomHint">Mε ποντίκι: σύρετε για μετακίνηση, κρατήστε πατημένο το πλήκτρο Shift και σύρετε για μεγέθυνση περιοχής, χρησιμοποιήστε τον τροχό για μεγέθυνση. Με τα δάχτυλα : πιέστε για μεγέθυνση, σύρετε για μετακίνηση.</string>
     <string name="wb_locked">Κλειδωμένο</string>
     <string name="wb_temperature">Θερμοκρασία</string>
+    <string name="wb_tint">Απόχρωση</string>
+    <string name="settingsUnitSystem">Σύστημα μονάδων</string>
 </resources>
