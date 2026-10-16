@@ -430,7 +430,7 @@
     <string name="portrait_orientation">Κατακόρυφος</string>
     <string name="landscape_orientation">Οριζόντιος</string>
     <string name="spectrum_analysis_setting">Ρυθμίσεις Ανάλυσης Φάσματος</string>
-    <string name="bl_scan_permission_required_title">Απαιτείται άδεια για αναζήτηση Bluetooth</string>
+    <string name="bl_scan_permission_required_title">Απαιτείται άδεια για τηναναζήτηση Bluetooth</string>
     <string name="error">Σφάλμα</string>
     <string name="invalidValue">Μη έγκυρη τιμή</string>
     <string name="clear_data_question_select">Να διαγραφούν τα καταγεγραμμένα δεδομένα και τα ακόλουθα προαιρετικά στοιχεία;</string>
