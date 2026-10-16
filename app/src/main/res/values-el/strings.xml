@@ -483,4 +483,9 @@
     <string name="wb_temperature">Θερμοκρασία</string>
     <string name="wb_tint">Απόχρωση</string>
     <string name="settingsUnitSystem">Σύστημα μονάδων</string>
+    <string name="unit_dialog_other">Άλλη</string>
+    <string name="settingsUnitSystemDetail">Εμφάνιση των μονάδων όπως ορίζονται στο πείραμα ή μετά από μετατροπή τους σε ένα σύστημα μονάδων, πατήστε μια μονάδα στο πείραμα για να την αλλάξετε ξεχωριστά.</string>
+    <string name="settingsUnitSystemExperiment">Όπως έχει οριστεί στο πείραμα</string>
+    <string name="settingsUnitSystemMetric">Διεθνές Σύστημα (SI)</string>
+    <string name="settingsUnitSystemImperial">Imperial / US customary</string>
 </resources>
