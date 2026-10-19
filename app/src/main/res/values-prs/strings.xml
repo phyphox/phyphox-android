@@ -40,5 +40,14 @@
     <string name="leave_experiment">خروج از آزمایش</string>
     <string name="leave_experiment_question">آیا میخواهید از این آزمایش خارج شوید و معلومات دخیره شده را حذف کنید؟</string>
     <string name="leave">خروج</string>
-    <string name="timed_stop">توقف آزمایش درحال اجرا</string>
+    <string name="timed_stop">توقف اندازه گیری زمان</string>
+    <string name="timed_start">شروع اندازه گیری زمان</string>
+    <string name="loadingTitle">در حال آماده شدن</string>
+    <string name="loadingText">در حال آماده شدن آزمایش…</string>
+    <string name="loadingBluetoothConnectionText">در حال اتصال به دستگاه بلوتوث …</string>
+    <string name="timedRunDialogTitle">اندازه گیری زمان</string>
+    <string name="timedRunStartDelay">زمان انتظار تا شروع (ثانیه)</string>
+    <string name="timedRunStopDelay">مدت آزمایش (ثانیه)</string>
+    <string name="enableTimedRun">اجرا آزمایش برای مدت مشخص</string>
+    <string name="export">ذخیره معلومات در فایل</string>
 </resources>
