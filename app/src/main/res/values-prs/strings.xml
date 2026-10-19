@@ -50,4 +50,7 @@
     <string name="timedRunStopDelay">مدت آزمایش (ثانیه)</string>
     <string name="enableTimedRun">اجرا آزمایش برای مدت مشخص</string>
     <string name="export">ذخیره معلومات در فایل</string>
+    <string name="export_empty">در تنظیمات این آزمایش، معلوماتی جهت ذخیره در فایل مشخص نشده است. اگر این پیام به اشتباه نمایش داده شده است، لطفاً با منبع دریافت کود QR یا تنظیمات فایل، موضوع را بررسی کنید.</string>
+    <string name="export_subject">معلومات از phyphox</string>
+    <string name="export_pick_share">انتخاب روش ذخیرۀ معلومات</string>
 </resources>
