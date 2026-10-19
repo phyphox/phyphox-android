@@ -17,4 +17,5 @@
     <string name="copyToClipboard">کاپی کردن متن</string>
     <string name="deviceInfoCopied">مشخصات دستگاه کاپی شد.</string>
     <string name="warning">هشدار</string>
+    <string name="donotshowagain">دوباره نمایش داده نشود</string>
 </resources>
