@@ -1,3 +1,20 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
+    <string name="app_name">phyphox</string>
+    <string name="privacyPolicyURL">https://phyphox.org/privancy</string>
+    <string name="action_settings">تنظیمات</string>
+    <string name="title_activity_experiment">phyphox</string>
+    <string name="experimentsPhyphoxOrg">ایده ها و دستورالعمل های ازمایش</string>
+    <string name="experimentsPhyphoxOrgURL">http://phyphox.org/experiments</string>
+    <string name="faqPhyphoxOrg">سوالات مکرر</string>
+    <string name="faqPhyphoxOrgURL">http://phyphox.org/faq</string>
+    <string name="error">خطا</string>
+    <string name="invalidValue">مقدار نامعتبر</string>
+    <string name="generalErrorDialog">خطا رخ داده است.</string>
+    <string name="help">کمک و معلومات</string>
+    <string name="translationToWebsiteURL">http://phyphox.org/languages#da</string>
+    <string name="deviceInfo">مشخصات دستگاه</string>
+    <string name="copyToClipboard">کاپی کردن متن</string>
+    <string name="deviceInfoCopied">مشخصات دستگاه کاپی شد.</string>
+    <string name="warning">هشدار</string>
 </resources>
