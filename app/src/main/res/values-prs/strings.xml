@@ -53,4 +53,9 @@
     <string name="export_empty">در تنظیمات این آزمایش، معلوماتی جهت ذخیره در فایل مشخص نشده است. اگر این پیام به اشتباه نمایش داده شده است، لطفاً با منبع دریافت کود QR یا تنظیمات فایل، موضوع را بررسی کنید.</string>
     <string name="export_subject">معلومات از phyphox</string>
     <string name="export_pick_share">انتخاب روش ذخیرۀ معلومات</string>
+    <string name="share">ارسال عکس صفحه</string>
+    <string name="download">دانلود</string>
+    <string name="savedToDownloadsMessage">فایل در پوشۀ دانلود ذخیره شد</string>
+    <string name="savedToDownloadsError">فایل در پوشۀ دانلود ذخیره نشد:</string>
+    <string name="permissionRequiredToSaveToDownloads">برای ذخیرۀ فایل‌ها در پوشۀ دانلود، اجازۀ دسترسی به حافظۀ دستگاه ضروری است</string>
 </resources>
