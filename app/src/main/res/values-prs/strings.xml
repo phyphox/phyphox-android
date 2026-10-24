@@ -58,4 +58,5 @@
     <string name="savedToDownloadsMessage">فایل در پوشۀ دانلود ذخیره شد</string>
     <string name="savedToDownloadsError">فایل در پوشۀ دانلود ذخیره نشد:</string>
     <string name="permissionRequiredToSaveToDownloads">برای ذخیرۀ فایل‌ها در پوشۀ دانلود، اجازۀ دسترسی به حافظۀ دستگاه ضروری است</string>
+    <string name="show_description">مشخصات ازمایش</string>
 </resources>
