@@ -714,8 +714,6 @@ public class ExperimentListActivity extends AppCompatActivity {
         tvA.setText(Html.fromHtml(localizedRes.getString(R.string.creditsApache)));
         TextView tvB = (TextView) creditLayout.findViewById(R.id.creditsZxing);
         tvB.setText(Html.fromHtml(localizedRes.getString(R.string.creditsZxing)));
-        TextView tvC = (TextView) creditLayout.findViewById(R.id.creditsPahoMQTT);
-        tvC.setText(Html.fromHtml(localizedRes.getString(R.string.creditsPahoMQTT)));
 
         //Finish alertDialog builder
         credits.setView(creditLayout);

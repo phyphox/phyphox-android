@@ -82,8 +82,3 @@ http://barcode4j.sourceforge.net/contributors.html
 **NOTICES FOR JCOMMANDER**
 
 Copyright 2010 Cedric Beust cedric@beust.com
-
-### Eclipse Paho MQTT
-
-The Android version's MQTT communication uses the MQTT Android Service by Hannes Achleitner (https://github.com/hannesa2/paho.mqtt.android, Apache Licence 2.0), which in turn uses the Eclipse Paho MQTT library (https://www.eclipse.org/paho, Eclipse Distribution Licence 1.0), please see the respective webpages for details on the licence and contributors.
-
