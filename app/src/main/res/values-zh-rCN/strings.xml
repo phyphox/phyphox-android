@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="app_name">手机物理工坊</string>
+    <string name="app_name">phyphox</string>
     <string name="action_settings">设置</string>
-    <string name="title_activity_experiment">手机物理工坊</string>
+    <string name="title_activity_experiment">phyphox</string>
     <string name="newExperiment">新建实验</string>
     <string name="newExperimentPhyphoxInfo">参考phyphox.org网站信息，创设更好的手机实验，并包括数据分析，可与同事，学生和朋友们分享。</string>
     <string name="newExperimentInputTitle">标题</string>
@@ -50,7 +50,7 @@
     <string name="close">关闭</string>
     <string name="next">下一步</string>
     <string name="cancel">取消</string>
-    <string name="location">GPS定位</string>
+    <string name="location">定位</string>
     <string name="unknown">未知</string>
     <string name="delete">删除</string>
     <string name="confirmDelete">你想从你的收藏中删除这个实验吗？</string>
@@ -279,7 +279,7 @@
     <string name="common_unit_short_standard_gravity">g</string>
     <string name="common_unit_short_degree_per_second">°/s</string>
     <string name="common_unit_short_revolution_per_minute">r/min</string>
-    <string name="common_unit_short_radian">rad</string>
+    <string name="common_unit_short_radian">弧度</string>
     <string name="common_unit_short_milli_tesla">mT</string>
     <string name="common_unit_short_tesla">T</string>
     <string name="common_unit_short_gauss">G</string>
@@ -385,10 +385,10 @@
     <string name="settingsHeadLanguage">语言</string>
     <string name="settingsLanguage">App 语言</string>
     <string name="settingsTranslation">翻译</string>
-    <string name="settingsTranslationMore">了解更多关于可用语言及如何提供帮助的信息</string>
+    <string name="settingsTranslationMore">了解更多关于可用语言及如何提供帮助的信息。</string>
     <string name="settingsHeadAdvanced">高级</string>
     <string name="settingsProximityLock">靠近自动锁屏</string>
-    <string name="settingsProximityLockDetail">当距离传感器被触发时禁用屏幕，避免误触（如在口袋中时）</string>
+    <string name="settingsProximityLockDetail">当距离传感器被触发时禁用屏幕，避免误触（如在口袋中时）。</string>
     <string name="settingsPort">远程访问端口</string>
     <string name="settings_theme_night">默认</string>
     <string name="settings_theme_no_night">浅色模式</string>
@@ -459,4 +459,35 @@
     <string name="localNetworkDeniedHint">如果没有本地网络权限，连接到本地网络上的设备将会失败。</string>
     <string name="remoteServerPortInUseTitle">无法启用远程访问</string>
     <string name="remoteServerPortInUse">由于该端口已被设备上的其他应用占用，因此无法启用远程访问。请停止正在使用该端口的应用，或在 Phyphox 设置中设置其他端口。</string>
+    <string name="savedToDownloadsError">无法将文件保存到下载文件夹：</string>
+    <string name="graph_no_data">无数据</string>
+    <string name="graph_no_valid_data">无有效的数据</string>
+    <string name="graph_no_data_in_range">无范围内的数据</string>
+    <string name="applyZoomQuestionTitle">保留此视图？</string>
+    <string name="applyZoomQuestion">你已放大。下次查看时，图表是否应继续显示此部分？</string>
+    <string name="applyZoomRange">%1$s：%2$s 至 %3$s</string>
+    <string name="applyZoomActionReset">重置缩放</string>
+    <string name="applyZoomActionKeep">保留此部分</string>
+    <string name="applyZoomActionFollow">保留并跟随新数据</string>
+    <string name="applyZoomMoreOptions">更多选项…</string>
+    <string name="applyZoomAlsoApply">也应用到其他图表…</string>
+    <string name="applyZoomTargetThis">仅限此图表</string>
+    <string name="applyZoomTargetSameData">相同的数据</string>
+    <string name="applyZoomTargetSameUnit">相同的单位（%s）</string>
+    <string name="applyZoomTargetSameAxis">任意 %s 轴</string>
+    <string name="calibrated_gyroscope">使用校准过的陀螺仪</string>
+    <string name="calibrated_accelerometer">使用校准过的加速度计</string>
+    <string name="bt_scan_failed">无法启动蓝牙扫描。关闭蓝牙后再重新开启通常可以解决此问题。Android 报告的错误代码：</string>
+    <string name="remoteGraphZoomHint">鼠标：拖动以平移，按住 Shift 键并拖动以放大选定区域，滚动滚轮以缩放。触摸屏：双指捏合以缩放，拖动以平移。</string>
+    <string name="wb_locked">锁定</string>
+    <string name="wb_temperature">温度</string>
+    <string name="wb_tint">色调</string>
+    <string name="settingsUnitSystem">单位制</string>
+    <string name="settingsUnitSystemDetail">按实验定义的单位显示，或转换为某一单位制；点按实验中的单位可单独更改。</string>
+    <string name="settingsUnitSystemExperiment">按实验定义</string>
+    <string name="settingsUnitSystemMetric">公制（SI）</string>
+    <string name="settingsUnitSystemImperial">英制 / 美制</string>
+    <string name="unit_dialog_title">单位</string>
+    <string name="unit_dialog_experiment_default">默认</string>
+    <string name="unit_dialog_other">其他</string>
 </resources>
