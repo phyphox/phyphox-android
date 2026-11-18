@@ -15,12 +15,10 @@ env:
   API_LEVEL: 36
   EMULATOR_ARCH: x86_64
   EMULATOR_TARGET: google_apis
-  # The jobs run on ubuntu-24.04, pinned 2026-11-18: on ubuntu-26.04 (ubuntu-latest since the
-  # migration) the mqtt fixture fails.
 
 jobs:
   remote-contract:
-    runs-on: ubuntu-24.04
+    runs-on: ubuntu-latest
     timeout-minutes: 45
     steps:
       - uses: actions/checkout@v5
@@ -73,7 +71,7 @@ jobs:
   # The web interface's browser tests against the interface the app actually serves: the mock
   # server only provides the fixture experiment, which the emulator fetches from the host.
   webinterface-served:
-    runs-on: ubuntu-24.04
+    runs-on: ubuntu-latest
     timeout-minutes: 45
     steps:
       - uses: actions/checkout@v5
@@ -126,7 +124,7 @@ jobs:
           if-no-files-found: ignore
 
   experiments-e2e:
-    runs-on: ubuntu-24.04
+    runs-on: ubuntu-latest
     timeout-minutes: 90
     strategy:
       fail-fast: false
@@ -177,7 +175,7 @@ jobs:
           if-no-files-found: ignore
 
   view-and-chrome-suites:
-    runs-on: ubuntu-24.04
+    runs-on: ubuntu-latest
     timeout-minutes: 90
     strategy:
       fail-fast: false
@@ -254,7 +252,7 @@ jobs:
           if-no-files-found: ignore
 
   network-fixtures:
-    runs-on: ubuntu-24.04
+    runs-on: ubuntu-latest
     timeout-minutes: 45
     steps:
       - uses: actions/checkout@v5
@@ -281,6 +279,12 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y mosquitto
           sudo systemctl disable --now mosquitto || true
+          # Since Ubuntu 26.04 an AppArmor profile confines mosquitto to configurations in /etc/mosquitto,
+          # so the broker could not read the fixture's and exited at once
+          if [ -e /etc/apparmor.d/mosquitto ]; then
+            echo 'file ${{ github.workspace }}/** r,' | sudo tee /etc/apparmor.d/local/mosquitto
+            sudo apparmor_parser -r /etc/apparmor.d/mosquitto
+          fi
       # phyphox-test: network-http
       # phyphox-test: network-mqtt
       - name: Network fixtures
