@@ -50,7 +50,7 @@ data class CameraSettingState  constructor(
     val whiteBalanceLockedByFile: Boolean = false, //set by the experiment file: the camera-gui control is disabled
     val whiteBalanceFrozen: Boolean = false, //the AWB lock is engaged
 
-    val spectrumAnalysisOrientation: SpectroscopyAnalyzer.SpectrumOrientation = SpectroscopyAnalyzer.SpectrumOrientation.LANDSCAPE
+    val spectrumAnalysisOrientation: SpectroscopyAnalyzer.SpectrumOrientation = SpectroscopyAnalyzer.SpectrumOrientation.PORTRAIT
 ) {
     //Whether the shaders apply the adaptation from the daylight anchor to the requested white point
     fun whiteBalanceCorrectionActive(): Boolean =

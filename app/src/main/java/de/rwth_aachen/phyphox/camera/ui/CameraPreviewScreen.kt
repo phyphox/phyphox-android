@@ -246,6 +246,7 @@ class CameraPreviewScreen(
 
         if (cameraInput.isFeatureSpectroscopy()){
             isLandscape = cameraInput.cameraSettingState.value.spectrumAnalysisOrientation == SpectroscopyAnalyzer.SpectrumOrientation.LANDSCAPE
+            btnAnalysisSetting.setIconResource(getSpectrumOrientationIcon(getSelectedSpectrumOrientation()))
             lnrSpectrumOrientation.visibility = View.VISIBLE
             btnAnalysisSetting.setOnClickListener {  openSpectrumAnalysisConfigurationDialog() }
         }
