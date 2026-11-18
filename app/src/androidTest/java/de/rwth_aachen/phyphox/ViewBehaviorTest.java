@@ -212,8 +212,9 @@ public class ViewBehaviorTest {
 
     //Real key events, so the fields' input restrictions apply.
     private void type(EditText edit, String text) throws Exception {
-        getInstrumentation().runOnMainSync(() -> edit.setText(""));
+        //Focus first: an unfocused edit shows its buffer again on the next update, undoing the clearing
         tap(edit);
+        getInstrumentation().runOnMainSync(() -> edit.setText(""));
         getInstrumentation().sendStringSync(text);
         Thread.sleep(200);
     }
