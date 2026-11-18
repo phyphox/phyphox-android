@@ -15,10 +15,8 @@ env:
   API_LEVEL: 36
   EMULATOR_ARCH: x86_64
   EMULATOR_TARGET: google_apis
-  # Pinned 2026-11-18: the move of ubuntu-latest to 26.04 together with emulator 37.2.13 broke
-  # CameraAnalyzerMathTest.hueIsAveragedOnTheColourWheel and the mqtt fixture. 16428233 is 37.2.12,
-  # the last green combination with ubuntu-24.04.
-  EMULATOR_BUILD: 16428233
+  # The jobs run on ubuntu-24.04, pinned 2026-11-18: on ubuntu-26.04 (ubuntu-latest since the
+  # migration) the mqtt fixture fails.
 
 jobs:
   remote-contract:
@@ -52,7 +50,6 @@ jobs:
           api-level: ${{ env.API_LEVEL }}
           arch: ${{ env.EMULATOR_ARCH }}
           target: ${{ env.EMULATOR_TARGET }}
-          emulator-build: ${{ env.EMULATOR_BUILD }}
           ram-size: 4096M
           script: |
             cd phyphox-android && ./gradlew installRegularDebug && cd ..
@@ -105,7 +102,6 @@ jobs:
           api-level: ${{ env.API_LEVEL }}
           arch: ${{ env.EMULATOR_ARCH }}
           target: ${{ env.EMULATOR_TARGET }}
-          emulator-build: ${{ env.EMULATOR_BUILD }}
           ram-size: 4096M
           script: |
             cd phyphox-android && ./gradlew installRegularDebug && cd ..
@@ -163,7 +159,6 @@ jobs:
           api-level: ${{ env.API_LEVEL }}
           arch: ${{ env.EMULATOR_ARCH }}
           target: ${{ env.EMULATOR_TARGET }}
-          emulator-build: ${{ env.EMULATOR_BUILD }}
           ram-size: 4096M
           # Each script line runs in its own shell, hence the wrapper script for log and exit code,
           # and the summary table is written after a failed sweep too (its status is kept).
@@ -220,6 +215,12 @@ jobs:
           echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
           sudo udevadm control --reload-rules
           sudo udevadm trigger --name-match=kvm
+      # The emulator renders with SwiftShader, whose code path depends on the host CPU: log it, so a
+      # failure seen on some runners only can be matched against the hardware
+      - name: Runner CPU
+        run: |
+          lscpu | tee runner-cpu.txt
+          { echo '### Runner CPU'; echo '```'; grep -E 'Model name|Vendor ID|^CPU\(s\)' runner-cpu.txt; echo "AVX-512: $(grep -o 'avx512[a-z_]*' runner-cpu.txt | sort -u | tr '\n' ' ')"; echo '```'; } >> "$GITHUB_STEP_SUMMARY"
       # The chrome selection:
       # phyphox-test: graph-snapshots
       # phyphox-test: view-behavior
@@ -237,7 +238,6 @@ jobs:
           api-level: ${{ env.API_LEVEL }}
           arch: ${{ env.EMULATOR_ARCH }}
           target: ${{ env.EMULATOR_TARGET }}
-          emulator-build: ${{ env.EMULATOR_BUILD }}
           profile: ${{ matrix.profile }}
           ram-size: 4096M
           script: |
@@ -289,7 +289,6 @@ jobs:
           api-level: ${{ env.API_LEVEL }}
           arch: ${{ env.EMULATOR_ARCH }}
           target: ${{ env.EMULATOR_TARGET }}
-          emulator-build: ${{ env.EMULATOR_BUILD }}
           ram-size: 4096M
           script: |
             cd phyphox-android && ./gradlew installRegularDebug && cd ..

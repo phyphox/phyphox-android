@@ -103,6 +103,9 @@ class CameraAnalyzerMathTest {
 
     @Before
     fun setUp() {
+        //The matrix is static and the camera renderer leaves its last one behind: a camera test earlier in
+        //the same process (CameraWhiteBalanceTest's clamp to 25000 K) shifted the first hue here by 3.76 degrees
+        AnalyzingModule.setWhiteBalance(null)
         display = EGL14.eglGetDisplay(EGL14.EGL_DEFAULT_DISPLAY)
         val version = IntArray(2)
         assertTrue("eglInitialize failed", EGL14.eglInitialize(display, version, 0, version, 1))
