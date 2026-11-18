@@ -15,10 +15,14 @@ env:
   API_LEVEL: 36
   EMULATOR_ARCH: x86_64
   EMULATOR_TARGET: google_apis
+  # Pinned 2026-11-18: the move of ubuntu-latest to 26.04 together with emulator 37.2.13 broke
+  # CameraAnalyzerMathTest.hueIsAveragedOnTheColourWheel and the mqtt fixture. 16428233 is 37.2.12,
+  # the last green combination with ubuntu-24.04.
+  EMULATOR_BUILD: 16428233
 
 jobs:
   remote-contract:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 45
     steps:
       - uses: actions/checkout@v5
@@ -48,6 +52,7 @@ jobs:
           api-level: ${{ env.API_LEVEL }}
           arch: ${{ env.EMULATOR_ARCH }}
           target: ${{ env.EMULATOR_TARGET }}
+          emulator-build: ${{ env.EMULATOR_BUILD }}
           ram-size: 4096M
           script: |
             cd phyphox-android && ./gradlew installRegularDebug && cd ..
@@ -71,7 +76,7 @@ jobs:
   # The web interface's browser tests against the interface the app actually serves: the mock
   # server only provides the fixture experiment, which the emulator fetches from the host.
   webinterface-served:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 45
     steps:
       - uses: actions/checkout@v5
@@ -100,6 +105,7 @@ jobs:
           api-level: ${{ env.API_LEVEL }}
           arch: ${{ env.EMULATOR_ARCH }}
           target: ${{ env.EMULATOR_TARGET }}
+          emulator-build: ${{ env.EMULATOR_BUILD }}
           ram-size: 4096M
           script: |
             cd phyphox-android && ./gradlew installRegularDebug && cd ..
@@ -124,7 +130,7 @@ jobs:
           if-no-files-found: ignore
 
   experiments-e2e:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 90
     strategy:
       fail-fast: false
@@ -157,6 +163,7 @@ jobs:
           api-level: ${{ env.API_LEVEL }}
           arch: ${{ env.EMULATOR_ARCH }}
           target: ${{ env.EMULATOR_TARGET }}
+          emulator-build: ${{ env.EMULATOR_BUILD }}
           ram-size: 4096M
           # Each script line runs in its own shell, hence the wrapper script for log and exit code,
           # and the summary table is written after a failed sweep too (its status is kept).
@@ -175,7 +182,7 @@ jobs:
           if-no-files-found: ignore
 
   view-and-chrome-suites:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 90
     strategy:
       fail-fast: false
@@ -230,6 +237,7 @@ jobs:
           api-level: ${{ env.API_LEVEL }}
           arch: ${{ env.EMULATOR_ARCH }}
           target: ${{ env.EMULATOR_TARGET }}
+          emulator-build: ${{ env.EMULATOR_BUILD }}
           profile: ${{ matrix.profile }}
           ram-size: 4096M
           script: |
@@ -246,7 +254,7 @@ jobs:
           if-no-files-found: ignore
 
   network-fixtures:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 45
     steps:
       - uses: actions/checkout@v5
@@ -281,6 +289,7 @@ jobs:
           api-level: ${{ env.API_LEVEL }}
           arch: ${{ env.EMULATOR_ARCH }}
           target: ${{ env.EMULATOR_TARGET }}
+          emulator-build: ${{ env.EMULATOR_BUILD }}
           ram-size: 4096M
           script: |
             cd phyphox-android && ./gradlew installRegularDebug && cd ..
@@ -293,5 +302,6 @@ jobs:
           name: t1-network-fixture-results
           path: |
             network-fixtures.json
+            network-fixtures-broker.txt
             logcat-network-fixtures*.txt
           if-no-files-found: ignore

@@ -303,9 +303,13 @@ def main():
                   "(network-mqtt).", flush=True)
         fixtures = [f for f in fixtures if f[0] not in MQTT_FIXTURES]
     else:
-        broker = subprocess.Popen(["mosquitto", "-c", os.path.join(fixtures_dir, "mosquitto.conf")],
-                                  stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+        broker_log = open("network-fixtures-broker.txt", "w")
+        broker = subprocess.Popen(["mosquitto", "-v", "-c", os.path.join(fixtures_dir, "mosquitto.conf")],
+                                  stdout=broker_log, stderr=subprocess.STDOUT)
     time.sleep(1)
+    if broker is not None and broker.poll() is not None:
+        print("NOTICE: mosquitto exited with code %d at startup, see network-fixtures-broker.txt"
+              % broker.returncode, flush=True)
 
     try:
         results = Driver(args).run(fixtures, directory)
