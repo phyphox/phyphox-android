@@ -588,6 +588,14 @@ Copyright 2010 Cedric Beust cedric@beust.com
     <string name="localNetworkRationaleMessage">Local network access is required to connect to the remote server. Please grant the permission.</string>
     <!-- Shown below an error when an experiment could not be loaded from a web address, offering to ask for the local network permission and try again. -->
     <string name="localNetworkLoadMessage">The experiment could not be loaded from this address. If it is served from a device on your local network, phyphox needs permission to access the local network. Grant the permission and try again?</string>
+    <!-- Title of the dialog shown when an experiment could not be downloaded, for example from a scanned QR code with a web address. -->
+    <string name="downloadErrorTitle">Could not load experiment</string>
+    <!-- Shown when an experiment could not be downloaded from a web address (for example from a scanned QR code) because the device has no internet connection. -->
+    <string name="downloadErrorOffline">The experiment could not be downloaded because this device is not connected to the internet.</string>
+    <!-- Shown when an experiment could not be downloaded because the server did not answer or its name was not found. The server's name (for example phyphox.org) is appended after a space. -->
+    <string name="downloadErrorUnreachable">The experiment could not be downloaded because this server could not be reached:</string>
+    <!-- Shown when an experiment could not be downloaded for any other reason, for example because the file no longer exists on the server. A technical description of the problem (in English) is appended on a separate line. -->
+    <string name="downloadErrorGeneral">The experiment could not be downloaded.</string>
     <!-- Explanation shown before Android asks for the local network permission, when an experiment connects to a device in the local network. -->
     <string name="localNetworkExperimentMessage">This experiment uses a connection to a device on your local network. phyphox needs permission to access the local network to reach it.</string>
     <!-- Short hint (toast) after the local network permission was denied. -->

@@ -34,13 +34,19 @@ import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.lang.ref.WeakReference;
+import java.net.ConnectException;
+import java.net.HttpURLConnection;
+import java.net.NoRouteToHostException;
+import java.net.SocketTimeoutException;
 import java.net.URL;
 import java.net.URLConnection;
+import java.net.UnknownHostException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -321,21 +327,32 @@ public abstract class PhyphoxFile {
             } else if (scheme.equals("phyphox")) { //The intent refers to an online resource, but we need to figure out if we can use https or should fallback to http
                 phyphoxStream.isLocal = false;
                 Uri uri = intent.getData();
+                URLConnection connection = null;
                 try {
                     URL url = new URL("https", uri.getHost(), uri.getPort(), uri.getPath() + (uri.getQuery() != null ? ("?" + uri.getQuery()) : ""));
-                    URLConnection connection = url.openConnection();
+                    connection = url.openConnection();
                     phyphoxStream.inputStream = connection.getInputStream();
                     remoteInputToMemory(phyphoxStream, null, false, connection.getContentLength());
                 } catch (Exception e) {
-                    //ok, https did not work. Maybe we success with http?
-                    try {
-                        URL url = new URL("http", uri.getHost(), uri.getPort(), uri.getPath() + (uri.getQuery() != null ? ("?" + uri.getQuery()) : ""));
-                        URLConnection connection = url.openConnection();
-                        phyphoxStream.inputStream = connection.getInputStream();
-                        remoteInputToMemory(phyphoxStream, null, false, connection.getContentLength());
-                    } catch (Exception e2) {
-                        phyphoxStream.errorMessage = "Error loading experiment from phyphox: " + e2.getMessage();
+                    //https did not work, so fall back to http, but report the https error: it is the request that matters
+                    int networkState = Helper.networkState(parent);
+                    int status = httpStatus(e, connection);
+                    phyphoxStream.inputStream = null;
+                    if (httpFallbackCanHelp(e, status, networkState)) {
+                        try {
+                            URL url = new URL("http", uri.getHost(), uri.getPort(), uri.getPath() + (uri.getQuery() != null ? ("?" + uri.getQuery()) : ""));
+                            URLConnection httpConnection = url.openConnection();
+                            //A redirect is not followed from http to https, so its body must not be taken for the experiment
+                            if (httpConnection instanceof HttpURLConnection && ((HttpURLConnection) httpConnection).getResponseCode() / 100 != 2)
+                                throw new IOException("HTTP " + ((HttpURLConnection) httpConnection).getResponseCode());
+                            phyphoxStream.inputStream = httpConnection.getInputStream();
+                            remoteInputToMemory(phyphoxStream, null, false, httpConnection.getContentLength());
+                        } catch (Exception e2) {
+                            phyphoxStream.inputStream = null;
+                        }
                     }
+                    if (phyphoxStream.inputStream == null)
+                        phyphoxStream.errorMessage = downloadErrorMessage(e, status, uri.getHost(), networkState, parent);
                 }
                 return phyphoxStream;
             }
@@ -345,6 +362,38 @@ public abstract class PhyphoxFile {
             phyphoxStream.errorMessage = "No run-intent.";
             return phyphoxStream;
         }
+    }
+
+    //http cannot fix an unresolvable host, a device without any network or a server that answered over https with an
+    //HTTP error status. A connected network without internet still gets the fallback: a server in the classroom LAN
+    //may only speak http.
+    static boolean httpFallbackCanHelp(Exception httpsError, int httpsStatus, int networkState) {
+        return networkState != Helper.NETWORK_NONE && httpsStatus < 0 && !(httpsError instanceof UnknownHostException);
+    }
+
+    //The status of a failed HTTP request (getInputStream throws FileNotFoundException for every status >= 400), or -1
+    private static int httpStatus(Exception e, URLConnection connection) {
+        if (!(e instanceof FileNotFoundException) || !(connection instanceof HttpURLConnection))
+            return -1;
+        try {
+            return ((HttpURLConnection) connection).getResponseCode();
+        } catch (Exception e2) {
+            return -1;
+        }
+    }
+
+    //A failed download as a plain, translated message, kept in step with iOS (Android-TODO/iOS-TODO 2026-11-12)
+    static String downloadErrorMessage(Exception e, int httpStatus, String host, int networkState, Context context) {
+        if (httpStatus >= 0)
+            return context.getString(R.string.downloadErrorGeneral) + "\n\nHTTP " + httpStatus;
+        boolean connectionFailure = e instanceof UnknownHostException || e instanceof ConnectException
+                || e instanceof SocketTimeoutException || e instanceof NoRouteToHostException;
+        if (networkState == Helper.NETWORK_NONE
+                || (networkState == Helper.NETWORK_LOCAL && !Helper.isLikelyLocalNetworkAddress(host)))
+            return context.getString(R.string.downloadErrorOffline);
+        if (connectionFailure)
+            return context.getString(R.string.downloadErrorUnreachable) + " " + host;
+        return context.getString(R.string.downloadErrorGeneral) + "\n\n" + e;
     }
 
     //Exceptions caused by a bad phyphox file

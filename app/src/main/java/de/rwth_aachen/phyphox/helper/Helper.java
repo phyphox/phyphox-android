@@ -264,6 +264,30 @@ public abstract class Helper {
         return new HostPort(host, port);
     }
 
+    public static final int NETWORK_NONE = 0;
+    public static final int NETWORK_LOCAL = 1; //connected, but without validated internet access (captive portal, LAN without internet)
+    public static final int NETWORK_INTERNET = 2;
+
+    //State of the default network, the one an URLConnection uses
+    public static int networkState(Context context) {
+        android.net.ConnectivityManager cm = (android.net.ConnectivityManager) context.getSystemService(Context.CONNECTIVITY_SERVICE);
+        if (cm == null)
+            return NETWORK_INTERNET; //cannot tell, so do not claim to be offline
+        if (Build.VERSION.SDK_INT < 23) {
+            android.net.NetworkInfo info = cm.getActiveNetworkInfo();
+            return (info != null && info.isConnected()) ? NETWORK_INTERNET : NETWORK_NONE;
+        }
+        android.net.Network network = cm.getActiveNetwork();
+        if (network == null)
+            return NETWORK_NONE;
+        android.net.NetworkCapabilities caps = cm.getNetworkCapabilities(network);
+        if (caps == null)
+            return NETWORK_NONE;
+        if (caps.hasCapability(android.net.NetworkCapabilities.NET_CAPABILITY_INTERNET) && caps.hasCapability(android.net.NetworkCapabilities.NET_CAPABILITY_VALIDATED))
+            return NETWORK_INTERNET;
+        return NETWORK_LOCAL;
+    }
+
     //Heuristic without DNS (must not block): hostnames that merely resolve to a LAN address are caught after a failed attempt
     public static boolean isLikelyLocalNetworkAddress(String address) {
         if (address == null || address.isEmpty())

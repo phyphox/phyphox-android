@@ -788,12 +788,21 @@ public class ExperimentListActivity extends AppCompatActivity {
     public void showError(String error) {
         if (progress != null)
             progress.dismiss();
-        //A hostname resolving to a local address escapes the up-front check in handleIntent, so offer the permission here
-        if (lastNetworkLoadIntent != null && Helper.needsLocalNetworkPermission(this)) {
-            final Intent retryIntent = lastNetworkLoadIntent;
-            lastNetworkLoadIntent = null; //offer this once per load attempt
+        final Intent retryIntent = lastNetworkLoadIntent;
+        lastNetworkLoadIntent = null; //offer the permission once per load attempt
+        //A hostname resolving to a local address escapes the up-front check in handleIntent, so offer the permission here, unless there is no network at all
+        if (retryIntent != null && Helper.needsLocalNetworkPermission(this) && Helper.networkState(this) != Helper.NETWORK_NONE) {
             lastNetworkLoadRetryIntent = retryIntent;
             Helper.requestLocalNetworkPermission(this, R.string.localNetworkPermission, error + "\n\n" + getString(R.string.localNetworkLoadMessage), LOCAL_NETWORK_LOAD_REQUEST_CODE, null);
+            return;
+        }
+        if (retryIntent != null) { //a failed download: a toast is gone before the message is read
+            new AlertDialog.Builder(this)
+                    .setTitle(R.string.downloadErrorTitle)
+                    .setMessage(error)
+                    .setPositiveButton(R.string.tryagain, (dialog, id) -> handleIntent(retryIntent))
+                    .setNegativeButton(R.string.cancel, null)
+                    .show();
             return;
         }
         Toast.makeText(this, error, Toast.LENGTH_LONG).show();
