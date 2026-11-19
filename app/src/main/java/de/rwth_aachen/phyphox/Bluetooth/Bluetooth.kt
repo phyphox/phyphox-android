@@ -23,6 +23,7 @@ import de.rwth_aachen.phyphox.Experiment
 import de.rwth_aachen.phyphox.ExperimentTimeReference
 import de.rwth_aachen.phyphox.PhyphoxFile
 import de.rwth_aachen.phyphox.R
+import de.rwth_aachen.phyphox.helper.DebugSwitches
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -57,6 +58,9 @@ open class Bluetooth(
     val nameFilter: BluetoothNameFilter = nameFilter ?: BluetoothNameFilter.NONE
 
     val deviceName: String get() = nameFilter.description
+
+    //The lab's debug.phyphox.bleAutoConnect switch makes every block behave as autoConnect="true"
+    val effectiveAutoConnect: Boolean get() = autoConnect || DebugSwitches.bleAutoConnect()
 
     @JvmField
     var requestMTU: Int = 0
@@ -246,7 +250,7 @@ open class Bluetooth(
         if (btDevice == null) {
             //no match: scan and let the user pick (blocks until picked or cancelled)
             val adapter = btAdapter ?: throw BluetoothException(context.resources.getString(R.string.bt_exception_disabled), this)
-            val bsd = BluetoothScanDialog(autoConnect, activity, context, adapter)
+            val bsd = BluetoothScanDialog(effectiveAutoConnect, activity, context, adapter)
             if (!bsd.scanPermission())
                 return false
             if (!bsd.locationEnabled())

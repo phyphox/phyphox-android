@@ -15,6 +15,7 @@ import java.util.Locale;
 //  debug.phyphox.autoConfirm   dismiss the network privacy and photosensitivity notices, decline saving a downloaded experiment (iOS -phyphoxAutoConfirm)
 //  debug.phyphox.assumeSensors report every sensor as present when building the collection list; affects rendering only (iOS -phyphoxAssumeSensors)
 //  debug.phyphox.view          0-based view (tab) index to open on; absent/invalid/out of range = first view; restored instance state wins (iOS -phyphoxView)
+//  debug.phyphox.bleAutoConnect "1"/"true": every bluetooth block behaves as autoConnect="true", the first device passing its filters is taken without the pick dialog (iOS -phyphoxBleAutoConnect)
 //Safe to ship in release builds: the debug.* namespace is writable only by the adb shell user and root, never by apps.
 public class DebugSwitches {
 
@@ -23,11 +24,23 @@ public class DebugSwitches {
     private static final String AUTO_CONFIRM = "debug.phyphox.autoConfirm";
     private static final String ASSUME_SENSORS = "debug.phyphox.assumeSensors";
     private static final String VIEW = "debug.phyphox.view";
+    private static final String BLE_AUTO_CONNECT = "debug.phyphox.bleAutoConnect";
+
+    public interface PropertyReader {
+        String get(String property);
+    }
+
+    //Replaced by JVM tests, which have no getprop
+    public static PropertyReader propertyReader = DebugSwitches::getprop;
 
     private static Boolean assumeSensors = null;
 
     public static boolean remoteEnabled() {
         return isSet(REMOTE);
+    }
+
+    public static boolean bleAutoConnect() {
+        return isSet(BLE_AUTO_CONNECT);
     }
 
     public static boolean autoConfirm() {
@@ -67,8 +80,13 @@ public class DebugSwitches {
         return value.equals("1") || value.equals("true");
     }
 
-    //Unset property or any failure to run getprop reads as "": switch off.
     private static String get(String property) {
+        String value = propertyReader.get(property);
+        return value == null ? "" : value;
+    }
+
+    //Unset property or any failure to run getprop reads as "": switch off.
+    private static String getprop(String property) {
         try {
             Process process = new ProcessBuilder("/system/bin/getprop", property)
                     .redirectErrorStream(true).start();
