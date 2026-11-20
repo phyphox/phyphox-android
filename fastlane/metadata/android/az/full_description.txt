@@ -1,0 +1,30 @@
+Bilirdinizmi ki, cibinizdə 3D maqnitometr gəzdirirsiniz? Telefonunuzdan rəqqas kimi istifadə edərək Yerin yerli sərbəstdüşmə təcilini ölçə biləcəyinizi bilirdinizmi? Bəs telefonunuzu sonara çevirə biləcəyinizi?
+
+phyphox sizə telefonunuzun sensorlarına birbaşa və ya məlumatlarınızı təhlil edən istifadəyə hazır təcrübələr vasitəsilə giriş imkanı verir. Həmçinin ilkin məlumatları nəticələrlə birlikdə sonrakı təhlil üçün ixrac edə bilərsiniz. Hətta phyphox.org saytında öz təcrübələrinizi yarada və onları həmkarlarınız, tələbələriniz və dostlarınızla paylaşa bilərsiniz.
+
+Seçilmiş xüsusiyyətlər:
+Əvvəlcədən hazırlanmış təcrübələr toplusu. Başlamaq üçün sadəcə işə salma düyməsini basın.
+Məlumatlarınızı geniş istifadə olunan müxtəlif formatlarda ixrac edin.
+Telefonunuzla eyni şəbəkədə olan istənilən kompüterdən veb-interfeys vasitəsilə təcrübənizi uzaqdan idarə edin. Həmin kompüterlərə heç nə quraşdırmağa ehtiyac yoxdur — yalnız müasir veb-brauzer kifayətdir.
+Sensor girişlərini seçərək, təhlil mərhələlərini müəyyən edərək və veb-redaktorumuzdan (<a href="http://phyphox.org/editor">http://phyphox.org/editor</a>) istifadə etməklə interfeys üçün görünüşlər yaradaraq öz təcrübələrinizi tərtib edin. Təhlil iki qiymətin sadəcə toplanmasından Furye çevrilməsi və çarpaz korrelyasiya kimi qabaqcıl üsullara qədər müxtəlif əməliyyatları əhatə edə bilər. Biz geniş təhlil funksiyaları dəsti təqdim edirik.
+
+Dəstəklənən sensorlar:
+Akselerometr
+Maqnitometr
+Giroskop
+İşıq intensivliyi
+Təzyiq
+Mikrofon
+Yaxınlıq sensoru
+GPS
+Kamera
+LiDAR/ToF
+*Bəzi sensorlar hər telefonda mövcud deyil.
+
+İxrac formatları
+CSV (vergüllə ayrılmış qiymətlər)
+TSV (tabulyasiya ilə ayrılmış qiymətlər)
+Excel
+(başqa formatlara ehtiyacınız varsa, bizə bildirin)
+
+Bu tətbiq RWTH Aachen Universitetinin A Fizika üzrə 2-ci İnstitutunda hazırlanmışdır.

@@ -1,0 +1,12 @@
+Einheiten umrechnen: metrisch oder imperial, Einheit antippen
+Neuer Kompass und Tacho
+Überarbeitete Sonar- und Doppler-Experimente
+Graphen im Querformat nebeneinander
+Fernzugriff: neue Graphen mit Zoom und Datenauswahl
+Experimente für die Sensorbox phyphox:mini
+Bluetooth-Geräte können Messungen starten und stoppen
+Weißabgleich über Farbtemperatur
+Neue Sprache: Aserbaidschanisch
+Viele Korrekturen und neue Werkzeuge für eigene Experimente
+
+Vollständiges Changelog: https://phyphox.org/changelog

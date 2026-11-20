@@ -1,0 +1,12 @@
+Unit conversion: metric or imperial, tap a unit to convert it
+New compass and speedometer
+Reworked sonar and Doppler effect experiments
+Related graphs side by side in landscape
+Remote access: new graphs with zoom, pan and data picker
+Experiments for the phyphox:mini sensor box
+Bluetooth devices can start and stop the measurement
+White balance by color temperature
+New language: Azerbaijani
+Many fixes, and new tools for your own experiments
+
+Full changelog at https://phyphox.org/changelog
