@@ -6,11 +6,14 @@ import static org.junit.Assert.assertTrue;
 import android.content.Context;
 import android.content.res.Configuration;
 import android.content.res.Resources;
+import android.content.res.XmlResourceParser;
 
 import androidx.test.core.app.ApplicationProvider;
 
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.xmlpull.v1.XmlPullParser;
+import org.xmlpull.v1.XmlPullParserException;
 import org.robolectric.RobolectricTestRunner;
 import org.robolectric.annotation.Config;
 
@@ -31,6 +34,7 @@ import java.util.regex.Pattern;
 //Every locale the build enables (BuildConfig.LOCALE_ARRAY) must resolve its resources; the enabled
 //set is compared with phyphox-docs' languages.yml. Deviations are warnings, not failures, by
 //decision (test plan area P): the hard enforcement is T2, against the built artifact.
+//The system's per-app language list (locales_config.xml) must match the enabled set exactly.
 @RunWith(RobolectricTestRunner.class)
 @Config(sdk = 35)
 public class TranslationsBuildTest {
@@ -110,6 +114,33 @@ public class TranslationsBuildTest {
         //English must be there whatever else drifts - everything falls back to it.
         assertTrue("the build enables no English resources", enabled.contains("en"));
         assertFalse("the build enables no locales at all", enabled.isEmpty());
+    }
+
+    @Test
+    public void localeConfigListsExactlyTheEnabledLocales() throws IOException, XmlPullParserException {
+        Set<String> enabled = new TreeSet<>();
+        for (String qualifier : enabledLocales())
+            enabled.add(localeOf(qualifier).toLanguageTag());
+
+        Set<String> listed = new TreeSet<>();
+        Context context = ApplicationProvider.getApplicationContext();
+        try (XmlResourceParser parser = context.getResources().getXml(R.xml.locales_config)) {
+            for (int event = parser.getEventType(); event != XmlPullParser.END_DOCUMENT; event = parser.next()) {
+                if (event == XmlPullParser.START_TAG && "locale".equals(parser.getName()))
+                    listed.add(Locale.forLanguageTag(parser.getAttributeValue(
+                            "http://schemas.android.com/apk/res/android", "name")).toLanguageTag());
+            }
+        }
+
+        Set<String> notListed = new TreeSet<>(enabled);
+        notListed.removeAll(listed);
+        Set<String> notEnabled = new TreeSet<>(listed);
+        notEnabled.removeAll(enabled);
+
+        assertTrue("locales_config.xml does not match \"def locales\" in app/build.gradle."
+                        + "\n  enabled but missing from locales_config.xml: " + notListed
+                        + "\n  in locales_config.xml but not enabled: " + notEnabled,
+                notListed.isEmpty() && notEnabled.isEmpty());
     }
 
     private Set<String> canonicalLanguages() throws IOException {
